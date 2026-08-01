@@ -123,8 +123,8 @@ function renderParallax() {
 
   renderedScroll = Math.abs(distance) < 0.25 ? targetScroll : renderedScroll + distance * 0.16
 
-  const farOffset = reduceMotion ? 0 : (renderedScroll * 0.055) % panelHeight
-  const nearOffset = reduceMotion ? 0 : (renderedScroll * 0.13) % panelHeight
+  const farOffset = reduceMotion ? 0 : -((renderedScroll * 0.055) % panelHeight)
+  const nearOffset = reduceMotion ? 0 : -((renderedScroll * 0.13) % panelHeight)
 
   cosmosRef.value.style.setProperty('--far-drift', `${farOffset}px`)
   cosmosRef.value.style.setProperty('--near-drift', `${nearOffset}px`)
@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
 
 .drift-track {
   position: absolute;
-  top: calc(-1 * var(--panel-height));
+  top: calc(0px - var(--panel-height));
   right: 0;
   left: 0;
   display: flex;
@@ -232,11 +232,11 @@ onBeforeUnmount(() => {
 }
 
 .drift-track-far {
-  transform: translate3d(0, calc(-1 * var(--far-drift)), 0);
+  transform: translate3d(0, var(--far-drift), 0);
 }
 
 .drift-track-near {
-  transform: translate3d(0, calc(-1 * var(--near-drift)), 0);
+  transform: translate3d(0, var(--near-drift), 0);
 }
 
 .drift-panel {
@@ -294,7 +294,7 @@ onBeforeUnmount(() => {
 .major-star::after,
 .hero-flare::after {
   width: 1px;
-  height: calc(var(--star-size) * 1.14);
+  height: calc(var(--star-size) + 3px);
   background: linear-gradient(
     180deg,
     transparent,
