@@ -143,11 +143,17 @@ html,
 body,
 #app {
   min-height: 100%;
-  background: #010207;
+  background: #010305;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
+}
+
+#app {
+  position: relative;
+  isolation: isolate;
 }
 
 .termrelay-app-layer {
@@ -173,6 +179,6 @@ body {
 
 .termrelay-shell .scanlines,
 .auth-shell .auth-scanlines {
-  opacity: 0.035 !important;
+  opacity: 0.018 !important;
 }
 </style>
