@@ -164,6 +164,13 @@ body {
 
 .termrelay-shell,
 .auth-shell {
+  --text: #f1efe9;
+  --muted: #a6a8ad;
+  --dim: #737980;
+  --rose: #d9a7b7;
+  --iris: #b8a7cf;
+  --foam: #87d5d0;
+  --pine: #2f7880;
   background: transparent !important;
 }
 
@@ -179,6 +186,83 @@ body {
 
 .termrelay-shell .scanlines,
 .auth-shell .auth-scanlines {
-  opacity: 0.018 !important;
+  opacity: 0.012 !important;
+}
+
+.termrelay-shell .site-header {
+  background: linear-gradient(180deg, rgba(1, 3, 5, 0.36), rgba(1, 3, 5, 0));
+}
+
+.termrelay-shell .hero-copy {
+  position: relative;
+  isolation: isolate;
+}
+
+.termrelay-shell .hero-copy::before {
+  content: '';
+  position: absolute;
+  inset: -42px -78px -46px -34px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 20% 48%,
+    rgba(1, 4, 6, 0.72) 0%,
+    rgba(1, 4, 6, 0.45) 48%,
+    rgba(1, 4, 6, 0) 78%
+  );
+}
+
+.termrelay-shell .hero h1 {
+  text-shadow: 0 15px 38px rgba(0, 0, 0, 0.42);
+}
+
+.termrelay-shell .hero-description {
+  color: rgba(212, 213, 216, 0.7);
+}
+
+.termrelay-shell .terminal-window {
+  border-color: rgba(135, 213, 208, 0.15) !important;
+  background: linear-gradient(
+    150deg,
+    rgba(12, 17, 21, 0.94),
+    rgba(5, 8, 11, 0.95)
+  ) !important;
+  box-shadow:
+    0 34px 86px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(255, 255, 255, 0.018),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.termrelay-shell .command-strip,
+.termrelay-shell .capability-grid,
+.termrelay-shell .manifesto {
+  background: rgba(3, 7, 10, 0.34);
+  border-color: rgba(135, 213, 208, 0.1) !important;
+}
+
+.termrelay-shell .capability-grid {
+  overflow: hidden;
+  border: 1px solid rgba(135, 213, 208, 0.1);
+  border-radius: 14px;
+}
+
+.termrelay-shell .capability-grid article {
+  padding-inline: 22px;
+}
+
+.termrelay-shell .capability-grid article:hover {
+  background: rgba(135, 213, 208, 0.028);
+}
+
+@media (max-width: 940px) {
+  .termrelay-shell .hero-copy::before {
+    inset: -34px -28px -38px -22px;
+    background: radial-gradient(
+      ellipse at 24% 48%,
+      rgba(1, 4, 6, 0.74) 0%,
+      rgba(1, 4, 6, 0.46) 54%,
+      rgba(1, 4, 6, 0) 84%
+    );
+  }
 }
 </style>
