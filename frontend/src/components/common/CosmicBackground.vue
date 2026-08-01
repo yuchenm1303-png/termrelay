@@ -4,36 +4,32 @@
     <div class="cosmos-nebula cosmos-nebula-cyan"></div>
     <div class="cosmos-nebula cosmos-nebula-violet"></div>
 
-    <div class="drift-track drift-track-far">
-      <div v-for="panel in 3" :key="`far-${panel}`" class="drift-panel">
-        <span
-          v-for="star in smallStars"
-          :key="`small-${panel}-${star.id}`"
-          class="small-star"
-          :class="`small-star--${star.color}`"
-          :style="smallStarStyle(star)"
-        ></span>
-      </div>
+    <div class="parallax-layer parallax-layer-far">
+      <span
+        v-for="star in smallStars"
+        :key="`small-${star.id}`"
+        class="small-star"
+        :class="`small-star--${star.color}`"
+        :style="smallStarStyle(star)"
+      ></span>
     </div>
 
-    <div class="drift-track drift-track-near">
-      <div v-for="panel in 3" :key="`near-${panel}`" class="drift-panel">
-        <span
-          v-for="star in majorStars"
-          :key="`major-${panel}-${star.id}`"
-          class="major-star"
-          :class="`major-star--${star.color}`"
-          :style="majorStarStyle(star)"
-        ></span>
+    <div class="parallax-layer parallax-layer-near">
+      <span
+        v-for="star in majorStars"
+        :key="`major-${star.id}`"
+        class="major-star"
+        :class="`major-star--${star.color}`"
+        :style="majorStarStyle(star)"
+      ></span>
 
-        <div class="upper-right-stars">
-          <span class="hero-flare hero-flare-main"></span>
-          <span class="hero-flare hero-flare-secondary"></span>
-          <span class="hero-dot hero-dot-a"></span>
-          <span class="hero-dot hero-dot-b"></span>
-          <span class="hero-dot hero-dot-c"></span>
-          <span class="hero-trail"></span>
-        </div>
+      <div class="upper-right-stars">
+        <span class="hero-flare hero-flare-main"></span>
+        <span class="hero-flare hero-flare-secondary"></span>
+        <span class="hero-dot hero-dot-a"></span>
+        <span class="hero-dot hero-dot-b"></span>
+        <span class="hero-dot hero-dot-c"></span>
+        <span class="hero-trail"></span>
       </div>
     </div>
 
@@ -56,11 +52,7 @@ type Star = {
 }
 
 const cosmosRef = ref<HTMLElement | null>(null)
-
 let animationFrame = 0
-let panelHeight = 0
-let targetScroll = 0
-let renderedScroll = 0
 let reduceMotionQuery: MediaQueryList | null = null
 
 const majorStars: Star[] = [
@@ -107,68 +99,48 @@ function smallStarStyle(star: Star) {
   }
 }
 
-function measureScene() {
-  if (!cosmosRef.value) return
-
-  panelHeight = Math.max(window.innerHeight * 1.28, 860)
-  cosmosRef.value.style.setProperty('--panel-height', `${panelHeight}px`)
-}
-
 function renderParallax() {
   animationFrame = 0
-  if (!cosmosRef.value || panelHeight <= 0) return
+  if (!cosmosRef.value) return
 
   const reduceMotion = reduceMotionQuery?.matches ?? false
-  const distance = targetScroll - renderedScroll
+  const maxScroll = Math.max(
+    document.documentElement.scrollHeight - document.documentElement.clientHeight,
+    0
+  )
+  const rawScroll = window.scrollY || document.documentElement.scrollTop || 0
+  const scrollTop = Math.min(Math.max(rawScroll, 0), maxScroll)
 
-  renderedScroll = Math.abs(distance) < 0.25 ? targetScroll : renderedScroll + distance * 0.16
+  const farOffset = reduceMotion ? 0 : -Math.min(scrollTop * 0.035, 96)
+  const nearOffset = reduceMotion ? 0 : -Math.min(scrollTop * 0.075, 210)
 
-  const farOffset = reduceMotion ? 0 : -((renderedScroll * 0.055) % panelHeight)
-  const nearOffset = reduceMotion ? 0 : -((renderedScroll * 0.13) % panelHeight)
-
-  cosmosRef.value.style.setProperty('--far-drift', `${farOffset}px`)
-  cosmosRef.value.style.setProperty('--near-drift', `${nearOffset}px`)
-
-  if (Math.abs(targetScroll - renderedScroll) >= 0.25) {
-    animationFrame = window.requestAnimationFrame(renderParallax)
-  }
+  cosmosRef.value.style.setProperty('--far-offset', `${farOffset.toFixed(2)}px`)
+  cosmosRef.value.style.setProperty('--near-offset', `${nearOffset.toFixed(2)}px`)
 }
 
 function requestParallaxUpdate() {
-  targetScroll = window.scrollY || document.documentElement.scrollTop || 0
-  if (!animationFrame) {
-    animationFrame = window.requestAnimationFrame(renderParallax)
-  }
-}
-
-function handleResize() {
-  measureScene()
-  requestParallaxUpdate()
+  if (animationFrame) return
+  animationFrame = window.requestAnimationFrame(renderParallax)
 }
 
 onMounted(() => {
   reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  targetScroll = window.scrollY || document.documentElement.scrollTop || 0
-  renderedScroll = targetScroll
-  measureScene()
   renderParallax()
-
   window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
-  window.addEventListener('resize', handleResize, { passive: true })
+  window.addEventListener('resize', requestParallaxUpdate, { passive: true })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', requestParallaxUpdate)
-  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('resize', requestParallaxUpdate)
   if (animationFrame) window.cancelAnimationFrame(animationFrame)
 })
 </script>
 
 <style scoped>
 .cosmos {
-  --panel-height: 1000px;
-  --far-drift: 0px;
-  --near-drift: 0px;
+  --far-offset: 0px;
+  --near-offset: 0px;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -220,29 +192,24 @@ onBeforeUnmount(() => {
   );
 }
 
-.drift-track {
+.parallax-layer {
   position: absolute;
-  top: calc(0px - var(--panel-height));
   right: 0;
   left: 0;
-  display: flex;
-  flex-direction: column;
   will-change: transform;
   backface-visibility: hidden;
 }
 
-.drift-track-far {
-  transform: translate3d(0, var(--far-drift), 0);
+.parallax-layer-far {
+  top: -120px;
+  bottom: -120px;
+  transform: translate3d(0, var(--far-offset), 0);
 }
 
-.drift-track-near {
-  transform: translate3d(0, var(--near-drift), 0);
-}
-
-.drift-panel {
-  position: relative;
-  flex: 0 0 var(--panel-height);
-  height: var(--panel-height);
+.parallax-layer-near {
+  top: -240px;
+  bottom: -240px;
+  transform: translate3d(0, var(--near-offset), 0);
 }
 
 .major-star,
@@ -294,7 +261,7 @@ onBeforeUnmount(() => {
 .major-star::after,
 .hero-flare::after {
   width: 1px;
-  height: calc(var(--star-size) + 3px);
+  height: calc(var(--star-size) * 1.14);
   background: linear-gradient(
     180deg,
     transparent,
@@ -408,6 +375,16 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 760px) {
+  .parallax-layer-far {
+    top: -100px;
+    bottom: -100px;
+  }
+
+  .parallax-layer-near {
+    top: -220px;
+    bottom: -220px;
+  }
+
   .upper-right-stars {
     right: -18px;
     top: 92px;
@@ -423,8 +400,9 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .drift-track {
-    transform: translate3d(0, 0, 0) !important;
+  .parallax-layer-far,
+  .parallax-layer-near {
+    transform: none;
   }
 }
 </style>
