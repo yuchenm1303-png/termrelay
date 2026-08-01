@@ -18,6 +18,7 @@
         <div class="console-content-frame">
           <KeysOverviewBanner v-if="route.path === '/keys'" />
           <AccountsOverviewBanner v-if="route.path === '/admin/accounts'" />
+          <UsageOverviewBanner v-if="route.path === '/usage'" />
           <slot />
         </div>
       </main>
@@ -30,6 +31,7 @@ import '@/styles/onboarding.css'
 import '@/styles/termrelay-console.css'
 import '@/styles/termrelay-keys.css'
 import '@/styles/termrelay-accounts.css'
+import '@/styles/termrelay-usage.css'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores'
@@ -40,6 +42,7 @@ import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import KeysOverviewBanner from '@/components/keys/KeysOverviewBanner.vue'
 import AccountsOverviewBanner from '@/components/admin/account/AccountsOverviewBanner.vue'
+import UsageOverviewBanner from '@/components/usage/UsageOverviewBanner.vue'
 
 const route = useRoute()
 const appStore = useAppStore()
