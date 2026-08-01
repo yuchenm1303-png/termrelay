@@ -1,0 +1,27 @@
+{$TERMRELAY_DOMAIN} {
+  encode zstd gzip
+
+  reverse_proxy termrelay:8080 {
+    flush_interval -1
+
+    # Overwrite client-provided forwarding headers before the request reaches
+    # TermRelay. The application is not published directly to the host.
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
+    header_up X-Forwarded-Proto {scheme}
+    header_up X-Forwarded-Host {host}
+  }
+
+  header {
+    -Server
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  }
+
+  log {
+    output stdout
+    format console
+  }
+}
