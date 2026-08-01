@@ -1,287 +1,172 @@
 <template>
   <div class="cosmos" aria-hidden="true">
     <div class="cosmos-sky"></div>
-    <div class="cosmos-horizon"></div>
-    <div class="cosmos-nebula nebula-cyan"></div>
-    <div class="cosmos-nebula nebula-violet"></div>
-    <div class="cosmos-nebula nebula-rose"></div>
+    <div class="cosmos-haze"></div>
 
-    <div class="star-dust dust-a"></div>
-    <div class="star-dust dust-b"></div>
-    <div class="star-dust dust-c"></div>
-
-    <span
-      v-for="star in stars"
-      :key="star.id"
-      class="star"
-      :class="[`star-${star.kind}`, `star-${star.color}`]"
-      :style="starStyle(star)"
-    ></span>
-
-    <div class="orbit">
+    <div class="orbit-mark">
       <span class="orbit-ring"></span>
       <span class="orbit-core"></span>
     </div>
 
-    <div class="cloud-bank cloud-bank-left"></div>
-    <div class="cloud-bank cloud-bank-right"></div>
+    <span
+      v-for="star in majorStars"
+      :key="`major-${star.id}`"
+      class="major-star"
+      :class="`major-star--${star.color}`"
+      :style="majorStarStyle(star)"
+    ></span>
+
+    <span
+      v-for="star in smallStars"
+      :key="`small-${star.id}`"
+      class="small-star"
+      :class="`small-star--${star.color}`"
+      :style="smallStarStyle(star)"
+    ></span>
+
     <div class="cosmos-vignette"></div>
-    <div class="cosmos-grain"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-type StarKind = 'pin' | 'soft' | 'flare' | 'diamond'
 type StarColor = 'ivory' | 'cyan' | 'rose'
 
-type Star = {
+type MajorStar = {
   id: number
   x: number
   y: number
   size: number
-  kind: StarKind
   color: StarColor
-  delay: number
-  duration: number
+  opacity: number
+  pulse?: boolean
+}
+
+type SmallStar = {
+  id: number
+  x: number
+  y: number
+  size: number
+  color: StarColor
   opacity: number
 }
 
-const stars: Star[] = [
-  { id: 1, x: 5.5, y: 36, size: 1.1, kind: 'flare', color: 'cyan', delay: -1.4, duration: 6.2, opacity: 0.95 },
-  { id: 2, x: 13, y: 48, size: 0.75, kind: 'diamond', color: 'ivory', delay: -2.8, duration: 7.5, opacity: 0.78 },
-  { id: 3, x: 18.5, y: 29, size: 0.48, kind: 'pin', color: 'ivory', delay: -1.2, duration: 5.6, opacity: 0.68 },
-  { id: 4, x: 25, y: 43, size: 0.8, kind: 'flare', color: 'cyan', delay: -4.1, duration: 8.4, opacity: 0.82 },
-  { id: 5, x: 31, y: 24, size: 0.38, kind: 'pin', color: 'rose', delay: -0.8, duration: 6.7, opacity: 0.52 },
-  { id: 6, x: 38.5, y: 51, size: 0.7, kind: 'diamond', color: 'rose', delay: -3.3, duration: 7.2, opacity: 0.64 },
-  { id: 7, x: 46, y: 34, size: 0.52, kind: 'soft', color: 'ivory', delay: -5.1, duration: 9.1, opacity: 0.7 },
-  { id: 8, x: 51, y: 43, size: 0.95, kind: 'flare', color: 'cyan', delay: -2.2, duration: 6.9, opacity: 0.96 },
-  { id: 9, x: 59, y: 29, size: 1.05, kind: 'flare', color: 'ivory', delay: -3.8, duration: 8.8, opacity: 0.9 },
-  { id: 10, x: 64, y: 51, size: 0.42, kind: 'pin', color: 'ivory', delay: -1.6, duration: 6.4, opacity: 0.58 },
-  { id: 11, x: 71, y: 39, size: 0.65, kind: 'diamond', color: 'cyan', delay: -4.7, duration: 7.8, opacity: 0.75 },
-  { id: 12, x: 78, y: 26, size: 0.34, kind: 'pin', color: 'rose', delay: -2.4, duration: 5.9, opacity: 0.47 },
-  { id: 13, x: 87.5, y: 31, size: 1.15, kind: 'flare', color: 'cyan', delay: -5.5, duration: 9.4, opacity: 0.98 },
-  { id: 14, x: 91, y: 49, size: 0.54, kind: 'soft', color: 'ivory', delay: -3.1, duration: 7.1, opacity: 0.65 },
-  { id: 15, x: 96, y: 41, size: 0.32, kind: 'pin', color: 'ivory', delay: -0.4, duration: 6.5, opacity: 0.5 },
-  { id: 16, x: 9, y: 61, size: 0.42, kind: 'pin', color: 'rose', delay: -4.2, duration: 8.1, opacity: 0.48 },
-  { id: 17, x: 18, y: 67, size: 0.7, kind: 'flare', color: 'cyan', delay: -1.9, duration: 7.6, opacity: 0.72 },
-  { id: 18, x: 34, y: 63, size: 0.36, kind: 'pin', color: 'ivory', delay: -2.7, duration: 6.1, opacity: 0.5 },
-  { id: 19, x: 57, y: 68, size: 0.58, kind: 'diamond', color: 'rose', delay: -3.6, duration: 8.6, opacity: 0.56 },
-  { id: 20, x: 74, y: 63, size: 0.44, kind: 'pin', color: 'cyan', delay: -1.1, duration: 6.8, opacity: 0.58 },
-  { id: 21, x: 83, y: 72, size: 0.78, kind: 'flare', color: 'ivory', delay: -4.9, duration: 9.2, opacity: 0.72 },
-  { id: 22, x: 94, y: 61, size: 0.45, kind: 'soft', color: 'rose', delay: -2.6, duration: 7.4, opacity: 0.55 }
+const majorStars: MajorStar[] = [
+  { id: 1, x: 5.8, y: 35.4, size: 28, color: 'cyan', opacity: 0.84 },
+  { id: 2, x: 13.2, y: 47.8, size: 18, color: 'cyan', opacity: 0.76, pulse: true },
+  { id: 3, x: 18.8, y: 41.6, size: 13, color: 'cyan', opacity: 0.72 },
+  { id: 4, x: 46.5, y: 28.2, size: 16, color: 'rose', opacity: 0.62 },
+  { id: 5, x: 50.8, y: 34.4, size: 30, color: 'cyan', opacity: 0.93, pulse: true },
+  { id: 6, x: 60.2, y: 23.8, size: 32, color: 'ivory', opacity: 0.9 },
+  { id: 7, x: 87.6, y: 26.2, size: 36, color: 'cyan', opacity: 0.95, pulse: true },
+  { id: 8, x: 80.7, y: 45.6, size: 22, color: 'cyan', opacity: 0.82 },
+  { id: 9, x: 2.6, y: 53.4, size: 34, color: 'rose', opacity: 0.82 },
+  { id: 10, x: 94.4, y: 51.2, size: 27, color: 'ivory', opacity: 0.78 },
+  { id: 11, x: 17.5, y: 69.4, size: 25, color: 'cyan', opacity: 0.72 },
+  { id: 12, x: 82.8, y: 73.6, size: 25, color: 'ivory', opacity: 0.74 }
 ]
 
-function starStyle(star: Star) {
+const smallStars: SmallStar[] = [
+  { id: 1, x: 9, y: 29, size: 1.1, color: 'ivory', opacity: 0.52 },
+  { id: 2, x: 15.5, y: 38.5, size: 1.4, color: 'cyan', opacity: 0.66 },
+  { id: 3, x: 23.2, y: 31.6, size: 1.1, color: 'rose', opacity: 0.48 },
+  { id: 4, x: 31, y: 43.2, size: 1.5, color: 'ivory', opacity: 0.66 },
+  { id: 5, x: 39.6, y: 25.6, size: 1, color: 'ivory', opacity: 0.5 },
+  { id: 6, x: 48.4, y: 39.2, size: 1.2, color: 'cyan', opacity: 0.58 },
+  { id: 7, x: 56.8, y: 31.4, size: 1, color: 'ivory', opacity: 0.48 },
+  { id: 8, x: 65.2, y: 43.8, size: 1.4, color: 'rose', opacity: 0.5 },
+  { id: 9, x: 72.4, y: 29.6, size: 1.2, color: 'cyan', opacity: 0.57 },
+  { id: 10, x: 79.1, y: 37.1, size: 1.1, color: 'ivory', opacity: 0.58 },
+  { id: 11, x: 91.4, y: 33.4, size: 1.4, color: 'rose', opacity: 0.5 },
+  { id: 12, x: 97.2, y: 43.6, size: 1.1, color: 'ivory', opacity: 0.56 },
+  { id: 13, x: 7.2, y: 61.2, size: 1.2, color: 'ivory', opacity: 0.52 },
+  { id: 14, x: 24.8, y: 58.6, size: 1.1, color: 'rose', opacity: 0.46 },
+  { id: 15, x: 35.5, y: 66.8, size: 1.5, color: 'cyan', opacity: 0.62 },
+  { id: 16, x: 46.4, y: 55.3, size: 1.1, color: 'ivory', opacity: 0.46 },
+  { id: 17, x: 57.2, y: 63.6, size: 1.3, color: 'rose', opacity: 0.52 },
+  { id: 18, x: 68.6, y: 57.2, size: 1.1, color: 'ivory', opacity: 0.48 },
+  { id: 19, x: 75.8, y: 68.2, size: 1.5, color: 'cyan', opacity: 0.61 },
+  { id: 20, x: 90.2, y: 62.8, size: 1.2, color: 'ivory', opacity: 0.5 },
+  { id: 21, x: 11.6, y: 79.1, size: 1, color: 'rose', opacity: 0.42 },
+  { id: 22, x: 28.4, y: 75.8, size: 1.2, color: 'ivory', opacity: 0.46 },
+  { id: 23, x: 43.8, y: 82.4, size: 1.1, color: 'cyan', opacity: 0.5 },
+  { id: 24, x: 61.4, y: 77.6, size: 1.3, color: 'ivory', opacity: 0.49 },
+  { id: 25, x: 72.8, y: 86.3, size: 1, color: 'rose', opacity: 0.4 },
+  { id: 26, x: 93.1, y: 81.2, size: 1.3, color: 'cyan', opacity: 0.54 }
+]
+
+function majorStarStyle(star: MajorStar) {
   return {
     left: `${star.x}%`,
     top: `${star.y}%`,
-    '--star-size': `${star.size}rem`,
-    '--star-delay': `${star.delay}s`,
-    '--star-duration': `${star.duration}s`,
-    '--star-opacity': String(star.opacity)
+    '--star-size': `${star.size}px`,
+    '--star-opacity': star.opacity,
+    '--star-animation': star.pulse ? 'star-breathe 9s ease-in-out infinite' : 'none'
+  }
+}
+
+function smallStarStyle(star: SmallStar) {
+  return {
+    left: `${star.x}%`,
+    top: `${star.y}%`,
+    width: `${star.size}px`,
+    height: `${star.size}px`,
+    opacity: star.opacity
   }
 }
 </script>
 
 <style scoped>
 .cosmos {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
+  min-height: 100vh;
+  height: 100%;
   overflow: hidden;
   pointer-events: none;
-  isolation: isolate;
-  background: #010207;
+  contain: paint;
+  background: #010305;
 }
 
 .cosmos-sky,
-.cosmos-horizon,
-.cosmos-vignette,
-.cosmos-grain,
-.star-dust,
-.cosmos-nebula,
-.cloud-bank {
+.cosmos-haze,
+.cosmos-vignette {
   position: absolute;
   inset: 0;
 }
 
 .cosmos-sky {
-  z-index: 0;
   background:
-    radial-gradient(ellipse at 50% 56%, rgba(5, 48, 55, 0.48), transparent 38%),
-    radial-gradient(ellipse at 34% 76%, rgba(116, 57, 119, 0.34), transparent 33%),
-    radial-gradient(ellipse at 67% 79%, rgba(54, 55, 117, 0.38), transparent 34%),
+    radial-gradient(ellipse at 48% 44%, rgba(8, 78, 83, 0.42) 0%, rgba(4, 38, 43, 0.24) 30%, transparent 58%),
+    radial-gradient(ellipse at 20% 62%, rgba(29, 113, 115, 0.24) 0%, transparent 46%),
+    radial-gradient(ellipse at 82% 65%, rgba(95, 43, 103, 0.24) 0%, transparent 48%),
     linear-gradient(
       180deg,
-      #010205 0%,
-      #010308 17%,
-      #02070b 31%,
-      #06232a 52%,
-      #173444 64%,
-      #4c315d 78%,
-      #151b32 100%
+      #010204 0%,
+      #010407 20%,
+      #021014 38%,
+      #07343a 52%,
+      #76506f 70%,
+      #332848 88%,
+      #121522 100%
     );
 }
 
-.cosmos-horizon {
-  z-index: 1;
-  top: 39%;
-  bottom: auto;
-  height: 48%;
-  opacity: 0.78;
+.cosmos-haze {
+  opacity: 0.88;
   background:
-    radial-gradient(ellipse at 50% 31%, rgba(120, 249, 238, 0.16), transparent 42%),
-    radial-gradient(ellipse at 25% 62%, rgba(255, 122, 187, 0.16), transparent 39%),
-    radial-gradient(ellipse at 75% 67%, rgba(133, 105, 255, 0.17), transparent 40%);
-  filter: blur(24px) saturate(115%);
+    radial-gradient(ellipse at 50% 54%, rgba(93, 218, 210, 0.14) 0%, transparent 38%),
+    radial-gradient(ellipse at 50% 70%, rgba(221, 111, 169, 0.16) 0%, transparent 44%),
+    linear-gradient(180deg, transparent 0 43%, rgba(0, 14, 18, 0.1) 52%, transparent 75%);
 }
 
-.cosmos-nebula {
-  z-index: 2;
-  border-radius: 48% 52% 58% 42% / 61% 43% 57% 39%;
-  filter: blur(78px) saturate(132%);
-  mix-blend-mode: screen;
-  opacity: 0.28;
-}
-
-.nebula-cyan {
-  inset: 28% 48% 7% -20%;
-  background:
-    radial-gradient(ellipse at 48% 48%, rgba(55, 226, 218, 0.58), rgba(18, 89, 110, 0.21) 49%, transparent 74%);
-  animation: nebula-cyan-drift 24s ease-in-out infinite alternate;
-}
-
-.nebula-violet {
-  inset: 35% -18% 3% 50%;
-  background:
-    radial-gradient(ellipse at 46% 52%, rgba(144, 104, 233, 0.55), rgba(56, 53, 123, 0.22) 52%, transparent 76%);
-  animation: nebula-violet-drift 27s ease-in-out infinite alternate;
-}
-
-.nebula-rose {
-  inset: 57% 15% -22% 12%;
-  opacity: 0.32;
-  background:
-    radial-gradient(ellipse at 50% 38%, rgba(243, 118, 178, 0.58), rgba(105, 51, 120, 0.19) 52%, transparent 77%);
-  animation: nebula-rose-breathe 20s ease-in-out infinite alternate;
-}
-
-.star-dust {
-  z-index: 3;
-  background-repeat: repeat;
-  animation: dust-drift 120s linear infinite;
-}
-
-.dust-a {
-  opacity: 0.42;
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 0.65px, transparent 1.2px),
-    radial-gradient(circle, rgba(120, 255, 245, 0.72) 0 0.8px, transparent 1.35px);
-  background-position: 21px 37px, 97px 173px;
-  background-size: 168px 168px, 257px 257px;
-}
-
-.dust-b {
-  opacity: 0.26;
-  background-image:
-    radial-gradient(circle, rgba(255, 186, 225, 0.9) 0 0.55px, transparent 1.15px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 0.5px, transparent 1.05px);
-  background-position: 83px 131px, 171px 43px;
-  background-size: 341px 341px, 219px 219px;
-  animation-direction: reverse;
-  animation-duration: 150s;
-}
-
-.dust-c {
-  opacity: 0.18;
-  background-image:
-    radial-gradient(circle, rgba(170, 151, 255, 0.86) 0 0.48px, transparent 1px);
-  background-position: 19px 91px;
-  background-size: 129px 129px;
-  animation-duration: 95s;
-}
-
-.star {
-  --star-size: 0.5rem;
-  --star-delay: 0s;
-  --star-duration: 7s;
-  --star-opacity: 0.7;
+.orbit-mark {
   position: absolute;
-  z-index: 4;
-  width: var(--star-size);
-  height: var(--star-size);
-  transform: translate(-50%, -50%);
-  opacity: var(--star-opacity);
-  animation: star-breathe var(--star-duration) ease-in-out var(--star-delay) infinite;
-}
-
-.star::before,
-.star::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.star-pin {
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 6px color-mix(in srgb, currentColor 70%, transparent);
-}
-
-.star-soft {
-  border-radius: 50%;
-  background: radial-gradient(circle, currentColor 0 18%, color-mix(in srgb, currentColor 42%, transparent) 32%, transparent 70%);
-  filter: blur(0.2px);
-}
-
-.star-diamond {
-  width: calc(var(--star-size) * 0.62);
-  height: calc(var(--star-size) * 0.62);
-  transform: translate(-50%, -50%) rotate(45deg);
-  border-radius: 1px;
-  background: currentColor;
-  box-shadow:
-    0 0 7px color-mix(in srgb, currentColor 68%, transparent),
-    0 0 16px color-mix(in srgb, currentColor 34%, transparent);
-}
-
-.star-flare {
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow:
-    0 0 8px color-mix(in srgb, currentColor 88%, transparent),
-    0 0 22px color-mix(in srgb, currentColor 38%, transparent);
-}
-
-.star-flare::before {
-  width: calc(var(--star-size) * 4.8);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, currentColor 72%, transparent), currentColor, color-mix(in srgb, currentColor 72%, transparent), transparent);
-  filter: blur(0.25px);
-}
-
-.star-flare::after {
-  width: 1px;
-  height: calc(var(--star-size) * 4.8);
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, currentColor 70%, transparent), currentColor, color-mix(in srgb, currentColor 70%, transparent), transparent);
-  filter: blur(0.25px);
-}
-
-.star-ivory { color: #fffaf2; }
-.star-cyan { color: #63fff3; }
-.star-rose { color: #ff9fd0; }
-
-.orbit {
-  position: absolute;
-  z-index: 4;
-  left: clamp(34px, 7vw, 108px);
-  top: clamp(70px, 11vh, 155px);
-  width: clamp(56px, 6vw, 82px);
-  aspect-ratio: 1;
+  left: clamp(52px, 8vw, 118px);
+  top: clamp(88px, 12vh, 168px);
+  width: 76px;
+  height: 76px;
   opacity: 0.9;
-  animation: orbit-float 9s ease-in-out infinite alternate;
 }
 
 .orbit-ring,
@@ -289,127 +174,145 @@ function starStyle(star: Star) {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
   border-radius: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .orbit-ring {
-  width: 100%;
-  height: 100%;
-  border: 1.5px solid rgba(255, 253, 248, 0.86);
+  width: 70px;
+  height: 70px;
+  border: 2px solid rgba(244, 242, 235, 0.86);
   box-shadow:
-    0 0 10px rgba(255, 255, 255, 0.14),
-    inset 0 0 10px rgba(255, 255, 255, 0.05);
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 20px rgba(214, 240, 238, 0.06);
 }
 
 .orbit-core {
-  width: 29%;
-  height: 29%;
-  background: #fffaf2;
-  box-shadow: 0 0 11px rgba(255, 250, 242, 0.34);
+  width: 20px;
+  height: 20px;
+  background: #f4f1e8;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
-.cloud-bank {
-  z-index: 2;
-  top: auto;
-  height: 34%;
-  filter: blur(18px) saturate(108%);
-  opacity: 0.35;
+.major-star {
+  --star-color: 235, 242, 238;
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: var(--star-opacity);
+  background: rgb(var(--star-color));
+  box-shadow:
+    0 0 5px 1px rgba(var(--star-color), 0.55),
+    0 0 16px 3px rgba(var(--star-color), 0.18);
+  animation: var(--star-animation);
 }
 
-.cloud-bank-left {
-  right: 43%;
-  bottom: -19%;
-  left: -9%;
-  background:
-    radial-gradient(ellipse at 18% 32%, rgba(224, 126, 174, 0.46), transparent 37%),
-    radial-gradient(ellipse at 43% 18%, rgba(131, 112, 175, 0.42), transparent 39%),
-    radial-gradient(ellipse at 68% 41%, rgba(73, 113, 143, 0.38), transparent 42%);
+.major-star::before,
+.major-star::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
 }
 
-.cloud-bank-right {
-  right: -8%;
-  bottom: -18%;
-  left: 48%;
-  background:
-    radial-gradient(ellipse at 24% 29%, rgba(83, 111, 166, 0.44), transparent 39%),
-    radial-gradient(ellipse at 52% 22%, rgba(163, 107, 180, 0.46), transparent 40%),
-    radial-gradient(ellipse at 78% 42%, rgba(239, 127, 184, 0.4), transparent 38%);
+.major-star::before {
+  width: var(--star-size);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--star-color), 0.08) 20%,
+    rgba(var(--star-color), 0.72) 46%,
+    rgba(var(--star-color), 1) 50%,
+    rgba(var(--star-color), 0.72) 54%,
+    rgba(var(--star-color), 0.08) 80%,
+    transparent 100%
+  );
+}
+
+.major-star::after {
+  width: 1px;
+  height: calc(var(--star-size) * 1.15);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(var(--star-color), 0.06) 18%,
+    rgba(var(--star-color), 0.74) 46%,
+    rgba(var(--star-color), 1) 50%,
+    rgba(var(--star-color), 0.74) 54%,
+    rgba(var(--star-color), 0.06) 82%,
+    transparent 100%
+  );
+}
+
+.major-star--ivory {
+  --star-color: 244, 242, 232;
+}
+
+.major-star--cyan {
+  --star-color: 90, 246, 239;
+}
+
+.major-star--rose {
+  --star-color: 255, 161, 199;
+}
+
+.small-star {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: currentColor;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.small-star--ivory {
+  color: rgba(244, 242, 232, 0.92);
+}
+
+.small-star--cyan {
+  color: rgba(102, 244, 237, 0.92);
+}
+
+.small-star--rose {
+  color: rgba(255, 162, 201, 0.88);
 }
 
 .cosmos-vignette {
-  z-index: 7;
-  background:
-    radial-gradient(ellipse at center, transparent 44%, rgba(0, 0, 0, 0.18) 76%, rgba(0, 0, 0, 0.52) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.26), transparent 24%, transparent 76%, rgba(3, 6, 18, 0.35));
-}
-
-.cosmos-grain {
-  z-index: 8;
-  opacity: 0.017;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.8'/%3E%3C/svg%3E");
+  box-shadow:
+    inset 0 0 180px rgba(0, 0, 0, 0.42),
+    inset 0 -160px 220px rgba(4, 4, 13, 0.34);
 }
 
 @keyframes star-breathe {
-  0%, 100% { opacity: calc(var(--star-opacity) * 0.58); transform: translate(-50%, -50%) scale(0.84); }
-  48% { opacity: var(--star-opacity); transform: translate(-50%, -50%) scale(1.08); }
-  65% { opacity: calc(var(--star-opacity) * 0.76); }
-}
-
-@keyframes dust-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-72px, 38px, 0); }
-}
-
-@keyframes nebula-cyan-drift {
-  from { transform: translate3d(-2%, -2%, 0) scale(0.97); }
-  to { transform: translate3d(7%, 4%, 0) scale(1.05); }
-}
-
-@keyframes nebula-violet-drift {
-  from { transform: translate3d(3%, 1%, 0) scale(0.98); }
-  to { transform: translate3d(-6%, -3%, 0) scale(1.06); }
-}
-
-@keyframes nebula-rose-breathe {
-  from { transform: scale(0.96); opacity: 0.24; }
-  to { transform: scale(1.07); opacity: 0.36; }
-}
-
-@keyframes orbit-float {
-  from { transform: translate3d(0, -3px, 0); }
-  to { transform: translate3d(0, 8px, 0); }
+  0%,
+  100% {
+    opacity: calc(var(--star-opacity) * 0.72);
+  }
+  50% {
+    opacity: var(--star-opacity);
+  }
 }
 
 @media (max-width: 720px) {
-  .orbit {
-    left: 30px;
-    top: 70px;
-    width: 58px;
+  .orbit-mark {
+    left: 44px;
+    top: 96px;
+    transform: scale(0.82);
+    transform-origin: top left;
   }
 
-  .cosmos-nebula {
-    filter: blur(58px) saturate(125%);
-  }
-
-  .nebula-cyan {
-    inset: 34% 25% 11% -44%;
-  }
-
-  .nebula-violet {
-    inset: 43% -45% 5% 32%;
-  }
-
-  .star:nth-of-type(n + 17) {
+  .major-star:nth-of-type(n + 9),
+  .small-star:nth-of-type(n + 17) {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cosmos *,
-  .cosmos::before,
-  .cosmos::after {
+  .major-star {
     animation: none !important;
   }
 }
