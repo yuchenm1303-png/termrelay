@@ -17,6 +17,7 @@
       <main class="termrelay-console-content p-4 md:p-6 lg:p-8">
         <div class="console-content-frame">
           <KeysOverviewBanner v-if="route.path === '/keys'" />
+          <AccountsOverviewBanner v-if="route.path === '/admin/accounts'" />
           <slot />
         </div>
       </main>
@@ -28,6 +29,7 @@
 import '@/styles/onboarding.css'
 import '@/styles/termrelay-console.css'
 import '@/styles/termrelay-keys.css'
+import '@/styles/termrelay-accounts.css'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores'
@@ -37,6 +39,7 @@ import { useOnboardingStore } from '@/stores/onboarding'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import KeysOverviewBanner from '@/components/keys/KeysOverviewBanner.vue'
+import AccountsOverviewBanner from '@/components/admin/account/AccountsOverviewBanner.vue'
 
 const route = useRoute()
 const appStore = useAppStore()
