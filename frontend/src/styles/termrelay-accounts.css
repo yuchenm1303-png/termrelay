@@ -1,0 +1,368 @@
+.route-admin-accounts .console-content-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.accounts-overview {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+  align-items: center;
+  min-height: 258px;
+  overflow: hidden;
+  padding: clamp(1.55rem, 3vw, 2.65rem);
+  border: 1px solid rgba(130, 216, 210, 0.14);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 74% 32%, rgba(70, 191, 185, 0.1), transparent 22rem),
+    linear-gradient(128deg, rgba(14, 22, 29, 0.97), rgba(7, 12, 17, 0.92));
+  box-shadow:
+    0 26px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.accounts-overview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.24;
+  background-image:
+    linear-gradient(rgba(121, 207, 202, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(121, 207, 202, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(90deg, transparent 24%, black 72%, transparent 100%);
+}
+
+.accounts-overview-copy,
+.accounts-flow,
+.accounts-overview-steps {
+  position: relative;
+  z-index: 1;
+}
+
+.accounts-overview-kicker {
+  margin: 0 0 0.8rem;
+  color: #78d3cd;
+  font: 700 0.68rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.14em;
+}
+
+.accounts-overview h2 {
+  margin: 0;
+  color: #eef5f2;
+  font-size: clamp(1.9rem, 3.3vw, 3.2rem);
+  font-weight: 620;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.accounts-overview-description {
+  max-width: 720px;
+  margin: 1rem 0 0;
+  color: #91a0a1;
+  font-size: 0.94rem;
+  line-height: 1.76;
+}
+
+.accounts-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.3rem;
+}
+
+.accounts-overview-primary,
+.accounts-overview-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 42px;
+  padding: 0 1rem;
+  border-radius: 11px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.accounts-overview-primary {
+  border: 1px solid rgba(156, 239, 233, 0.22);
+  background: linear-gradient(135deg, #76d5ce, #5ec4bd);
+  color: #03100f;
+  box-shadow: 0 12px 32px rgba(62, 173, 166, 0.18);
+}
+
+.accounts-overview-secondary {
+  border: 1px solid rgba(130, 216, 210, 0.13);
+  background: rgba(130, 216, 210, 0.035);
+  color: #c5d3d1;
+}
+
+.accounts-overview-primary:hover,
+.accounts-overview-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.accounts-overview-primary:hover {
+  box-shadow: 0 16px 38px rgba(62, 173, 166, 0.24);
+}
+
+.accounts-overview-secondary:hover {
+  border-color: rgba(130, 216, 210, 0.24);
+  background: rgba(130, 216, 210, 0.065);
+}
+
+.accounts-flow {
+  display: grid;
+  grid-template-columns: minmax(94px, 1fr) 52px minmax(94px, 1fr) 52px minmax(94px, 1fr);
+  align-items: center;
+  min-height: 128px;
+}
+
+.accounts-flow-node {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 1rem 0.65rem;
+  border: 1px solid rgba(130, 216, 210, 0.1);
+  border-radius: 16px;
+  background: rgba(3, 8, 12, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  text-align: center;
+}
+
+.accounts-flow-node small {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #607174;
+  font: 700 0.58rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.1em;
+}
+
+.accounts-flow-node strong {
+  display: block;
+  overflow: hidden;
+  color: #d7e5e2;
+  font: 600 0.72rem/1.25 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accounts-flow-icon,
+.accounts-flow-core {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(130, 216, 210, 0.15);
+  border-radius: 12px;
+  background: rgba(130, 216, 210, 0.07);
+  color: #8ddcd6;
+  font: 700 0.66rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  box-shadow: 0 0 24px rgba(93, 199, 192, 0.08);
+}
+
+.accounts-flow-node-source .accounts-flow-icon {
+  border-color: rgba(121, 211, 205, 0.18);
+  color: #88ddd7;
+}
+
+.accounts-flow-node-client .accounts-flow-icon {
+  border-color: rgba(184, 165, 207, 0.18);
+  background: rgba(184, 165, 207, 0.07);
+  color: #c0acd9;
+}
+
+.accounts-flow-core {
+  position: relative;
+  border-radius: 50%;
+  background: #70d0c9;
+  box-shadow:
+    0 0 0 7px rgba(112, 208, 201, 0.065),
+    0 0 34px rgba(112, 208, 201, 0.34);
+}
+
+.accounts-flow-core::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #061413;
+}
+
+.accounts-flow-link {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(120, 213, 206, 0.08), rgba(120, 213, 206, 0.65));
+}
+
+.accounts-flow-link::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid rgba(120, 213, 206, 0.76);
+  border-right: 1px solid rgba(120, 213, 206, 0.76);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.accounts-flow-link-b {
+  background: linear-gradient(90deg, rgba(120, 213, 206, 0.16), rgba(184, 165, 207, 0.62));
+}
+
+.accounts-flow-link-b::after {
+  border-color: rgba(184, 165, 207, 0.72);
+}
+
+.accounts-overview-steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: -0.35rem;
+}
+
+.accounts-overview-steps > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 52px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(130, 216, 210, 0.075);
+  border-radius: 13px;
+  background: rgba(3, 8, 12, 0.4);
+}
+
+.accounts-overview-steps span {
+  color: #69c8c2;
+  font: 700 0.66rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.accounts-overview-steps p {
+  margin: 0;
+  color: #829193;
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+.route-admin-accounts .table-page-layout {
+  height: auto;
+  gap: 1rem;
+}
+
+.route-admin-accounts .layout-section-fixed:first-child {
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(130, 216, 210, 0.1);
+  border-radius: 16px;
+  background: rgba(6, 11, 15, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+.route-admin-accounts .layout-section-fixed:first-child > div {
+  align-items: center;
+}
+
+.route-admin-accounts .layout-section-scrollable {
+  min-height: 600px;
+}
+
+.route-admin-accounts .table-scroll-container {
+  min-height: 600px;
+  border-color: rgba(130, 216, 210, 0.11) !important;
+  border-radius: 18px;
+  background: rgba(6, 11, 15, 0.84) !important;
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.022) !important;
+}
+
+.route-admin-accounts .table-scroll-container thead,
+.route-admin-accounts .table-scroll-container :is(thead, th) {
+  background: rgba(10, 17, 22, 0.97) !important;
+}
+
+.route-admin-accounts .table-scroll-container th {
+  border-color: rgba(130, 216, 210, 0.09) !important;
+  color: #819092 !important;
+  font-size: 0.7rem;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.route-admin-accounts .table-scroll-container td {
+  border-color: rgba(130, 216, 210, 0.055) !important;
+}
+
+.route-admin-accounts .table-scroll-container tbody tr {
+  transition: background 150ms ease;
+}
+
+.route-admin-accounts .table-scroll-container tbody tr:hover {
+  background: rgba(130, 216, 210, 0.027);
+}
+
+.route-admin-accounts .account-tools-menu-item {
+  border-radius: 10px;
+}
+
+@media (max-width: 1180px) {
+  .accounts-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .accounts-flow {
+    width: min(100%, 720px);
+  }
+}
+
+@media (max-width: 760px) {
+  .accounts-overview {
+    padding: 1.35rem;
+    border-radius: 19px;
+  }
+
+  .accounts-flow {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .accounts-flow-link {
+    justify-self: center;
+    width: 1px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(120, 213, 206, 0.08), rgba(120, 213, 206, 0.58));
+  }
+
+  .accounts-flow-link::after {
+    right: 50%;
+    top: auto;
+    bottom: -1px;
+    transform: translateX(50%) rotate(135deg);
+  }
+
+  .accounts-overview-steps {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+
+  .route-admin-accounts .layout-section-fixed:first-child {
+    padding: 0.8rem;
+  }
+
+  .route-admin-accounts .layout-section-scrollable,
+  .route-admin-accounts .table-scroll-container {
+    min-height: 0;
+  }
+}
