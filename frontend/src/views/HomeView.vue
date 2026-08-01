@@ -23,53 +23,74 @@
         </span>
         <span class="brand-copy">
           <strong>{{ siteName }}</strong>
-          <small>personal ai relay node</small>
+          <small>{{ copy.brandSubtitle }}</small>
         </span>
       </router-link>
 
-      <nav class="site-nav" aria-label="Primary navigation">
-        <a href="#system">system</a>
-        <a href="#capabilities">capabilities</a>
-        <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">docs</a>
+      <nav class="site-nav" :aria-label="copy.primaryNavigation">
+        <a href="#system">{{ copy.navSystem }}</a>
+        <a href="#capabilities">{{ copy.navCapabilities }}</a>
+        <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">
+          {{ copy.navDocs }}
+        </a>
+
+        <div class="language-switch" :aria-label="copy.languageLabel" role="group">
+          <button
+            type="button"
+            :class="{ active: currentLanguage === 'zh' }"
+            :disabled="switchingLocale"
+            @click="changeLocale('zh')"
+          >
+            中文
+          </button>
+          <button
+            type="button"
+            :class="{ active: currentLanguage === 'en' }"
+            :disabled="switchingLocale"
+            @click="changeLocale('en')"
+          >
+            EN
+          </button>
+        </div>
+
         <router-link :to="isAuthenticated ? dashboardPath : '/login'" class="nav-cta">
-          {{ isAuthenticated ? 'open console' : 'sign in' }}
+          {{ isAuthenticated ? copy.openConsole : copy.signIn }}
         </router-link>
       </nav>
     </header>
 
     <main>
-      <section class="hero" id="system">
+      <section id="system" class="hero">
         <div class="hero-copy">
-          <p class="eyebrow"><span></span> self-hosted gateway / node 01</p>
+          <p class="eyebrow"><span></span>{{ copy.eyebrow }}</p>
           <h1>
-            Your models.
-            <em>Your endpoint.</em>
+            {{ copy.heroLineOne }}
+            <em>{{ copy.heroLineTwo }}</em>
           </h1>
-          <p class="hero-description">
-            {{ siteSubtitle }}
-          </p>
+          <p class="hero-description">{{ localizedSubtitle }}</p>
 
           <div class="hero-actions">
             <router-link :to="isAuthenticated ? dashboardPath : '/login'" class="primary-action">
-              <span>{{ isAuthenticated ? 'Enter console' : 'Initialize session' }}</span>
+              <span>{{ isAuthenticated ? copy.enterConsole : copy.initializeSession }}</span>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </router-link>
+
             <button type="button" class="secondary-action" @click="copyBaseUrl">
-              <span>{{ copied ? 'Copied' : 'Copy base URL' }}</span>
+              <span>{{ copied ? copy.copied : copy.copyBaseUrl }}</span>
               <code>{{ baseUrl }}</code>
             </button>
           </div>
 
-          <div class="signal-row" aria-label="Gateway capabilities">
-            <span><i class="signal online"></i> gateway reachable</span>
-            <span><i class="signal"></i> responses api</span>
-            <span><i class="signal"></i> oauth upstream</span>
+          <div class="signal-row" :aria-label="copy.gatewayCapabilities">
+            <span><i class="signal online"></i>{{ copy.gatewayReachable }}</span>
+            <span><i class="signal"></i>{{ copy.responsesApi }}</span>
+            <span><i class="signal"></i>{{ copy.oauthUpstream }}</span>
           </div>
         </div>
 
-        <div class="terminal-wrap" aria-label="TermRelay terminal preview">
+        <div class="terminal-wrap" :aria-label="copy.terminalPreview">
           <div class="terminal-glow"></div>
           <div class="terminal-window">
             <div class="terminal-bar">
@@ -77,7 +98,7 @@
                 <span></span><span></span><span></span>
               </div>
               <div class="terminal-title">jack@termrelay: ~/gateway</div>
-              <div class="terminal-state"><i></i> live</div>
+              <div class="terminal-state"><i></i>{{ copy.live }}</div>
             </div>
 
             <div class="terminal-body">
@@ -85,16 +106,19 @@
                 <span class="prompt">jack@termrelay</span><span class="path">:~$</span>
                 <span>status --verbose</span>
               </div>
+
               <div class="terminal-output delay-2">
-                <div><span>service</span><strong>TermRelay Gateway</strong></div>
-                <div><span>transport</span><strong>OpenAI Responses</strong></div>
-                <div><span>auth</span><strong>Bearer / OAuth upstream</strong></div>
-                <div><span>endpoint</span><strong>{{ baseUrl }}</strong></div>
+                <div><span>{{ copy.service }}</span><strong>TermRelay Gateway</strong></div>
+                <div><span>{{ copy.transport }}</span><strong>OpenAI Responses</strong></div>
+                <div><span>{{ copy.auth }}</span><strong>Bearer / OAuth upstream</strong></div>
+                <div><span>{{ copy.endpoint }}</span><strong>{{ baseUrl }}</strong></div>
               </div>
+
               <div class="terminal-line delay-3">
                 <span class="prompt">jack@termrelay</span><span class="path">:~$</span>
                 <span>curl {{ baseUrl }}/models</span>
               </div>
+
               <div class="terminal-json delay-4">
                 <span>{</span>
                 <span class="indent">"object": "list",</span>
@@ -102,6 +126,7 @@
                 <span class="indent">"stream": true</span>
                 <span>}</span>
               </div>
+
               <div class="terminal-line delay-5">
                 <span class="prompt">jack@termrelay</span><span class="path">:~$</span>
                 <span class="cursor"></span>
@@ -110,72 +135,42 @@
           </div>
 
           <div class="terminal-meta">
-            <span>NODE</span><strong>TR-01</strong>
-            <span>MODE</span><strong>PRIVATE</strong>
-            <span>TIME</span><strong>{{ clock }}</strong>
+            <span>{{ copy.node }}</span><strong>TR-01</strong>
+            <span>{{ copy.mode }}</span><strong>{{ copy.privateMode }}</strong>
+            <span>{{ copy.time }}</span><strong>{{ clock }}</strong>
           </div>
         </div>
       </section>
 
-      <section class="command-strip" aria-label="Quick start command">
-        <div class="command-label">quick start</div>
+      <section class="command-strip" :aria-label="copy.quickStartCommand">
+        <div class="command-label">{{ copy.quickStart }}</div>
         <code><span>$</span> export OPENAI_BASE_URL={{ baseUrl }}</code>
-        <button type="button" @click="copyBaseUrl">{{ copied ? 'done' : 'copy' }}</button>
+        <button type="button" @click="copyBaseUrl">{{ copied ? copy.done : copy.copy }}</button>
       </section>
 
-      <section class="capabilities" id="capabilities">
+      <section id="capabilities" class="capabilities">
         <div class="section-heading">
           <p>cat capabilities.md</p>
-          <h2>Built as a gateway, presented as a personal node.</h2>
+          <h2>{{ copy.capabilitiesHeadline }}</h2>
         </div>
 
         <div class="capability-grid">
-          <article>
-            <div class="article-index">01</div>
+          <article v-for="item in copy.capabilities" :key="item.index">
+            <div class="article-index">{{ item.index }}</div>
             <div>
-              <h3>Unified endpoint</h3>
-              <p>Expose one stable API base URL while the gateway handles upstream routing and protocol compatibility.</p>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
             </div>
-            <span class="article-tag">/v1</span>
-          </article>
-
-          <article>
-            <div class="article-index">02</div>
-            <div>
-              <h3>Credential control</h3>
-              <p>Keep downstream keys separate from upstream OAuth credentials, with revocation and usage visibility.</p>
-            </div>
-            <span class="article-tag">auth</span>
-          </article>
-
-          <article>
-            <div class="article-index">03</div>
-            <div>
-              <h3>Streaming native</h3>
-              <p>Forward long-running Responses API streams without turning the interface into a generic SaaS dashboard.</p>
-            </div>
-            <span class="article-tag">sse</span>
-          </article>
-
-          <article>
-            <div class="article-index">04</div>
-            <div>
-              <h3>Observable by default</h3>
-              <p>Track requests, latency, failures and account health from a focused operator console.</p>
-            </div>
-            <span class="article-tag">logs</span>
+            <span class="article-tag">{{ item.tag }}</span>
           </article>
         </div>
       </section>
 
       <section class="manifesto">
         <div class="manifesto-label">README / 00</div>
-        <p>
-          TermRelay is not designed to look like another anonymous API marketplace.
-          It is a small, self-hosted AI gateway with the character of a personal terminal.
-        </p>
+        <p>{{ copy.manifesto }}</p>
         <router-link :to="isAuthenticated ? dashboardPath : '/login'">
-          launch console <span>↗</span>
+          {{ copy.launchConsole }} <span>↗</span>
         </router-link>
       </section>
     </main>
@@ -183,10 +178,10 @@
     <footer>
       <div>
         <span>© {{ currentYear }} {{ siteName }}</span>
-        <span>built on Sub2API</span>
+        <span>{{ copy.builtOn }}</span>
       </div>
       <a href="https://github.com/yuchenm1303-png/termrelay" target="_blank" rel="noopener noreferrer">
-        github / source
+        {{ copy.githubSource }}
       </a>
     </footer>
   </div>
@@ -194,11 +189,161 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
+import { setLocale } from '@/i18n'
 import { sanitizeUrl } from '@/utils/url'
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const { locale } = useI18n()
+
+const COPY = {
+  en: {
+    brandSubtitle: 'personal ai relay node',
+    primaryNavigation: 'Primary navigation',
+    navSystem: 'system',
+    navCapabilities: 'capabilities',
+    navDocs: 'docs',
+    languageLabel: 'Language',
+    openConsole: 'open console',
+    signIn: 'sign in',
+    eyebrow: 'self-hosted gateway / node 01',
+    heroLineOne: 'Your models.',
+    heroLineTwo: 'Your endpoint.',
+    fallbackSubtitle:
+      'A terminal-inspired AI relay gateway for your own models, credentials and clients.',
+    enterConsole: 'Enter console',
+    initializeSession: 'Initialize session',
+    copied: 'Copied',
+    copyBaseUrl: 'Copy base URL',
+    gatewayCapabilities: 'Gateway capabilities',
+    gatewayReachable: 'gateway reachable',
+    responsesApi: 'responses api',
+    oauthUpstream: 'oauth upstream',
+    terminalPreview: 'TermRelay terminal preview',
+    live: 'live',
+    service: 'service',
+    transport: 'transport',
+    auth: 'auth',
+    endpoint: 'endpoint',
+    node: 'NODE',
+    mode: 'MODE',
+    privateMode: 'PRIVATE',
+    time: 'TIME',
+    quickStartCommand: 'Quick start command',
+    quickStart: 'quick start',
+    done: 'done',
+    copy: 'copy',
+    capabilitiesHeadline: 'Built as a gateway, presented as a personal node.',
+    capabilities: [
+      {
+        index: '01',
+        title: 'Unified endpoint',
+        description:
+          'Expose one stable API base URL while the gateway handles upstream routing and protocol compatibility.',
+        tag: '/v1'
+      },
+      {
+        index: '02',
+        title: 'Credential control',
+        description:
+          'Keep downstream keys separate from upstream OAuth credentials, with revocation and usage visibility.',
+        tag: 'auth'
+      },
+      {
+        index: '03',
+        title: 'Streaming native',
+        description:
+          'Forward long-running Responses API streams without turning the interface into a generic SaaS dashboard.',
+        tag: 'sse'
+      },
+      {
+        index: '04',
+        title: 'Observable by default',
+        description:
+          'Track requests, latency, failures and account health from a focused operator console.',
+        tag: 'logs'
+      }
+    ],
+    manifesto:
+      'TermRelay is not designed to look like another anonymous API marketplace. It is a small, self-hosted AI gateway with the character of a personal terminal.',
+    launchConsole: 'launch console',
+    builtOn: 'built on Sub2API',
+    githubSource: 'github / source'
+  },
+  zh: {
+    brandSubtitle: '个人 AI 中转节点',
+    primaryNavigation: '主导航',
+    navSystem: '系统',
+    navCapabilities: '能力',
+    navDocs: '文档',
+    languageLabel: '语言切换',
+    openConsole: '打开控制台',
+    signIn: '登录',
+    eyebrow: '自托管网关 / 节点 01',
+    heroLineOne: '你的模型。',
+    heroLineTwo: '你的入口。',
+    fallbackSubtitle: '一个为你的模型、凭证与客户端而设计的终端风格 AI 中转网关。',
+    enterConsole: '进入控制台',
+    initializeSession: '初始化会话',
+    copied: '已复制',
+    copyBaseUrl: '复制 Base URL',
+    gatewayCapabilities: '网关能力',
+    gatewayReachable: '网关在线',
+    responsesApi: 'Responses API',
+    oauthUpstream: 'OAuth 上游',
+    terminalPreview: 'TermRelay 终端预览',
+    live: '在线',
+    service: '服务',
+    transport: '协议',
+    auth: '认证',
+    endpoint: '入口',
+    node: '节点',
+    mode: '模式',
+    privateMode: '私有',
+    time: '时间',
+    quickStartCommand: '快速接入命令',
+    quickStart: '快速接入',
+    done: '完成',
+    copy: '复制',
+    capabilitiesHeadline: '以网关为内核，以个人节点的方式呈现。',
+    capabilities: [
+      {
+        index: '01',
+        title: '统一 API 入口',
+        description: '对外提供稳定的 Base URL，由网关负责上游路由和协议兼容。',
+        tag: '/v1'
+      },
+      {
+        index: '02',
+        title: '凭证隔离管理',
+        description: '将下游 API Key 与上游 OAuth 凭证分离，并支持撤销和用量查看。',
+        tag: '认证'
+      },
+      {
+        index: '03',
+        title: '原生流式转发',
+        description: '稳定转发长时间运行的 Responses API 流，同时保持界面简洁。',
+        tag: 'SSE'
+      },
+      {
+        index: '04',
+        title: '默认可观测',
+        description: '在统一控制台查看请求、延迟、错误与上游账号健康状态。',
+        tag: '日志'
+      }
+    ],
+    manifesto:
+      'TermRelay 不想成为又一个没有辨识度的 API 商城。它是一套小型、自托管、具有个人终端气质的 AI 网关。',
+    launchConsole: '启动控制台',
+    builtOn: '基于 Sub2API 构建',
+    githubSource: 'GitHub / 源码'
+  }
+} as const
+
+const currentLanguage = computed<'en' | 'zh'>(() => (locale.value === 'zh' ? 'zh' : 'en'))
+const copy = computed(() => COPY[currentLanguage.value])
 
 const siteName = computed(
   () => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'TermRelay'
@@ -209,11 +354,10 @@ const siteLogo = computed(() =>
     allowDataUrl: true
   })
 )
-const siteSubtitle = computed(
-  () =>
-    appStore.cachedPublicSettings?.site_subtitle ||
-    'A terminal-inspired AI relay gateway for your own models, credentials and clients.'
+const configuredSubtitle = computed(() =>
+  (appStore.cachedPublicSettings?.site_subtitle || '').trim()
 )
+const localizedSubtitle = computed(() => configuredSubtitle.value || copy.value.fallbackSubtitle)
 const docUrl = computed(() =>
   sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || '')
 )
@@ -234,16 +378,29 @@ const baseUrl = computed(() =>
 
 const copied = ref(false)
 const clock = ref('00:00:00')
+const switchingLocale = ref(false)
 let clockTimer: number | undefined
 let copiedTimer: number | undefined
 
 function updateClock() {
-  clock.value = new Intl.DateTimeFormat('en-GB', {
+  clock.value = new Intl.DateTimeFormat(currentLanguage.value === 'zh' ? 'zh-CN' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
     hour12: false
   }).format(new Date())
+}
+
+async function changeLocale(code: 'en' | 'zh') {
+  if (switchingLocale.value || currentLanguage.value === code) return
+
+  switchingLocale.value = true
+  try {
+    await setLocale(code)
+    updateClock()
+  } finally {
+    switchingLocale.value = false
+  }
 }
 
 async function copyBaseUrl() {
@@ -277,8 +434,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .termrelay-shell {
   --bg: #06070b;
-  --panel: rgba(14, 16, 23, 0.78);
-  --panel-solid: #0d0f16;
   --line: rgba(226, 232, 255, 0.12);
   --line-strong: rgba(226, 232, 255, 0.22);
   --text: #f3f0ff;
@@ -295,8 +450,7 @@ onBeforeUnmount(() => {
     radial-gradient(circle at 50% -20%, rgba(196, 167, 231, 0.13), transparent 38%),
     var(--bg);
   color: var(--text);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .termrelay-shell::before {
@@ -374,6 +528,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
   padding: 24px 0;
   border-bottom: 1px solid var(--line);
 }
@@ -427,17 +582,18 @@ footer {
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 25px;
+  justify-content: flex-end;
+  gap: 22px;
 }
 
-.site-nav a {
+.site-nav > a {
   color: var(--muted);
   font: 500 12px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   text-decoration: none;
   transition: color 160ms ease;
 }
 
-.site-nav a:hover {
+.site-nav > a:hover {
   color: var(--text);
 }
 
@@ -447,6 +603,44 @@ footer {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.035);
   color: var(--text);
+  white-space: nowrap;
+}
+
+.language-switch {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.language-switch button {
+  min-width: 44px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--dim);
+  font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.language-switch button:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.language-switch button.active {
+  background: rgba(196, 167, 231, 0.14);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(196, 167, 231, 0.14);
+}
+
+.language-switch button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .hero {
@@ -605,9 +799,7 @@ footer {
   border: 1px solid var(--line-strong);
   border-radius: 14px;
   background: linear-gradient(150deg, rgba(18, 20, 29, 0.96), rgba(7, 8, 12, 0.96));
-  box-shadow:
-    0 40px 100px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transform: perspective(1200px) rotateY(-4deg) rotateX(1.5deg);
 }
 
@@ -926,6 +1118,16 @@ footer a {
   text-decoration: none;
 }
 
+@media (max-width: 1040px) {
+  .site-nav {
+    gap: 12px;
+  }
+
+  .site-nav > a:not(.nav-cta) {
+    display: none;
+  }
+}
+
 @media (max-width: 940px) {
   .hero {
     grid-template-columns: 1fr;
@@ -961,8 +1163,26 @@ footer a {
     width: min(100% - 28px, 1180px);
   }
 
-  .site-nav > a:not(.nav-cta) {
+  .brand-copy small {
     display: none;
+  }
+
+  .site-header {
+    gap: 12px;
+  }
+
+  .site-nav {
+    gap: 8px;
+  }
+
+  .site-nav .nav-cta {
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .language-switch button {
+    min-width: 38px;
+    padding-inline: 7px;
   }
 
   .hero {
@@ -1031,6 +1251,16 @@ footer a {
   footer,
   footer div {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 470px) {
+  .brand-copy {
+    display: none;
+  }
+
+  .site-nav .nav-cta {
+    display: none;
   }
 }
 
