@@ -1,32 +1,40 @@
 <template>
-  <div class="cosmos" aria-hidden="true">
+  <div ref="cosmosRef" class="cosmos" aria-hidden="true">
     <div class="cosmos-sky"></div>
     <div class="cosmos-nebula cosmos-nebula-cyan"></div>
     <div class="cosmos-nebula cosmos-nebula-violet"></div>
 
-    <span
-      v-for="star in majorStars"
-      :key="`major-${star.id}`"
-      class="major-star"
-      :class="`major-star--${star.color}`"
-      :style="majorStarStyle(star)"
-    ></span>
+    <div class="drift-track drift-track-far">
+      <div v-for="panel in 3" :key="`far-${panel}`" class="drift-panel">
+        <span
+          v-for="star in smallStars"
+          :key="`small-${panel}-${star.id}`"
+          class="small-star"
+          :class="`small-star--${star.color}`"
+          :style="smallStarStyle(star)"
+        ></span>
+      </div>
+    </div>
 
-    <span
-      v-for="star in smallStars"
-      :key="`small-${star.id}`"
-      class="small-star"
-      :class="`small-star--${star.color}`"
-      :style="smallStarStyle(star)"
-    ></span>
+    <div class="drift-track drift-track-near">
+      <div v-for="panel in 3" :key="`near-${panel}`" class="drift-panel">
+        <span
+          v-for="star in majorStars"
+          :key="`major-${panel}-${star.id}`"
+          class="major-star"
+          :class="`major-star--${star.color}`"
+          :style="majorStarStyle(star)"
+        ></span>
 
-    <div class="upper-right-stars">
-      <span class="hero-flare hero-flare-main"></span>
-      <span class="hero-flare hero-flare-secondary"></span>
-      <span class="hero-dot hero-dot-a"></span>
-      <span class="hero-dot hero-dot-b"></span>
-      <span class="hero-dot hero-dot-c"></span>
-      <span class="hero-trail"></span>
+        <div class="upper-right-stars">
+          <span class="hero-flare hero-flare-main"></span>
+          <span class="hero-flare hero-flare-secondary"></span>
+          <span class="hero-dot hero-dot-a"></span>
+          <span class="hero-dot hero-dot-b"></span>
+          <span class="hero-dot hero-dot-c"></span>
+          <span class="hero-trail"></span>
+        </div>
+      </div>
     </div>
 
     <div class="cosmos-vignette"></div>
@@ -34,6 +42,8 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 type StarColor = 'ivory' | 'cyan' | 'rose'
 
 type Star = {
@@ -44,6 +54,14 @@ type Star = {
   color: StarColor
   opacity: number
 }
+
+const cosmosRef = ref<HTMLElement | null>(null)
+
+let animationFrame = 0
+let panelHeight = 0
+let targetScroll = 0
+let renderedScroll = 0
+let reduceMotionQuery: MediaQueryList | null = null
 
 const majorStars: Star[] = [
   { id: 1, x: 8, y: 42, size: 18, color: 'cyan', opacity: 0.42 },
@@ -88,10 +106,69 @@ function smallStarStyle(star: Star) {
     opacity: star.opacity
   }
 }
+
+function measureScene() {
+  if (!cosmosRef.value) return
+
+  panelHeight = Math.max(window.innerHeight * 1.28, 860)
+  cosmosRef.value.style.setProperty('--panel-height', `${panelHeight}px`)
+}
+
+function renderParallax() {
+  animationFrame = 0
+  if (!cosmosRef.value || panelHeight <= 0) return
+
+  const reduceMotion = reduceMotionQuery?.matches ?? false
+  const distance = targetScroll - renderedScroll
+
+  renderedScroll = Math.abs(distance) < 0.25 ? targetScroll : renderedScroll + distance * 0.16
+
+  const farOffset = reduceMotion ? 0 : (renderedScroll * 0.055) % panelHeight
+  const nearOffset = reduceMotion ? 0 : (renderedScroll * 0.13) % panelHeight
+
+  cosmosRef.value.style.setProperty('--far-drift', `${farOffset}px`)
+  cosmosRef.value.style.setProperty('--near-drift', `${nearOffset}px`)
+
+  if (Math.abs(targetScroll - renderedScroll) >= 0.25) {
+    animationFrame = window.requestAnimationFrame(renderParallax)
+  }
+}
+
+function requestParallaxUpdate() {
+  targetScroll = window.scrollY || document.documentElement.scrollTop || 0
+  if (!animationFrame) {
+    animationFrame = window.requestAnimationFrame(renderParallax)
+  }
+}
+
+function handleResize() {
+  measureScene()
+  requestParallaxUpdate()
+}
+
+onMounted(() => {
+  reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  targetScroll = window.scrollY || document.documentElement.scrollTop || 0
+  renderedScroll = targetScroll
+  measureScene()
+  renderParallax()
+
+  window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
+  window.addEventListener('resize', handleResize, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', requestParallaxUpdate)
+  window.removeEventListener('resize', handleResize)
+  if (animationFrame) window.cancelAnimationFrame(animationFrame)
+})
 </script>
 
 <style scoped>
 .cosmos {
+  --panel-height: 1000px;
+  --far-drift: 0px;
+  --near-drift: 0px;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -141,6 +218,31 @@ function smallStarStyle(star: Star) {
     rgba(68, 50, 105, 0.05) 38%,
     transparent 66%
   );
+}
+
+.drift-track {
+  position: absolute;
+  top: calc(-1 * var(--panel-height));
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.drift-track-far {
+  transform: translate3d(0, calc(-1 * var(--far-drift)), 0);
+}
+
+.drift-track-near {
+  transform: translate3d(0, calc(-1 * var(--near-drift)), 0);
+}
+
+.drift-panel {
+  position: relative;
+  flex: 0 0 var(--panel-height);
+  height: var(--panel-height);
 }
 
 .major-star,
@@ -317,6 +419,12 @@ function smallStarStyle(star: Star) {
   .major-star:nth-of-type(n + 4),
   .small-star:nth-of-type(n + 10) {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drift-track {
+    transform: translate3d(0, 0, 0) !important;
   }
 }
 </style>
