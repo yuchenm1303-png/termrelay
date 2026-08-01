@@ -9,6 +9,7 @@ on:
       - frontend/**
       - backend/**
       - deploy/docker-entrypoint.sh
+      - deploy/termrelay/**
       - docs/legal/**
       - .github/workflows/build-termrelay-image.yml
   workflow_dispatch:
