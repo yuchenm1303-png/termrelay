@@ -27,6 +27,23 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
+function normalizeBrandName() {
+  if (!appStore.siteName || appStore.siteName === 'Sub2API') {
+    appStore.siteName = 'TermRelay'
+  }
+
+  const publicSettings = appStore.cachedPublicSettings
+  if (publicSettings && (!publicSettings.site_name || publicSettings.site_name === 'Sub2API')) {
+    publicSettings.site_name = 'TermRelay'
+  }
+}
+
+watch(
+  [() => appStore.siteName, () => appStore.cachedPublicSettings?.site_name],
+  normalizeBrandName,
+  { immediate: true }
+)
+
 function updateDocumentTitle() {
   const customMenuItems = [
     ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
@@ -123,6 +140,7 @@ onMounted(async () => {
   }
 
   await appStore.fetchPublicSettings()
+  normalizeBrandName()
   updateDocumentTitle()
 })
 </script>
