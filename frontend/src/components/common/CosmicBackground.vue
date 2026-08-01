@@ -1,5 +1,5 @@
 <template>
-  <div ref="cosmosRef" class="cosmos" aria-hidden="true">
+  <div class="cosmos" aria-hidden="true">
     <div class="cosmos-sky"></div>
     <div class="cosmos-nebula cosmos-nebula-cyan"></div>
     <div class="cosmos-nebula cosmos-nebula-violet"></div>
@@ -38,8 +38,6 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-
 type StarColor = 'ivory' | 'cyan' | 'rose'
 
 type Star = {
@@ -50,10 +48,6 @@ type Star = {
   color: StarColor
   opacity: number
 }
-
-const cosmosRef = ref<HTMLElement | null>(null)
-let animationFrame = 0
-let reduceMotionQuery: MediaQueryList | null = null
 
 const majorStars: Star[] = [
   { id: 1, x: 8, y: 42, size: 18, color: 'cyan', opacity: 0.42 },
@@ -98,49 +92,10 @@ function smallStarStyle(star: Star) {
     opacity: star.opacity
   }
 }
-
-function renderParallax() {
-  animationFrame = 0
-  if (!cosmosRef.value) return
-
-  const reduceMotion = reduceMotionQuery?.matches ?? false
-  const maxScroll = Math.max(
-    document.documentElement.scrollHeight - document.documentElement.clientHeight,
-    0
-  )
-  const rawScroll = window.scrollY || document.documentElement.scrollTop || 0
-  const scrollTop = Math.min(Math.max(rawScroll, 0), maxScroll)
-
-  const farOffset = reduceMotion ? 0 : -Math.min(scrollTop * 0.035, 96)
-  const nearOffset = reduceMotion ? 0 : -Math.min(scrollTop * 0.075, 210)
-
-  cosmosRef.value.style.setProperty('--far-offset', `${farOffset.toFixed(2)}px`)
-  cosmosRef.value.style.setProperty('--near-offset', `${nearOffset.toFixed(2)}px`)
-}
-
-function requestParallaxUpdate() {
-  if (animationFrame) return
-  animationFrame = window.requestAnimationFrame(renderParallax)
-}
-
-onMounted(() => {
-  reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  renderParallax()
-  window.addEventListener('scroll', requestParallaxUpdate, { passive: true })
-  window.addEventListener('resize', requestParallaxUpdate, { passive: true })
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('scroll', requestParallaxUpdate)
-  window.removeEventListener('resize', requestParallaxUpdate)
-  if (animationFrame) window.cancelAnimationFrame(animationFrame)
-})
 </script>
 
 <style scoped>
 .cosmos {
-  --far-offset: 0px;
-  --near-offset: 0px;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -196,20 +151,58 @@ onBeforeUnmount(() => {
   position: absolute;
   right: 0;
   left: 0;
-  will-change: transform;
   backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
 .parallax-layer-far {
   top: -120px;
   bottom: -120px;
-  transform: translate3d(0, var(--far-offset), 0);
 }
 
 .parallax-layer-near {
   top: -240px;
   bottom: -240px;
-  transform: translate3d(0, var(--near-offset), 0);
+}
+
+@supports (animation-timeline: scroll()) {
+  .parallax-layer-far {
+    animation-name: cosmic-drift-far;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+    animation-range: 0% 100%;
+  }
+
+  .parallax-layer-near {
+    animation-name: cosmic-drift-near;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+    animation-range: 0% 100%;
+  }
+}
+
+@keyframes cosmic-drift-far {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, -96px, 0);
+  }
+}
+
+@keyframes cosmic-drift-near {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, -210px, 0);
+  }
 }
 
 .major-star,
@@ -402,7 +395,8 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .parallax-layer-far,
   .parallax-layer-near {
-    transform: none;
+    animation: none !important;
+    transform: none !important;
   }
 }
 </style>
