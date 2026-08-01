@@ -1,22 +1,23 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-dark-950">
-    <!-- Background Decoration -->
-    <div class="pointer-events-none fixed inset-0 bg-mesh-gradient"></div>
+  <div class="termrelay-console-shell min-h-screen">
+    <div class="console-backdrop" aria-hidden="true">
+      <span class="console-aurora console-aurora-cyan"></span>
+      <span class="console-aurora console-aurora-violet"></span>
+      <span class="console-grid"></span>
+    </div>
 
-    <!-- Sidebar -->
     <AppSidebar />
 
-    <!-- Main Content Area -->
     <div
-      class="relative min-h-screen transition-all duration-300"
+      class="termrelay-console-main relative min-h-screen transition-[margin] duration-300"
       :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
     >
-      <!-- Header -->
       <AppHeader />
 
-      <!-- Main Content -->
-      <main class="p-4 md:p-6 lg:p-8">
-        <slot />
+      <main class="termrelay-console-content p-4 md:p-6 lg:p-8">
+        <div class="console-content-frame">
+          <slot />
+        </div>
       </main>
     </div>
   </div>
@@ -24,6 +25,7 @@
 
 <script setup lang="ts">
 import '@/styles/onboarding.css'
+import '@/styles/termrelay-console.css'
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
