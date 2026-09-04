@@ -333,6 +333,7 @@ func (s *OpenAIGatewayService) FetchCodexModelsManifest(ctx context.Context, acc
 	}
 	expectedTaskID := strings.TrimSpace(credAccount.GetCredential("task_id"))
 	if recoverErr := s.recoverAgentIdentityTask(ctx, credAccount, expectedTaskID); recoverErr != nil {
+		CodexMetricsInstance().RecordAgentIdentityRecovery(false)
 		return nil, infraerrors.Newf(http.StatusBadGateway, "OPENAI_CODEX_MODELS_AUTH_FAILED", "agent identity task recovery failed: %v", recoverErr)
 	}
 	authHeaders, authErr := s.buildOpenAIAuthenticationHeaders(ctx, credAccount, "")
@@ -347,6 +348,7 @@ func (s *OpenAIGatewayService) FetchCodexModelsManifest(ctx context.Context, acc
 		}
 	}
 	setOpenAIChatGPTAccountHeaders(request.headers, credAccount)
+	CodexMetricsInstance().RecordAgentIdentityRecovery(true)
 	return s.fetchCodexModelsManifestUpstream(ctx, request, ifNoneMatch)
 }
 
@@ -394,10 +396,13 @@ func (s *OpenAIGatewayService) fetchCachedAPIKeyCodexModelsManifest(ctx context.
 	cacheKey := buildCodexModelsManifestCacheKey(request)
 	manifest, state := s.codexModelsManifestCache.get(cacheKey, time.Now())
 	if state == codexModelsManifestCacheFresh {
+		CodexMetricsInstance().RecordCacheHit(true)
 		return codexModelsManifestForClient(manifest, ifNoneMatch), nil
 	}
-	resultCh := s.refreshCachedAPIKeyCodexModelsManifest(cacheKey, request)
+	CodexMetricsInstance().RecordCacheMiss()
+		resultCh := s.refreshCachedAPIKeyCodexModelsManifest(cacheKey, request)
 	if state == codexModelsManifestCacheStale {
+		CodexMetricsInstance().RecordCacheHit(false)
 		return codexModelsManifestForClient(manifest, ifNoneMatch), nil
 	}
 	select {
@@ -474,6 +479,7 @@ func (s *OpenAIGatewayService) fetchCodexModelsManifestUpstream(ctx context.Cont
 		}
 	}
 	defer func() { _ = resp.Body.Close() }()
+	CodexMetricsInstance().RecordUpstreamNetworkError()
 
 	if resp.StatusCode == http.StatusNotModified {
 		return &CodexModelsManifest{ETag: resp.Header.Get("ETag"), NotModified: true}, nil
