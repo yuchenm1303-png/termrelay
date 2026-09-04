@@ -68,10 +68,10 @@ func TestHTTPTransportExecutesAccountScopedConversationFlow(t *testing.T) {
 	request := TransportRequest{
 		ClientState: *state,
 		Conversation: ConversationRequest{
-			Action:          "next",
-			ParentMessageID: RootParentMessageID,
-			Model:           "gpt-5",
-			Timezone:        "UTC",
+			Action:           "next",
+			ParentMessageID:  RootParentMessageID,
+			Model:            "gpt-5",
+			Timezone:         "UTC",
 			ConversationMode: map[string]string{"kind": "primary_assistant"},
 			SystemHints:      []string{},
 			Messages: []ConversationMessage{{
@@ -113,10 +113,10 @@ func TestHTTPTransportStopsOnHumanChallenge(t *testing.T) {
 	_, err := transport.Send(context.Background(), AccountRef{ID: 7}, TransportRequest{
 		ClientState: *state,
 		Conversation: ConversationRequest{
-			Action:          "next",
-			ParentMessageID: RootParentMessageID,
-			Model:           "gpt-5",
-			Timezone:        "UTC",
+			Action:           "next",
+			ParentMessageID:  RootParentMessageID,
+			Model:            "gpt-5",
+			Timezone:         "UTC",
 			ConversationMode: map[string]string{"kind": "primary_assistant"},
 			Messages: []ConversationMessage{{
 				ID:      "user-1",
