@@ -250,10 +250,10 @@ func messageText(message map[string]any) string {
 	for _, part := range parts {
 		switch p := part.(type) {
 		case string:
-			b.WriteString(p)
+			_, _ = b.WriteString(p)
 		case map[string]any:
 			if text := stringValue(p["text"]); text != "" {
-				b.WriteString(text)
+				_, _ = b.WriteString(text)
 			}
 		}
 	}
