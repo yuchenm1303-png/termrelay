@@ -213,6 +213,19 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 		_ = scheduleDecision
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
+		// If the selected account's route mode is chatgpt_web or auto, use the ChatGPT Web gateway
+		// instead of normal OpenAI API forwarding. This allows automatic routing based on account
+		// configuration without requiring users to send X-TermRelay-Route header.
+		if account.SupportsOpenAIUpstreamRoute(service.OpenAIUpstreamRouteChatGPTWeb) {
+			// Release the scheduler lease acquired by SelectAccountWithSchedulerForCapability.
+			// The ChatGPT Web gateway has its own account binding (sticky session) mechanism.
+			if selection.ReleaseFunc != nil {
+				selection.ReleaseFunc()
+			}
+			h.forwardChatGPTWeb(c, body, apiKey, sessionHash, reqStream, &streamStarted)
+			return
+		}
+
 		accountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
 		if !acquired {
 			return
