@@ -144,7 +144,7 @@ func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, er
 		}
 		snapshot, sendErr := g.transport.Send(ctx, account, transportRequest)
 		if sendErr != nil {
-			if shouldReleaseSticky(sendErr) {
+			if shouldReleaseSticky(key, sendErr) {
 				if _, releaseErr := g.stickyStore.Release(ctx, key, account.ID); releaseErr != nil {
 					return SendResult{}, fmt.Errorf("chatgptweb: release failed account binding: %w", releaseErr)
 				}
@@ -294,8 +294,19 @@ func (g *gateway) bindConversation(ctx context.Context, key StickyKey, accountID
 	if winnerID != accountID {
 		return fmt.Errorf("%w: conversation %s is bound to account %d, current account %d", ErrStickyBindingConflict, key.ID, winnerID, accountID)
 	}
-	if _, err := g.stickyStore.Refresh(ctx, key, accountID, g.stickyTTL); err != nil {
+	refreshed, err := g.stickyStore.Refresh(ctx, key, accountID, g.stickyTTL)
+	if err != nil {
 		return fmt.Errorf("chatgptweb: refresh conversation sticky binding: %w", err)
+	}
+	if refreshed {
+		return nil
+	}
+	winnerID, _, err = g.stickyStore.Bind(ctx, key, accountID, g.stickyTTL)
+	if err != nil {
+		return fmt.Errorf("chatgptweb: restore expired conversation sticky binding: %w", err)
+	}
+	if winnerID != accountID {
+		return fmt.Errorf("%w: conversation %s was rebound to account %d, current account %d", ErrStickyBindingConflict, key.ID, winnerID, accountID)
 	}
 	return nil
 }
@@ -343,10 +354,13 @@ func shouldRetryNextAccount(err error) bool {
 	return errors.As(err, &upstream) && upstream.RetryNextAccount
 }
 
-func shouldReleaseSticky(err error) bool {
+func shouldReleaseSticky(key StickyKey, err error) bool {
 	var upstream *UpstreamError
 	if !errors.As(err, &upstream) {
 		return false
 	}
-	return upstream.RetryNextAccount || upstream.RequiresReauth || upstream.ChallengeRequired
+	if upstream.RequiresReauth || upstream.ChallengeRequired {
+		return true
+	}
+	return key.Kind == StickyKeyClientSession && upstream.RetryNextAccount
 }
