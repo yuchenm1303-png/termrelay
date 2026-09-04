@@ -124,9 +124,15 @@ func (p *credentialSessionProvider) LoadSession(ctx context.Context, account Acc
 	if err != nil {
 		return nil, err
 	}
-	upstreamAccountID, err := credentialString(record.credentials, "account_id", false)
+	upstreamAccountID, err := credentialString(record.credentials, "chatgpt_account_id", false)
 	if err != nil {
 		return nil, err
+	}
+	if upstreamAccountID == "" {
+		upstreamAccountID, err = credentialString(record.credentials, "account_id", false)
+		if err != nil {
+			return nil, err
+		}
 	}
 	deviceID, err := credentialString(record.credentials, "device_id", false)
 	if err != nil {

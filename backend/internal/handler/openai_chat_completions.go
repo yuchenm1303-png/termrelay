@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/Wei-Shaw/sub2api/internal/service/chatgptweb"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -141,6 +143,10 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 
 	sessionHash := h.gatewayService.GenerateSessionHash(c, body)
 	promptCacheKey := h.gatewayService.ExtractSessionID(c, body)
+	if strings.EqualFold(strings.TrimSpace(c.GetHeader("X-TermRelay-Route")), string(service.OpenAIUpstreamRouteChatGPTWeb)) {
+		h.forwardChatGPTWeb(c, body, apiKey, sessionHash, reqStream, &streamStarted)
+		return
+	}
 
 	maxAccountSwitches := h.maxAccountSwitches
 	switchCount := 0
@@ -376,6 +382,82 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 		)
 		return
 	}
+}
+
+func (h *OpenAIGatewayHandler) forwardChatGPTWeb(c *gin.Context, body []byte, apiKey *service.APIKey, sessionHash string, stream bool, streamStarted *bool) {
+	if h.chatGPTWebGateway == nil {
+		h.handleStreamingAwareError(c, http.StatusServiceUnavailable, "api_error", "ChatGPT Web gateway is not configured", false)
+		return
+	}
+	state := chatgptweb.NewClientState(c.GetHeader("X-TermRelay-Device-ID"), c.GetHeader("User-Agent"), time.Now())
+	if sessionID := strings.TrimSpace(c.GetHeader("X-TermRelay-Session-ID")); sessionID != "" {
+		state.SessionID = sessionID
+	}
+	state.ConversationID = strings.TrimSpace(c.GetHeader("X-TermRelay-Conversation-ID"))
+	if parentID := strings.TrimSpace(c.GetHeader("X-TermRelay-Parent-Message-ID")); parentID != "" {
+		state.ParentMessageID = parentID
+	}
+	conversation, _, err := chatgptweb.TransformChatCompletions(body, state, time.Now())
+	if err != nil {
+		h.errorResponse(c, http.StatusBadRequest, "invalid_request_error", err.Error())
+		return
+	}
+	request := chatgptweb.SendRequest{ClientState: state, Conversation: conversation, GroupID: apiKey.GroupID, SessionHash: sessionHash}
+	if !stream {
+		result, err := h.chatGPTWebGateway.Send(c.Request.Context(), request)
+		if err != nil {
+			h.errorResponse(c, http.StatusBadGateway, "upstream_error", err.Error())
+			return
+		}
+		setChatGPTWebSessionHeaders(c, result.Session)
+		c.JSON(http.StatusOK, gin.H{
+			"id": "chatcmpl-" + result.Session.ParentMessageID, "object": "chat.completion", "created": time.Now().Unix(), "model": conversation.Model,
+			"choices":           []gin.H{{"index": 0, "message": gin.H{"role": "assistant", "content": result.Snapshot.FinalText}, "finish_reason": "stop"}},
+			"termrelay_session": result.Session,
+		})
+		return
+	}
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	*streamStarted = true
+	writeEvent := func(payload any) error {
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		if _, err := c.Writer.Write([]byte("data: ")); err != nil {
+			return err
+		}
+		if _, err := c.Writer.Write(encoded); err != nil {
+			return err
+		}
+		if _, err := c.Writer.Write([]byte("\n\n")); err != nil {
+			return err
+		}
+		c.Writer.Flush()
+		return nil
+	}
+	result, err := h.chatGPTWebGateway.SendStream(c.Request.Context(), request, func(event chatgptweb.StreamEvent) error {
+		if event.Type != chatgptweb.StreamEventUpdate || event.FinalDelta == "" {
+			return nil
+		}
+		return writeEvent(gin.H{"id": "chatcmpl-web", "object": "chat.completion.chunk", "created": time.Now().Unix(), "model": conversation.Model, "choices": []gin.H{{"index": 0, "delta": gin.H{"content": event.FinalDelta}, "finish_reason": nil}}})
+	})
+	if err != nil {
+		_ = writeEvent(gin.H{"error": gin.H{"type": "upstream_error", "message": err.Error()}})
+		return
+	}
+	_ = writeEvent(gin.H{"id": "chatcmpl-web", "object": "chat.completion.chunk", "created": time.Now().Unix(), "model": conversation.Model, "choices": []gin.H{{"index": 0, "delta": gin.H{}, "finish_reason": "stop"}}, "termrelay_session": result.Session})
+	_, _ = c.Writer.Write([]byte("data: [DONE]\n\n"))
+	c.Writer.Flush()
+}
+
+func setChatGPTWebSessionHeaders(c *gin.Context, session chatgptweb.SessionState) {
+	c.Header("X-TermRelay-Session-ID", session.ClientSessionID)
+	c.Header("X-TermRelay-Conversation-ID", session.ConversationID)
+	c.Header("X-TermRelay-Parent-Message-ID", session.ParentMessageID)
 }
 
 // resolveOpenAIUpstreamEndpoint returns the actual upstream endpoint for an

@@ -34,5 +34,19 @@ func (s *chatGPTWebCredentialSource) LoadCredential(ctx context.Context, account
 	if err != nil {
 		return chatgptweb.CredentialRecord{}, fmt.Errorf("chatgptweb credential source: load account %d: %w", accountID, err)
 	}
-	return chatgptweb.NewCredentialRecord(account.ID, account.Platform, account.Type, account.Credentials), nil
+	credentials := make(map[string]any, len(account.Credentials)+2)
+	for key, value := range account.Credentials {
+		credentials[key] = value
+	}
+	if _, exists := credentials["device_id"]; !exists {
+		if value, ok := account.Extra["openai_device_id"]; ok {
+			credentials["device_id"] = value
+		}
+	}
+	if _, exists := credentials["user_agent"]; !exists {
+		if value, ok := account.Extra["openai_user_agent"]; ok {
+			credentials["user_agent"] = value
+		}
+	}
+	return chatgptweb.NewCredentialRecord(account.ID, account.Platform, account.Type, credentials), nil
 }

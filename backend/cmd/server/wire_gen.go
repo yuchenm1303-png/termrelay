@@ -18,6 +18,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/server"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/Wei-Shaw/sub2api/internal/service/chatgptweb"
 	"github.com/redis/go-redis/v9"
 	"log"
 	"net/http"
@@ -277,7 +278,26 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	legacyEngine := securityaudit.NewLegacyModerationAdapter(contentModerationService)
 	coordinator := securityaudit.NewCoordinator(legacyEngine, promptService)
 	gatewayHandler := handler.ProvideGatewayHandler(gatewayService, openAIGatewayService, geminiMessagesCompatService, antigravityGatewayService, userService, concurrencyService, billingCacheService, usageService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, contentModerationService, userMessageQueueService, configConfig, settingService, coordinator)
-	openAIGatewayHandler := handler.ProvideOpenAIGatewayHandler(openAIGatewayService, concurrencyService, billingCacheService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, grokQuotaService, configConfig, coordinator)
+	stickyStore := repository.NewChatGPTWebStickyStore(redisClient)
+	accountSelector := service.NewChatGPTWebAccountSelector(openAIGatewayService, accountRepository, concurrencyService)
+	credentialSource := repository.NewChatGPTWebCredentialSource(client)
+	accountSessionProvider, err := service.ProvideChatGPTWebSessionProvider(credentialSource)
+	if err != nil {
+		return nil, err
+	}
+	proxyService := service.NewProxyService(proxyRepository)
+	httpClientProvider := service.NewChatGPTWebHTTPClientProvider(accountRepository, proxyService, httpUpstream, tlsFingerprintProfileService)
+	requirementsTokenProviderFactory := chatgptweb.NewNativeRequirementsTokenProviderFactory()
+	proofOfWorkSolver := chatgptweb.NewNativeProofOfWorkSolver()
+	transport, err := service.ProvideChatGPTWebTransport(accountSessionProvider, httpClientProvider, requirementsTokenProviderFactory, proofOfWorkSolver)
+	if err != nil {
+		return nil, err
+	}
+	chatGPTWebGateway, err := service.ProvideChatGPTWebGateway(stickyStore, accountSelector, transport)
+	if err != nil {
+		return nil, err
+	}
+	openAIGatewayHandler := handler.ProvideOpenAIGatewayHandler(openAIGatewayService, concurrencyService, billingCacheService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, grokQuotaService, configConfig, coordinator, chatGPTWebGateway)
 	handlerSettingHandler := handler.ProvideSettingHandler(settingService, buildInfo, notificationEmailService)
 	totpHandler := handler.NewTotpHandler(totpService)
 	passkeyRepository := repository.NewPasskeyRepository(db)

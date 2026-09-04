@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/service/chatgptweb"
 )
@@ -152,3 +153,20 @@ func (p *ChatGPTWebHTTPClientProvider) HTTPClient(ctx context.Context, ref chatg
 type chatGPTWebRoundTripper func(*http.Request) (*http.Response, error)
 
 func (f chatGPTWebRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+func ProvideChatGPTWebSessionProvider(source chatgptweb.CredentialSource) (chatgptweb.AccountSessionProvider, error) {
+	return chatgptweb.NewCredentialSessionProvider(source)
+}
+
+func ProvideChatGPTWebTransport(
+	sessions chatgptweb.AccountSessionProvider,
+	httpClients chatgptweb.HTTPClientProvider,
+	requirements chatgptweb.RequirementsTokenProviderFactory,
+	proofSolver chatgptweb.ProofOfWorkSolver,
+) (chatgptweb.Transport, error) {
+	return chatgptweb.NewHTTPTransport(sessions, httpClients, requirements, proofSolver, chatgptweb.DefaultBaseURL)
+}
+
+func ProvideChatGPTWebGateway(sticky chatgptweb.StickyStore, selector chatgptweb.AccountSelector, transport chatgptweb.Transport) (chatgptweb.ChatGPTWebGateway, error) {
+	return chatgptweb.NewGateway(sticky, selector, transport, 24*time.Hour)
+}

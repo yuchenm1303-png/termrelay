@@ -44,6 +44,7 @@ type httpTransport struct {
 }
 
 var _ Transport = (*httpTransport)(nil)
+var _ StreamingTransport = (*httpTransport)(nil)
 
 func NewHTTPTransport(
 	sessions AccountSessionProvider,
@@ -74,6 +75,10 @@ func NewHTTPTransport(
 }
 
 func (t *httpTransport) Send(ctx context.Context, account AccountRef, request TransportRequest) (Snapshot, error) {
+	return t.SendStream(ctx, account, request, nil)
+}
+
+func (t *httpTransport) SendStream(ctx context.Context, account AccountRef, request TransportRequest, sink StreamSink) (Snapshot, error) {
 	if account.ID <= 0 {
 		return Snapshot{}, errors.New("chatgptweb: transport account id must be positive")
 	}
@@ -154,6 +159,11 @@ func (t *httpTransport) Send(ctx context.Context, account AccountRef, request Tr
 		}
 		if err != nil {
 			return Snapshot{}, fmt.Errorf("chatgptweb: parse conversation stream: %w", err)
+		}
+		if sink != nil {
+			if err := sink(event); err != nil {
+				return Snapshot{}, err
+			}
 		}
 		if event.Type == StreamEventDone {
 			return event.Snapshot, nil

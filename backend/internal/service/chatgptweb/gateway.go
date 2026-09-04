@@ -107,6 +107,13 @@ type Transport interface {
 	Send(ctx context.Context, account AccountRef, request TransportRequest) (Snapshot, error)
 }
 
+type StreamSink func(StreamEvent) error
+
+type StreamingTransport interface {
+	Transport
+	SendStream(ctx context.Context, account AccountRef, request TransportRequest, sink StreamSink) (Snapshot, error)
+}
+
 type SendRequest struct {
 	ClientState  *ClientState
 	Conversation ConversationRequest
@@ -122,6 +129,7 @@ type SendResult struct {
 
 type ChatGPTWebGateway interface {
 	Send(ctx context.Context, request SendRequest) (SendResult, error)
+	SendStream(ctx context.Context, request SendRequest, sink StreamSink) (SendResult, error)
 }
 
 type gateway struct {
@@ -155,6 +163,17 @@ func NewGateway(stickyStore StickyStore, selector AccountSelector, transport Tra
 }
 
 func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, error) {
+	return g.send(ctx, request, nil)
+}
+
+func (g *gateway) SendStream(ctx context.Context, request SendRequest, sink StreamSink) (SendResult, error) {
+	if sink == nil {
+		return SendResult{}, errors.New("chatgptweb: stream sink is required")
+	}
+	return g.send(ctx, request, sink)
+}
+
+func (g *gateway) send(ctx context.Context, request SendRequest, sink StreamSink) (SendResult, error) {
 	if request.ClientState == nil {
 		return SendResult{}, errors.New("chatgptweb: client state is required")
 	}
@@ -179,7 +198,20 @@ func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, er
 			Conversation: mergeConversationState(request.Conversation, request.ClientState),
 			ClientState:  *request.ClientState,
 		}
-		snapshot, sendErr := g.transport.Send(ctx, account, transportRequest)
+		var snapshot Snapshot
+		var sendErr error
+		if sink != nil {
+			if streaming, ok := g.transport.(StreamingTransport); ok {
+				snapshot, sendErr = streaming.SendStream(ctx, account, transportRequest, sink)
+			} else {
+				snapshot, sendErr = g.transport.Send(ctx, account, transportRequest)
+				if sendErr == nil {
+					sendErr = sink(StreamEvent{Type: StreamEventDone, Snapshot: snapshot})
+				}
+			}
+		} else {
+			snapshot, sendErr = g.transport.Send(ctx, account, transportRequest)
+		}
 		account.Release()
 		if sendErr != nil {
 			if shouldReleaseSticky(key, sendErr) {

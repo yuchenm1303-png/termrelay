@@ -10,6 +10,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/Wei-Shaw/sub2api/internal/service/chatgptweb"
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -769,6 +770,13 @@ var ProviderSet = wire.NewSet(
 	NewTotpService,
 	NewErrorPassthroughService,
 	NewTLSFingerprintProfileService,
+	NewChatGPTWebAccountSelector,
+	NewChatGPTWebHTTPClientProvider,
+	ProvideChatGPTWebSessionProvider,
+	chatgptweb.NewNativeRequirementsTokenProviderFactory,
+	chatgptweb.NewNativeProofOfWorkSolver,
+	ProvideChatGPTWebTransport,
+	ProvideChatGPTWebGateway,
 	NewDigestSessionStore,
 	ProvideIdempotencyCoordinator,
 	ProvideSystemOperationLockService,

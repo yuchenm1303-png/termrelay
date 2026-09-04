@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/Wei-Shaw/sub2api/internal/service/chatgptweb"
 
 	coderws "github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,7 @@ type OpenAIGatewayHandler struct {
 	opsService                 *service.OpsService
 	concurrencyHelper          *ConcurrencyHelper
 	imageLimiter               *imageConcurrencyLimiter
+	chatGPTWebGateway          chatgptweb.ChatGPTWebGateway
 	maxAccountSwitches         int
 	cfg                        *config.Config
 }
