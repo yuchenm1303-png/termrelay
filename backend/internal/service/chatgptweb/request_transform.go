@@ -125,7 +125,7 @@ func pureTextContent(raw json.RawMessage) (string, error) {
 	for _, part := range parts {
 		switch part.Type {
 		case "text", "input_text":
-			b.WriteString(part.Text)
+			_, _ = b.WriteString(part.Text)
 		default:
 			return "", fmt.Errorf("chatgptweb: unsupported content part %q", part.Type)
 		}
