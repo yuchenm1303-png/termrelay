@@ -265,16 +265,23 @@ func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, request Acc
 			if err != nil {
 				return AccountRef{}, err
 			}
-			if available && account.ID == boundID {
+			if available {
+				if account.ID != boundID {
+					account.Release()
+					return AccountRef{}, fmt.Errorf("chatgptweb: selector resolved account %d for sticky account %d", account.ID, boundID)
+				}
 				refreshed, err := g.stickyStore.Refresh(ctx, key, boundID, g.stickyTTL)
 				if err != nil {
+					account.Release()
 					return AccountRef{}, fmt.Errorf("chatgptweb: refresh sticky binding: %w", err)
 				}
 				if refreshed {
 					return account, nil
 				}
+				account.Release()
 				continue
 			}
+			account.Release()
 			if _, err := g.stickyStore.Release(ctx, key, boundID); err != nil {
 				return AccountRef{}, fmt.Errorf("chatgptweb: release unavailable account binding: %w", err)
 			}
@@ -297,6 +304,7 @@ func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, request Acc
 			return AccountRef{}, err
 		}
 		if account.ID <= 0 {
+			account.Release()
 			return AccountRef{}, errors.New("chatgptweb: selector returned invalid account id")
 		}
 		winnerID, _, err := g.stickyStore.Bind(ctx, key, account.ID, g.stickyTTL)
@@ -324,16 +332,23 @@ func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, request Acc
 		if err != nil {
 			return AccountRef{}, err
 		}
-		if available && winner.ID == winnerID {
+		if available {
+			if winner.ID != winnerID {
+				winner.Release()
+				return AccountRef{}, fmt.Errorf("chatgptweb: selector resolved account %d for winning sticky account %d", winner.ID, winnerID)
+			}
 			refreshed, err := g.stickyStore.Refresh(ctx, key, winnerID, g.stickyTTL)
 			if err != nil {
+				winner.Release()
 				return AccountRef{}, fmt.Errorf("chatgptweb: refresh winning binding: %w", err)
 			}
 			if refreshed {
 				return winner, nil
 			}
+			winner.Release()
 			continue
 		}
+		winner.Release()
 		if _, err := g.stickyStore.Release(ctx, key, winnerID); err != nil {
 			return AccountRef{}, fmt.Errorf("chatgptweb: release unavailable winning binding: %w", err)
 		}
