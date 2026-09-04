@@ -83,14 +83,14 @@ func TestSentinelNoChallenge(t *testing.T) {
 			if body["p"] != "requirements-token" {
 				t.Errorf("prepare body = %+v", body)
 			}
-			io.WriteString(w, `{"prepare_token":"prepare-1","proofofwork":{"required":false},"turnstile":{"required":false}}`)
+			_, _ = io.WriteString(w, `{"prepare_token":"prepare-1","proofofwork":{"required":false},"turnstile":{"required":false}}`)
 		case "/sentinel/chat-requirements/finalize":
 			var body map[string]string
 			_ = json.NewDecoder(r.Body).Decode(&body)
 			if body["prepare_token"] != "prepare-1" {
 				t.Errorf("finalize body = %+v", body)
 			}
-			io.WriteString(w, `{"token":"final-1"}`)
+			_, _ = io.WriteString(w, `{"token":"final-1"}`)
 		default:
 			http.NotFound(w, r)
 		}
@@ -118,14 +118,14 @@ func TestSentinelPoWRequiredUsesInjectedSolver(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/sentinel/chat-requirements/prepare":
-			io.WriteString(w, `{"prepare_token":"prepare-1","proofofwork":{"required":true,"seed":"seed-1","difficulty":"hard"},"turnstile":{"required":false}}`)
+			_, _ = io.WriteString(w, `{"prepare_token":"prepare-1","proofofwork":{"required":true,"seed":"seed-1","difficulty":"hard"},"turnstile":{"required":false}}`)
 		case "/sentinel/chat-requirements/finalize":
 			var body map[string]string
 			_ = json.NewDecoder(r.Body).Decode(&body)
 			if body["proofofwork"] != "proof-1" {
 				t.Errorf("finalize=%+v", body)
 			}
-			io.WriteString(w, `{"token":"final-1"}`)
+			_, _ = io.WriteString(w, `{"token":"final-1"}`)
 		default:
 			http.NotFound(w, r)
 		}
@@ -157,7 +157,7 @@ func TestSentinelHumanChallengeStopsBeforeFinalize(t *testing.T) {
 			finalizeCalls++
 		}
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"prepare_token":"prepare-1","turnstile":{"required":true,"dx":"human"}}`)
+		_, _ = io.WriteString(w, `{"prepare_token":"prepare-1","turnstile":{"required":true,"dx":"human"}}`)
 	}))
 	defer server.Close()
 	flow, _ := NewSentinelFlow(client, RequirementsTokenProviderFunc(func(context.Context, *ClientState) (string, error) { return "requirements-token", nil }), nil)
@@ -178,7 +178,7 @@ func TestConversationPrepareThreeStagesAndOpen(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/conversation/init":
-			io.WriteString(w, `{"type":"success","default_model_slug":"gpt-5"}`)
+			_, _ = io.WriteString(w, `{"type":"success","default_model_slug":"gpt-5"}`)
 		case "/f/conversation/prepare":
 			var body map[string]any
 			_ = json.NewDecoder(r.Body).Decode(&body)
@@ -191,7 +191,7 @@ func TestConversationPrepareThreeStagesAndOpen(t *testing.T) {
 				}
 			}
 			token := map[string]string{"none": "c1", "sent": "c2", "success": "c3"}[stage]
-			fmt.Fprintf(w, `{"conduit_token":%q}`, token)
+			_, _ = fmt.Fprintf(w, `{"conduit_token":%q}`, token)
 		case "/f/conversation":
 			if got := r.Header.Get("X-Conduit-Token"); got != "c3" {
 				t.Errorf("conduit=%q", got)
@@ -200,7 +200,7 @@ func TestConversationPrepareThreeStagesAndOpen(t *testing.T) {
 				t.Errorf("sentinel=%q", got)
 			}
 			w.Header().Set("Content-Type", "text/event-stream")
-			io.WriteString(w, "data: {\"conversation_id\":\"conv-new\"}\n\ndata: [DONE]\n\n")
+			_, _ = io.WriteString(w, "data: {\"conversation_id\":\"conv-new\"}\n\ndata: [DONE]\n\n")
 		default:
 			http.NotFound(w, r)
 		}
@@ -225,7 +225,7 @@ func TestConversationPrepareThreeStagesAndOpen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
 	if !strings.Contains(string(body), "[DONE]") {
 		t.Fatalf("body=%q", body)
@@ -235,7 +235,7 @@ func TestConversationPrepareThreeStagesAndOpen(t *testing.T) {
 func TestHTTPErrorDoesNotExposeUpstreamBody(t *testing.T) {
 	client, server, state := newTestClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		io.WriteString(w, `{"token":"super-secret-upstream-body"}`)
+		_, _ = io.WriteString(w, `{"token":"super-secret-upstream-body"}`)
 	}))
 	defer server.Close()
 	_, err := client.InitConversation(context.Background(), state)
