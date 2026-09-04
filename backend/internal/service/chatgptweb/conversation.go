@@ -31,7 +31,7 @@ func (c *Client) InitConversation(ctx context.Context, state *ClientState) (*Con
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var out ConversationInitResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (c *Client) prepareConversationStage(ctx context.Context, request Conversat
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var result prepareResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", err
