@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-5">
-    <!-- Product-oriented model catalog header -->
     <section
       class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900"
       :class="embedded ? '' : 'mt-1'"
@@ -43,14 +42,12 @@
       </div>
     </section>
 
-    <!-- Global pricing description configured by admin -->
     <div
       v-if="descriptionHtml"
       class="plaza-description rounded-2xl border border-gray-100 bg-white px-5 py-4 text-sm shadow-card dark:border-dark-700/50 dark:bg-dark-800/50"
       v-html="descriptionHtml"
     ></div>
 
-    <!-- Anonymous hint -->
     <p
       v-if="!isAuthenticated"
       class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-dark-500"
@@ -59,7 +56,6 @@
       {{ t('modelPlaza.anonymousHint') }}
     </p>
 
-    <!-- Loading / error / empty -->
     <div v-if="loading" class="flex min-h-[240px] items-center justify-center">
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-600/25 border-t-primary-600 dark:border-primary-400/25 dark:border-t-primary-400"></div>
     </div>
@@ -70,7 +66,6 @@
       {{ t('modelPlaza.loadFailed') }}
     </div>
     <template v-else>
-      <!-- Filters: platform → group → rate → model name -->
       <PlazaFilterBar
         :platforms="platforms"
         :groups="groupOptions"
@@ -85,7 +80,6 @@
         @update:search="searchQuery = $event"
       />
 
-      <!-- Models grouped by channel, sorted by effective rate -->
       <div v-if="filteredGroups.length > 0" class="space-y-5">
         <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" />
       </div>
@@ -109,22 +103,27 @@ import PlazaFilterBar from './PlazaFilterBar.vue'
 import PlazaGroupSection from './PlazaGroupSection.vue'
 import type { ModelPlazaGroup, ModelPlazaResponse } from '@/api/modelPlaza'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 
 const props = defineProps<{
   response: ModelPlazaResponse | null
   loading: boolean
   error?: boolean
-  /** Embedded inside AppLayout. */
   embedded?: boolean
 }>()
 
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
+const appStore = useAppStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isZh = computed(() => locale.value.toLowerCase().startsWith('zh'))
 const copied = ref(false)
 
-const apiBase = computed(() => `${window.location.origin.replace(/\/$/, '')}/v1`)
+const apiBase = computed(() => {
+  const configured = appStore.cachedPublicSettings?.api_base_url?.trim()
+  return (configured || `${window.location.origin.replace(/\/$/, '')}/v1`).replace(/\/$/, '')
+})
+
 const productCopy = computed(() =>
   isZh.value
     ? {
@@ -160,7 +159,6 @@ const descriptionHtml = computed(() => {
   return DOMPurify.sanitize(marked.parse(md) as string)
 })
 
-/** Effective rate = per-user rate ?? group default rate. */
 function effectiveRate(g: ModelPlazaGroup): number {
   return g.user_rate_multiplier ?? g.rate_multiplier
 }

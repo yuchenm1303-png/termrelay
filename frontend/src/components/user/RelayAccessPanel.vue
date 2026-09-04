@@ -13,9 +13,16 @@
           {{ copy.description }}
         </p>
         <div class="mt-5 flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="inline-flex h-10 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition hover:bg-primary-700"
+            @click="openCreateKey"
+          >
+            {{ copy.create }}
+          </button>
           <router-link
             to="/model-plaza?embedded=1"
-            class="inline-flex h-10 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition hover:bg-primary-700"
+            class="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-dark-600 dark:bg-dark-800 dark:text-dark-100 dark:hover:bg-dark-700"
           >
             {{ copy.models }}
           </router-link>
@@ -86,6 +93,7 @@ const copy = computed(() =>
     ? {
         title: '创建 Key 后，就可以直接调用统一 AI API',
         description: '下方仍然是完整的 API Key 管理能力。普通用户只需要创建一个 Key、选择可用模型，然后把 Base URL 和 Key 配到 OpenAI-compatible 客户端即可。',
+        create: '创建 API Key',
         models: '查看模型与价格',
         docs: 'API 文档',
         copy: '复制',
@@ -95,6 +103,7 @@ const copy = computed(() =>
     : {
         title: 'Create a key and start calling the unified AI API',
         description: 'The full API key management tools remain below. For normal usage, create one key, choose an available model, then configure the Base URL and key in any OpenAI-compatible client.',
+        create: 'Create API Key',
         models: 'Models & Pricing',
         docs: 'API Docs',
         copy: 'Copy',
@@ -102,6 +111,11 @@ const copy = computed(() =>
         steps: ['Create an API key', 'Choose a model', 'Copy the Base URL and call the API']
       }
 )
+
+function openCreateKey() {
+  const button = document.querySelector<HTMLElement>('[data-tour="keys-create-btn"]')
+  button?.click()
+}
 
 async function copyBase() {
   try {
