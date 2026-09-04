@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	AccountPlatformChatGPTWeb = "chatgpt_web"
-	AccountTypeCookie         = "cookie"
+	AccountPlatformOpenAI = "openai"
+	AccountTypeOAuth      = "oauth"
+	AccountTypeSetupToken = "setup_token"
 )
 
 var ErrInvalidAccountCredentials = errors.New("chatgptweb: invalid account credentials")
@@ -111,11 +112,12 @@ func (p *credentialSessionProvider) LoadSession(ctx context.Context, account Acc
 	if record.accountID != account.ID {
 		return nil, fmt.Errorf("%w: credential record account mismatch", ErrInvalidAccountCredentials)
 	}
-	if strings.ToLower(record.platform) != AccountPlatformChatGPTWeb {
-		return nil, fmt.Errorf("%w: account platform must be %s", ErrInvalidAccountCredentials, AccountPlatformChatGPTWeb)
+	if strings.ToLower(record.platform) != AccountPlatformOpenAI {
+		return nil, fmt.Errorf("%w: account platform must be %s", ErrInvalidAccountCredentials, AccountPlatformOpenAI)
 	}
-	if strings.ToLower(record.accountType) != AccountTypeCookie {
-		return nil, fmt.Errorf("%w: account type must be %s", ErrInvalidAccountCredentials, AccountTypeCookie)
+	accountType := strings.ToLower(record.accountType)
+	if accountType != AccountTypeOAuth && accountType != AccountTypeSetupToken {
+		return nil, fmt.Errorf("%w: account type must be %s or %s", ErrInvalidAccountCredentials, AccountTypeOAuth, AccountTypeSetupToken)
 	}
 
 	accessToken, err := credentialString(record.credentials, "access_token", true)

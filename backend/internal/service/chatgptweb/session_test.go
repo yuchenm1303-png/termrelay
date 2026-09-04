@@ -10,7 +10,7 @@ import (
 )
 
 func TestCredentialSessionProviderBuildsRedactedAccountSession(t *testing.T) {
-	record := NewCredentialRecord(7, AccountPlatformChatGPTWeb, AccountTypeCookie, map[string]any{
+	record := NewCredentialRecord(7, AccountPlatformOpenAI, AccountTypeOAuth, map[string]any{
 		"access_token": "secret-access-token",
 		"cookie":       "session=secret-cookie",
 		"account_id":   "upstream-account",
@@ -58,23 +58,23 @@ func TestCredentialSessionProviderRejectsInvalidRecordsWithoutLeakingValues(t *t
 	}{
 		{
 			name: "wrong platform",
-			record: NewCredentialRecord(7, "openai", AccountTypeCookie, map[string]any{
+			record: NewCredentialRecord(7, "anthropic", AccountTypeOAuth, map[string]any{
 				"access_token": "do-not-leak-platform-token",
 			}),
 		},
 		{
 			name: "wrong type",
-			record: NewCredentialRecord(7, AccountPlatformChatGPTWeb, "oauth", map[string]any{
+			record: NewCredentialRecord(7, AccountPlatformOpenAI, "api_key", map[string]any{
 				"access_token": "do-not-leak-type-token",
 			}),
 		},
 		{
 			name:   "missing token",
-			record: NewCredentialRecord(7, AccountPlatformChatGPTWeb, AccountTypeCookie, map[string]any{"cookie": "do-not-leak-cookie"}),
+			record: NewCredentialRecord(7, AccountPlatformOpenAI, AccountTypeOAuth, map[string]any{"cookie": "do-not-leak-cookie"}),
 		},
 		{
 			name: "wrong token type",
-			record: NewCredentialRecord(7, AccountPlatformChatGPTWeb, AccountTypeCookie, map[string]any{
+			record: NewCredentialRecord(7, AccountPlatformOpenAI, AccountTypeOAuth, map[string]any{
 				"access_token": 123,
 			}),
 		},

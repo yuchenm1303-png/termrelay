@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -55,15 +56,44 @@ type StickyStore interface {
 }
 
 type AccountRef struct {
-	ID int64
+	ID    int64
+	lease *accountLease
+}
+
+type accountLease struct {
+	once    sync.Once
+	release func()
+}
+
+// NewAccountRef attaches the scheduler's concurrency lease to an opaque
+// account reference. The lease is deliberately not serializable and Release
+// is idempotent so every exit path can safely return the slot exactly once.
+func NewAccountRef(id int64, release func()) AccountRef {
+	if release == nil {
+		return AccountRef{ID: id}
+	}
+	return AccountRef{ID: id, lease: &accountLease{release: release}}
+}
+
+func (a AccountRef) Release() {
+	if a.lease == nil || a.lease.release == nil {
+		return
+	}
+	a.lease.once.Do(a.lease.release)
 }
 
 // AccountSelector separates scheduling from account credentials. Resolve must
 // report unavailable accounts with available=false; Select chooses a new
 // schedulable account while respecting excludeAccountIDs.
 type AccountSelector interface {
-	Resolve(ctx context.Context, accountID int64) (account AccountRef, available bool, err error)
-	Select(ctx context.Context, excludeAccountIDs []int64) (AccountRef, error)
+	Resolve(ctx context.Context, request AccountSelectionRequest, accountID int64) (account AccountRef, available bool, err error)
+	Select(ctx context.Context, request AccountSelectionRequest, excludeAccountIDs []int64) (AccountRef, error)
+}
+
+type AccountSelectionRequest struct {
+	GroupID        *int64
+	SessionHash    string
+	RequestedModel string
 }
 
 type TransportRequest struct {
@@ -80,6 +110,8 @@ type Transport interface {
 type SendRequest struct {
 	ClientState  *ClientState
 	Conversation ConversationRequest
+	GroupID      *int64
+	SessionHash  string
 }
 
 type SendResult struct {
@@ -132,8 +164,13 @@ func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, er
 	}
 
 	excluded := make(map[int64]struct{})
+	selectionRequest := AccountSelectionRequest{
+		GroupID:        request.GroupID,
+		SessionHash:    request.SessionHash,
+		RequestedModel: request.Conversation.Model,
+	}
 	for attempt := 0; attempt < defaultAccountAcquireAttempts; attempt++ {
-		account, err := g.acquireAccount(ctx, key, excluded)
+		account, err := g.acquireAccount(ctx, key, selectionRequest, excluded)
 		if err != nil {
 			return SendResult{}, err
 		}
@@ -143,6 +180,7 @@ func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, er
 			ClientState:  *request.ClientState,
 		}
 		snapshot, sendErr := g.transport.Send(ctx, account, transportRequest)
+		account.Release()
 		if sendErr != nil {
 			if shouldReleaseSticky(key, sendErr) {
 				if _, releaseErr := g.stickyStore.Release(ctx, key, account.ID); releaseErr != nil {
@@ -184,14 +222,14 @@ func (g *gateway) Send(ctx context.Context, request SendRequest) (SendResult, er
 	return SendResult{}, errors.New("chatgptweb: account acquisition attempts exhausted")
 }
 
-func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, excluded map[int64]struct{}) (AccountRef, error) {
+func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, request AccountSelectionRequest, excluded map[int64]struct{}) (AccountRef, error) {
 	for attempt := 0; attempt < defaultAccountAcquireAttempts; attempt++ {
 		boundID, found, err := g.stickyStore.GetBinding(ctx, key)
 		if err != nil {
 			return AccountRef{}, fmt.Errorf("chatgptweb: get sticky binding: %w", err)
 		}
 		if found {
-			account, available, err := g.selector.Resolve(ctx, boundID)
+			account, available, err := g.selector.Resolve(ctx, request, boundID)
 			if err != nil {
 				return AccountRef{}, err
 			}
@@ -222,7 +260,7 @@ func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, excluded ma
 			return AccountRef{}, ErrConversationBindingMissing
 		}
 
-		account, err := g.selector.Select(ctx, sortedAccountIDs(excluded))
+		account, err := g.selector.Select(ctx, request, sortedAccountIDs(excluded))
 		if err != nil {
 			return AccountRef{}, err
 		}
@@ -231,22 +269,26 @@ func (g *gateway) acquireAccount(ctx context.Context, key StickyKey, excluded ma
 		}
 		winnerID, _, err := g.stickyStore.Bind(ctx, key, account.ID, g.stickyTTL)
 		if err != nil {
+			account.Release()
 			return AccountRef{}, fmt.Errorf("chatgptweb: bind sticky account: %w", err)
 		}
 		if winnerID == account.ID {
 			refreshed, err := g.stickyStore.Refresh(ctx, key, winnerID, g.stickyTTL)
 			if err != nil {
+				account.Release()
 				return AccountRef{}, fmt.Errorf("chatgptweb: refresh newly acquired binding: %w", err)
 			}
 			if refreshed {
 				return account, nil
 			}
+			account.Release()
 			continue
 		}
+		account.Release()
 
 		// Another request won the atomic bind. Resolve and use that winner so all
 		// concurrent requests for this client session converge on one account.
-		winner, available, err := g.selector.Resolve(ctx, winnerID)
+		winner, available, err := g.selector.Resolve(ctx, request, winnerID)
 		if err != nil {
 			return AccountRef{}, err
 		}

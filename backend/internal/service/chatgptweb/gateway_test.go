@@ -117,6 +117,19 @@ func TestGatewayMissingConversationBindingDoesNotChooseRandomAccount(t *testing.
 	require.Equal(t, 0, selector.selectCalls)
 }
 
+func TestGatewayReleasesAccountLeaseAfterTransport(t *testing.T) {
+	store := newMemoryStickyStore()
+	selector := &leasedAccountSelector{}
+	transport := &fakeTransport{snapshots: []Snapshot{{ConversationID: "conv-release", Finished: true}}}
+	gateway, err := NewGateway(store, selector, transport, time.Hour)
+	require.NoError(t, err)
+
+	state := NewClientState("device-release", "test", time.Now())
+	_, err = gateway.Send(context.Background(), SendRequest{ClientState: state, Conversation: ConversationRequest{Model: "auto"}})
+	require.NoError(t, err)
+	require.Equal(t, 1, selector.releaseCalls)
+}
+
 type memoryStickyStore struct {
 	mu       sync.Mutex
 	bindings map[string]int64
@@ -166,13 +179,25 @@ type fakeAccountSelector struct {
 	selectCalls int
 }
 
-func (s *fakeAccountSelector) Resolve(_ context.Context, accountID int64) (AccountRef, bool, error) {
+type leasedAccountSelector struct {
+	releaseCalls int
+}
+
+func (s *leasedAccountSelector) Resolve(_ context.Context, _ AccountSelectionRequest, accountID int64) (AccountRef, bool, error) {
+	return NewAccountRef(accountID, func() { s.releaseCalls++ }), true, nil
+}
+
+func (s *leasedAccountSelector) Select(_ context.Context, _ AccountSelectionRequest, _ []int64) (AccountRef, error) {
+	return NewAccountRef(11, func() { s.releaseCalls++ }), nil
+}
+
+func (s *fakeAccountSelector) Resolve(_ context.Context, _ AccountSelectionRequest, accountID int64) (AccountRef, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return AccountRef{ID: accountID}, s.available[accountID], nil
 }
 
-func (s *fakeAccountSelector) Select(_ context.Context, excluded []int64) (AccountRef, error) {
+func (s *fakeAccountSelector) Select(_ context.Context, _ AccountSelectionRequest, excluded []int64) (AccountRef, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.selectCalls++

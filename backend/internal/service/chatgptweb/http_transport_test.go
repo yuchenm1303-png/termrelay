@@ -137,7 +137,7 @@ func TestHTTPTransportStopsOnHumanChallenge(t *testing.T) {
 func newHTTPTransportForTest(t *testing.T, server *httptest.Server, requirementsToken string) Transport {
 	t.Helper()
 	source := CredentialSourceFunc(func(context.Context, int64) (CredentialRecord, error) {
-		return NewCredentialRecord(7, AccountPlatformChatGPTWeb, AccountTypeCookie, map[string]any{
+		return NewCredentialRecord(7, AccountPlatformOpenAI, AccountTypeOAuth, map[string]any{
 			"access_token": "secret-access-token",
 			"cookie":       "session=secret-cookie",
 			"account_id":   "upstream-account",
