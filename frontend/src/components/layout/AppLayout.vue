@@ -14,8 +14,12 @@
       <!-- Header -->
       <AppHeader />
 
+      <!-- Primary user workflow navigation. Admin keeps the existing admin IA untouched. -->
+      <UserRelayNav v-if="!isAdmin" />
+
       <!-- Main Content -->
       <main class="p-4 md:p-6 lg:p-8">
+        <RelayAccessPanel v-if="showRelayAccessPanel" />
         <slot />
       </main>
     </div>
@@ -25,17 +29,22 @@
 <script setup lang="ts">
 import '@/styles/onboarding.css'
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import UserRelayNav from './UserRelayNav.vue'
+import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 
+const route = useRoute()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const isAdmin = computed(() => authStore.user?.role === 'admin')
+const showRelayAccessPanel = computed(() => !isAdmin.value && route.path === '/keys')
 
 const { replayTour } = useOnboardingTour({
   storageKey: isAdmin.value ? 'admin_guide' : 'user_guide',

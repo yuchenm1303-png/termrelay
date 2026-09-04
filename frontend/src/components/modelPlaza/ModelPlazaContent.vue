@@ -1,19 +1,56 @@
 <template>
   <div class="space-y-5">
-    <!-- 页头(独立形态下展示标题;后台形态 AppHeader 已有页面标题) -->
-    <div v-if="!embedded">
-      <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">{{ t('modelPlaza.title') }}</h1>
-      <p class="mt-1.5 text-sm text-gray-500 dark:text-dark-400">{{ t('modelPlaza.description') }}</p>
-    </div>
+    <!-- Product-oriented model catalog header -->
+    <section
+      class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900"
+      :class="embedded ? '' : 'mt-1'"
+    >
+      <div class="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
+            Model Catalog
+          </div>
+          <h1 class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+            {{ productCopy.title }}
+          </h1>
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-gray-600 dark:text-dark-300">
+            {{ productCopy.description }}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 lg:justify-end">
+          <router-link
+            :to="isAuthenticated ? '/keys' : '/register'"
+            class="inline-flex h-10 items-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition hover:bg-primary-700"
+          >
+            {{ isAuthenticated ? productCopy.manageKeys : productCopy.getStarted }}
+          </router-link>
+          <button
+            type="button"
+            class="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-dark-600 dark:bg-dark-800 dark:text-dark-100 dark:hover:bg-dark-700"
+            @click="copyBase"
+          >
+            {{ copied ? productCopy.copied : productCopy.copyBase }}
+          </button>
+        </div>
+      </div>
+      <div class="border-t border-gray-100 bg-gray-50/80 px-5 py-3.5 sm:px-6 dark:border-dark-800 dark:bg-dark-950/50">
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+          <span class="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Base URL</span>
+          <code class="truncate text-xs font-medium text-gray-700 dark:text-dark-200">{{ apiBase }}</code>
+          <span class="hidden text-gray-300 sm:inline dark:text-dark-600">•</span>
+          <span class="text-xs text-gray-500 dark:text-dark-400">{{ productCopy.sameKey }}</span>
+        </div>
+      </div>
+    </section>
 
-    <!-- 全局价格说明(管理员配置,Markdown) -->
+    <!-- Global pricing description configured by admin -->
     <div
       v-if="descriptionHtml"
       class="plaza-description rounded-2xl border border-gray-100 bg-white px-5 py-4 text-sm shadow-card dark:border-dark-700/50 dark:bg-dark-800/50"
       v-html="descriptionHtml"
     ></div>
 
-    <!-- 未登录提示 -->
+    <!-- Anonymous hint -->
     <p
       v-if="!isAuthenticated"
       class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-dark-500"
@@ -22,7 +59,7 @@
       {{ t('modelPlaza.anonymousHint') }}
     </p>
 
-    <!-- 加载/错误/空 -->
+    <!-- Loading / error / empty -->
     <div v-if="loading" class="flex min-h-[240px] items-center justify-center">
       <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-600/25 border-t-primary-600 dark:border-primary-400/25 dark:border-t-primary-400"></div>
     </div>
@@ -33,7 +70,7 @@
       {{ t('modelPlaza.loadFailed') }}
     </div>
     <template v-else>
-      <!-- 筛选区:平台 → 分组 → 倍率 -->
+      <!-- Filters: platform → group → rate → model name -->
       <PlazaFilterBar
         :platforms="platforms"
         :groups="groupOptions"
@@ -48,7 +85,7 @@
         @update:search="searchQuery = $event"
       />
 
-      <!-- 分组分节的模型清单(默认按生效倍率升序) -->
+      <!-- Models grouped by channel, sorted by effective rate -->
       <div v-if="filteredGroups.length > 0" class="space-y-5">
         <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" />
       </div>
@@ -77,13 +114,38 @@ const props = defineProps<{
   response: ModelPlazaResponse | null
   loading: boolean
   error?: boolean
-  /** 后台内嵌形态(AppLayout 内):隐藏页头。 */
+  /** Embedded inside AppLayout. */
   embedded?: boolean
 }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isZh = computed(() => locale.value.toLowerCase().startsWith('zh'))
+const copied = ref(false)
+
+const apiBase = computed(() => `${window.location.origin.replace(/\/$/, '')}/v1`)
+const productCopy = computed(() =>
+  isZh.value
+    ? {
+        title: '选择模型，然后用同一个 API Key 直接调用',
+        description: '不同上游、模型和账号池由 TermRelay 在服务端统一调度。你只需要记住模型名、Base URL 和自己的 API Key。',
+        manageKeys: '管理 API Key',
+        getStarted: '注册并开始使用',
+        copyBase: '复制 Base URL',
+        copied: '已复制',
+        sameKey: '所有可用模型使用统一入口'
+      }
+    : {
+        title: 'Choose a model, then call it with the same API key',
+        description: 'TermRelay handles upstream providers, model routing, and account pools on the server. You only need the model name, Base URL, and your API key.',
+        manageKeys: 'Manage API Keys',
+        getStarted: 'Create an account',
+        copyBase: 'Copy Base URL',
+        copied: 'Copied',
+        sameKey: 'One unified endpoint for all available models'
+      }
+)
 
 const selectedPlatform = ref<string>('all')
 const selectedGroupId = ref<number | 'all'>('all')
@@ -98,7 +160,7 @@ const descriptionHtml = computed(() => {
   return DOMPurify.sanitize(marked.parse(md) as string)
 })
 
-/** 生效倍率 = 用户专属倍率 ?? 分组默认倍率。 */
+/** Effective rate = per-user rate ?? group default rate. */
 function effectiveRate(g: ModelPlazaGroup): number {
   return g.user_rate_multiplier ?? g.rate_multiplier
 }
@@ -116,12 +178,10 @@ const groupOptions = computed(() =>
   }))
 )
 
-/** 全量生效倍率;当前组合下不可用的项由 FilterBar 置灰而非隐藏。 */
 const rates = computed(() =>
   [...new Set((props.response?.groups ?? []).map(effectiveRate))].sort((a, b) => a - b)
 )
 
-/** 数据刷新后选中的倍率可能不复存在,重置为全部。 */
 watch(rates, (list) => {
   if (selectedRate.value !== 'all' && !list.includes(selectedRate.value)) {
     selectedRate.value = 'all'
@@ -139,18 +199,30 @@ const filteredGroups = computed(() => {
   if (selectedRate.value !== 'all') {
     groups = groups.filter((g) => effectiveRate(g) === selectedRate.value)
   }
-  // 模型名搜索:分组内只留命中的模型,整组无命中则隐藏该分组。
+
   const q = searchQuery.value.trim().toLowerCase()
   if (q) {
     groups = groups
       .map((g) => ({ ...g, models: g.models.filter((m) => m.name.toLowerCase().includes(q)) }))
       .filter((g) => g.models.length > 0)
   }
-  // 专属倍率会改变生效值,不能只依赖后端按默认倍率的排序。
+
   return [...groups].sort(
     (a, b) => effectiveRate(a) - effectiveRate(b) || a.name.localeCompare(b.name)
   )
 })
+
+async function copyBase() {
+  try {
+    await navigator.clipboard.writeText(apiBase.value)
+    copied.value = true
+    window.setTimeout(() => {
+      copied.value = false
+    }, 1600)
+  } catch (error) {
+    console.warn('Failed to copy API base URL:', error)
+  }
+}
 </script>
 
 <style scoped>
