@@ -25,6 +25,11 @@ func NewIdentity(accessToken, accountID, deviceID, userAgent, cookie string) (*I
 }
 func (i *Identity) String() string   { return "chatgptweb.Identity{redacted}" }
 func (i *Identity) GoString() string { return i.String() }
+
+// MarshalJSON intentionally emits an empty object. This makes the no-secret
+// serialization contract explicit instead of relying only on unexported fields.
+func (i *Identity) MarshalJSON() ([]byte, error) { return []byte("{}"), nil }
+
 func (i *Identity) DeviceID() string {
 	if i == nil {
 		return ""
