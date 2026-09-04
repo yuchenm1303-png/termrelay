@@ -95,7 +95,7 @@ func (c *Client) doJSON(ctx context.Context, method, path string, payload any, s
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return resp, nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, c.maxErrorBody))
 	return nil, ClassifyHTTPError(resp.StatusCode, body, parseRetryAfter(resp.Header.Get("Retry-After"), c.now()))
 }
