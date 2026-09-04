@@ -81,7 +81,7 @@ func (s *SentinelFlow) Run(ctx context.Context, state *ClientState) (*SentinelTo
 	}
 	var prepare SentinelPrepareResponse
 	decodeErr := json.NewDecoder(resp.Body).Decode(&prepare)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if decodeErr != nil {
 		return nil, decodeErr
 	}
@@ -117,7 +117,7 @@ func (s *SentinelFlow) Run(ctx context.Context, state *ClientState) (*SentinelTo
 	}
 	var finalized sentinelFinalizeResponse
 	decodeErr = json.NewDecoder(resp.Body).Decode(&finalized)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if decodeErr != nil {
 		return nil, decodeErr
 	}
