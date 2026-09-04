@@ -104,8 +104,11 @@ var ProviderSet = wire.NewSet(
 	NewUserPlatformQuotaRepository,     // T14: user × platform quota
 	NewUserPlatformQuotaServiceAdapter, // T14: adapter → service.UserPlatformQuotaRepository
 
-	// Cache implementations
+	// ChatGPT Web account infrastructure
+	NewChatGPTWebCredentialSource,
 	NewChatGPTWebStickyStore,
+
+	// Cache implementations
 	NewGatewayCache,
 	NewBillingCache,
 	NewAPIKeyCache,
@@ -199,7 +202,6 @@ func ProvideImageStorageFactory() service.ImageStorageFactory {
 //   - 这种设计允许在同一事务中混用 Ent 和原生 SQL
 //
 // 依赖：*ent.Client
-// 提供：*sql.DB
 func ProvideSQLDB(client *ent.Client) (*sql.DB, error) {
 	if client == nil {
 		return nil, errors.New("nil ent client")
