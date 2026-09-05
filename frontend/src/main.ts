@@ -8,6 +8,7 @@ import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
 import './style.css'
 import './styles/smirel-relay.css'
+import './styles/smirel-relay-interactions.css'
 
 const RELAY_SITE_NAME = 'Smirel API'
 const RELAY_SITE_LOGO = '/smirel-mark.svg'
