@@ -35,7 +35,6 @@ function applyStandaloneRelayShell() {
 
   document.documentElement.classList.add('relay-standalone')
   applyStandaloneSmirelPreferences()
-  initIOSViewportZoomFix()
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
@@ -77,6 +76,7 @@ function initThemeClass() {
 async function bootstrap() {
   initThemeClass()
   applyStandaloneRelayShell()
+  initIOSViewportZoomFix()
 
   const app = createApp(App)
   const pinia = createPinia()
