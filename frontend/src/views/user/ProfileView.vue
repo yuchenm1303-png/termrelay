@@ -1,17 +1,17 @@
 <template>
   <AppLayout>
-    <section class="smv3-page" data-testid="profile-shell">
-      <header class="smv3-page-head">
+    <section class="smg-page" data-testid="profile-shell">
+      <header class="smg-page-head">
         <div>
-          <div class="smv3-page-kicker">SMIREL ACCOUNT</div>
-          <h1 class="smv3-page-title">{{ copy.title }}</h1>
-          <p class="smv3-page-description">{{ copy.description }}</p>
+          <div class="smg-page-kicker">SMIREL ACCOUNT</div>
+          <h1 class="smg-page-title">{{ copy.title }}</h1>
+          <p class="smg-page-description">{{ copy.description }}</p>
         </div>
       </header>
 
-      <div class="smv3-profile-grid">
-        <div class="smv3-profile-column">
-          <div class="smv3-profile-section-label">{{ copy.identity }}</div>
+      <div class="smg-profile-grid">
+        <div class="smg-profile-column">
+          <div class="smg-profile-section-label">{{ copy.identity }}</div>
           <ProfileInfoCard
             :user="user"
             :linuxdo-enabled="linuxdoOAuthEnabled"
@@ -23,7 +23,7 @@
             :wechat-mp-enabled="wechatOAuthMPEnabled"
           />
 
-          <div class="smv3-profile-section-label">{{ copy.password }}</div>
+          <div class="smg-profile-section-label">{{ copy.password }}</div>
           <ProfilePasswordForm />
 
           <ProfileBalanceNotifyCard
@@ -36,14 +36,14 @@
           />
         </div>
 
-        <aside class="smv3-profile-column">
-          <div v-if="contactInfo" class="smv3-profile-support">
-            <div class="smv3-profile-support-label">{{ copy.support }}</div>
+        <aside class="smg-profile-column">
+          <div v-if="contactInfo" class="smg-profile-support">
+            <div class="smg-profile-support-label">{{ copy.support }}</div>
             <strong>{{ contactInfo }}</strong>
             <p>{{ copy.supportHint }}</p>
           </div>
 
-          <div class="smv3-profile-section-label">{{ copy.security }}</div>
+          <div class="smg-profile-section-label">{{ copy.security }}</div>
           <ProfileTotpCard />
           <ProfilePasskeyCard :enabled="passkeyEnabled" />
         </aside>

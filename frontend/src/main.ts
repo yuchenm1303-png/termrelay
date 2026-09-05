@@ -17,7 +17,6 @@ import {
 import './style.css'
 import './styles/smirel-relay.css'
 import './styles/smirel-v3.css'
-import './styles/smirel-v3-pages.css'
 import './styles/smirel-source-structure.css'
 import './styles/smirel-source-visual.css'
 import './styles/smirel-source-compat.css'
@@ -26,6 +25,7 @@ import './styles/smirel-source-home.css'
 import './styles/smirel-source-portal.css'
 import './styles/smirel-source-workspace.css'
 import './styles/smirel-source-workspace-density.css'
+import './styles/smirel-source-workspace-pages.css'
 import './styles/smirel-source-interactions.css'
 
 function applyStandaloneRelayShell() {
