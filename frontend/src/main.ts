@@ -8,6 +8,46 @@ import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
 import './style.css'
 
+const RELAY_SITE_NAME = 'Smirel API'
+const RELAY_SITE_LOGO = '/smirel-mark.svg'
+const RELAY_API_BASE_URL = 'https://api.smirel.com/v1'
+
+function isStandaloneRelayFrontend() {
+  const host = window.location.hostname.toLowerCase()
+  return host === 'relay.smirel.com' || host.endsWith('.vercel.app')
+}
+
+async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
+  if (!isStandaloneRelayFrontend()) return
+
+  // Load backend feature flags/auth settings first, then override only public
+  // presentation fields for the independently hosted relay frontend.
+  await appStore.fetchPublicSettings()
+
+  if (appStore.cachedPublicSettings) {
+    appStore.cachedPublicSettings = {
+      ...appStore.cachedPublicSettings,
+      site_name: RELAY_SITE_NAME,
+      site_logo: RELAY_SITE_LOGO,
+      api_base_url: RELAY_API_BASE_URL,
+    }
+  }
+
+  if (window.__APP_CONFIG__) {
+    window.__APP_CONFIG__ = {
+      ...window.__APP_CONFIG__,
+      site_name: RELAY_SITE_NAME,
+      site_logo: RELAY_SITE_LOGO,
+      api_base_url: RELAY_API_BASE_URL,
+    }
+  }
+
+  appStore.siteName = RELAY_SITE_NAME
+  appStore.siteLogo = RELAY_SITE_LOGO
+  appStore.apiBaseUrl = RELAY_API_BASE_URL
+  appStore.publicSettingsLoaded = true
+}
+
 function initIOSViewportZoomFix() {
   // iOS Safari 在输入框字号小于 16px 时聚焦会自动放大页面，且失焦后不会恢复。
   // 限制 maximum-scale 可阻止该行为；iOS 10+ 用户仍可双指手动缩放，不影响可访问性。
@@ -43,6 +83,7 @@ async function bootstrap() {
   // This must happen after pinia is installed but before router and i18n
   const appStore = useAppStore()
   appStore.initFromInjectedConfig()
+  await applyStandaloneRelayBrand(appStore)
 
   // Set document title immediately after config is loaded
   if (appStore.siteName && appStore.siteName !== 'Sub2API') {
