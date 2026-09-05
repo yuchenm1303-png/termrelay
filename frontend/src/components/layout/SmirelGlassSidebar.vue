@@ -70,14 +70,6 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 
-interface NavItem {
-  path: string
-  label: string
-  hint: string
-  index: string
-  enabled?: boolean
-}
-
 const route = useRoute()
 const { locale } = useI18n()
 const appStore = useAppStore()
