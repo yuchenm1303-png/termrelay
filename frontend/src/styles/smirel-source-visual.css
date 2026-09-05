@@ -1,10 +1,8 @@
 /*
- * Smirel source visual port.
- * Source of truth: Chen-s-Homepage/main/download/
- * Values are intentionally carried over from styles-v3.css,
- * portal-polish-v1/v2.css, beach-wallpaper-v1.css and usage-admin-v1.css.
- * This file adapts those existing materials to TermRelay's Vue DOM; it does
- * not introduce a separate relay design language.
+ * Smirel visual system.
+ * Source of truth: Chen-s-Homepage/main/download/.
+ * Layout may change by product surface, but material, typography, controls and
+ * interaction values stay anchored to the existing Smirel design language.
  */
 
 html.relay-standalone {
@@ -32,51 +30,24 @@ html.relay-standalone body {
   overflow-x: hidden;
   color: var(--text);
   background-color: #21313c;
-  background-image:
-    linear-gradient(180deg, rgba(4,10,16,.17), rgba(4,10,16,.28)),
-    radial-gradient(ellipse at 50% 34%, transparent 24%, rgba(3,8,14,.22) 100%),
-    url("https://smirel.com/download/wallpaper-beach-blue-v1-original.png?v=20260828-1348-original-png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: 54% center;
-  background-attachment: fixed;
   font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", "Microsoft YaHei UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-html.relay-standalone body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: rgba(4,10,16,.02);
-}
-
-/* Remove the relay-created environment. The photographic wallpaper is the material source. */
-html.relay-standalone .smg-environment {
-  display: none !important;
-}
-
-html.relay-standalone .smg-shell,
-html.relay-standalone .smg-app-grid,
-html.relay-standalone .smg-workspace,
-html.relay-standalone .smg-main,
-html.relay-standalone .smg-main-inner,
-html.relay-standalone .smv3-page,
-html.relay-standalone .smg-dashboard {
+html.relay-standalone :is(
+  .smg-shell,
+  .smg-app-grid,
+  .smg-workspace,
+  .smg-main,
+  .smg-main-inner,
+  .smg-dashboard
+) {
   background: transparent !important;
 }
 
-html.relay-standalone .smg-shell {
-  min-height: 100vh;
-}
-
+html.relay-standalone .smg-shell,
 html.relay-standalone .smg-app-grid {
   min-height: 100vh;
-  grid-template-columns: 258px minmax(0,1fr);
-  gap: 18px;
-  padding: 18px;
 }
 
 html.relay-standalone .smg-workspace {
@@ -92,17 +63,11 @@ html.relay-standalone .smg-main-inner {
   margin: 0 auto;
 }
 
-/* Exact source glass material. Keep transform off by default so Chromium can sample the wallpaper. */
+/* Exact source glass material. Persistent transforms stay off so Chromium can sample the shared backdrop. */
 html.relay-standalone :is(
   .smg-sidebar,
   .smg-topbar,
   .smg-surface,
-  .smv3-hero-card,
-  .smv3-quickstart-card,
-  .smv3-stat,
-  .smv3-toolbar,
-  .smv3-section-card,
-  .smv3-empty,
   .table-page-card,
   .table-page-surface,
   .auth-card,
@@ -120,27 +85,15 @@ html.relay-standalone :is(
   transform: none;
 }
 
-html.relay-standalone :is(
-  .smg-surface,
-  .smv3-hero-card,
-  .smv3-quickstart-card,
-  .smv3-stat,
-  .smv3-section-card
-):hover {
+html.relay-standalone .smg-surface:hover {
   transform: scale(1.01);
 }
 
-html.relay-standalone :is(
-  .smg-surface,
-  .smv3-hero-card,
-  .smv3-quickstart-card,
-  .smv3-stat,
-  .smv3-section-card
-):active {
+html.relay-standalone .smg-surface:active {
   transform: scale(.98);
 }
 
-/* Shell = the same glass, not a separate dark SaaS theme. */
+/* Workspace shell */
 html.relay-standalone .smg-sidebar {
   position: sticky;
   top: 18px;
@@ -174,12 +127,12 @@ html.relay-standalone .smg-brand-copy strong {
   font-weight: 650;
 }
 
-html.relay-standalone .smg-brand-copy small,
-html.relay-standalone .smg-sidebar-context > span,
-html.relay-standalone .smg-sidebar-context small,
-html.relay-standalone .smg-nav-section > p,
-html.relay-standalone .smg-nav-copy small,
-html.relay-standalone .smg-account small {
+html.relay-standalone :is(
+  .smg-brand-copy small,
+  .smg-nav-section > p,
+  .smg-nav-copy small,
+  .smg-account small
+) {
   color: var(--soft) !important;
 }
 
@@ -195,20 +148,6 @@ html.relay-standalone .smg-live-pill i,
 html.relay-standalone .smg-endpoint i {
   background: var(--smirel-live) !important;
   box-shadow: 0 0 10px rgba(141,240,202,.54) !important;
-}
-
-html.relay-standalone .smg-sidebar-context {
-  margin: 14px 0 12px;
-  padding: 14px;
-  border-radius: 9px;
-  background: var(--smirel-inner);
-  border: 1px solid rgba(255,255,255,.05);
-}
-
-html.relay-standalone .smg-sidebar-context strong {
-  margin-top: 5px;
-  color: rgba(255,255,255,.82);
-  font-weight: 600;
 }
 
 html.relay-standalone .smg-nav {
@@ -249,17 +188,6 @@ html.relay-standalone .smg-nav-item--active {
   border-color: rgba(255,255,255,.08) !important;
 }
 
-html.relay-standalone .smg-nav-index {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  color: rgba(255,255,255,.42);
-  background: rgba(255,255,255,.07);
-  font-size: .57rem;
-}
-
 html.relay-standalone .smg-nav-copy strong {
   color: rgba(255,255,255,.84);
   font-size: .76rem;
@@ -283,7 +211,7 @@ html.relay-standalone .smg-avatar {
   background: rgba(255,255,255,.10);
 }
 
-/* Topbar follows portal-nav/title-chip styling from the source site. */
+/* Topbar */
 html.relay-standalone .smg-topbar {
   min-height: 60px;
   margin: 0;
@@ -291,10 +219,7 @@ html.relay-standalone .smg-topbar {
 }
 
 html.relay-standalone .smg-topbar-title > div > span,
-html.relay-standalone .smv3-hero-eyebrow,
-html.relay-standalone .smg-dashboard-kicker,
-html.relay-standalone .smv3-stat-label,
-html.relay-standalone .smv3-section-head span {
+html.relay-standalone .smg-dashboard-kicker {
   color: rgba(255,255,255,.46) !important;
   font-size: .68rem;
   letter-spacing: .14em;
@@ -327,26 +252,25 @@ html.relay-standalone :is(.smg-endpoint,.smg-topbar-link,.smg-balance):hover {
   transform: translateY(-1px);
 }
 
-/* Dashboard / operations surfaces map directly to source release, account and usage cards. */
-html.relay-standalone .smg-dashboard,
-html.relay-standalone .smv3-page {
+/* User dashboard */
+html.relay-standalone .smg-dashboard {
   display: grid;
   gap: 14px;
 }
 
-html.relay-standalone :is(.smg-dashboard-hero,.smv3-dashboard-hero) {
+html.relay-standalone .smg-dashboard-hero {
   gap: 18px;
 }
 
-html.relay-standalone :is(.smg-dashboard-intro,.smv3-hero-card) {
+html.relay-standalone .smg-dashboard-intro {
   padding: 30px 32px !important;
 }
 
-html.relay-standalone :is(.smg-dashboard-quickstart,.smv3-quickstart-card) {
+html.relay-standalone .smg-dashboard-quickstart {
   padding: 26px !important;
 }
 
-html.relay-standalone :is(.smg-dashboard-intro,.smv3-hero-card) h1 {
+html.relay-standalone .smg-dashboard-intro h1 {
   margin-top: 10px;
   color: #fff;
   font-size: clamp(2.25rem, 3.7vw, 3.8rem);
@@ -355,7 +279,7 @@ html.relay-standalone :is(.smg-dashboard-intro,.smv3-hero-card) h1 {
   letter-spacing: -.045em;
 }
 
-html.relay-standalone :is(.smg-dashboard-intro,.smv3-hero-card) p {
+html.relay-standalone .smg-dashboard-intro p {
   margin-top: 14px;
   max-width: 760px;
   color: var(--muted);
@@ -363,12 +287,12 @@ html.relay-standalone :is(.smg-dashboard-intro,.smv3-hero-card) p {
   line-height: 1.72;
 }
 
-html.relay-standalone :is(.smg-dashboard-actions,.smv3-hero-actions) {
+html.relay-standalone .smg-dashboard-actions {
   gap: 8px;
   margin-top: 22px;
 }
 
-html.relay-standalone :is(.smg-button,.smv3-primary-action,.smv3-secondary-action,.btn) {
+html.relay-standalone :is(.smg-button,.btn) {
   min-height: 42px;
   padding: 0 14px;
   border: 1px solid rgba(255,255,255,.08) !important;
@@ -378,12 +302,12 @@ html.relay-standalone :is(.smg-button,.smv3-primary-action,.smv3-secondary-actio
   box-shadow: none !important;
 }
 
-html.relay-standalone :is(.smg-button,.smv3-primary-action,.smv3-secondary-action,.btn):hover {
+html.relay-standalone :is(.smg-button,.btn):hover {
   background: rgba(255,255,255,.19) !important;
   transform: translateY(-1px);
 }
 
-html.relay-standalone :is(.smg-dashboard-code,.smv3-code-block) {
+html.relay-standalone .smg-dashboard-code {
   margin-top: 14px;
   padding: 14px;
   border-radius: 9px;
@@ -394,16 +318,16 @@ html.relay-standalone :is(.smg-dashboard-code,.smv3-code-block) {
   line-height: 1.65;
 }
 
-html.relay-standalone :is(.smg-dashboard-metrics,.smv3-stat-grid) {
+html.relay-standalone .smg-dashboard-metrics {
   gap: 8px;
 }
 
-html.relay-standalone :is(.smg-metric,.smv3-stat) {
+html.relay-standalone .smg-metric {
   min-height: 94px;
   padding: 14px !important;
 }
 
-html.relay-standalone :is(.smg-metric-value,.smv3-stat-value) {
+html.relay-standalone .smg-metric-value {
   margin-top: 11px;
   color: #fff !important;
   font-size: 1.7rem !important;
@@ -413,37 +337,32 @@ html.relay-standalone :is(.smg-metric-value,.smv3-stat-value) {
   font-variant-numeric: tabular-nums;
 }
 
-html.relay-standalone :is(.smg-metric-note,.smv3-stat-note) {
+html.relay-standalone .smg-metric-note {
   margin-top: 8px;
   color: rgba(255,255,255,.50) !important;
   font-size: .62rem;
 }
 
-html.relay-standalone .smv3-toolbar {
-  padding: 10px 12px;
-}
-
-html.relay-standalone :is(.smg-dashboard-panel,.smv3-section-card) {
+html.relay-standalone .smg-dashboard-panel {
   overflow: hidden;
 }
 
-html.relay-standalone :is(.smg-dashboard-panel-head,.smv3-section-head) {
+html.relay-standalone .smg-dashboard-panel-head {
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255,255,255,.075);
 }
 
-html.relay-standalone :is(.smg-dashboard-panel-head,.smv3-section-head) h2,
 html.relay-standalone .smg-dashboard-panel-head strong {
   color: #fff;
   font-size: .98rem;
   font-weight: 620;
 }
 
-html.relay-standalone :is(.smg-dashboard-chart-surface,.smv3-section-card > div:not(.smv3-section-head)) {
+html.relay-standalone .smg-dashboard-chart-surface {
   background: rgba(0,0,0,.08);
 }
 
-html.relay-standalone :is(.smg-dashboard-shortcut,.smv3-action-row) {
+html.relay-standalone .smg-dashboard-shortcut {
   min-height: 56px;
   padding: 11px 13px;
   border-radius: 9px;
@@ -452,16 +371,16 @@ html.relay-standalone :is(.smg-dashboard-shortcut,.smv3-action-row) {
   border: 1px solid rgba(255,255,255,.05);
 }
 
-html.relay-standalone :is(.smg-dashboard-shortcut,.smv3-action-row):hover {
+html.relay-standalone .smg-dashboard-shortcut:hover {
   background: rgba(255,255,255,.08);
   transform: translateX(2px);
 }
 
-html.relay-standalone :is(.smg-dashboard-shortcut,.smv3-action-row) span {
+html.relay-standalone .smg-dashboard-shortcut span {
   color: rgba(255,255,255,.48) !important;
 }
 
-/* Source form controls. */
+/* Controls */
 html.relay-standalone :is(input,textarea,select,.select-trigger,.date-input) {
   color: #fff !important;
   background: rgba(0,0,0,.18) !important;
@@ -484,7 +403,7 @@ html.relay-standalone textarea::placeholder {
   color: rgba(255,255,255,.34) !important;
 }
 
-/* Source data surfaces / tables. */
+/* Data surfaces */
 html.relay-standalone :is(table,.table,.data-table) {
   color: rgba(255,255,255,.78);
   background: transparent !important;
@@ -511,18 +430,19 @@ html.relay-standalone :is(.badge,.pill,.status-badge,.tag) {
   color: rgba(255,255,255,.62) !important;
 }
 
-/* Keep semantic colour only where the source product uses status colour. */
 html.relay-standalone :is(.text-success,.status-success,[data-state="ok"]) {
   color: #83efc7 !important;
 }
+
 html.relay-standalone :is(.text-warning,.status-warning,[data-state="warn"]) {
   color: #ffd49a !important;
 }
+
 html.relay-standalone :is(.text-danger,.status-danger,[data-state="error"]) {
   color: #f3b279 !important;
 }
 
-/* Toast / modal vocabulary from the original page. */
+/* Toast / modal vocabulary */
 html.relay-standalone .toast,
 html.relay-standalone [role="status"].toast {
   border-radius: 999px !important;
@@ -532,7 +452,7 @@ html.relay-standalone [role="status"].toast {
   color: #fff !important;
 }
 
-/* Source cursor. */
+/* Cursor base geometry; state and workbench interactions live in smirel-source-interactions.css. */
 .smirel-source-cursor-dot,
 .smirel-source-cursor-follow {
   position: fixed;
@@ -576,6 +496,7 @@ html.relay-standalone [role="status"].toast {
     grid-template-columns: 1fr;
     padding: 12px;
   }
+
   html.relay-standalone .smg-sidebar {
     top: 12px;
     height: calc(100vh - 24px);
@@ -583,9 +504,6 @@ html.relay-standalone [role="status"].toast {
 }
 
 @media (max-width: 720px), (pointer: coarse) {
-  html.relay-standalone body {
-    background-position-x: 57%;
-  }
   .smirel-source-cursor-dot,
   .smirel-source-cursor-follow {
     display: none !important;
