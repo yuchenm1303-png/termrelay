@@ -1,0 +1,42 @@
+/* Keep the existing operations console visually isolated from the customer glass rebuild. */
+html.relay-standalone .smv3-shell {
+  --smv3-bg: #f3f6f5;
+  --smv3-bg-soft: #eaf0ee;
+  --smv3-sidebar: #0b1212;
+  --smv3-sidebar-soft: #101b1a;
+  --smv3-surface: #ffffff;
+  --smv3-surface-2: #f8faf9;
+  --smv3-border: #dce5e2;
+  --smv3-border-strong: #c9d6d2;
+  --smv3-text: #11201d;
+  --smv3-muted: #687773;
+  --smv3-faint: #93a09d;
+  --smv3-accent: #16b8a2;
+  --smv3-accent-strong: #0d8f7f;
+  --smv3-accent-soft: #dff7f2;
+  --smv3-danger: #d65c6a;
+  --smv3-warning: #b97817;
+  --smv3-shadow: 0 18px 50px rgba(25, 48, 44, .08);
+  --smv3-shadow-soft: 0 4px 18px rgba(25, 48, 44, .05);
+  background: var(--smv3-bg);
+  color: var(--smv3-text);
+}
+
+html.relay-standalone.dark .smv3-shell {
+  --smv3-bg: #090e0f;
+  --smv3-bg-soft: #0e1516;
+  --smv3-sidebar: #050909;
+  --smv3-sidebar-soft: #0c1414;
+  --smv3-surface: #111919;
+  --smv3-surface-2: #0d1414;
+  --smv3-border: #243130;
+  --smv3-border-strong: #344442;
+  --smv3-text: #eef6f4;
+  --smv3-muted: #a7b6b2;
+  --smv3-faint: #70817d;
+  --smv3-accent: #45d3bf;
+  --smv3-accent-strong: #6ae0cf;
+  --smv3-accent-soft: rgba(69, 211, 191, .12);
+  --smv3-shadow: 0 22px 60px rgba(0,0,0,.28);
+  --smv3-shadow-soft: 0 4px 22px rgba(0,0,0,.18);
+}
