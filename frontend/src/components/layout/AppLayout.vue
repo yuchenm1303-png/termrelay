@@ -1,15 +1,15 @@
 <template>
-  <div class="relay-app-shell smirel-console-shell min-h-screen">
-    <AppSidebar />
+  <div class="smv3-shell">
+    <SmirelConsoleSidebar />
 
     <div
-      class="smirel-console-workspace relative min-h-screen transition-[margin] duration-300"
-      :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
+      class="smv3-workspace"
+      :style="{ marginLeft: sidebarCollapsed ? '84px' : '264px' }"
     >
-      <AppHeader />
+      <SmirelConsoleTopbar />
 
-      <main class="smirel-page-stage">
-        <div class="smirel-page-frame">
+      <main class="smv3-main">
+        <div class="smv3-main-inner">
           <RelayAccessPanel v-if="showRelayAccessPanel" />
           <BillingAccessPanel v-if="showBillingAccessPanel" />
           <slot />
@@ -27,8 +27,8 @@ import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
-import AppSidebar from './AppSidebar.vue'
-import AppHeader from './AppHeader.vue'
+import SmirelConsoleSidebar from './SmirelConsoleSidebar.vue'
+import SmirelConsoleTopbar from './SmirelConsoleTopbar.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
@@ -44,7 +44,7 @@ const showBillingAccessPanel = computed(
 
 const { replayTour } = useOnboardingTour({
   storageKey: isAdmin.value ? 'admin_guide' : 'user_guide',
-  autoStart: true
+  autoStart: true,
 })
 
 const onboardingStore = useOnboardingStore()

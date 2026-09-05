@@ -19,13 +19,12 @@ import './styles/smirel-relay.css'
 import './styles/smirel-console-shell.css'
 import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
+import './styles/smirel-v3.css'
+import './styles/smirel-v3-pages.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
 
-  // Mark the independently hosted Smirel console without forcing a theme.
-  // Light/dark preference remains user-controlled instead of being coupled to
-  // the legacy wallpaper/glass skin.
   document.documentElement.classList.add('relay-standalone')
   applyStandaloneSmirelPreferences()
 }
@@ -33,10 +32,6 @@ function applyStandaloneRelayShell() {
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
   if (!isStandaloneSmirelFrontend()) return
 
-  // Injected settings bypass Axios, while API-loaded settings pass through the
-  // response interceptor. Normalize both paths with the same central policy so
-  // no component can observe a different brand/API endpoint depending on how
-  // the settings were loaded.
   const loadedSettings = await appStore.fetchPublicSettings()
   const sourceSettings = loadedSettings || appStore.cachedPublicSettings
   if (sourceSettings) {
@@ -52,9 +47,6 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
 }
 
 function initIOSViewportZoomFix() {
-  // iOS Safari 在输入框字号小于 16px 时聚焦会自动放大页面，且失焦后不会恢复。
-  // 限制 maximum-scale 可阻止该行为；iOS 10+ 用户仍可双指手动缩放，不影响可访问性。
-  // 仅在 iOS 设备上注入，避免影响 Android Chrome 的手动缩放能力。
   if (!isIOSDevice()) return
 
   const viewport = document.querySelector('meta[name="viewport"]')
@@ -74,7 +66,6 @@ function initThemeClass() {
 }
 
 async function bootstrap() {
-  // Apply theme class globally before app mount to keep all routes consistent.
   initThemeClass()
   applyStandaloneRelayShell()
   initIOSViewportZoomFix()
@@ -83,13 +74,10 @@ async function bootstrap() {
   const pinia = createPinia()
   app.use(pinia)
 
-  // Initialize settings from injected config BEFORE mounting (prevents flash)
-  // This must happen after pinia is installed but before router and i18n
   const appStore = useAppStore()
   appStore.initFromInjectedConfig()
   await applyStandaloneRelayBrand(appStore)
 
-  // Set document title immediately after config is loaded
   if (appStore.siteName && appStore.siteName !== 'Sub2API') {
     document.title = `${appStore.siteName} - AI API Gateway`
   }
@@ -100,7 +88,6 @@ async function bootstrap() {
   app.use(router)
   app.use(i18n)
 
-  // 等待路由器完成初始导航后再挂载，避免竞态条件导致的空白渲染
   await router.isReady()
   app.mount('#app')
 }
