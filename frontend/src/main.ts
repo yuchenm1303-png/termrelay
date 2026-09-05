@@ -15,11 +15,8 @@ import {
   SMIREL_SITE_NAME,
 } from '@/utils/smirelStandalone'
 import './style.css'
-import './styles/smirel-relay.css'
-import './styles/smirel-v3.css'
 import './styles/smirel-source-structure.css'
 import './styles/smirel-source-visual.css'
-import './styles/smirel-source-compat.css'
 import './styles/smirel-source-background.css'
 import './styles/smirel-source-home.css'
 import './styles/smirel-source-portal.css'
