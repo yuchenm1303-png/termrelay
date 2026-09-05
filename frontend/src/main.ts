@@ -15,16 +15,15 @@ import {
   SMIREL_SITE_NAME,
 } from '@/utils/smirelStandalone'
 import './style.css'
-import './styles/smirel-relay.css'
-import './styles/smirel-console-shell.css'
-import './styles/smirel-public-pages.css'
-import './styles/smirel-relay-interactions.css'
-import './styles/smirel-v3.css'
-import './styles/smirel-v3-pages.css'
-import './styles/smirel-glass-v5.css'
-import './styles/smirel-glass-pages-v5.css'
-import './styles/smirel-glass-dashboard-v5.css'
-import './styles/smirel-glass-auth-v5.css'
+import './styles/smirel-structure.css'
+import './styles/smirel-visual.css'
+import './styles/smirel-background.css'
+import './styles/smirel-home.css'
+import './styles/smirel-portal.css'
+import './styles/smirel-workspace.css'
+import './styles/smirel-workspace-density.css'
+import './styles/smirel-workspace-pages.css'
+import './styles/smirel-interactions.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return

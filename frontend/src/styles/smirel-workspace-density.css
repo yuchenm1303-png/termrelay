@@ -1,0 +1,353 @@
+/*
+ * Density and frame correction for the authenticated Smirel workbench.
+ *
+ * Root causes handled here:
+ * 1) the desktop sidebar was treated as a floating card inside the same outer
+ *    padding as the workspace, creating an unnecessary frame-inside-frame;
+ * 2) dashboard chart components already render their own legacy `.card`, so
+ *    wrapping them inside `.smw-panel` produced a second dark glass layer;
+ * 3) the top-right account chip inherited the generic stacked balance layout,
+ *    making the admin label/name oversized and vertically misaligned.
+ *
+ * Wallpaper, glass material and source interaction behaviour stay unchanged.
+ */
+
+/* Desktop shell: navigation is the left edge of the application, not a card floating inside it. */
+html.relay-standalone .smg-app-grid {
+  grid-template-columns: 212px minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 10px 0 0;
+}
+
+html.relay-standalone .smg-workspace {
+  min-height: 100vh;
+  padding: 10px 0;
+}
+
+html.relay-standalone .smg-main {
+  min-height: calc(100vh - 70px);
+  padding: 10px 0 18px;
+}
+
+html.relay-standalone .smg-sidebar {
+  top: 0;
+  height: 100vh;
+  padding: 10px 9px;
+  border-left: 0 !important;
+  border-radius: 0 14px 14px 0 !important;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-sidebar-head {
+  min-height: 54px;
+  padding-bottom: 8px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav {
+  padding-top: 0;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-section {
+  margin-top: 8px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-section > p {
+  padding: 0 7px 3px;
+  font-size: .51rem;
+  letter-spacing: .11em;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-item {
+  min-height: 34px;
+  margin: 1px 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-copy {
+  gap: 0;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-copy strong {
+  font-size: .7rem;
+  line-height: 1.12;
+}
+
+/* Admin navigation is an operational index, not a catalogue. */
+html.relay-standalone .smg-sidebar--admin .smg-nav-copy small {
+  display: none;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-nav-item--active {
+  background: rgba(255,255,255,.13) !important;
+  border-color: rgba(255,255,255,.09) !important;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-sidebar-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  padding-top: 7px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-account,
+html.relay-standalone .smg-sidebar--admin .smg-theme {
+  min-height: 34px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-account {
+  min-width: 0;
+  padding: 5px 7px;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-account > span:last-child {
+  min-width: 0;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-account strong,
+html.relay-standalone .smg-sidebar--admin .smg-account small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-avatar {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  font-size: .58rem;
+}
+
+html.relay-standalone .smg-sidebar--admin .smg-theme {
+  width: auto;
+  padding: 0 9px;
+  white-space: nowrap;
+}
+
+/* One baseline for every topbar control. The admin identity is a chip, not a two-line card. */
+html.relay-standalone .smg-topbar {
+  top: 10px;
+  min-height: 50px;
+  padding: 5px 9px;
+}
+
+html.relay-standalone .smg-topbar-title strong {
+  font-size: .88rem;
+}
+
+html.relay-standalone .smg-topbar-actions {
+  align-items: center;
+  gap: 6px;
+}
+
+html.relay-standalone :is(.smg-endpoint,.smg-topbar-link,.smg-locale,.smg-balance) {
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+html.relay-standalone .smg-balance {
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+html.relay-standalone .smg-balance > span {
+  margin: 0;
+  color: rgba(255,255,255,.48);
+  font-size: .56rem !important;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html.relay-standalone .smg-balance > strong {
+  margin: 0;
+  color: rgba(255,255,255,.86);
+  font-size: .68rem !important;
+  font-weight: 650;
+  line-height: 1;
+}
+
+html.relay-standalone .smw-dashboard {
+  gap: 10px;
+}
+
+html.relay-standalone .smw-workspace-head {
+  gap: 10px 16px;
+  padding: 13px 15px 0;
+}
+
+html.relay-standalone .smw-workspace-title-row {
+  margin-top: 2px;
+}
+
+html.relay-standalone .smw-workspace-title-row h1 {
+  font-size: clamp(1.18rem, 1.4vw, 1.48rem);
+}
+
+html.relay-standalone .smw-workspace-head__copy > p {
+  margin-top: 4px;
+  font-size: .71rem;
+}
+
+html.relay-standalone .smw-workspace-head__actions {
+  gap: 5px;
+}
+
+html.relay-standalone .smw-action {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: .65rem;
+}
+
+html.relay-standalone .smw-live-strip {
+  margin: 0 -15px;
+}
+
+html.relay-standalone .smw-live-item {
+  min-height: 40px;
+  padding: 0 12px;
+  transition: background-color .2s ease;
+}
+
+html.relay-standalone .smw-live-item:hover {
+  background: rgba(255,255,255,.045);
+}
+
+html.relay-standalone .smw-live-item span {
+  font-size: .59rem;
+}
+
+html.relay-standalone .smw-live-item strong {
+  font-size: .78rem;
+}
+
+html.relay-standalone .smw-summary-item {
+  min-height: 64px;
+  padding: 8px 10px;
+  transition: background-color .2s ease;
+}
+
+html.relay-standalone .smw-summary-item:hover {
+  background: rgba(255,255,255,.05);
+}
+
+html.relay-standalone .smw-summary-item > span {
+  color: rgba(255,255,255,.48);
+  font-size: .58rem;
+}
+
+html.relay-standalone .smw-summary-item > strong {
+  margin-top: 2px;
+  font-size: clamp(.98rem, 1.15vw, 1.18rem);
+}
+
+html.relay-standalone .smw-summary-item > small {
+  margin-top: 1px;
+  color: rgba(255,255,255,.42);
+  font-size: .54rem;
+}
+
+html.relay-standalone .smw-toolbar {
+  min-height: 42px;
+  padding: 5px 7px;
+}
+
+html.relay-standalone .smw-toolbar__filters {
+  gap: 6px;
+}
+
+html.relay-standalone .smw-primary-grid,
+html.relay-standalone .smw-secondary-grid {
+  gap: 10px;
+}
+
+html.relay-standalone .smw-panel__head {
+  min-height: 46px;
+  padding: 8px 11px;
+}
+
+html.relay-standalone .smw-panel__head h2 {
+  font-size: .82rem;
+}
+
+html.relay-standalone .smw-panel__body {
+  padding: 9px;
+}
+
+/*
+ * The two primary charts already own a legacy `.card` root. Inside the new
+ * workbench panel that root is content, not another surface. Flatten only this
+ * nested layer instead of weakening `.card` globally across the console.
+ */
+html.relay-standalone .smw-primary-grid .smw-panel__body {
+  padding: 0;
+}
+
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card {
+  margin: 0;
+  padding: 12px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card:hover,
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card:active {
+  background: transparent !important;
+  transform: none !important;
+}
+
+html.relay-standalone .smw-action-row {
+  min-height: 52px;
+  padding: 7px 9px;
+}
+
+@media (max-width: 1180px) {
+  html.relay-standalone .smg-app-grid {
+    grid-template-columns: 196px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  html.relay-standalone .smw-workspace-head,
+  html.relay-standalone .smw-summary-strip,
+  html.relay-standalone .smw-primary-grid,
+  html.relay-standalone .smw-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html.relay-standalone .smw-live-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile returns to a floating drawer; the edge-attached rail is desktop-only. */
+@media (max-width: 820px) {
+  html.relay-standalone .smg-app-grid {
+    padding: 8px;
+  }
+
+  html.relay-standalone .smg-workspace {
+    min-height: calc(100vh - 16px);
+    padding: 0;
+  }
+
+  html.relay-standalone .smg-sidebar {
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    height: auto;
+    border: 1px solid rgba(255,255,255,.085) !important;
+    border-radius: 14px !important;
+  }
+
+  html.relay-standalone .smg-topbar {
+    top: 8px;
+  }
+}

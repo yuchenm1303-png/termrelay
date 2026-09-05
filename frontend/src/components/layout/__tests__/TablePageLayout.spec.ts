@@ -7,20 +7,15 @@ import { describe, expect, it } from 'vitest'
 const componentPath = resolve(dirname(fileURLToPath(import.meta.url)), '../TablePageLayout.vue')
 const componentSource = readFileSync(componentPath, 'utf8')
 
-describe('TablePageLayout responsive table scrolling', () => {
-  it('does not disable the table horizontal scroll container in mobile mode', () => {
-    const tableWrapperBlocks = Array.from(
-      componentSource.matchAll(/([^{}]*:deep\(\.table-wrapper\)[^{}]*)\{([^{}]*)\}/g)
-    )
+describe('TablePageLayout workspace composition', () => {
+  it('uses one canonical workspace DOM for admin and user routes', () => {
+    expect(componentSource).toContain('class="smg-page"')
+    expect(componentSource).toContain('class="smg-data-scroll"')
+    expect(componentSource).not.toContain('v-if="authStore.isAdmin"')
+    expect(componentSource).not.toContain('smv3-')
+  })
 
-    expect(tableWrapperBlocks.length).toBeGreaterThan(0)
-
-    const baseBlock = tableWrapperBlocks.find(([selector]) => !selector.includes('.mobile-mode'))
-    const mobileBlocks = tableWrapperBlocks.filter(([selector]) => selector.includes('.mobile-mode'))
-
-    expect(baseBlock?.[2]).toContain('overflow-x-auto')
-    expect(mobileBlocks.every(([, , declarations]) => !declarations.includes('overflow-visible'))).toBe(
-      true
-    )
+  it('keeps the table inside the dedicated scroll container', () => {
+    expect(componentSource).toContain('<div class="smg-data-scroll"><slot name="table" /></div>')
   })
 })

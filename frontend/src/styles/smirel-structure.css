@@ -1,0 +1,446 @@
+/*
+ * Structural adapter only.
+ * No colour, material, shadow or brand decisions live here.
+ * These rules preserve the current Vue business DOM; Smirel source visuals
+ * are defined in smirel-source-visual.css.
+ */
+
+.smg-shell {
+  position: relative;
+  min-height: 100vh;
+}
+
+.smg-app-grid {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 258px minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+}
+
+.smg-workspace {
+  min-width: 0;
+  min-height: calc(100vh - 36px);
+}
+
+.smg-main {
+  min-height: calc(100vh - 92px);
+  padding: 18px 0 30px;
+}
+
+.smg-main-inner {
+  width: min(100%, 1540px);
+  margin: 0 auto;
+}
+
+.smg-sidebar {
+  position: sticky;
+  top: 18px;
+  z-index: 50;
+  display: flex;
+  height: calc(100vh - 36px);
+  min-height: 620px;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.smg-sidebar-head {
+  display: flex;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.smg-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.smg-brand-mark {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+}
+
+.smg-brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.smg-brand-copy,
+.smg-nav-copy,
+.smg-account > span:last-child,
+.smg-topbar-title > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.smg-live-pill,
+.smg-endpoint,
+.smg-topbar-link,
+.smg-balance {
+  display: inline-flex;
+  align-items: center;
+}
+
+.smg-nav {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.smg-nav-item,
+.smg-account {
+  display: flex;
+  align-items: center;
+}
+
+.smg-sidebar-foot {
+  margin-top: auto;
+}
+
+.smg-topbar {
+  position: sticky;
+  top: 18px;
+  z-index: 40;
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.smg-topbar-title,
+.smg-topbar-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.smg-balance {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.smg-mobile-menu,
+.smg-mobile-scrim {
+  display: none;
+}
+
+.smg-page,
+.smg-dashboard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.smg-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.smg-page-actions {
+  display: flex;
+  align-items: center;
+}
+
+.smg-page-filters,
+.smg-data-panel,
+.smg-dashboard-panel {
+  min-width: 0;
+}
+
+.smg-data-panel,
+.smg-dashboard-panel {
+  overflow: hidden;
+}
+
+.smg-data-scroll {
+  min-height: 320px;
+  overflow: auto;
+}
+
+.smg-dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr);
+}
+
+.smg-dashboard-intro,
+.smg-dashboard-quickstart {
+  display: flex;
+  flex-direction: column;
+}
+
+.smg-dashboard-intro {
+  justify-content: flex-end;
+}
+
+.smg-dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.smg-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.smg-dashboard-code {
+  flex: 1;
+}
+
+.smg-dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.smg-metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.smg-dashboard-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.smg-dashboard-panel-head > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.smg-dashboard-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, .6fr);
+}
+
+.smg-dashboard-empty {
+  display: grid;
+  place-items: center;
+}
+
+.smg-dashboard-recent,
+.smg-dashboard-shortcuts {
+  display: flex;
+  flex-direction: column;
+}
+
+.smg-dashboard-recent-row,
+.smg-dashboard-shortcut {
+  display: grid;
+  align-items: center;
+}
+
+.smg-dashboard-recent-row {
+  grid-template-columns: minmax(140px, 1.25fr) minmax(80px, .8fr) minmax(70px, .55fr) minmax(64px, .45fr);
+}
+
+.smg-dashboard-shortcut {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.smg-dashboard-shortcut div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.smg-auth {
+  position: relative;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.smg-auth-nav {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  width: min(100%, 1320px);
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto;
+}
+
+.smg-auth-brand,
+.smg-auth-links {
+  display: flex;
+  align-items: center;
+}
+
+.smg-auth-links > a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.smg-auth-main {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(100%, 1120px);
+  min-height: calc(100vh - 130px);
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+  align-items: stretch;
+  margin: 16px auto 0;
+}
+
+.smg-auth-story,
+.smg-auth-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.smg-auth-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.smg-auth-card-shell {
+  width: 100%;
+}
+
+.smg-shell canvas,
+.smg-shell svg {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .smg-dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .smg-dashboard-lower {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1080px) {
+  .smg-app-grid {
+    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .smg-sidebar {
+    top: 12px;
+    height: calc(100vh - 24px);
+  }
+
+  .smg-topbar {
+    top: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .smg-auth-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .smg-app-grid {
+    display: block;
+    padding: 10px;
+  }
+
+  .smg-sidebar {
+    position: fixed;
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    z-index: 80;
+    width: min(286px, calc(100vw - 38px));
+    height: auto;
+    min-height: 0;
+    transform: translateX(calc(-100% - 18px));
+    transition: transform .2s ease;
+  }
+
+  .smg-sidebar--open {
+    transform: translateX(0);
+  }
+
+  .smg-mobile-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: block;
+    border: 0;
+  }
+
+  .smg-topbar {
+    top: 10px;
+  }
+
+  .smg-mobile-menu {
+    display: grid;
+  }
+
+  .smg-main {
+    padding-top: 12px;
+  }
+
+  .smg-dashboard-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .smg-page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .smg-app-grid {
+    padding: 7px;
+  }
+
+  .smg-topbar {
+    top: 7px;
+    min-height: 54px;
+  }
+
+  .smg-main {
+    padding-bottom: 20px;
+  }
+
+  .smg-auth {
+    padding: 7px;
+  }
+
+  .smg-auth-main {
+    min-height: auto;
+    margin-top: 7px;
+  }
+
+  .smg-auth-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .smg-dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .smg-dashboard-recent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .smg-dashboard-recent-row > span:nth-of-type(1),
+  .smg-dashboard-recent-row > span:nth-of-type(3) {
+    display: none;
+  }
+}

@@ -1,23 +1,5 @@
 <template>
-  <section v-if="authStore.isAdmin" class="smv3-page">
-    <header class="smv3-page-head">
-      <div>
-        <div class="smv3-page-kicker">{{ kicker }}</div>
-        <h1 class="smv3-page-title">{{ title }}</h1>
-        <p v-if="description" class="smv3-page-description">{{ description }}</p>
-      </div>
-      <div v-if="$slots.actions" class="smv3-toolbar-actions"><slot name="actions" /></div>
-    </header>
-    <div v-if="$slots.filters" class="smv3-toolbar">
-      <div class="smv3-toolbar-filters"><slot name="filters" /></div>
-    </div>
-    <div class="smv3-panel">
-      <div class="smv3-panel-scroll"><slot name="table" /></div>
-      <div v-if="$slots.pagination" class="smv3-pagination"><slot name="pagination" /></div>
-    </div>
-  </section>
-
-  <section v-else class="smg-page">
+  <section class="smg-page">
     <header class="smg-page-head">
       <div>
         <div class="smg-page-kicker">{{ kicker }}</div>

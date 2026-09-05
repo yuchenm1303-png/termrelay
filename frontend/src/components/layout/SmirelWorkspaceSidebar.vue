@@ -1,5 +1,8 @@
 <template>
-  <aside class="smg-sidebar" :class="{ 'smg-sidebar--open': mobileOpen }">
+  <aside
+    class="smg-sidebar"
+    :class="{ 'smg-sidebar--open': mobileOpen, 'smg-sidebar--admin': isAdmin }"
+  >
     <div class="smg-sidebar-head">
       <router-link :to="homePath" class="smg-brand" @click="closeMobile">
         <span class="smg-brand-mark">
@@ -14,12 +17,6 @@
       <span class="smg-live-pill"><i></i>{{ copy.live }}</span>
     </div>
 
-    <div class="smg-sidebar-context">
-      <span>{{ copy.workspace }}</span>
-      <strong>{{ isAdmin ? copy.platformWorkspace : copy.workspaceName }}</strong>
-      <small>{{ isAdmin ? copy.platformWorkspaceHint : compactEndpoint }}</small>
-    </div>
-
     <nav class="smg-nav" :aria-label="isAdmin ? copy.operationsConsole : copy.console">
       <section v-for="section in navSections" :key="section.label" class="smg-nav-section">
         <p>{{ section.label }}</p>
@@ -31,7 +28,6 @@
           :class="{ 'smg-nav-item--active': isActive(item.path) }"
           @click="closeMobile"
         >
-          <span class="smg-nav-index">{{ item.index }}</span>
           <span class="smg-nav-copy">
             <strong>{{ item.label }}</strong>
             <small>{{ item.hint }}</small>
@@ -84,15 +80,10 @@ const mobileOpen = computed(() => appStore.mobileOpen)
 const siteName = computed(() => appStore.siteName || 'Smirel API')
 const siteLogo = computed(() => sanitizeUrl(appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
 const homePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
-const apiBase = computed(() =>
-  (settings.value?.api_base_url || appStore.apiBaseUrl || 'https://api.smirel.com/v1').trim().replace(/\/$/, ''),
-)
-const compactEndpoint = computed(() => apiBase.value.replace(/^https?:\/\//, ''))
 
 const copy = computed(() => isZh.value ? {
-  console: 'API 控制台', operationsConsole: '运营控制台', live: 'ONLINE', workspace: 'WORKSPACE', workspaceName: 'Smirel API',
-  platformWorkspace: 'Smirel 平台', platformWorkspaceHint: '客户产品与平台运营统一工作区',
-  core: '核心', observe: '用量', resources: '资源', billing: '结算', account: '账户',
+  console: 'API 控制台', operationsConsole: '运营控制台', live: 'ONLINE',
+  core: '核心', observe: '用量', resources: '资源', billing: '结算', account: '账户', selfService: 'API 自助',
   operations: '运营', routing: '路由与上游', commerce: '商业化', governance: '治理',
   dashboard: '工作台', dashboardHint: '余额与运行概览', keys: 'API Keys', keysHint: '创建与管理凭证',
   models: '模型与价格', modelsHint: '能力、价格与选择', usage: '用量与日志', usageHint: '请求、Token 与费用',
@@ -113,9 +104,8 @@ const copy = computed(() => isZh.value ? {
   settingsAdmin: '平台设置', settingsAdminHint: '全局平台配置', administrator: 'Administrator',
   darkMode: '深色', lightMode: '浅色',
 } : {
-  console: 'API Console', operationsConsole: 'Operations Console', live: 'ONLINE', workspace: 'WORKSPACE', workspaceName: 'Smirel API',
-  platformWorkspace: 'Smirel Platform', platformWorkspaceHint: 'Customer product and platform operations in one workspace',
-  core: 'Core', observe: 'Usage', resources: 'Resources', billing: 'Billing', account: 'Account',
+  console: 'API Console', operationsConsole: 'Operations Console', live: 'ONLINE',
+  core: 'Core', observe: 'Usage', resources: 'Resources', billing: 'Billing', account: 'Account', selfService: 'API Self-service',
   operations: 'Operations', routing: 'Routing & Upstream', commerce: 'Commerce', governance: 'Governance',
   dashboard: 'Workspace', dashboardHint: 'Balance and runtime overview', keys: 'API Keys', keysHint: 'Create and manage credentials',
   models: 'Models & Pricing', modelsHint: 'Capabilities, pricing and selection', usage: 'Usage & Logs', usageHint: 'Requests, tokens and spend',
@@ -145,39 +135,39 @@ const userSections = computed(() => [
   {
     label: copy.value.core,
     items: enabledItems([
-      { path: '/dashboard', label: copy.value.dashboard, hint: copy.value.dashboardHint, index: '01' },
-      { path: '/keys', label: copy.value.keys, hint: copy.value.keysHint, index: '02' },
-      { path: '/model-plaza?embedded=1', label: copy.value.models, hint: copy.value.modelsHint, index: '03', enabled: settings.value?.model_plaza_enabled !== false },
+      { path: '/dashboard', label: copy.value.dashboard, hint: copy.value.dashboardHint },
+      { path: '/keys', label: copy.value.keys, hint: copy.value.keysHint },
+      { path: '/model-plaza?embedded=1', label: copy.value.models, hint: copy.value.modelsHint, enabled: settings.value?.model_plaza_enabled !== false },
     ]),
   },
   {
     label: copy.value.observe,
     items: enabledItems([
-      { path: '/usage', label: copy.value.usage, hint: copy.value.usageHint, index: '04' },
-      { path: '/available-channels', label: copy.value.available, hint: copy.value.availableHint, index: '05', enabled: settings.value?.available_channels_enabled !== false },
-      { path: '/monitor', label: copy.value.monitor, hint: copy.value.monitorHint, index: '06', enabled: settings.value?.channel_monitor_enabled !== false },
+      { path: '/usage', label: copy.value.usage, hint: copy.value.usageHint },
+      { path: '/available-channels', label: copy.value.available, hint: copy.value.availableHint, enabled: settings.value?.available_channels_enabled !== false },
+      { path: '/monitor', label: copy.value.monitor, hint: copy.value.monitorHint, enabled: settings.value?.channel_monitor_enabled !== false },
     ]),
   },
   {
     label: copy.value.resources,
     items: [
-      { path: '/batch-image', label: copy.value.batchImage, hint: copy.value.batchImageHint, index: '07' },
+      { path: '/batch-image', label: copy.value.batchImage, hint: copy.value.batchImageHint },
     ],
   },
   {
     label: copy.value.billing,
     items: enabledItems([
-      { path: '/subscriptions', label: copy.value.plans, hint: copy.value.plansHint, index: '08' },
-      { path: '/purchase', label: copy.value.purchase, hint: copy.value.purchaseHint, index: '09', enabled: settings.value?.payment_enabled !== false },
+      { path: '/subscriptions', label: copy.value.plans, hint: copy.value.plansHint },
+      { path: '/purchase', label: copy.value.purchase, hint: copy.value.purchaseHint, enabled: settings.value?.payment_enabled !== false },
     ]),
   },
   {
     label: copy.value.account,
     items: enabledItems([
-      { path: '/orders', label: copy.value.orders, hint: copy.value.ordersHint, index: '10', enabled: settings.value?.payment_enabled !== false },
-      { path: '/redeem', label: copy.value.redeem, hint: copy.value.redeemHint, index: '11' },
-      { path: '/affiliate', label: copy.value.affiliate, hint: copy.value.affiliateHint, index: '12', enabled: settings.value?.affiliate_enabled === true },
-      { path: '/profile', label: copy.value.profile, hint: copy.value.profileHint, index: '13' },
+      { path: '/orders', label: copy.value.orders, hint: copy.value.ordersHint, enabled: settings.value?.payment_enabled !== false },
+      { path: '/redeem', label: copy.value.redeem, hint: copy.value.redeemHint },
+      { path: '/affiliate', label: copy.value.affiliate, hint: copy.value.affiliateHint, enabled: settings.value?.affiliate_enabled === true },
+      { path: '/profile', label: copy.value.profile, hint: copy.value.profileHint },
     ]),
   },
 ])
@@ -186,46 +176,60 @@ const adminSections = computed(() => [
   {
     label: copy.value.operations,
     items: [
-      { path: '/admin/dashboard', label: copy.value.adminDashboard, hint: copy.value.adminDashboardHint, index: 'A1' },
-      { path: '/admin/ops', label: copy.value.opsDashboard, hint: copy.value.opsDashboardHint, index: 'A2' },
-      { path: '/admin/users', label: copy.value.users, hint: copy.value.usersHint, index: 'A3' },
-      { path: '/admin/usage', label: copy.value.usageAdmin, hint: copy.value.usageAdminHint, index: 'A4' },
+      { path: '/admin/dashboard', label: copy.value.adminDashboard, hint: copy.value.adminDashboardHint },
+      { path: '/admin/ops', label: copy.value.opsDashboard, hint: copy.value.opsDashboardHint },
+      { path: '/admin/users', label: copy.value.users, hint: copy.value.usersHint },
+      { path: '/admin/usage', label: copy.value.usageAdmin, hint: copy.value.usageAdminHint },
     ],
   },
   {
     label: copy.value.routing,
     items: [
-      { path: '/admin/groups', label: copy.value.groups, hint: copy.value.groupsHint, index: 'R1' },
-      { path: '/admin/channels/pricing', label: copy.value.channels, hint: copy.value.channelsHint, index: 'R2' },
-      { path: '/admin/channels/monitor', label: copy.value.routeHealth, hint: copy.value.routeHealthHint, index: 'R3' },
-      { path: '/admin/accounts', label: copy.value.upstream, hint: copy.value.upstreamHint, index: 'R4' },
-      { path: '/admin/proxies', label: copy.value.proxies, hint: copy.value.proxiesHint, index: 'R5' },
+      { path: '/admin/groups', label: copy.value.groups, hint: copy.value.groupsHint },
+      { path: '/admin/channels/pricing', label: copy.value.channels, hint: copy.value.channelsHint },
+      { path: '/admin/channels/monitor', label: copy.value.routeHealth, hint: copy.value.routeHealthHint },
+      { path: '/admin/accounts', label: copy.value.upstream, hint: copy.value.upstreamHint },
+      { path: '/admin/proxies', label: copy.value.proxies, hint: copy.value.proxiesHint },
     ],
   },
   {
     label: copy.value.commerce,
     items: enabledItems([
-      { path: '/admin/subscriptions', label: copy.value.subscriptionsAdmin, hint: copy.value.subscriptionsAdminHint, index: 'C1' },
-      { path: '/admin/orders/dashboard', label: copy.value.revenue, hint: copy.value.revenueHint, index: 'C2', enabled: settings.value?.payment_enabled !== false },
-      { path: '/admin/orders', label: copy.value.orderManagement, hint: copy.value.orderManagementHint, index: 'C3', enabled: settings.value?.payment_enabled !== false },
-      { path: '/admin/orders/plans', label: copy.value.planConfig, hint: copy.value.planConfigHint, index: 'C4', enabled: settings.value?.payment_enabled !== false },
-      { path: '/admin/redeem', label: copy.value.redeemAdmin, hint: copy.value.redeemAdminHint, index: 'C5' },
-      { path: '/admin/promo-codes', label: copy.value.promo, hint: copy.value.promoHint, index: 'C6' },
+      { path: '/admin/subscriptions', label: copy.value.subscriptionsAdmin, hint: copy.value.subscriptionsAdminHint },
+      { path: '/admin/orders/dashboard', label: copy.value.revenue, hint: copy.value.revenueHint, enabled: settings.value?.payment_enabled !== false },
+      { path: '/admin/orders', label: copy.value.orderManagement, hint: copy.value.orderManagementHint, enabled: settings.value?.payment_enabled !== false },
+      { path: '/admin/orders/plans', label: copy.value.planConfig, hint: copy.value.planConfigHint, enabled: settings.value?.payment_enabled !== false },
+      { path: '/admin/redeem', label: copy.value.redeemAdmin, hint: copy.value.redeemAdminHint },
+      { path: '/admin/promo-codes', label: copy.value.promo, hint: copy.value.promoHint },
     ]),
   },
   {
     label: copy.value.governance,
     items: enabledItems([
-      { path: '/admin/announcements', label: copy.value.announcements, hint: copy.value.announcementsHint, index: 'G1' },
-      { path: '/admin/audit-logs', label: copy.value.audit, hint: copy.value.auditHint, index: 'G2' },
-      { path: '/admin/risk-control', label: copy.value.risk, hint: copy.value.riskHint, index: 'G3', enabled: settings.value?.risk_control_enabled === true },
-      { path: '/admin/settings', label: copy.value.settingsAdmin, hint: copy.value.settingsAdminHint, index: 'G4' },
+      { path: '/admin/announcements', label: copy.value.announcements, hint: copy.value.announcementsHint },
+      { path: '/admin/audit-logs', label: copy.value.audit, hint: copy.value.auditHint },
+      { path: '/admin/risk-control', label: copy.value.risk, hint: copy.value.riskHint, enabled: settings.value?.risk_control_enabled === true },
+      { path: '/admin/settings', label: copy.value.settingsAdmin, hint: copy.value.settingsAdminHint },
+    ]),
+  },
+])
+
+const adminSelfServiceSections = computed(() => [
+  {
+    label: copy.value.selfService,
+    items: enabledItems([
+      { path: '/keys', label: copy.value.keys, hint: copy.value.keysHint },
+      { path: '/model-plaza?embedded=1', label: copy.value.models, hint: copy.value.modelsHint, enabled: settings.value?.model_plaza_enabled !== false },
+      { path: '/usage', label: copy.value.usage, hint: copy.value.usageHint },
+      { path: '/monitor', label: copy.value.monitor, hint: copy.value.monitorHint, enabled: settings.value?.channel_monitor_enabled !== false },
+      { path: '/batch-image', label: copy.value.batchImage, hint: copy.value.batchImageHint },
+      { path: '/profile', label: copy.value.profile, hint: copy.value.profileHint },
     ]),
   },
 ])
 
 const navSections = computed(() => isAdmin.value
-  ? [...userSections.value, ...adminSections.value]
+  ? [...adminSections.value, ...adminSelfServiceSections.value]
   : userSections.value)
 
 const displayName = computed(() => user.value?.username || user.value?.email?.split('@')[0] || 'User')
