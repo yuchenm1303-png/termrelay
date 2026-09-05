@@ -9,6 +9,7 @@ import { isIOSDevice } from '@/utils/device'
 import './style.css'
 import './styles/smirel-relay.css'
 import './styles/smirel-console-shell.css'
+import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
 
 const RELAY_SITE_NAME = 'Smirel API'
