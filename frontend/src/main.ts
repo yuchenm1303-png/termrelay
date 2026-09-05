@@ -34,7 +34,8 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
   if (!isStandaloneRelayFrontend()) return
 
   // Load backend feature flags/auth settings first, then override only the
-  // presentation fields owned by the independently hosted relay frontend.
+  // presentation fields and customer-facing policy owned by the standalone
+  // Smirel console. Upstream-only integrations must not leak into Smirel's UI.
   await appStore.fetchPublicSettings()
 
   if (appStore.cachedPublicSettings) {
@@ -44,6 +45,7 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       site_logo: RELAY_SITE_LOGO,
       site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
+      hide_ccs_import_button: true,
       // The standalone relay owns its public homepage. A legacy backend
       // home_content value would otherwise make HomeView render the old
       // HTML/iframe before the standalone portal can ever be reached.
@@ -59,6 +61,7 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       site_logo: RELAY_SITE_LOGO,
       site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
+      hide_ccs_import_button: true,
       home_content: '',
       compact_home_enabled: false,
     }
