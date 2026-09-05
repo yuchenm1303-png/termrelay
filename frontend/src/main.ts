@@ -20,6 +20,7 @@ import './styles/smirel-console-shell.css'
 import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
 import './styles/smirel-v3.css'
+import './styles/smirel-v3-pages.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return

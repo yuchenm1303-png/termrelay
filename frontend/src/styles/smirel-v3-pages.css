@@ -1,0 +1,211 @@
+/* Smirel Console v3 — page-specific compositions. */
+.smv3-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.smv3-profile-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.smv3-profile-support {
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--smv3-accent) 18%, var(--smv3-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--smv3-accent-soft) 48%, var(--smv3-surface));
+  box-shadow: var(--smv3-shadow-soft);
+}
+
+.smv3-profile-support-label {
+  color: var(--smv3-accent-strong);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.smv3-profile-support strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--smv3-text);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.smv3-profile-support p {
+  margin: 5px 0 0;
+  color: var(--smv3-muted);
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.smv3-profile-section-label {
+  margin: 4px 2px -4px;
+  color: var(--smv3-faint);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+/* Public model catalog */
+.smv3-public-page {
+  min-height: 100vh;
+  background: var(--smv3-bg);
+  color: var(--smv3-text);
+}
+
+.smv3-public-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  height: 66px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 max(5vw, 28px);
+  border-bottom: 1px solid var(--smv3-border);
+  background: color-mix(in srgb, var(--smv3-bg) 90%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.smv3-public-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--smv3-text);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.smv3-public-brand img {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  object-fit: contain;
+}
+
+.smv3-public-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--smv3-muted);
+  font-size: 10.5px;
+}
+
+.smv3-public-nav-actions > a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 9px;
+}
+
+.smv3-public-nav-actions > a:hover {
+  background: var(--smv3-surface);
+  color: var(--smv3-text);
+}
+
+.smv3-public-main {
+  width: min(100%, 1380px);
+  margin: 0 auto;
+  padding: 50px 26px 60px;
+}
+
+.smv3-public-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr);
+  gap: 28px;
+  align-items: end;
+  padding: 12px 2px 30px;
+}
+
+.smv3-public-hero h1 {
+  max-width: 780px;
+  margin: 10px 0 0;
+  color: var(--smv3-text);
+  font-size: 38px;
+  font-weight: 730;
+  letter-spacing: -.045em;
+  line-height: 1.05;
+}
+
+.smv3-public-hero p {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--smv3-muted);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.smv3-public-hero-aside {
+  padding: 15px;
+  border: 1px solid var(--smv3-border);
+  border-radius: 14px;
+  background: var(--smv3-surface);
+  box-shadow: var(--smv3-shadow-soft);
+}
+
+.smv3-public-hero-aside span {
+  display: block;
+  color: var(--smv3-faint);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.smv3-public-hero-aside code {
+  display: block;
+  margin-top: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--smv3-text);
+  font-size: 10.5px;
+}
+
+.smv3-catalog-panel {
+  overflow: hidden;
+  border: 1px solid var(--smv3-border);
+  border-radius: 18px;
+  background: var(--smv3-surface);
+  box-shadow: var(--smv3-shadow);
+}
+
+/* Normalize old Profile/ModelPlaza leaf cards inside v3 layouts without reintroducing old page chrome. */
+html.relay-standalone .smv3-profile-grid .card,
+html.relay-standalone .smv3-catalog-panel [class*="rounded-2xl"],
+html.relay-standalone .smv3-catalog-panel [class*="rounded-xl"] {
+  border-color: var(--smv3-border) !important;
+  background: var(--smv3-surface) !important;
+  box-shadow: none !important;
+}
+
+html.relay-standalone .smv3-profile-grid .card {
+  border-radius: 14px !important;
+}
+
+html.relay-standalone .smv3-catalog-panel > * {
+  background: transparent !important;
+}
+
+@media (max-width: 960px) {
+  .smv3-profile-grid,
+  .smv3-public-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .smv3-public-nav { padding: 0 14px; }
+  .smv3-public-nav-actions > a:not(:last-of-type) { display: none; }
+  .smv3-public-main { padding: 34px 14px 42px; }
+  .smv3-public-hero h1 { font-size: 30px; }
+}
