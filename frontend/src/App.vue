@@ -5,6 +5,7 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelSourceBackground from '@/components/visual/SmirelSourceBackground.vue'
 import SmirelSourceCursor from '@/components/visual/SmirelSourceCursor.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
@@ -136,6 +137,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <SmirelSourceBackground />
   <NavigationProgress />
   <RouterView v-slot="{ Component }">
     <SmirelUtilityShell v-if="useUtilityShell">
