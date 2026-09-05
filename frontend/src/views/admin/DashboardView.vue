@@ -1,59 +1,105 @@
 <template>
   <AppLayout>
-    <section class="smv3-page">
-      <div class="smv3-dashboard-hero">
-        <article class="smv3-hero-card">
-          <div class="smv3-hero-eyebrow">SMIREL OPERATIONS</div>
-          <h1>{{ copy.heroTitle }}</h1>
-          <p>{{ copy.heroDescription }}</p>
-          <div class="smv3-hero-actions">
-            <router-link to="/admin/accounts" class="smv3-primary-action">{{ copy.upstreams }}</router-link>
-            <router-link to="/admin/groups" class="smv3-secondary-action">{{ copy.routing }}</router-link>
-            <router-link to="/admin/users" class="smv3-secondary-action">{{ copy.users }}</router-link>
+    <section class="smg-admin-dashboard">
+      <GlassSurface class="smg-admin-overview">
+        <div class="smg-admin-overview-copy">
+          <div class="smg-admin-kicker">SMIREL OPERATIONS</div>
+          <h1>{{ copy.pageTitle }}</h1>
+          <p>{{ copy.pageDescription }}</p>
+
+          <div class="smg-admin-overview-actions">
+            <router-link to="/admin/accounts" class="smg-button smg-button--primary">{{ copy.upstreams }}</router-link>
+            <router-link to="/admin/groups" class="smg-button">{{ copy.routing }}</router-link>
+            <router-link to="/admin/users" class="smg-button">{{ copy.users }}</router-link>
           </div>
-        </article>
+        </div>
 
-        <article class="smv3-quickstart-card">
-          <div class="smv3-quickstart-label">{{ copy.health }}</div>
-          <div class="smv3-code-block">
-            ACTIVE_UPSTREAMS={{ stats?.normal_accounts || 0 }}<br />
-            ERROR_UPSTREAMS={{ stats?.error_accounts || 0 }}<br />
-            ACTIVE_USERS={{ stats?.active_users || 0 }}<br />
-            RPM={{ formatCompact(stats?.rpm || 0) }}
+        <aside class="smg-admin-health">
+          <div>
+            <div class="smg-admin-health-head">
+              <span>{{ copy.health }}</span>
+              <span
+                class="smg-admin-health-badge"
+                :class="{ 'smg-admin-health-badge--warning': healthHasIssues }"
+              >
+                <i></i>{{ healthLabel }}
+              </span>
+            </div>
+
+            <dl class="smg-admin-health-list">
+              <div class="smg-admin-health-row">
+                <dt>{{ copy.healthyUpstreams }}</dt>
+                <dd>{{ formatCompact(stats?.normal_accounts) }} / {{ formatCompact(stats?.total_accounts) }}</dd>
+              </div>
+              <div class="smg-admin-health-row">
+                <dt>{{ copy.errorUpstreams }}</dt>
+                <dd :class="{ 'is-warning': healthHasIssues }">{{ formatCompact(stats?.error_accounts) }}</dd>
+              </div>
+              <div class="smg-admin-health-row">
+                <dt>{{ copy.activeUsers }}</dt>
+                <dd>{{ formatCompact(stats?.active_users) }}</dd>
+              </div>
+            </dl>
           </div>
-          <router-link to="/admin/ops" class="smv3-secondary-action" style="width:100%; margin-top:10px">{{ copy.openOps }}</router-link>
-        </article>
-      </div>
 
-      <div v-if="loading && !stats" class="smv3-empty">{{ copy.loading }}</div>
-      <div v-else class="smv3-stat-grid">
-        <article v-for="card in statCards" :key="card.label" class="smv3-stat">
-          <div class="smv3-stat-label">{{ card.label }}</div>
-          <div class="smv3-stat-value">{{ card.value }}</div>
-          <div class="smv3-stat-note">{{ card.note }}</div>
-        </article>
-      </div>
+          <router-link to="/admin/ops" class="smg-button smg-button--wide">{{ copy.openOps }}</router-link>
+        </aside>
+      </GlassSurface>
 
-      <div class="smv3-toolbar">
-        <div class="smv3-toolbar-filters" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+      <GlassSurface v-if="loading && !stats" tone="quiet" class="smg-admin-loading">
+        {{ copy.loading }}
+      </GlassSurface>
+
+      <template v-else>
+        <div class="smg-admin-primary-grid">
+          <GlassSurface v-for="card in primaryStatCards" :key="card.label" class="smg-admin-primary-stat">
+            <span class="smg-admin-stat-label">{{ card.label }}</span>
+            <strong class="smg-admin-stat-value">{{ card.value }}</strong>
+            <small class="smg-admin-stat-note">{{ card.note }}</small>
+          </GlassSurface>
+        </div>
+
+        <GlassSurface tone="quiet" class="smg-admin-secondary-strip">
+          <div v-for="card in secondaryStatCards" :key="card.label" class="smg-admin-secondary-stat">
+            <span>{{ card.label }}</span>
+            <strong>{{ card.value }}</strong>
+            <small>{{ card.note }}</small>
+          </div>
+        </GlassSurface>
+      </template>
+
+      <GlassSurface tone="quiet" class="smg-admin-analytics-head">
+        <div class="smg-admin-analytics-copy">
+          <div class="smg-admin-section-kicker">ANALYTICS</div>
+          <h2>{{ copy.analytics }}</h2>
+          <p>{{ copy.analyticsDescription }}</p>
+        </div>
+
+        <div class="smg-admin-controls">
           <DateRangePicker
             v-model:start-date="startDate"
             v-model:end-date="endDate"
             @change="onDateRangeChange"
           />
-          <div style="width:120px">
+          <div class="smg-admin-granularity">
             <Select v-model="granularity" :options="granularityOptions" @change="loadChartData" />
           </div>
+          <button class="smg-button" type="button" :disabled="chartsLoading" @click="loadDashboardStats">
+            {{ copy.refresh }}
+          </button>
         </div>
-        <button class="btn btn-secondary" type="button" :disabled="chartsLoading" @click="loadDashboardStats">
-          {{ copy.refresh }}
-        </button>
-      </div>
+      </GlassSurface>
 
-      <div class="smv3-dashboard-grid">
-        <article class="smv3-section-card" style="overflow:hidden">
-          <div class="smv3-section-head"><h2>{{ copy.modelMix }}</h2><span>{{ startDate }} → {{ endDate }}</span></div>
-          <div style="padding:14px">
+      <div class="smg-admin-analytics-grid">
+        <GlassSurface class="smg-admin-panel">
+          <div class="smg-admin-panel-head">
+            <div>
+              <div class="smg-admin-section-kicker">MODEL / SPEND</div>
+              <h2>{{ copy.modelMix }}</h2>
+            </div>
+            <span>{{ startDate }} → {{ endDate }}</span>
+          </div>
+          <div class="smg-admin-chart-panel">
             <ModelDistributionChart
               :model-stats="modelStats"
               :enable-ranking-view="true"
@@ -69,31 +115,62 @@
               @ranking-click="goToUserUsage"
             />
           </div>
-        </article>
+        </GlassSurface>
 
-        <article class="smv3-section-card" style="overflow:hidden">
-          <div class="smv3-section-head"><h2>{{ copy.tokenTrend }}</h2><span>{{ granularity }}</span></div>
-          <div style="padding:14px"><TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" /></div>
-        </article>
+        <GlassSurface class="smg-admin-panel smg-admin-token-panel">
+          <div class="smg-admin-panel-head">
+            <div>
+              <div class="smg-admin-section-kicker">TOKENS</div>
+              <h2>{{ copy.tokenTrend }}</h2>
+            </div>
+            <span>{{ granularity }}</span>
+          </div>
+          <div class="smg-admin-chart-panel">
+            <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" />
+          </div>
+        </GlassSurface>
       </div>
 
-      <article class="smv3-section-card">
-        <div class="smv3-section-head"><h2>{{ copy.userTrend }}</h2><span>TOP 12</span></div>
-        <div style="height:280px; padding:14px">
-          <div v-if="userTrendLoading" class="smv3-empty">{{ copy.loading }}</div>
-          <Line v-else-if="userTrendChartData" :data="userTrendChartData" :options="lineOptions" />
-          <div v-else class="smv3-empty">{{ copy.noData }}</div>
-        </div>
-      </article>
+      <div class="smg-admin-bottom-grid">
+        <GlassSurface class="smg-admin-panel">
+          <div class="smg-admin-panel-head">
+            <div>
+              <div class="smg-admin-section-kicker">USERS</div>
+              <h2>{{ copy.userTrend }}</h2>
+            </div>
+            <span>TOP 12</span>
+          </div>
+          <div class="smg-admin-user-chart">
+            <div v-if="userTrendLoading" class="smg-admin-empty">{{ copy.loading }}</div>
+            <Line v-else-if="userTrendChartData" :data="userTrendChartData" :options="lineOptions" />
+            <div v-else class="smg-admin-empty">{{ copy.noData }}</div>
+          </div>
+        </GlassSurface>
 
-      <article class="smv3-section-card">
-        <div class="smv3-section-head"><h2>{{ copy.actions }}</h2><span>OPERATE</span></div>
-        <div class="smv3-action-list" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:4px">
-          <router-link v-for="action in quickActions" :key="action.path" :to="action.path" class="smv3-action-row">
-            <div><strong>{{ action.title }}</strong><span>{{ action.description }}</span></div><b>→</b>
-          </router-link>
-        </div>
-      </article>
+        <GlassSurface class="smg-admin-panel">
+          <div class="smg-admin-panel-head">
+            <div>
+              <div class="smg-admin-section-kicker">OPERATE</div>
+              <h2>{{ copy.actions }}</h2>
+            </div>
+          </div>
+          <div class="smg-admin-actions-list">
+            <router-link
+              v-for="(action, index) in quickActions"
+              :key="action.path"
+              :to="action.path"
+              class="smg-admin-action"
+            >
+              <span class="smg-admin-action-index">{{ String(index + 1).padStart(2, '0') }}</span>
+              <span class="smg-admin-action-copy">
+                <strong>{{ action.title }}</strong>
+                <span>{{ action.description }}</span>
+              </span>
+              <span class="smg-admin-action-arrow">→</span>
+            </router-link>
+          </div>
+        </GlassSurface>
+      </div>
     </section>
   </AppLayout>
 </template>
@@ -112,11 +189,13 @@ import type {
   UserSpendingRankingItem,
 } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import GlassSurface from '@/components/glass/GlassSurface.vue'
 import DateRangePicker from '@/components/common/DateRangePicker.vue'
 import Select from '@/components/common/Select.vue'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
+import '@/styles/smirel-glass-admin-dashboard-v5.css'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -171,20 +250,82 @@ const granularityOptions = computed(() => [
 const copy = computed(() =>
   isZh.value
     ? {
-        heroTitle: '把用户、路由、上游资源和收入放在同一个运营视图里。',
-        heroDescription: '这是 Smirel 的内部控制面。客户侧只暴露 API 产品；这里负责资源池、调度、用户、计费和平台健康。',
-        upstreams: '上游账户', routing: '路由策略', users: '用户管理', health: 'LIVE HEALTH', openOps: '打开运行状态',
-        loading: '正在读取平台数据…', refresh: '刷新数据', modelMix: '模型与用户消费分布', tokenTrend: 'Token 趋势', userTrend: '用户调用趋势', noData: '暂无数据', actions: '运营入口',
-        apiKeys: 'API Keys', accounts: '上游账户', requests: '今日请求', newUsers: '今日新增', todayTokens: '今日 Tokens', cost: '今日成本', rpm: '当前 RPM', latency: '平均响应',
-        activeKeys: '启用密钥', healthyAccounts: '正常 / 异常', totalRequests: '累计请求', totalUsers: '累计用户', billed: '实际结算', accountCost: '上游成本', perMinute: '每分钟请求', average: '平均耗时',
+        pageTitle: '运营工作台',
+        pageDescription: '先看平台是否健康，再处理流量、成本与用户。核心状态、消费和趋势集中在同一个工作区。',
+        upstreams: '上游账户',
+        routing: '路由策略',
+        users: '用户管理',
+        health: 'LIVE HEALTH',
+        healthStable: '运行正常',
+        healthWarning: '需要关注',
+        healthyUpstreams: '健康上游',
+        errorUpstreams: '异常上游',
+        activeUsers: '活跃用户',
+        openOps: '打开运行状态',
+        loading: '正在读取平台数据…',
+        refresh: '刷新数据',
+        analytics: '流量与消费',
+        analyticsDescription: '按时间范围查看模型、Token 与用户活动，把运营判断集中在同一组数据里。',
+        modelMix: '模型与消费',
+        tokenTrend: 'Token 使用趋势',
+        userTrend: '用户调用趋势',
+        noData: '暂无数据',
+        actions: '运营入口',
+        apiKeys: 'API Keys',
+        requests: '今日请求',
+        newUsers: '今日新增',
+        todayTokens: '今日 Tokens',
+        settlement: '今日结算',
+        upstreamCost: '上游成本',
+        rpm: '当前 RPM',
+        latency: '平均响应',
+        activeKeys: '启用密钥',
+        totalRequests: '累计请求',
+        totalUsers: '累计用户',
+        settlementNote: '用户侧实际结算',
+        tokenVolume: '今日 Token 用量',
+        accountCost: '今日上游成本',
+        perMinute: '每分钟请求',
+        average: '平均耗时',
       }
     : {
-        heroTitle: 'Users, routing, upstream resources and revenue in one operations view.',
-        heroDescription: 'This is Smirel’s internal control plane. Customers see the API product; this workspace manages resource pools, routing, users, billing and platform health.',
-        upstreams: 'Upstream Accounts', routing: 'Routing Policies', users: 'Users', health: 'LIVE HEALTH', openOps: 'Open operations',
-        loading: 'Loading platform data…', refresh: 'Refresh', modelMix: 'Model & user spend mix', tokenTrend: 'Token trend', userTrend: 'User request trend', noData: 'No data', actions: 'Operations',
-        apiKeys: 'API Keys', accounts: 'Upstream accounts', requests: 'Requests today', newUsers: 'New users today', todayTokens: 'Tokens today', cost: 'Cost today', rpm: 'Current RPM', latency: 'Avg response',
-        activeKeys: 'active keys', healthyAccounts: 'healthy / error', totalRequests: 'total requests', totalUsers: 'total users', billed: 'actual billed', accountCost: 'upstream cost', perMinute: 'requests per minute', average: 'average duration',
+        pageTitle: 'Operations workspace',
+        pageDescription: 'Check platform health first, then manage traffic, cost and users. Core status, spend and trends stay in one workspace.',
+        upstreams: 'Upstream Accounts',
+        routing: 'Routing Policies',
+        users: 'Users',
+        health: 'LIVE HEALTH',
+        healthStable: 'Operational',
+        healthWarning: 'Needs attention',
+        healthyUpstreams: 'Healthy upstreams',
+        errorUpstreams: 'Upstream errors',
+        activeUsers: 'Active users',
+        openOps: 'Open operations',
+        loading: 'Loading platform data…',
+        refresh: 'Refresh',
+        analytics: 'Traffic & spend',
+        analyticsDescription: 'Review model, token and user activity across the selected time range in one operational view.',
+        modelMix: 'Model & spend mix',
+        tokenTrend: 'Token usage trend',
+        userTrend: 'User request trend',
+        noData: 'No data',
+        actions: 'Operations',
+        apiKeys: 'API Keys',
+        requests: 'Requests today',
+        newUsers: 'New users today',
+        todayTokens: 'Tokens today',
+        settlement: 'Settlement today',
+        upstreamCost: 'Upstream cost',
+        rpm: 'Current RPM',
+        latency: 'Avg response',
+        activeKeys: 'active keys',
+        totalRequests: 'total requests',
+        totalUsers: 'total users',
+        settlementNote: 'actual customer settlement',
+        tokenVolume: 'token volume today',
+        accountCost: 'upstream cost today',
+        perMinute: 'requests per minute',
+        average: 'average duration',
       },
 )
 
@@ -213,15 +354,53 @@ function formatDuration(ms: number | null | undefined): string {
   return n >= 1000 ? `${(n / 1000).toFixed(2)}s` : `${Math.round(n)}ms`
 }
 
-const statCards = computed(() => [
-  { label: copy.value.apiKeys, value: formatCompact(stats.value?.total_api_keys), note: `${formatCompact(stats.value?.active_api_keys)} ${copy.value.activeKeys}` },
-  { label: copy.value.accounts, value: formatCompact(stats.value?.total_accounts), note: `${stats.value?.normal_accounts || 0} / ${stats.value?.error_accounts || 0} ${copy.value.healthyAccounts}` },
-  { label: copy.value.requests, value: formatCompact(stats.value?.today_requests), note: `${formatCompact(stats.value?.total_requests)} ${copy.value.totalRequests}` },
-  { label: copy.value.newUsers, value: `+${formatCompact(stats.value?.today_new_users)}`, note: `${formatCompact(stats.value?.total_users)} ${copy.value.totalUsers}` },
-  { label: copy.value.todayTokens, value: formatCompact(stats.value?.today_tokens), note: `${copy.value.billed}: $${formatCost(stats.value?.today_actual_cost)}` },
-  { label: copy.value.cost, value: `$${formatCost(stats.value?.today_account_cost)}`, note: copy.value.accountCost },
-  { label: copy.value.rpm, value: formatCompact(stats.value?.rpm), note: copy.value.perMinute },
-  { label: copy.value.latency, value: formatDuration(stats.value?.average_duration_ms), note: copy.value.average },
+const healthHasIssues = computed(() => toFinite(stats.value?.error_accounts) > 0)
+const healthLabel = computed(() => healthHasIssues.value ? copy.value.healthWarning : copy.value.healthStable)
+
+const primaryStatCards = computed(() => [
+  {
+    label: copy.value.requests,
+    value: formatCompact(stats.value?.today_requests),
+    note: `${formatCompact(stats.value?.total_requests)} ${copy.value.totalRequests}`,
+  },
+  {
+    label: copy.value.settlement,
+    value: `$${formatCost(stats.value?.today_actual_cost)}`,
+    note: copy.value.settlementNote,
+  },
+  {
+    label: copy.value.todayTokens,
+    value: formatCompact(stats.value?.today_tokens),
+    note: copy.value.tokenVolume,
+  },
+  {
+    label: copy.value.latency,
+    value: formatDuration(stats.value?.average_duration_ms),
+    note: copy.value.average,
+  },
+])
+
+const secondaryStatCards = computed(() => [
+  {
+    label: copy.value.apiKeys,
+    value: formatCompact(stats.value?.total_api_keys),
+    note: `${formatCompact(stats.value?.active_api_keys)} ${copy.value.activeKeys}`,
+  },
+  {
+    label: copy.value.newUsers,
+    value: `+${formatCompact(stats.value?.today_new_users)}`,
+    note: `${formatCompact(stats.value?.total_users)} ${copy.value.totalUsers}`,
+  },
+  {
+    label: copy.value.rpm,
+    value: formatCompact(stats.value?.rpm),
+    note: copy.value.perMinute,
+  },
+  {
+    label: copy.value.upstreamCost,
+    value: `$${formatCost(stats.value?.today_account_cost)}`,
+    note: copy.value.accountCost,
+  },
 ])
 
 const quickActions = computed(() => {
@@ -231,23 +410,53 @@ const quickActions = computed(() => {
     { path: '/admin/users', title: copy.value.users, description: isZh.value ? '管理客户、额度与访问权限' : 'Manage customers, quota and access' },
     { path: '/admin/orders/dashboard', title: isZh.value ? '收入概览' : 'Revenue overview', description: isZh.value ? '查看订单和收入数据' : 'Inspect orders and revenue' },
   ]
-  if (canUseBatchImage.value) items.push({ path: '/batch-image', title: isZh.value ? '批量生图' : 'Batch image', description: isZh.value ? '打开批量生图工作流' : 'Open the batch image workflow' })
+  if (canUseBatchImage.value) {
+    items.push({
+      path: '/batch-image',
+      title: isZh.value ? '批量生图' : 'Batch image',
+      description: isZh.value ? '打开批量生图工作流' : 'Open the batch image workflow',
+    })
+  }
   return items
 })
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const chartColors = computed(() => ({ text: isDarkMode.value ? '#dce9e6' : '#465653', grid: isDarkMode.value ? '#253431' : '#e1e9e6' }))
+const chartColors = computed(() => ({
+  text: 'rgba(235, 244, 251, .68)',
+  grid: 'rgba(255, 255, 255, .07)',
+}))
+
 const lineOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: { intersect: false, mode: 'index' as const },
   plugins: {
-    legend: { position: 'top' as const, labels: { color: chartColors.value.text, usePointStyle: true, pointStyle: 'circle', padding: 15, font: { size: 10 } } },
-    tooltip: { callbacks: { label: (context: any) => `${context.dataset.label}: ${formatCompact(context.raw)}` } },
+    legend: {
+      position: 'top' as const,
+      labels: {
+        color: chartColors.value.text,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        padding: 16,
+        font: { size: 10.5 },
+      },
+    },
+    tooltip: {
+      callbacks: { label: (context: any) => `${context.dataset.label}: ${formatCompact(context.raw)}` },
+    },
   },
   scales: {
-    x: { grid: { color: chartColors.value.grid }, ticks: { color: chartColors.value.text, font: { size: 9 } } },
-    y: { grid: { color: chartColors.value.grid }, ticks: { color: chartColors.value.text, font: { size: 9 }, callback: (value: string | number) => formatCompact(Number(value)) } },
+    x: {
+      grid: { color: chartColors.value.grid },
+      ticks: { color: chartColors.value.text, font: { size: 10 } },
+    },
+    y: {
+      grid: { color: chartColors.value.grid },
+      ticks: {
+        color: chartColors.value.text,
+        font: { size: 10 },
+        callback: (value: string | number) => formatCompact(Number(value)),
+      },
+    },
   },
 }))
 
@@ -272,12 +481,22 @@ const userTrendChartData = computed(() => {
       backgroundColor: `${colors[index % colors.length]}20`,
       fill: false,
       tension: 0.3,
+      borderWidth: 1.5,
+      pointRadius: 1.75,
+      pointHoverRadius: 4,
     })),
   }
 })
 
 function goToUserUsage(item: UserSpendingRankingItem) {
-  void router.push({ path: '/admin/usage', query: { user_id: String(item.user_id), start_date: startDate.value, end_date: endDate.value } })
+  void router.push({
+    path: '/admin/usage',
+    query: {
+      user_id: String(item.user_id),
+      start_date: startDate.value,
+      end_date: endDate.value,
+    },
+  })
 }
 
 function onDateRangeChange(range: { startDate: string; endDate: string; preset: string | null }) {
@@ -323,7 +542,12 @@ async function loadUsersTrend() {
   const currentSeq = ++usersTrendLoadSeq
   userTrendLoading.value = true
   try {
-    const response = await adminAPI.dashboard.getUserUsageTrend({ start_date: startDate.value, end_date: endDate.value, granularity: granularity.value, limit: 12 })
+    const response = await adminAPI.dashboard.getUserUsageTrend({
+      start_date: startDate.value,
+      end_date: endDate.value,
+      granularity: granularity.value,
+      limit: 12,
+    })
     if (currentSeq !== usersTrendLoadSeq) return
     userTrend.value = response.trend || []
   } catch (error) {
@@ -340,7 +564,11 @@ async function loadUserSpendingRanking() {
   rankingLoading.value = true
   rankingError.value = false
   try {
-    const response = await adminAPI.dashboard.getUserSpendingRanking({ start_date: startDate.value, end_date: endDate.value, limit: rankingLimit })
+    const response = await adminAPI.dashboard.getUserSpendingRanking({
+      start_date: startDate.value,
+      end_date: endDate.value,
+      limit: rankingLimit,
+    })
     if (currentSeq !== rankingLoadSeq) return
     rankingItems.value = response.ranking || []
     rankingTotalActualCost.value = response.total_actual_cost || 0
