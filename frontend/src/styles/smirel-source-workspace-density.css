@@ -1,23 +1,27 @@
 /*
- * Density pass for the authenticated Smirel workbench.
+ * Density and frame correction for the authenticated Smirel workbench.
  *
- * This does not introduce new material or motion. It only resolves the two
- * remaining hierarchy issues visible after the workspace rebuild:
- * 1) operator navigation still read like a long customer+admin catalogue;
- * 2) summary/control chrome still occupied more visual weight than live data.
+ * Root causes handled here:
+ * 1) the desktop sidebar was treated as a floating card inside the same outer
+ *    padding as the workspace, creating an unnecessary frame-inside-frame;
+ * 2) dashboard chart components already render their own legacy `.card`, so
+ *    wrapping them inside `.smw-panel` produced a second dark glass layer;
+ * 3) the top-right account chip inherited the generic stacked balance layout,
+ *    making the admin label/name oversized and vertically misaligned.
  *
- * Glass, wallpaper, colours and card interaction stay sourced from the
- * existing Smirel visual system.
+ * Wallpaper, glass material and source interaction behaviour stay unchanged.
  */
 
+/* Desktop shell: navigation is the left edge of the application, not a card floating inside it. */
 html.relay-standalone .smg-app-grid {
   grid-template-columns: 212px minmax(0, 1fr);
   gap: 10px;
-  padding: 10px;
+  padding: 0 10px 0 0;
 }
 
 html.relay-standalone .smg-workspace {
-  min-height: calc(100vh - 20px);
+  min-height: 100vh;
+  padding: 10px 0;
 }
 
 html.relay-standalone .smg-main {
@@ -26,9 +30,11 @@ html.relay-standalone .smg-main {
 }
 
 html.relay-standalone .smg-sidebar {
-  top: 10px;
-  height: calc(100vh - 20px);
-  padding: 9px;
+  top: 0;
+  height: 100vh;
+  padding: 10px 9px;
+  border-left: 0 !important;
+  border-radius: 0 14px 14px 0 !important;
 }
 
 html.relay-standalone .smg-sidebar--admin .smg-sidebar-head {
@@ -117,6 +123,7 @@ html.relay-standalone .smg-sidebar--admin .smg-theme {
   white-space: nowrap;
 }
 
+/* One baseline for every topbar control. The admin identity is a chip, not a two-line card. */
 html.relay-standalone .smg-topbar {
   top: 10px;
   min-height: 50px;
@@ -127,9 +134,39 @@ html.relay-standalone .smg-topbar-title strong {
   font-size: .88rem;
 }
 
+html.relay-standalone .smg-topbar-actions {
+  align-items: center;
+  gap: 6px;
+}
+
 html.relay-standalone :is(.smg-endpoint,.smg-topbar-link,.smg-locale,.smg-balance) {
   min-height: 30px;
   padding: 0 8px;
+}
+
+html.relay-standalone .smg-balance {
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+html.relay-standalone .smg-balance > span {
+  margin: 0;
+  color: rgba(255,255,255,.48);
+  font-size: .56rem !important;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html.relay-standalone .smg-balance > strong {
+  margin: 0;
+  color: rgba(255,255,255,.86);
+  font-size: .68rem !important;
+  font-weight: 650;
+  line-height: 1;
 }
 
 html.relay-standalone .smw-dashboard {
@@ -239,6 +276,33 @@ html.relay-standalone .smw-panel__body {
   padding: 9px;
 }
 
+/*
+ * The two primary charts already own a legacy `.card` root. Inside the new
+ * workbench panel that root is content, not another surface. Flatten only this
+ * nested layer instead of weakening `.card` globally across the console.
+ */
+html.relay-standalone .smw-primary-grid .smw-panel__body {
+  padding: 0;
+}
+
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card {
+  margin: 0;
+  padding: 12px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card:hover,
+html.relay-standalone .smw-primary-grid .smw-panel__body > .card:active {
+  background: transparent !important;
+  transform: none !important;
+}
+
 html.relay-standalone .smw-action-row {
   min-height: 52px;
   padding: 7px 9px;
@@ -251,11 +315,6 @@ html.relay-standalone .smw-action-row {
 }
 
 @media (max-width: 900px) {
-  html.relay-standalone .smg-app-grid {
-    grid-template-columns: 1fr;
-    padding: 8px;
-  }
-
   html.relay-standalone .smw-workspace-head,
   html.relay-standalone .smw-summary-strip,
   html.relay-standalone .smw-primary-grid,
@@ -265,5 +324,30 @@ html.relay-standalone .smw-action-row {
 
   html.relay-standalone .smw-live-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile returns to a floating drawer; the edge-attached rail is desktop-only. */
+@media (max-width: 820px) {
+  html.relay-standalone .smg-app-grid {
+    padding: 8px;
+  }
+
+  html.relay-standalone .smg-workspace {
+    min-height: calc(100vh - 16px);
+    padding: 0;
+  }
+
+  html.relay-standalone .smg-sidebar {
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    height: auto;
+    border: 1px solid rgba(255,255,255,.085) !important;
+    border-radius: 14px !important;
+  }
+
+  html.relay-standalone .smg-topbar {
+    top: 8px;
   }
 }
