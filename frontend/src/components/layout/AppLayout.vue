@@ -1,6 +1,6 @@
 <template>
   <div class="relay-app-shell smirel-console-shell min-h-screen">
-    <SmirelConsoleSidebar />
+    <AppSidebar />
 
     <div
       class="smirel-console-workspace relative min-h-screen transition-[margin] duration-300"
@@ -27,7 +27,7 @@ import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
-import SmirelConsoleSidebar from './SmirelConsoleSidebar.vue'
+import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
