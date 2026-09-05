@@ -70,7 +70,7 @@
               </div>
               <span>{{ formatCompact((log.input_tokens || 0) + (log.output_tokens || 0)) }} tokens</span>
               <span>${{ formatMoney(log.actual_cost || 0, 4) }}</span>
-              <span>{{ log.status_code || 200 }}</span>
+              <span>{{ formatDuration(log.duration_ms) }}</span>
             </div>
           </div>
         </article>
@@ -202,7 +202,7 @@ const statCards = computed(() => [
   { label: copy.value.tokens, value: formatCompact(stats.value?.today_tokens || 0), note: copy.value.inputOutput },
   { label: copy.value.rpm, value: formatCompact(stats.value?.rpm || 0), note: copy.value.perMinute },
   { label: copy.value.tpm, value: formatCompact(stats.value?.tpm || 0), note: copy.value.tokenRate },
-  { label: copy.value.latency, value: formatDuration(stats.value?.average_duration_ms || 0), note: copy.value.average },
+  { label: copy.value.latency, value: formatDuration(stats.value?.average_duration_ms), note: copy.value.average },
 ])
 
 const actions = computed(() => [
@@ -222,10 +222,11 @@ function formatMoney(value: number, digits: number): string {
   return Number(value || 0).toFixed(digits)
 }
 
-function formatDuration(ms: number): string {
-  if (!ms) return '—'
-  if (ms < 1000) return `${Math.round(ms)} ms`
-  return `${(ms / 1000).toFixed(2)} s`
+function formatDuration(ms: number | null | undefined): string {
+  const value = Number(ms || 0)
+  if (!value) return '—'
+  if (value < 1000) return `${Math.round(value)} ms`
+  return `${(value / 1000).toFixed(2)} s`
 }
 
 function formatTime(value: string): string {
