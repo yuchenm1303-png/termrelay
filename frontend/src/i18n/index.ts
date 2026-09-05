@@ -1,4 +1,5 @@
 import { createI18n } from 'vue-i18n'
+import { smirelLocaleOverrides } from './smirelOverrides'
 
 type LocaleCode = 'en' | 'zh'
 
@@ -50,6 +51,18 @@ export async function loadLocaleMessages(locale: LocaleCode): Promise<void> {
   const loader = localeLoaders[locale]
   const module = await loader()
   i18n.global.setLocaleMessage(locale, module.default)
+
+  // Standalone Smirel owns its product vocabulary while continuing to reuse
+  // the upstream translation catalog for every untouched string. Apply the
+  // override at locale-load time so language switches cannot restore legacy
+  // operator terminology such as groups/channels in customer-facing screens.
+  if (document.documentElement.classList.contains('relay-standalone')) {
+    i18n.global.mergeLocaleMessage(
+      locale,
+      smirelLocaleOverrides[locale] as LocaleMessages,
+    )
+  }
+
   loadedLocales.add(locale)
 }
 
