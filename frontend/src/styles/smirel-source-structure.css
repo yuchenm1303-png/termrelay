@@ -1,8 +1,8 @@
 /*
  * Structural adapter only.
  * No colour, material, shadow or brand decisions live here.
- * These rules preserve the existing Vue business DOM after the old v5 visual
- * styles are removed; Smirel source visuals are defined in smirel-source-visual.css.
+ * These rules preserve the current Vue business DOM; Smirel source visuals
+ * are defined in smirel-source-visual.css.
  */
 
 .smg-shell {
@@ -133,15 +133,13 @@
 }
 
 .smg-page,
-.smg-dashboard,
-.smg-shell .smv3-page {
+.smg-dashboard {
   display: flex;
   min-width: 0;
   flex-direction: column;
 }
 
-.smg-page-head,
-.smg-shell .smv3-page-head {
+.smg-page-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -159,13 +157,11 @@
 }
 
 .smg-data-panel,
-.smg-shell .smv3-panel,
 .smg-dashboard-panel {
   overflow: hidden;
 }
 
-.smg-data-scroll,
-.smg-shell .smv3-panel-scroll {
+.smg-data-scroll {
   min-height: 320px;
   overflow: auto;
 }
@@ -396,10 +392,7 @@
     padding-top: 12px;
   }
 
-  .smg-dashboard-hero,
-  .smg-shell .smv3-dashboard-hero,
-  .smg-shell .smv3-dashboard-grid,
-  .smg-shell .smv3-profile-grid {
+  .smg-dashboard-hero {
     grid-template-columns: 1fr !important;
   }
 
@@ -421,15 +414,6 @@
 
   .smg-main {
     padding-bottom: 20px;
-  }
-
-  .smg-shell .smv3-page-head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .smg-shell .smv3-stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
   .smg-auth {
