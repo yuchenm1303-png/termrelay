@@ -6,66 +6,48 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
+import {
+  applyStandaloneSmirelPreferences,
+  applyStandaloneSmirelPublicSettings,
+  isStandaloneSmirelFrontend,
+  SMIREL_API_BASE_URL,
+  SMIREL_SITE_LOGO,
+  SMIREL_SITE_NAME,
+} from '@/utils/smirelStandalone'
 import './style.css'
 import './styles/smirel-relay.css'
+import './styles/smirel-console-shell.css'
+import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
 
-const RELAY_SITE_NAME = 'Smirel API'
-const RELAY_SITE_LOGO = '/smirel-mark.svg'
-const RELAY_SITE_SUBTITLE = 'Unified AI API Gateway'
-const RELAY_API_BASE_URL = 'https://api.smirel.com/v1'
-
-function isStandaloneRelayFrontend() {
-  const host = window.location.hostname.toLowerCase()
-  return host === 'relay.smirel.com' || host.endsWith('.vercel.app')
-}
-
 function applyStandaloneRelayShell() {
-  if (!isStandaloneRelayFrontend()) return
+  if (!isStandaloneSmirelFrontend()) return
 
-  // The standalone relay intentionally uses the same fixed dark/glass visual
-  // language as the Smirel download portal and service monitor.
-  document.documentElement.classList.add('relay-standalone', 'dark')
-  localStorage.setItem('theme', 'dark')
+  // Mark the independently hosted Smirel console without forcing a theme.
+  // Light/dark preference remains user-controlled instead of being coupled to
+  // the legacy wallpaper/glass skin.
+  document.documentElement.classList.add('relay-standalone')
+  applyStandaloneSmirelPreferences()
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
-  if (!isStandaloneRelayFrontend()) return
+  if (!isStandaloneSmirelFrontend()) return
 
-  // Load backend feature flags/auth settings first, then override only the
-  // presentation fields owned by the independently hosted relay frontend.
-  await appStore.fetchPublicSettings()
-
-  if (appStore.cachedPublicSettings) {
-    appStore.cachedPublicSettings = {
-      ...appStore.cachedPublicSettings,
-      site_name: RELAY_SITE_NAME,
-      site_logo: RELAY_SITE_LOGO,
-      site_subtitle: RELAY_SITE_SUBTITLE,
-      api_base_url: RELAY_API_BASE_URL,
-      // The standalone relay owns its public homepage. A legacy backend
-      // home_content value would otherwise make HomeView render the old
-      // HTML/iframe before the standalone portal can ever be reached.
-      home_content: '',
-      compact_home_enabled: false,
-    }
+  // Injected settings bypass Axios, while API-loaded settings pass through the
+  // response interceptor. Normalize both paths with the same central policy so
+  // no component can observe a different brand/API endpoint depending on how
+  // the settings were loaded.
+  const loadedSettings = await appStore.fetchPublicSettings()
+  const sourceSettings = loadedSettings || appStore.cachedPublicSettings
+  if (sourceSettings) {
+    const brandedSettings = applyStandaloneSmirelPublicSettings(sourceSettings)
+    appStore.cachedPublicSettings = brandedSettings
+    window.__APP_CONFIG__ = { ...brandedSettings }
   }
 
-  if (window.__APP_CONFIG__) {
-    window.__APP_CONFIG__ = {
-      ...window.__APP_CONFIG__,
-      site_name: RELAY_SITE_NAME,
-      site_logo: RELAY_SITE_LOGO,
-      site_subtitle: RELAY_SITE_SUBTITLE,
-      api_base_url: RELAY_API_BASE_URL,
-      home_content: '',
-      compact_home_enabled: false,
-    }
-  }
-
-  appStore.siteName = RELAY_SITE_NAME
-  appStore.siteLogo = RELAY_SITE_LOGO
-  appStore.apiBaseUrl = RELAY_API_BASE_URL
+  appStore.siteName = SMIREL_SITE_NAME
+  appStore.siteLogo = SMIREL_SITE_LOGO
+  appStore.apiBaseUrl = SMIREL_API_BASE_URL
   appStore.publicSettingsLoaded = true
 }
 

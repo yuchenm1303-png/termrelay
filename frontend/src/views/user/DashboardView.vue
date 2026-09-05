@@ -103,7 +103,11 @@ import { sanitizeUrl } from '@/utils/url'
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const user = computed(() => authStore.user)
-const apiBase = computed(() => `${window.location.origin.replace(/\/$/, '')}/v1`)
+const apiBase = computed(() =>
+  appStore.cachedPublicSettings?.api_base_url
+  || appStore.apiBaseUrl
+  || `${window.location.origin.replace(/\/$/, '')}/v1`,
+)
 const docUrl = computed(() =>
   sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''),
 )

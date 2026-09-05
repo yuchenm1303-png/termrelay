@@ -1,27 +1,19 @@
 <template>
-  <div class="relay-app-shell min-h-screen bg-gray-50 dark:bg-dark-950">
-    <!-- Background Decoration -->
-    <div class="relay-console-backdrop pointer-events-none fixed inset-0 bg-mesh-gradient"></div>
-
-    <!-- Sidebar -->
+  <div class="relay-app-shell smirel-console-shell min-h-screen">
     <AppSidebar />
 
-    <!-- Main Content Area -->
     <div
-      class="relative min-h-screen transition-all duration-300"
+      class="smirel-console-workspace relative min-h-screen transition-[margin] duration-300"
       :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
     >
-      <!-- Header -->
       <AppHeader />
 
-      <!-- Primary user workflow navigation. Admin keeps the existing admin IA untouched. -->
-      <UserRelayNav v-if="!isAdmin" />
-
-      <!-- Main Content -->
-      <main class="p-4 md:p-6 lg:p-8">
-        <RelayAccessPanel v-if="showRelayAccessPanel" />
-        <BillingAccessPanel v-if="showBillingAccessPanel" />
-        <slot />
+      <main class="smirel-page-stage">
+        <div class="smirel-page-frame">
+          <RelayAccessPanel v-if="showRelayAccessPanel" />
+          <BillingAccessPanel v-if="showBillingAccessPanel" />
+          <slot />
+        </div>
       </main>
     </div>
   </div>
@@ -37,7 +29,6 @@ import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
-import UserRelayNav from './UserRelayNav.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 

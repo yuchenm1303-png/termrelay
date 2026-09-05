@@ -4,8 +4,9 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse, PublicSettings } from '@/types'
 import { getLocale } from '@/i18n'
+import { applyStandaloneSmirelPublicSettings } from '@/utils/smirelStandalone'
 import {
   ADMIN_UI_REQUEST_HEADER,
   USER_UI_REQUEST_HEADER,
@@ -119,6 +120,20 @@ apiClient.interceptors.response.use(
         })
       }
     }
+
+    // `/settings/public` is consumed both through the Pinia app store and
+    // directly by feature pages (for example API Keys). Transforming the
+    // response here makes the standalone Smirel presentation policy a single
+    // invariant instead of something callers can accidentally bypass.
+    const requestURL = String(response.config?.url || '')
+    if (
+      requestURL.includes('/settings/public')
+      && response.data
+      && typeof response.data === 'object'
+    ) {
+      response.data = applyStandaloneSmirelPublicSettings(response.data as PublicSettings)
+    }
+
     return response
   },
   async (error: AxiosError<ApiResponse<unknown>>) => {
