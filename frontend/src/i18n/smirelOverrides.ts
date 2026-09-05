@@ -36,6 +36,13 @@ export const smirelLocaleOverrides: Record<LocaleCode, MessageTree> = {
       paymentPlans: '套餐配置',
       docs: 'API 文档',
     },
+    dashboard: {
+      title: '概览',
+      welcomeMessage: '查看 API 使用、额度与服务运行概况。',
+      groupDistribution: '线路使用分布',
+      group: '线路',
+      noGroup: '未分配线路',
+    },
     keys: {
       group: 'API 路由',
       groupLabel: 'API 路由',
@@ -45,7 +52,42 @@ export const smirelLocaleOverrides: Record<LocaleCode, MessageTree> = {
       noGroup: '未选择线路',
       noGroupFound: '未找到匹配线路',
       clickToChangeGroup: '点击切换线路',
+      groupChangedSuccess: '线路切换成功',
+      failedToChangeGroup: '切换线路失败',
+      groupRequired: '请选择线路',
       currentConcurrency: '实时并发',
+      useKeyModal: {
+        noGroupTitle: '请先选择 API 路由',
+        noGroupDescription: '此 API 密钥尚未选择服务线路。请先在密钥列表中设置 API 路由，然后再查看接入配置。',
+        antigravity: {
+          description: '为 Antigravity 线路配置 API 访问。请根据使用的客户端选择对应接入方式。',
+        },
+        grok: {
+          description: '配置 Grok Build、Claude Code、Codex 或 OpenCode，让请求通过 Smirel API 转发。',
+          claudeDescription: '配置 Claude Code，让 Messages API 请求通过 Smirel API 转发。',
+          codexDescription: '配置 Codex，让 Responses API 请求通过 Smirel API 转发。',
+        },
+      },
+    },
+    availableChannels: {
+      title: '可用模型',
+      description: '查看你可以使用的 AI 模型、服务线路与价格。',
+      searchPlaceholder: '搜索模型、线路或平台...',
+      empty: '暂无可用模型线路',
+      columns: {
+        name: '服务线路',
+        description: '说明',
+        platform: '平台',
+        groups: '可用路由',
+        supportedModels: '支持模型',
+      },
+    },
+    channelStatus: {
+      title: '服务状态',
+      description: '查看服务线路的可用性、延迟和近期运行状态。',
+      searchPlaceholder: '搜索服务线路...',
+      allProviders: '全部服务商',
+      loadError: '加载服务状态失败',
     },
     onboarding: {
       admin: {
@@ -99,6 +141,13 @@ export const smirelLocaleOverrides: Record<LocaleCode, MessageTree> = {
       paymentPlans: 'Plan Configuration',
       docs: 'API Docs',
     },
+    dashboard: {
+      title: 'Overview',
+      welcomeMessage: 'Review API usage, quota and service health.',
+      groupDistribution: 'Route Usage',
+      group: 'Route',
+      noGroup: 'No route assigned',
+    },
     keys: {
       group: 'API Route',
       groupLabel: 'API Route',
@@ -108,7 +157,42 @@ export const smirelLocaleOverrides: Record<LocaleCode, MessageTree> = {
       noGroup: 'No route selected',
       noGroupFound: 'No matching routes',
       clickToChangeGroup: 'Click to change route',
+      groupChangedSuccess: 'Route changed successfully',
+      failedToChangeGroup: 'Failed to change route',
+      groupRequired: 'Please select a route',
       currentConcurrency: 'Live Concurrency',
+      useKeyModal: {
+        noGroupTitle: 'Select an API route first',
+        noGroupDescription: 'This API key has no service route yet. Select an API route in the key list before opening client setup.',
+        antigravity: {
+          description: 'Configure API access for the Antigravity route. Choose the setup that matches your client.',
+        },
+        grok: {
+          description: 'Configure Grok Build, Claude Code, Codex or OpenCode to send requests through Smirel API.',
+          claudeDescription: 'Configure Claude Code to send Messages API requests through Smirel API.',
+          codexDescription: 'Configure Codex to send Responses API requests through Smirel API.',
+        },
+      },
+    },
+    availableChannels: {
+      title: 'Available Models',
+      description: 'Browse the AI models, service routes and pricing available to your account.',
+      searchPlaceholder: 'Search models, routes or platforms...',
+      empty: 'No model routes available',
+      columns: {
+        name: 'Service Route',
+        description: 'Description',
+        platform: 'Platform',
+        groups: 'Available Routes',
+        supportedModels: 'Models',
+      },
+    },
+    channelStatus: {
+      title: 'Service Status',
+      description: 'Review availability, latency and recent health for service routes.',
+      searchPlaceholder: 'Search service routes...',
+      allProviders: 'All providers',
+      loadError: 'Failed to load service status',
     },
     onboarding: {
       admin: {
