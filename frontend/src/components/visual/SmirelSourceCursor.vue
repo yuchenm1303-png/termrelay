@@ -96,6 +96,7 @@ function installFireworks(anime: any) {
   if (!canvas || !anime) return
   const context = canvas.getContext('2d')
   if (!context) return
+  const ctx = context
 
   const colors = ['252, 146, 174', '202, 180, 190', '207, 198, 255']
 
@@ -125,17 +126,17 @@ function installFireworks(anime: any) {
       angle: anime.random(0, 360),
       endPos: randomEndPosition({ x, y }),
       draw() {
-        context.save()
-        context.translate(this.x, this.y)
-        context.rotate(this.angle * Math.PI / 180)
-        context.beginPath()
-        context.moveTo(0, -this.radius)
-        context.lineTo(this.radius * Math.sin(Math.PI / 3), this.radius * Math.cos(Math.PI / 3))
-        context.lineTo(-this.radius * Math.sin(Math.PI / 3), this.radius * Math.cos(Math.PI / 3))
-        context.closePath()
-        context.fillStyle = this.color
-        context.fill()
-        context.restore()
+        ctx.save()
+        ctx.translate(this.x, this.y)
+        ctx.rotate(this.angle * Math.PI / 180)
+        ctx.beginPath()
+        ctx.moveTo(0, -this.radius)
+        ctx.lineTo(this.radius * Math.sin(Math.PI / 3), this.radius * Math.cos(Math.PI / 3))
+        ctx.lineTo(-this.radius * Math.sin(Math.PI / 3), this.radius * Math.cos(Math.PI / 3))
+        ctx.closePath()
+        ctx.fillStyle = this.color
+        ctx.fill()
+        ctx.restore()
       },
     }
   }
@@ -149,13 +150,13 @@ function installFireworks(anime: any) {
       alpha: .5,
       lineWidth: 6,
       draw() {
-        context.globalAlpha = this.alpha
-        context.beginPath()
-        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true)
-        context.lineWidth = this.lineWidth
-        context.strokeStyle = this.color
-        context.stroke()
-        context.globalAlpha = 1
+        ctx.globalAlpha = this.alpha
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true)
+        ctx.lineWidth = this.lineWidth
+        ctx.strokeStyle = this.color
+        ctx.stroke()
+        ctx.globalAlpha = 1
       },
     }
   }
@@ -189,7 +190,7 @@ function installFireworks(anime: any) {
 
   clearAnimation = anime({
     duration: Number.POSITIVE_INFINITY,
-    update: () => context.clearRect(0, 0, canvas.width, canvas.height),
+    update: () => ctx.clearRect(0, 0, canvas.width, canvas.height),
   })
 
   fireworkMouseDown = (event: MouseEvent) => {
