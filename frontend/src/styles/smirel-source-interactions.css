@@ -38,6 +38,43 @@
   }
 }
 
+/*
+ * Workbench cards inherit the exact beach-mode interaction contract from
+ * Chen-s-Homepage/download/beach-wallpaper-v1.css: keep transform:none while
+ * idle so Chromium samples the shared wallpaper correctly, then promote only
+ * for the short hover/press interaction.
+ *
+ * This file must load after smirel-source-workspace.css because that structural
+ * layer intentionally pins the idle glass surfaces to transform:none!important.
+ */
+@media (hover: hover) and (pointer: fine) {
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ) {
+    transform: none !important;
+    transform-origin: center;
+    transition: backdrop-filter .3s, transform .3s, background-color .3s !important;
+  }
+
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ):hover {
+    transform: scale(1.01) !important;
+  }
+
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ):active {
+    transform: scale(.98) !important;
+  }
+}
+
 .smirel-source-fireworks {
   position: fixed;
   left: 0;
@@ -57,5 +94,26 @@ html:not(.relay-standalone) .smirel-source-fireworks {
   .smirel-source-cursor-follow,
   .smirel-source-fireworks {
     display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ),
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ):hover,
+  html.relay-standalone :is(
+    .smw-workspace-head,
+    .smw-summary-strip,
+    .smw-panel
+  ):active {
+    transform: none !important;
+    transition: none !important;
   }
 }
