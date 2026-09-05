@@ -1,20 +1,30 @@
 <template>
-  <div class="smv3-shell">
+  <div v-if="isAdmin" class="smv3-shell">
     <SmirelConsoleSidebar />
-
-    <div
-      class="smv3-workspace"
-      :style="{ marginLeft: sidebarCollapsed ? '84px' : '264px' }"
-    >
+    <div class="smv3-workspace" :style="{ marginLeft: sidebarCollapsed ? '84px' : '264px' }">
       <SmirelConsoleTopbar />
-
       <main class="smv3-main">
         <div class="smv3-main-inner">
-          <RelayAccessPanel v-if="showRelayAccessPanel" />
-          <BillingAccessPanel v-if="showBillingAccessPanel" />
           <slot />
         </div>
       </main>
+    </div>
+  </div>
+
+  <div v-else class="smg-shell">
+    <div class="smg-environment" aria-hidden="true"></div>
+    <div class="smg-app-grid">
+      <SmirelGlassSidebar />
+      <div class="smg-workspace">
+        <SmirelGlassTopbar />
+        <main class="smg-main">
+          <div class="smg-main-inner">
+            <RelayAccessPanel v-if="showRelayAccessPanel" />
+            <BillingAccessPanel v-if="showBillingAccessPanel" />
+            <slot />
+          </div>
+        </main>
+      </div>
     </div>
   </div>
 </template>
@@ -29,6 +39,8 @@ import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
 import SmirelConsoleSidebar from './SmirelConsoleSidebar.vue'
 import SmirelConsoleTopbar from './SmirelConsoleTopbar.vue'
+import SmirelGlassSidebar from './SmirelGlassSidebar.vue'
+import SmirelGlassTopbar from './SmirelGlassTopbar.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
