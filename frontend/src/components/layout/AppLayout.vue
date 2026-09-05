@@ -2,9 +2,9 @@
   <div class="smg-shell">
     <div class="smg-environment" aria-hidden="true"></div>
     <div class="smg-app-grid">
-      <SmirelGlassSidebar />
+      <SmirelWorkspaceSidebar />
       <div class="smg-workspace">
-        <SmirelGlassTopbar />
+        <SmirelWorkspaceTopbar />
         <main class="smg-main">
           <div class="smg-main-inner">
             <RelayAccessPanel v-if="showRelayAccessPanel" />
@@ -24,8 +24,8 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
-import SmirelGlassSidebar from './SmirelGlassSidebar.vue'
-import SmirelGlassTopbar from './SmirelGlassTopbar.vue'
+import SmirelWorkspaceSidebar from './SmirelWorkspaceSidebar.vue'
+import SmirelWorkspaceTopbar from './SmirelWorkspaceTopbar.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
