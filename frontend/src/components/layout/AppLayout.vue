@@ -1,12 +1,12 @@
 <template>
   <div class="relay-app-shell smirel-console-shell min-h-screen">
-    <AppSidebar />
+    <SmirelConsoleSidebar />
 
     <div
       class="smirel-console-workspace relative min-h-screen transition-[margin] duration-300"
       :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
     >
-      <AppHeader />
+      <SmirelConsoleHeader />
 
       <main class="smirel-page-stage">
         <div class="smirel-page-frame">
@@ -27,8 +27,8 @@ import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
-import AppSidebar from './AppSidebar.vue'
-import AppHeader from './AppHeader.vue'
+import SmirelConsoleSidebar from './SmirelConsoleSidebar.vue'
+import SmirelConsoleHeader from './SmirelConsoleHeader.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
