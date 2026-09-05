@@ -20,6 +20,7 @@
       <!-- Main Content -->
       <main class="p-4 md:p-6 lg:p-8">
         <RelayAccessPanel v-if="showRelayAccessPanel" />
+        <BillingAccessPanel v-if="showBillingAccessPanel" />
         <slot />
       </main>
     </div>
@@ -38,6 +39,7 @@ import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import UserRelayNav from './UserRelayNav.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
+import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
 const route = useRoute()
 const appStore = useAppStore()
@@ -45,6 +47,9 @@ const authStore = useAuthStore()
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 const showRelayAccessPanel = computed(() => !isAdmin.value && route.path === '/keys')
+const showBillingAccessPanel = computed(
+  () => !isAdmin.value && (route.path === '/subscriptions' || route.path === '/purchase'),
+)
 
 const { replayTour } = useOnboardingTour({
   storageKey: isAdmin.value ? 'admin_guide' : 'user_guide',
