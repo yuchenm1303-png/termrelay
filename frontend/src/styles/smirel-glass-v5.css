@@ -1,11 +1,9 @@
 /*
- * Smirel Glass v5
+ * Smirel Glass v5 — canonical authenticated console design system.
  *
- * Customer console visual system. The material model intentionally mirrors the
- * compositor-safe glass used by smirel.com/download: one continuous backdrop,
- * glass surfaces that stay on the backdrop sampling path, and darker data
- * surfaces inside the glass. Do not add persistent transforms/opacity to shell
- * ancestors or glass cards; Chromium can otherwise stop sampling the backdrop.
+ * One continuous backdrop, glass chrome/surfaces, and darker data planes.
+ * This file deliberately contains no compatibility selectors for retired
+ * Smirel console generations.
  */
 
 html.relay-standalone {
@@ -32,26 +30,6 @@ html.relay-standalone {
   --smg-radius-sm: 7px;
   --smg-shadow: 0 24px 72px rgba(1, 8, 14, .23), inset 0 1px 0 rgba(255,255,255,.035);
   --smg-shadow-soft: 0 14px 40px rgba(1, 8, 14, .14), inset 0 1px 0 rgba(255,255,255,.025);
-
-  /* Bridge legacy leaf components into the new material tokens. */
-  --smv3-bg: transparent;
-  --smv3-bg-soft: rgba(2, 11, 18, .18);
-  --smv3-sidebar: transparent;
-  --smv3-sidebar-soft: rgba(2, 11, 18, .24);
-  --smv3-surface: rgba(7, 22, 34, .42);
-  --smv3-surface-2: rgba(2, 11, 18, .28);
-  --smv3-border: rgba(255,255,255,.09);
-  --smv3-border-strong: rgba(255,255,255,.15);
-  --smv3-text: var(--smg-text);
-  --smv3-muted: var(--smg-muted);
-  --smv3-faint: var(--smg-soft);
-  --smv3-accent: var(--smg-blue);
-  --smv3-accent-strong: var(--smg-blue-strong);
-  --smv3-accent-soft: rgba(155,220,255,.10);
-  --smv3-danger: var(--smg-red);
-  --smv3-warning: var(--smg-yellow);
-  --smv3-shadow: var(--smg-shadow);
-  --smv3-shadow-soft: var(--smg-shadow-soft);
 }
 
 html.relay-standalone,
@@ -61,11 +39,9 @@ html.relay-standalone #app {
   background: #172733 !important;
 }
 
-html.relay-standalone body {
-  color: var(--smg-text);
-}
+html.relay-standalone body { color: var(--smg-text); }
 
-/* Continuous scene: this must not be transformed or filtered as a whole. */
+/* Continuous scene. Do not transform/filter this ancestor as a whole. */
 .smg-shell {
   position: relative;
   min-height: 100vh;
@@ -119,7 +95,7 @@ html.relay-standalone.dark .smg-environment {
     linear-gradient(145deg, #3b566a 0%, #294353 35%, #1c3342 66%, #142633 100%);
 }
 
-/* Customer application layout */
+/* Application shell. */
 .smg-app-grid {
   display: grid;
   min-height: 100vh;
@@ -128,33 +104,14 @@ html.relay-standalone.dark .smg-environment {
   padding: 18px;
 }
 
-.smg-workspace {
-  min-width: 0;
-  min-height: calc(100vh - 36px);
-}
+.smg-workspace { min-width: 0; min-height: calc(100vh - 36px); }
+.smg-main { min-height: calc(100vh - 92px); padding: 18px 0 30px; }
+.smg-main-inner { width: min(100%, 1540px); margin: 0 auto; }
 
-.smg-main {
-  min-height: calc(100vh - 92px);
-  padding: 18px 0 30px;
-}
-
-.smg-main-inner {
-  width: min(100%, 1540px);
-  margin: 0 auto;
-}
-
-/* Shared optical material. Default state has no transform. */
+/* Canonical optical material. */
 .smg-surface,
 .smg-sidebar,
 .smg-topbar,
-.smg-shell .smv3-panel,
-.smg-shell .smv3-toolbar,
-.smg-shell .smv3-section-card,
-.smg-shell .smv3-hero-card,
-.smg-shell .smv3-quickstart-card,
-.smg-shell .smv3-stat,
-.smg-shell .smv3-profile-support,
-.smg-shell .smv3-catalog-panel,
 .smg-shell .card {
   border: 1px solid var(--smg-line) !important;
   background: var(--smg-glass) !important;
@@ -165,16 +122,7 @@ html.relay-standalone.dark .smg-environment {
 }
 
 .smg-surface,
-.smg-shell .smv3-panel,
-.smg-shell .smv3-section-card,
-.smg-shell .smv3-hero-card,
-.smg-shell .smv3-quickstart-card,
-.smg-shell .smv3-stat,
-.smg-shell .smv3-profile-support,
-.smg-shell .smv3-catalog-panel,
-.smg-shell .card {
-  border-radius: var(--smg-radius-lg) !important;
-}
+.smg-shell .card { border-radius: var(--smg-radius-lg) !important; }
 
 .smg-surface--data {
   background: var(--smg-data) !important;
@@ -188,7 +136,7 @@ html.relay-standalone.dark .smg-environment {
   box-shadow: none !important;
 }
 
-/* Navigation glass */
+/* Sidebar. */
 .smg-sidebar {
   position: sticky;
   top: 18px;
@@ -211,13 +159,7 @@ html.relay-standalone.dark .smg-environment {
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
 
-.smg-brand {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 11px;
-}
-
+.smg-brand { display: flex; min-width: 0; align-items: center; gap: 11px; }
 .smg-brand-mark {
   display: grid;
   width: 40px;
@@ -232,7 +174,6 @@ html.relay-standalone.dark .smg-environment {
   font-size: 13px;
   font-weight: 760;
 }
-
 .smg-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
 .smg-brand-copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .smg-brand-copy strong { overflow: hidden; color: #fff; font-size: 14px; font-weight: 680; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
@@ -303,7 +244,7 @@ html.relay-standalone.dark .smg-environment {
 .smg-theme { width: 100%; margin-top: 4px; padding: 7px; border: 0; border-radius: 8px; background: transparent; color: var(--smg-soft); font-size: 9px; text-align: left; }
 .smg-theme:hover { background: rgba(255,255,255,.045); color: #fff; }
 
-/* Top bar shares the exact same backdrop. */
+/* Topbar. */
 .smg-topbar {
   position: sticky;
   top: 18px;
@@ -344,48 +285,7 @@ html.relay-standalone.dark .smg-environment {
 .smg-mobile-menu { display: none; width: 36px; height: 36px; place-items: center; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; background: var(--smg-data); }
 .smg-mobile-menu span { display: block; width: 14px; height: 1px; margin: 2px auto; background: #fff; }
 
-/* Page rhythm: remove the old detached-SaaS spacing and use one material language. */
-.smg-shell .smv3-page { display: flex; flex-direction: column; gap: 12px; }
-.smg-shell .smv3-page-head { padding: 8px 3px 12px; align-items: flex-end; }
-.smg-shell .smv3-page-kicker { color: var(--smg-soft); font-size: 8px; letter-spacing: .15em; }
-.smg-shell .smv3-page-title { color: #fff; font-size: clamp(24px, 2.5vw, 34px); font-weight: 620; letter-spacing: -.04em; }
-.smg-shell .smv3-page-description { max-width: 760px; color: var(--smg-muted); font-size: 11px; line-height: 1.65; }
-
-.smg-shell .smv3-toolbar { padding: 10px; border-radius: var(--smg-radius-lg) !important; }
-.smg-shell .smv3-panel { overflow: hidden; }
-.smg-shell .smv3-panel-scroll { min-height: 300px; }
-.smg-shell .smv3-pagination { border-top-color: rgba(255,255,255,.07); background: var(--smg-data); }
-
-/* Existing customer page compositions inherit the same material instead of keeping v3 cards. */
-.smg-shell .smv3-dashboard-hero { gap: 12px; }
-.smg-shell .smv3-hero-card,
-.smg-shell .smv3-quickstart-card { padding: 22px !important; }
-.smg-shell .smv3-hero-eyebrow,
-.smg-shell .smv3-quickstart-label { color: var(--smg-soft) !important; }
-.smg-shell .smv3-hero-card h1 { color: #fff !important; font-weight: 610 !important; }
-.smg-shell .smv3-hero-card p { color: var(--smg-muted) !important; }
-.smg-shell .smv3-code-block { border: 1px solid rgba(255,255,255,.065) !important; border-radius: var(--smg-radius-md) !important; background: var(--smg-data-strong) !important; color: rgba(239,248,255,.78) !important; }
-
-.smg-shell .smv3-stat-grid { gap: 9px; }
-.smg-shell .smv3-stat { min-height: 104px; padding: 15px !important; box-shadow: var(--smg-shadow-soft) !important; }
-.smg-shell .smv3-stat-label { color: var(--smg-soft) !important; }
-.smg-shell .smv3-stat-value { color: #fff !important; font-weight: 580 !important; }
-.smg-shell .smv3-stat-note { color: var(--smg-soft) !important; }
-.smg-shell .smv3-section-head { border-bottom-color: rgba(255,255,255,.07) !important; }
-.smg-shell .smv3-section-head h2 { color: #fff !important; }
-.smg-shell .smv3-section-head span { color: var(--smg-soft) !important; }
-.smg-shell .smv3-recent-row,
-.smg-shell .smv3-action-row { border-color: rgba(255,255,255,.055) !important; color: var(--smg-muted) !important; }
-.smg-shell .smv3-action-row:hover,
-.smg-shell .smv3-recent-row:hover { background: rgba(255,255,255,.035) !important; }
-.smg-shell .smv3-action-row strong,
-.smg-shell .smv3-recent-row strong { color: var(--smg-text) !important; }
-.smg-shell .smv3-action-row span,
-.smg-shell .smv3-recent-row span { color: var(--smg-soft) !important; }
-.smg-shell .smv3-empty { color: var(--smg-soft) !important; }
-
-/* Buttons: white/black material buttons, brand blue only as a small interaction signal. */
-.smg-shell .smv3-primary-action,
+/* Generic upstream leaf controls are normalized only inside the Glass shell. */
 .smg-shell .btn-primary,
 .smg-shell button.primary,
 .smg-shell [class*="bg-blue-6"],
@@ -395,19 +295,15 @@ html.relay-standalone.dark .smg-environment {
   color: #10202b !important;
   box-shadow: 0 8px 24px rgba(4,13,20,.12) !important;
 }
-.smg-shell .smv3-primary-action:hover,
 .smg-shell .btn-primary:hover { background: #fff !important; }
-.smg-shell .smv3-secondary-action,
 .smg-shell .btn-secondary {
   border: 1px solid rgba(255,255,255,.09) !important;
   background: var(--smg-data) !important;
   color: var(--smg-text) !important;
   box-shadow: none !important;
 }
-.smg-shell .smv3-secondary-action:hover,
 .smg-shell .btn-secondary:hover { background: var(--smg-data-hover) !important; border-color: rgba(255,255,255,.14) !important; }
 
-/* Forms/data surfaces are deliberately darker and do not add another blur layer. */
 .smg-shell input:not([type="checkbox"]):not([type="radio"]),
 .smg-shell select,
 .smg-shell textarea,
@@ -425,7 +321,6 @@ html.relay-standalone.dark .smg-environment {
 .smg-shell select:focus,
 .smg-shell textarea:focus { border-color: rgba(184,226,247,.42) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(155,220,255,.07) !important; }
 
-/* Tables are a single dense data plane inside the outer glass panel. */
 .smg-shell table,
 .smg-shell .table-wrapper,
 .smg-shell [class*="table-container"] { background: transparent !important; color: var(--smg-muted) !important; }
@@ -437,7 +332,6 @@ html.relay-standalone.dark .smg-environment {
 .smg-shell tbody tr:nth-child(even) { background: rgba(255,255,255,.014) !important; }
 .smg-shell tbody tr:hover { background: rgba(255,255,255,.035) !important; }
 
-/* Normalize common legacy utility cards only inside customer glass shell. */
 .smg-shell [class*="bg-white"],
 .smg-shell [class*="dark:bg-gray"],
 .smg-shell [class*="bg-gray-50"],
@@ -450,7 +344,6 @@ html.relay-standalone.dark .smg-environment {
 .smg-shell [class*="text-gray-5"],
 .smg-shell [class*="text-gray-4"] { color: var(--smg-soft) !important; }
 
-/* Semantic state colors stay separate from the material/brand system. */
 .smg-shell [data-state="ok"],
 .smg-shell .text-green-500,
 .smg-shell .text-green-600 { color: var(--smg-green) !important; }
@@ -464,9 +357,7 @@ html.relay-standalone.dark .smg-environment {
 .smg-mobile-scrim { display: none; }
 
 @media (hover: hover) {
-  .smg-surface:hover,
-  .smg-shell .smv3-stat:hover,
-  .smg-shell .smv3-section-card:hover {
+  .smg-surface:hover {
     border-color: rgba(255,255,255,.13) !important;
     background: var(--smg-glass-hover) !important;
   }
@@ -498,9 +389,6 @@ html.relay-standalone.dark .smg-environment {
   .smg-topbar { top: 10px; }
   .smg-mobile-menu { display: grid; }
   .smg-main { padding-top: 12px; }
-  .smg-shell .smv3-dashboard-hero,
-  .smg-shell .smv3-dashboard-grid,
-  .smg-shell .smv3-profile-grid { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 620px) {
@@ -510,8 +398,6 @@ html.relay-standalone.dark .smg-environment {
   .smg-topbar-link { display: none; }
   .smg-balance { min-width: 76px; }
   .smg-main { padding-bottom: 20px; }
-  .smg-shell .smv3-page-head { align-items: flex-start; flex-direction: column; }
-  .smg-shell .smv3-stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -524,12 +410,6 @@ html.relay-standalone.dark .smg-environment {
   .smg-sidebar,
   .smg-topbar,
   .smg-surface,
-  .smg-shell .smv3-panel,
-  .smg-shell .smv3-toolbar,
-  .smg-shell .smv3-section-card,
-  .smg-shell .smv3-hero-card,
-  .smg-shell .smv3-quickstart-card,
-  .smg-shell .smv3-stat,
   .smg-shell .card {
     -webkit-backdrop-filter: blur(16px) saturate(115%);
     backdrop-filter: blur(16px) saturate(115%);
