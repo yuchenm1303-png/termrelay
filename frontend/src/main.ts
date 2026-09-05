@@ -21,6 +21,7 @@ import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
 import './styles/smirel-v3.css'
 import './styles/smirel-v3-pages.css'
+import './styles/smirel-source-structure.css'
 import './styles/smirel-source-visual.css'
 import './styles/smirel-source-interactions.css'
 
