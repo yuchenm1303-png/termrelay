@@ -1,12 +1,12 @@
 <template>
-  <div class="flex flex-wrap items-center gap-3">
+  <div class="account-table-actions">
     <slot name="before"></slot>
-    <button @click="$emit('refresh')" :disabled="loading" class="btn btn-secondary">
+    <button @click="$emit('refresh')" :disabled="loading" class="btn btn-secondary account-action-icon">
       <Icon name="refresh" size="md" :class="[loading ? 'animate-spin' : '']" />
     </button>
     <slot name="after"></slot>
     <slot name="beforeCreate"></slot>
-    <button @click="$emit('create')" class="btn btn-primary">{{ t('admin.accounts.createAccount') }}</button>
+    <button @click="$emit('create')" class="btn btn-primary account-action-primary">{{ t('admin.accounts.createAccount') }}</button>
     <slot name="afterCreate"></slot>
   </div>
 </template>
@@ -17,6 +17,5 @@ import Icon from '@/components/icons/Icon.vue'
 
 defineProps(['loading'])
 defineEmits(['refresh', 'create'])
-
 const { t } = useI18n()
 </script>
