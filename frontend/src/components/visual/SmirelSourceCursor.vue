@@ -14,9 +14,9 @@ const fireworks = ref<HTMLCanvasElement | null>(null)
 let raf = 0
 let curr: { x: number; y: number } | null = null
 let prev: { x: number; y: number } | null = null
-let animeInstance: any = null
 let clearAnimation: any = null
 let fireworkMouseDown: ((event: MouseEvent) => void) | null = null
+let resizeFireworks: (() => void) | null = null
 
 function renderFollow() {
   raf = 0
@@ -97,10 +97,9 @@ function installFireworks(anime: any) {
   const context = canvas.getContext('2d')
   if (!context) return
 
-  animeInstance = anime
   const colors = ['252, 146, 174', '202, 180, 190', '207, 198, 255']
 
-  function resize() {
+  resizeFireworks = () => {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
     canvas.style.width = `${window.innerWidth}px`
@@ -198,9 +197,9 @@ function installFireworks(anime: any) {
     createFirework(event.clientX, event.clientY)
   }
 
-  window.addEventListener('resize', resize)
+  window.addEventListener('resize', resizeFireworks)
   document.addEventListener('mousedown', fireworkMouseDown)
-  resize()
+  resizeFireworks()
 }
 
 onMounted(() => {
@@ -223,8 +222,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onMouseDown)
   document.removeEventListener('mouseup', onMouseUp)
   if (fireworkMouseDown) document.removeEventListener('mousedown', fireworkMouseDown)
-  window.removeEventListener('resize', () => {})
+  if (resizeFireworks) window.removeEventListener('resize', resizeFireworks)
   clearAnimation?.pause?.()
-  animeInstance = null
 })
 </script>
