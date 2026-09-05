@@ -31,8 +31,8 @@ function applyStandaloneRelayShell() {
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
   if (!isStandaloneRelayFrontend()) return
 
-  // Load backend feature flags/auth settings first, then override only public
-  // presentation fields for the independently hosted relay frontend.
+  // Load backend feature flags/auth settings first, then override only the
+  // presentation fields owned by the independently hosted relay frontend.
   await appStore.fetchPublicSettings()
 
   if (appStore.cachedPublicSettings) {
@@ -42,6 +42,11 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       site_logo: RELAY_SITE_LOGO,
       site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
+      // The standalone relay owns its public homepage. A legacy backend
+      // home_content value would otherwise make HomeView render the old
+      // HTML/iframe before the standalone portal can ever be reached.
+      home_content: '',
+      compact_home_enabled: false,
     }
   }
 
@@ -52,6 +57,8 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       site_logo: RELAY_SITE_LOGO,
       site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
+      home_content: '',
+      compact_home_enabled: false,
     }
   }
 
