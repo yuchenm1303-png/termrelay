@@ -25,7 +25,6 @@ import './styles/smirel-glass-v5.css'
 import './styles/smirel-glass-pages-v5.css'
 import './styles/smirel-glass-dashboard-v5.css'
 import './styles/smirel-glass-auth-v5.css'
-import './styles/smirel-glass-admin-compat.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
