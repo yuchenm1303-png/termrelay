@@ -1,6 +1,5 @@
 <template>
   <div class="smg-shell">
-    <div class="smg-environment" aria-hidden="true"></div>
     <div class="smg-app-grid">
       <SmirelWorkspaceSidebar />
       <div class="smg-workspace">
