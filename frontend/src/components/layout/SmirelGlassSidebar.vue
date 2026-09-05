@@ -1,5 +1,8 @@
 <template>
-  <aside class="smg-sidebar" :class="{ 'smg-sidebar--open': mobileOpen }">
+  <aside
+    class="smg-sidebar"
+    :class="{ 'smg-sidebar--open': mobileOpen, 'smg-sidebar--admin': isAdmin }"
+  >
     <div class="smg-sidebar-head">
       <router-link :to="homePath" class="smg-brand" @click="closeMobile">
         <span class="smg-brand-mark">
@@ -80,7 +83,7 @@ const homePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard
 
 const copy = computed(() => isZh.value ? {
   console: 'API 控制台', operationsConsole: '运营控制台', live: 'ONLINE',
-  core: '核心', observe: '用量', resources: '资源', billing: '结算', account: '账户',
+  core: '核心', observe: '用量', resources: '资源', billing: '结算', account: '账户', selfService: 'API 自助',
   operations: '运营', routing: '路由与上游', commerce: '商业化', governance: '治理',
   dashboard: '工作台', dashboardHint: '余额与运行概览', keys: 'API Keys', keysHint: '创建与管理凭证',
   models: '模型与价格', modelsHint: '能力、价格与选择', usage: '用量与日志', usageHint: '请求、Token 与费用',
@@ -102,7 +105,7 @@ const copy = computed(() => isZh.value ? {
   darkMode: '深色', lightMode: '浅色',
 } : {
   console: 'API Console', operationsConsole: 'Operations Console', live: 'ONLINE',
-  core: 'Core', observe: 'Usage', resources: 'Resources', billing: 'Billing', account: 'Account',
+  core: 'Core', observe: 'Usage', resources: 'Resources', billing: 'Billing', account: 'Account', selfService: 'API Self-service',
   operations: 'Operations', routing: 'Routing & Upstream', commerce: 'Commerce', governance: 'Governance',
   dashboard: 'Workspace', dashboardHint: 'Balance and runtime overview', keys: 'API Keys', keysHint: 'Create and manage credentials',
   models: 'Models & Pricing', modelsHint: 'Capabilities, pricing and selection', usage: 'Usage & Logs', usageHint: 'Requests, tokens and spend',
@@ -211,8 +214,22 @@ const adminSections = computed(() => [
   },
 ])
 
+const adminSelfServiceSections = computed(() => [
+  {
+    label: copy.value.selfService,
+    items: enabledItems([
+      { path: '/keys', label: copy.value.keys, hint: copy.value.keysHint },
+      { path: '/model-plaza?embedded=1', label: copy.value.models, hint: copy.value.modelsHint, enabled: settings.value?.model_plaza_enabled !== false },
+      { path: '/usage', label: copy.value.usage, hint: copy.value.usageHint },
+      { path: '/monitor', label: copy.value.monitor, hint: copy.value.monitorHint, enabled: settings.value?.channel_monitor_enabled !== false },
+      { path: '/batch-image', label: copy.value.batchImage, hint: copy.value.batchImageHint },
+      { path: '/profile', label: copy.value.profile, hint: copy.value.profileHint },
+    ]),
+  },
+])
+
 const navSections = computed(() => isAdmin.value
-  ? [...userSections.value, ...adminSections.value]
+  ? [...adminSections.value, ...adminSelfServiceSections.value]
   : userSections.value)
 
 const displayName = computed(() => user.value?.username || user.value?.email?.split('@')[0] || 'User')
