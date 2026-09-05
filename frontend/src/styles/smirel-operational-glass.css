@@ -1,0 +1,505 @@
+/*
+ * Smirel Operational Glass v4
+ *
+ * One visual system for relay.smirel.com:
+ *   1. Environment / canvas
+ *   2. Primary glass surfaces
+ *   3. Dense data surfaces
+ *   4. Restrained interaction feedback
+ *
+ * Keep this file scoped to relay-standalone. The public Smirel marketing site
+ * and the administrator console must not inherit customer-console materials.
+ */
+
+html.relay-standalone {
+  --smv3-bg: #edf4fb;
+  --smv3-bg-soft: rgba(225, 236, 247, 0.72);
+  --smv3-sidebar: rgba(10, 19, 32, 0.88);
+  --smv3-sidebar-soft: rgba(18, 31, 48, 0.74);
+  --smv3-surface: rgba(248, 252, 255, 0.72);
+  --smv3-surface-2: rgba(238, 246, 252, 0.72);
+  --smv3-border: rgba(55, 87, 121, 0.13);
+  --smv3-border-strong: rgba(55, 103, 154, 0.24);
+  --smv3-text: #14243a;
+  --smv3-muted: #68798f;
+  --smv3-faint: #91a0b2;
+  --smv3-accent: #5ea8f2;
+  --smv3-accent-strong: #347fcf;
+  --smv3-accent-soft: rgba(80, 154, 232, 0.12);
+  --smv3-danger: #cf6478;
+  --smv3-warning: #b9832f;
+  --smv3-radius: 18px;
+  --smv3-radius-sm: 11px;
+  --smv3-shadow: 0 24px 68px rgba(28, 57, 89, 0.14);
+  --smv3-shadow-soft: 0 10px 30px rgba(31, 61, 93, 0.08);
+
+  --smv4-cyan: #65d9f2;
+  --smv4-success: #2e9c78;
+  --smv4-glass: rgba(248, 252, 255, 0.72);
+  --smv4-glass-strong: rgba(250, 253, 255, 0.84);
+  --smv4-glass-hover: rgba(250, 253, 255, 0.82);
+  --smv4-data: rgba(229, 239, 248, 0.76);
+  --smv4-data-strong: rgba(238, 246, 252, 0.9);
+  --smv4-data-hover: rgba(220, 234, 247, 0.82);
+  --smv4-hairline: rgba(255, 255, 255, 0.62);
+  --smv4-sidebar-line: rgba(255, 255, 255, 0.09);
+  --smv4-sidebar-text: #dce9f5;
+  --smv4-sidebar-muted: #8295a9;
+  --smv4-sidebar-faint: #5f748a;
+  --smv4-blur: 20px;
+  --smv4-blur-strong: 26px;
+  --smv4-transition: 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+html.relay-standalone.dark {
+  --smv3-bg: #070b12;
+  --smv3-bg-soft: rgba(7, 13, 22, 0.62);
+  --smv3-sidebar: rgba(7, 12, 20, 0.86);
+  --smv3-sidebar-soft: rgba(15, 24, 37, 0.72);
+  --smv3-surface: rgba(17, 25, 38, 0.72);
+  --smv3-surface-2: rgba(9, 15, 24, 0.62);
+  --smv3-border: rgba(255, 255, 255, 0.09);
+  --smv3-border-strong: rgba(137, 188, 241, 0.2);
+  --smv3-text: #f3f7fc;
+  --smv3-muted: #95a3b6;
+  --smv3-faint: #68778c;
+  --smv3-accent: #80b8f4;
+  --smv3-accent-strong: #9ac8fa;
+  --smv3-accent-soft: rgba(103, 169, 238, 0.1);
+  --smv3-danger: #ef8aa0;
+  --smv3-warning: #e4b466;
+  --smv3-shadow: 0 28px 76px rgba(0, 0, 0, 0.34);
+  --smv3-shadow-soft: 0 12px 34px rgba(0, 0, 0, 0.22);
+
+  --smv4-cyan: #69ddf3;
+  --smv4-success: #78dfb6;
+  --smv4-glass: rgba(17, 25, 38, 0.72);
+  --smv4-glass-strong: rgba(19, 29, 43, 0.84);
+  --smv4-glass-hover: rgba(21, 32, 47, 0.82);
+  --smv4-data: rgba(5, 10, 18, 0.52);
+  --smv4-data-strong: rgba(7, 12, 21, 0.76);
+  --smv4-data-hover: rgba(16, 26, 39, 0.72);
+  --smv4-hairline: rgba(255, 255, 255, 0.055);
+  --smv4-sidebar-line: rgba(255, 255, 255, 0.08);
+  --smv4-sidebar-text: #e2edf8;
+  --smv4-sidebar-muted: #8294a8;
+  --smv4-sidebar-faint: #596d83;
+}
+
+/* Layer 1 — one continuous environment, not per-card decorative gradients. */
+html.relay-standalone body {
+  min-height: 100vh;
+  background-color: var(--smv3-bg) !important;
+  background-image:
+    radial-gradient(circle at 78% 8%, rgba(61, 139, 232, 0.15), transparent 30rem),
+    radial-gradient(circle at 14% 86%, rgba(83, 209, 236, 0.1), transparent 33rem),
+    radial-gradient(circle at 48% 44%, rgba(116, 100, 229, 0.055), transparent 29rem),
+    linear-gradient(rgba(50, 86, 122, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(50, 86, 122, 0.026) 1px, transparent 1px),
+    linear-gradient(145deg, #edf4fb 0%, #f3f8fc 44%, #eaf2f9 100%) !important;
+  background-size: auto, auto, auto, 56px 56px, 56px 56px, auto !important;
+  background-attachment: fixed !important;
+}
+
+html.relay-standalone.dark body {
+  background-image:
+    radial-gradient(circle at 76% 5%, rgba(52, 126, 234, 0.17), transparent 31rem),
+    radial-gradient(circle at 10% 88%, rgba(54, 211, 236, 0.105), transparent 34rem),
+    radial-gradient(circle at 47% 48%, rgba(112, 90, 230, 0.07), transparent 30rem),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(145deg, #070b12 0%, #0a1019 46%, #0b1320 100%) !important;
+}
+
+html.relay-standalone .smv3-shell,
+html.relay-standalone .smv3-workspace,
+html.relay-standalone .smv3-main,
+html.relay-standalone .smv3-public-page,
+html.relay-standalone .smv3-auth {
+  background: transparent !important;
+}
+
+/* Layer 2 — primary glass surfaces. Blur belongs to large spatial surfaces only. */
+html.relay-standalone .smv3-sidebar {
+  border-right-color: var(--smv4-sidebar-line);
+  background:
+    linear-gradient(180deg, rgba(18, 30, 47, 0.9), rgba(8, 15, 26, 0.86)),
+    var(--smv3-sidebar);
+  box-shadow: 18px 0 54px rgba(8, 18, 31, 0.12), inset -1px 0 rgba(255, 255, 255, 0.025);
+  -webkit-backdrop-filter: blur(var(--smv4-blur-strong)) saturate(1.06);
+  backdrop-filter: blur(var(--smv4-blur-strong)) saturate(1.06);
+}
+
+html.relay-standalone.dark .smv3-sidebar {
+  background:
+    linear-gradient(180deg, rgba(14, 23, 36, 0.9), rgba(5, 10, 18, 0.88)),
+    var(--smv3-sidebar);
+}
+
+html.relay-standalone .smv3-sidebar-brand,
+html.relay-standalone .smv3-sidebar-footer {
+  border-color: var(--smv4-sidebar-line);
+}
+
+html.relay-standalone .smv3-brand-mark {
+  border-color: rgba(137, 190, 244, 0.2);
+  background: linear-gradient(145deg, rgba(123, 181, 244, 0.16), rgba(93, 219, 242, 0.055));
+  color: #b9dbff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.09);
+}
+
+html.relay-standalone .smv3-brand-copy a,
+html.relay-standalone .smv3-account-copy strong {
+  color: var(--smv4-sidebar-text);
+}
+
+html.relay-standalone .smv3-brand-copy span,
+html.relay-standalone .smv3-account-copy span,
+html.relay-standalone .smv3-footer-action,
+html.relay-standalone .smv3-account-chip,
+html.relay-standalone .smv3-nav-item {
+  color: var(--smv4-sidebar-muted);
+}
+
+html.relay-standalone .smv3-nav-section-label,
+html.relay-standalone .smv3-nav-meta {
+  color: var(--smv4-sidebar-faint);
+}
+
+html.relay-standalone .smv3-workspace-card {
+  border-color: rgba(126, 185, 245, 0.13);
+  background: linear-gradient(135deg, rgba(111, 177, 244, 0.09), rgba(100, 219, 241, 0.035));
+}
+
+html.relay-standalone .smv3-workspace-dot {
+  background: var(--smv4-cyan);
+  box-shadow: 0 0 14px rgba(101, 217, 242, 0.38);
+}
+
+html.relay-standalone .smv3-nav-glyph {
+  border-color: rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.03);
+  color: #778ca2;
+}
+
+html.relay-standalone .smv3-nav-item:hover,
+html.relay-standalone .smv3-footer-action:hover,
+html.relay-standalone .smv3-account-chip:hover {
+  background: rgba(255, 255, 255, 0.045);
+  color: #f1f7fd;
+}
+
+html.relay-standalone .smv3-nav-item--active {
+  border-color: rgba(117, 181, 246, 0.16);
+  background: linear-gradient(90deg, rgba(96, 160, 230, 0.14), rgba(91, 211, 235, 0.05));
+  color: #f5f9fe;
+}
+
+html.relay-standalone .smv3-nav-item--active .smv3-nav-glyph {
+  border-color: rgba(124, 188, 250, 0.2);
+  background: rgba(112, 176, 242, 0.1);
+  color: #a9d3ff;
+}
+
+html.relay-standalone .smv3-collapse-button {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(17, 29, 44, 0.9);
+  color: #8fa3b8;
+  box-shadow: 0 8px 24px rgba(2, 8, 16, 0.24);
+}
+
+html.relay-standalone .smv3-topbar,
+html.relay-standalone .smv3-public-nav,
+html.relay-standalone .smv3-auth-nav {
+  border-color: var(--smv3-border);
+  background: color-mix(in srgb, var(--smv4-glass-strong) 88%, transparent);
+  box-shadow: 0 1px rgba(255, 255, 255, 0.025);
+  -webkit-backdrop-filter: blur(var(--smv4-blur)) saturate(1.06);
+  backdrop-filter: blur(var(--smv4-blur)) saturate(1.06);
+}
+
+html.relay-standalone .smv3-hero-card,
+html.relay-standalone .smv3-quickstart-card,
+html.relay-standalone .smv3-stat,
+html.relay-standalone .smv3-section-card,
+html.relay-standalone .smv3-panel,
+html.relay-standalone .smv3-toolbar,
+html.relay-standalone .smv3-profile-support,
+html.relay-standalone .smv3-public-hero-aside,
+html.relay-standalone .smv3-catalog-panel,
+html.relay-standalone .smv3-auth-card-shell,
+html.relay-standalone .smv3-auth-fact,
+html.relay-standalone .card {
+  border-color: var(--smv3-border) !important;
+  background: linear-gradient(180deg, var(--smv4-glass-strong), var(--smv4-glass)) !important;
+  box-shadow: var(--smv3-shadow-soft), inset 0 1px var(--smv4-hairline) !important;
+  -webkit-backdrop-filter: blur(var(--smv4-blur)) saturate(1.06);
+  backdrop-filter: blur(var(--smv4-blur)) saturate(1.06);
+}
+
+html.relay-standalone .smv3-hero-card {
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(91, 165, 241, 0.13), transparent 38%),
+    radial-gradient(circle at 12% 100%, rgba(92, 217, 240, 0.075), transparent 42%),
+    linear-gradient(180deg, var(--smv4-glass-strong), var(--smv4-glass)) !important;
+}
+
+html.relay-standalone .smv3-quickstart-card,
+html.relay-standalone .smv3-catalog-panel,
+html.relay-standalone .smv3-auth-card-shell {
+  border-radius: 18px;
+}
+
+html.relay-standalone .smv3-panel,
+html.relay-standalone .smv3-section-card {
+  border-radius: 16px;
+}
+
+html.relay-standalone .smv3-stat,
+html.relay-standalone .smv3-toolbar,
+html.relay-standalone .smv3-profile-support,
+html.relay-standalone .smv3-auth-fact {
+  border-radius: 14px;
+}
+
+/* Layer 3 — dense information surfaces stay darker/more opaque than the glass shell. */
+html.relay-standalone .smv3-code-block,
+html.relay-standalone .smv3-pagination,
+html.relay-standalone .smv3-endpoint-pill,
+html.relay-standalone .smv3-topbar-account,
+html.relay-standalone .smv3-mobile-menu,
+html.relay-standalone .input,
+html.relay-standalone input[class*="input"],
+html.relay-standalone select[class*="input"],
+html.relay-standalone textarea[class*="input"] {
+  border-color: var(--smv3-border) !important;
+  background: var(--smv4-data-strong) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.relay-standalone .smv3-code-block {
+  color: var(--smv3-text);
+}
+
+html.relay-standalone .smv3-panel .table-wrapper,
+html.relay-standalone .smv3-panel table,
+html.relay-standalone .smv3-catalog-panel table {
+  background: transparent !important;
+}
+
+html.relay-standalone .smv3-panel thead,
+html.relay-standalone .smv3-catalog-panel thead {
+  background: var(--smv4-data) !important;
+}
+
+html.relay-standalone .smv3-panel th,
+html.relay-standalone .smv3-panel td,
+html.relay-standalone .smv3-catalog-panel th,
+html.relay-standalone .smv3-catalog-panel td {
+  border-color: color-mix(in srgb, var(--smv3-border) 78%, transparent) !important;
+}
+
+html.relay-standalone .smv3-panel tbody tr,
+html.relay-standalone .smv3-catalog-panel tbody tr {
+  transition: background-color var(--smv4-transition);
+}
+
+html.relay-standalone .smv3-panel tbody tr:hover,
+html.relay-standalone .smv3-catalog-panel tbody tr:hover {
+  background: var(--smv4-data-hover) !important;
+}
+
+html.relay-standalone .smv3-recent-row {
+  border-color: color-mix(in srgb, var(--smv3-border) 78%, transparent);
+}
+
+html.relay-standalone .smv3-section-head {
+  border-color: var(--smv3-border);
+  background: color-mix(in srgb, var(--smv4-data) 42%, transparent);
+}
+
+html.relay-standalone .smv3-action-row:hover {
+  background: var(--smv4-data-hover);
+}
+
+/* Typography keeps the interface operational: bright data, quiet supporting copy. */
+html.relay-standalone .smv3-page-kicker,
+html.relay-standalone .smv3-hero-eyebrow,
+html.relay-standalone .smv3-profile-support-label,
+html.relay-standalone .smv3-auth-story-kicker {
+  color: var(--smv3-accent-strong);
+}
+
+html.relay-standalone .smv3-page-title,
+html.relay-standalone .smv3-hero-card h1,
+html.relay-standalone .smv3-stat-value {
+  text-wrap: balance;
+}
+
+html.relay-standalone .smv3-endpoint-dot {
+  background: var(--smv4-success);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--smv4-success) 36%, transparent);
+}
+
+/* Layer 4 — motion is a material response, never a permanent glow show. */
+html.relay-standalone .smv3-hero-card,
+html.relay-standalone .smv3-quickstart-card,
+html.relay-standalone .smv3-stat,
+html.relay-standalone .smv3-section-card,
+html.relay-standalone .smv3-panel,
+html.relay-standalone .smv3-toolbar,
+html.relay-standalone .smv3-profile-support,
+html.relay-standalone .smv3-public-hero-aside,
+html.relay-standalone .smv3-catalog-panel,
+html.relay-standalone .smv3-auth-fact,
+html.relay-standalone .smv3-primary-action,
+html.relay-standalone .smv3-secondary-action,
+html.relay-standalone .btn,
+html.relay-standalone .smv3-topbar-link,
+html.relay-standalone .smv3-nav-item {
+  transition:
+    transform var(--smv4-transition),
+    border-color var(--smv4-transition),
+    background-color var(--smv4-transition),
+    box-shadow var(--smv4-transition),
+    color var(--smv4-transition),
+    filter var(--smv4-transition);
+}
+
+@media (hover: hover) {
+  html.relay-standalone .smv3-stat:hover,
+  html.relay-standalone .smv3-quickstart-card:hover,
+  html.relay-standalone .smv3-profile-support:hover,
+  html.relay-standalone .smv3-public-hero-aside:hover {
+    transform: translateY(-2px);
+    border-color: var(--smv3-border-strong) !important;
+    background: linear-gradient(180deg, var(--smv4-glass-hover), var(--smv4-glass)) !important;
+  }
+
+  html.relay-standalone .smv3-section-card:hover,
+  html.relay-standalone .smv3-panel:hover,
+  html.relay-standalone .smv3-catalog-panel:hover {
+    border-color: var(--smv3-border-strong) !important;
+  }
+}
+
+html.relay-standalone .smv3-primary-action,
+html.relay-standalone .btn-primary {
+  border: 1px solid rgba(113, 181, 246, 0.2) !important;
+  background: linear-gradient(135deg, #6aa8ec, #69d4ed) !important;
+  color: #071321 !important;
+  box-shadow: 0 12px 28px rgba(50, 128, 215, 0.13) !important;
+}
+
+html.relay-standalone .smv3-primary-action:hover,
+html.relay-standalone .btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.045);
+}
+
+html.relay-standalone .smv3-primary-action:active,
+html.relay-standalone .btn-primary:active {
+  transform: translateY(0) scale(0.99);
+}
+
+html.relay-standalone .smv3-secondary-action,
+html.relay-standalone .btn-secondary {
+  border-color: var(--smv3-border) !important;
+  background: var(--smv4-data) !important;
+  color: var(--smv3-text) !important;
+  box-shadow: none !important;
+}
+
+html.relay-standalone .smv3-secondary-action:hover,
+html.relay-standalone .btn-secondary:hover,
+html.relay-standalone .smv3-topbar-link:hover {
+  background: var(--smv4-data-hover) !important;
+}
+
+html.relay-standalone .input:focus,
+html.relay-standalone input:focus,
+html.relay-standalone select:focus,
+html.relay-standalone textarea:focus {
+  border-color: color-mix(in srgb, var(--smv3-accent) 52%, var(--smv3-border)) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--smv3-accent) 10%, transparent) !important;
+}
+
+html.relay-standalone .smv3-topbar-avatar,
+html.relay-standalone .smv3-avatar {
+  background: linear-gradient(145deg, #4d88c9, #337c91);
+  color: #eef9ff;
+}
+
+/* Auth belongs to the same system, but the form remains the visual anchor. */
+html.relay-standalone .smv3-auth-story {
+  border-color: var(--smv3-border);
+}
+
+html.relay-standalone .smv3-auth-story::before {
+  inset: 4% 8%;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(70, 146, 234, 0.15), transparent 38%),
+    radial-gradient(circle at 70% 68%, rgba(92, 216, 239, 0.08), transparent 40%);
+}
+
+/* Public model catalog can share the material without becoming the marketing site. */
+html.relay-standalone .smv3-public-main {
+  position: relative;
+}
+
+html.relay-standalone .smv3-public-hero-aside code {
+  color: var(--smv3-text);
+}
+
+/* Mobile keeps atmosphere but removes expensive blur layers where space is tight. */
+@media (max-width: 1023px) {
+  html.relay-standalone .smv3-sidebar {
+    box-shadow: 24px 0 64px rgba(3, 10, 20, 0.22);
+  }
+
+  html.relay-standalone .smv3-mobile-scrim {
+    background: rgba(4, 9, 16, 0.5);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+  }
+}
+
+@media (max-width: 760px) {
+  html.relay-standalone body {
+    background-size: auto, auto, auto, 72px 72px, 72px 72px, auto !important;
+  }
+
+  html.relay-standalone .smv3-topbar,
+  html.relay-standalone .smv3-public-nav {
+    -webkit-backdrop-filter: blur(16px) saturate(1.04);
+    backdrop-filter: blur(16px) saturate(1.04);
+  }
+
+  html.relay-standalone .smv3-hero-card,
+  html.relay-standalone .smv3-quickstart-card,
+  html.relay-standalone .smv3-stat,
+  html.relay-standalone .smv3-section-card,
+  html.relay-standalone .smv3-panel,
+  html.relay-standalone .smv3-toolbar,
+  html.relay-standalone .smv3-catalog-panel,
+  html.relay-standalone .smv3-auth-card-shell,
+  html.relay-standalone .card {
+    -webkit-backdrop-filter: blur(14px) saturate(1.03);
+    backdrop-filter: blur(14px) saturate(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.relay-standalone *,
+  html.relay-standalone *::before,
+  html.relay-standalone *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
