@@ -27,6 +27,7 @@ import './styles/smirel-source-compat.css'
 import './styles/smirel-source-background.css'
 import './styles/smirel-source-interactions.css'
 import './styles/smirel-source-home.css'
+import './styles/smirel-source-workspace.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return

@@ -1,59 +1,78 @@
 <template>
   <AppLayout>
-    <section class="smv3-page">
-      <div class="smv3-dashboard-hero">
-        <article class="smv3-hero-card">
-          <div class="smv3-hero-eyebrow">SMIREL OPERATIONS</div>
-          <h1>{{ copy.heroTitle }}</h1>
-          <p>{{ copy.heroDescription }}</p>
-          <div class="smv3-hero-actions">
-            <router-link to="/admin/accounts" class="smv3-primary-action">{{ copy.upstreams }}</router-link>
-            <router-link to="/admin/groups" class="smv3-secondary-action">{{ copy.routing }}</router-link>
-            <router-link to="/admin/users" class="smv3-secondary-action">{{ copy.users }}</router-link>
+    <section class="smw-dashboard">
+      <header class="smw-workspace-head">
+        <div class="smw-workspace-head__copy">
+          <span class="smw-kicker">SMIREL OPERATIONS</span>
+          <div class="smw-workspace-title-row">
+            <h1>{{ copy.workspaceTitle }}</h1>
+            <span class="smw-live-state"><i></i>{{ copy.live }}</span>
           </div>
-        </article>
+          <p>{{ copy.workspaceDescription }}</p>
+        </div>
 
-        <article class="smv3-quickstart-card">
-          <div class="smv3-quickstart-label">{{ copy.health }}</div>
-          <div class="smv3-code-block">
-            ACTIVE_UPSTREAMS={{ stats?.normal_accounts || 0 }}<br />
-            ERROR_UPSTREAMS={{ stats?.error_accounts || 0 }}<br />
-            ACTIVE_USERS={{ stats?.active_users || 0 }}<br />
-            RPM={{ formatCompact(stats?.rpm || 0) }}
+        <div class="smw-workspace-head__actions">
+          <router-link to="/admin/accounts" class="smw-action smw-action--primary">{{ copy.upstreams }}</router-link>
+          <router-link to="/admin/groups" class="smw-action">{{ copy.routing }}</router-link>
+          <router-link to="/admin/users" class="smw-action">{{ copy.users }}</router-link>
+          <router-link to="/admin/ops" class="smw-action">{{ copy.openOps }}</router-link>
+        </div>
+
+        <div class="smw-live-strip" :aria-label="copy.health">
+          <div class="smw-live-item">
+            <span>{{ copy.activeUpstreams }}</span>
+            <strong>{{ stats?.normal_accounts || 0 }}</strong>
           </div>
-          <router-link to="/admin/ops" class="smv3-secondary-action" style="width:100%; margin-top:10px">{{ copy.openOps }}</router-link>
-        </article>
-      </div>
+          <div class="smw-live-item">
+            <span>{{ copy.errorUpstreams }}</span>
+            <strong :class="{ 'smw-live-value--danger': (stats?.error_accounts || 0) > 0 }">{{ stats?.error_accounts || 0 }}</strong>
+          </div>
+          <div class="smw-live-item">
+            <span>{{ copy.activeUsers }}</span>
+            <strong>{{ stats?.active_users || 0 }}</strong>
+          </div>
+          <div class="smw-live-item">
+            <span>RPM</span>
+            <strong>{{ formatCompact(stats?.rpm || 0) }}</strong>
+          </div>
+        </div>
+      </header>
 
-      <div v-if="loading && !stats" class="smv3-empty">{{ copy.loading }}</div>
-      <div v-else class="smv3-stat-grid">
-        <article v-for="card in statCards" :key="card.label" class="smv3-stat">
-          <div class="smv3-stat-label">{{ card.label }}</div>
-          <div class="smv3-stat-value">{{ card.value }}</div>
-          <div class="smv3-stat-note">{{ card.note }}</div>
+      <div v-if="loading && !stats" class="smw-loading">{{ copy.loading }}</div>
+      <section v-else class="smw-summary-strip" :aria-label="copy.summary">
+        <article v-for="card in statCards" :key="card.label" class="smw-summary-item">
+          <span>{{ card.label }}</span>
+          <strong>{{ card.value }}</strong>
+          <small>{{ card.note }}</small>
         </article>
-      </div>
+      </section>
 
-      <div class="smv3-toolbar">
-        <div class="smv3-toolbar-filters" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+      <div class="smw-toolbar">
+        <div class="smw-toolbar__filters">
           <DateRangePicker
             v-model:start-date="startDate"
             v-model:end-date="endDate"
             @change="onDateRangeChange"
           />
-          <div style="width:120px">
+          <div class="smw-granularity">
             <Select v-model="granularity" :options="granularityOptions" @change="loadChartData" />
           </div>
         </div>
-        <button class="btn btn-secondary" type="button" :disabled="chartsLoading" @click="loadDashboardStats">
+        <button class="smw-action" type="button" :disabled="chartsLoading" @click="loadDashboardStats">
           {{ copy.refresh }}
         </button>
       </div>
 
-      <div class="smv3-dashboard-grid">
-        <article class="smv3-section-card" style="overflow:hidden">
-          <div class="smv3-section-head"><h2>{{ copy.modelMix }}</h2><span>{{ startDate }} → {{ endDate }}</span></div>
-          <div style="padding:14px">
+      <section class="smw-primary-grid">
+        <article class="smw-panel smw-panel--wide">
+          <header class="smw-panel__head">
+            <div>
+              <span>{{ copy.analysis }}</span>
+              <h2>{{ copy.modelMix }}</h2>
+            </div>
+            <small>{{ startDate }} → {{ endDate }}</small>
+          </header>
+          <div class="smw-panel__body">
             <ModelDistributionChart
               :model-stats="modelStats"
               :enable-ranking-view="true"
@@ -71,29 +90,54 @@
           </div>
         </article>
 
-        <article class="smv3-section-card" style="overflow:hidden">
-          <div class="smv3-section-head"><h2>{{ copy.tokenTrend }}</h2><span>{{ granularity }}</span></div>
-          <div style="padding:14px"><TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" /></div>
+        <article class="smw-panel">
+          <header class="smw-panel__head">
+            <div>
+              <span>{{ copy.traffic }}</span>
+              <h2>{{ copy.tokenTrend }}</h2>
+            </div>
+            <small>{{ granularity }}</small>
+          </header>
+          <div class="smw-panel__body">
+            <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" />
+          </div>
         </article>
-      </div>
+      </section>
 
-      <article class="smv3-section-card">
-        <div class="smv3-section-head"><h2>{{ copy.userTrend }}</h2><span>TOP 12</span></div>
-        <div style="height:280px; padding:14px">
-          <div v-if="userTrendLoading" class="smv3-empty">{{ copy.loading }}</div>
-          <Line v-else-if="userTrendChartData" :data="userTrendChartData" :options="lineOptions" />
-          <div v-else class="smv3-empty">{{ copy.noData }}</div>
-        </div>
-      </article>
+      <section class="smw-secondary-grid">
+        <article class="smw-panel smw-panel--trend">
+          <header class="smw-panel__head">
+            <div>
+              <span>{{ copy.users }}</span>
+              <h2>{{ copy.userTrend }}</h2>
+            </div>
+            <small>TOP 12</small>
+          </header>
+          <div class="smw-panel__body smw-panel__body--chart">
+            <div v-if="userTrendLoading" class="smw-loading smw-loading--embedded">{{ copy.loading }}</div>
+            <Line v-else-if="userTrendChartData" :data="userTrendChartData" :options="lineOptions" />
+            <div v-else class="smw-loading smw-loading--embedded">{{ copy.noData }}</div>
+          </div>
+        </article>
 
-      <article class="smv3-section-card">
-        <div class="smv3-section-head"><h2>{{ copy.actions }}</h2><span>OPERATE</span></div>
-        <div class="smv3-action-list" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:4px">
-          <router-link v-for="action in quickActions" :key="action.path" :to="action.path" class="smv3-action-row">
-            <div><strong>{{ action.title }}</strong><span>{{ action.description }}</span></div><b>→</b>
-          </router-link>
-        </div>
-      </article>
+        <article class="smw-panel smw-panel--actions">
+          <header class="smw-panel__head">
+            <div>
+              <span>OPERATE</span>
+              <h2>{{ copy.actions }}</h2>
+            </div>
+          </header>
+          <div class="smw-action-list">
+            <router-link v-for="action in quickActions" :key="action.path" :to="action.path" class="smw-action-row">
+              <div>
+                <strong>{{ action.title }}</strong>
+                <span>{{ action.description }}</span>
+              </div>
+              <b>→</b>
+            </router-link>
+          </div>
+        </article>
+      </section>
     </section>
   </AppLayout>
 </template>
@@ -171,18 +215,20 @@ const granularityOptions = computed(() => [
 const copy = computed(() =>
   isZh.value
     ? {
-        heroTitle: '把用户、路由、上游资源和收入放在同一个运营视图里。',
-        heroDescription: '这是 Smirel 的内部控制面。客户侧只暴露 API 产品；这里负责资源池、调度、用户、计费和平台健康。',
-        upstreams: '上游账户', routing: '路由策略', users: '用户管理', health: 'LIVE HEALTH', openOps: '打开运行状态',
-        loading: '正在读取平台数据…', refresh: '刷新数据', modelMix: '模型与用户消费分布', tokenTrend: 'Token 趋势', userTrend: '用户调用趋势', noData: '暂无数据', actions: '运营入口',
+        workspaceTitle: '运营工作台',
+        workspaceDescription: '把平台运行、资源、用量与商业数据收进同一个可操作工作区。',
+        live: '实时', health: '实时运行状态', summary: '平台关键指标', activeUpstreams: '正常上游', errorUpstreams: '异常上游', activeUsers: '活跃用户',
+        upstreams: '上游账户', routing: '路由策略', users: '用户管理', openOps: '运行状态',
+        loading: '正在读取平台数据…', refresh: '刷新数据', analysis: '消费分析', traffic: '调用流量', modelMix: '模型与用户消费分布', tokenTrend: 'Token 趋势', userTrend: '用户调用趋势', noData: '暂无数据', actions: '运营入口',
         apiKeys: 'API Keys', accounts: '上游账户', requests: '今日请求', newUsers: '今日新增', todayTokens: '今日 Tokens', cost: '今日成本', rpm: '当前 RPM', latency: '平均响应',
         activeKeys: '启用密钥', healthyAccounts: '正常 / 异常', totalRequests: '累计请求', totalUsers: '累计用户', billed: '实际结算', accountCost: '上游成本', perMinute: '每分钟请求', average: '平均耗时',
       }
     : {
-        heroTitle: 'Users, routing, upstream resources and revenue in one operations view.',
-        heroDescription: 'This is Smirel’s internal control plane. Customers see the API product; this workspace manages resource pools, routing, users, billing and platform health.',
-        upstreams: 'Upstream Accounts', routing: 'Routing Policies', users: 'Users', health: 'LIVE HEALTH', openOps: 'Open operations',
-        loading: 'Loading platform data…', refresh: 'Refresh', modelMix: 'Model & user spend mix', tokenTrend: 'Token trend', userTrend: 'User request trend', noData: 'No data', actions: 'Operations',
+        workspaceTitle: 'Operations Workspace',
+        workspaceDescription: 'Platform runtime, resources, usage and commercial data in one operational workspace.',
+        live: 'LIVE', health: 'Live platform health', summary: 'Platform key metrics', activeUpstreams: 'Healthy upstreams', errorUpstreams: 'Errored upstreams', activeUsers: 'Active users',
+        upstreams: 'Upstream Accounts', routing: 'Routing Policies', users: 'Users', openOps: 'Operations',
+        loading: 'Loading platform data…', refresh: 'Refresh', analysis: 'Spend analysis', traffic: 'Traffic', modelMix: 'Model & user spend mix', tokenTrend: 'Token trend', userTrend: 'User request trend', noData: 'No data', actions: 'Operations',
         apiKeys: 'API Keys', accounts: 'Upstream accounts', requests: 'Requests today', newUsers: 'New users today', todayTokens: 'Tokens today', cost: 'Cost today', rpm: 'Current RPM', latency: 'Avg response',
         activeKeys: 'active keys', healthyAccounts: 'healthy / error', totalRequests: 'total requests', totalUsers: 'total users', billed: 'actual billed', accountCost: 'upstream cost', perMinute: 'requests per minute', average: 'average duration',
       },
