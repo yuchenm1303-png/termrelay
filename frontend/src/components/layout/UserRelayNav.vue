@@ -1,5 +1,5 @@
 <template>
-  <div class="border-b border-gray-200/80 bg-white/80 px-4 backdrop-blur-xl md:px-6 lg:px-8 dark:border-dark-800 dark:bg-dark-950/80">
+  <div class="relay-primary-nav-shell border-b border-gray-200/80 bg-white/80 px-4 backdrop-blur-xl md:px-6 lg:px-8 dark:border-dark-800 dark:bg-dark-950/80">
     <nav class="mx-auto flex min-h-12 max-w-[1600px] items-center gap-1 overflow-x-auto py-1 scrollbar-hide" aria-label="Primary user navigation">
       <router-link
         v-for="item in items"

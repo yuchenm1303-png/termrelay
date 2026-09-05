@@ -7,14 +7,25 @@ import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
 import './style.css'
+import './styles/smirel-relay.css'
 
 const RELAY_SITE_NAME = 'Smirel API'
 const RELAY_SITE_LOGO = '/smirel-mark.svg'
+const RELAY_SITE_SUBTITLE = 'Unified AI API Gateway'
 const RELAY_API_BASE_URL = 'https://api.smirel.com/v1'
 
 function isStandaloneRelayFrontend() {
   const host = window.location.hostname.toLowerCase()
   return host === 'relay.smirel.com' || host.endsWith('.vercel.app')
+}
+
+function applyStandaloneRelayShell() {
+  if (!isStandaloneRelayFrontend()) return
+
+  // The standalone relay intentionally uses the same fixed dark/glass visual
+  // language as the Smirel download portal and service monitor.
+  document.documentElement.classList.add('relay-standalone', 'dark')
+  localStorage.setItem('theme', 'dark')
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
@@ -29,6 +40,7 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       ...appStore.cachedPublicSettings,
       site_name: RELAY_SITE_NAME,
       site_logo: RELAY_SITE_LOGO,
+      site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
     }
   }
@@ -38,6 +50,7 @@ async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore
       ...window.__APP_CONFIG__,
       site_name: RELAY_SITE_NAME,
       site_logo: RELAY_SITE_LOGO,
+      site_subtitle: RELAY_SITE_SUBTITLE,
       api_base_url: RELAY_API_BASE_URL,
     }
   }
@@ -73,6 +86,7 @@ function initThemeClass() {
 async function bootstrap() {
   // Apply theme class globally before app mount to keep all routes consistent.
   initThemeClass()
+  applyStandaloneRelayShell()
   initIOSViewportZoomFix()
 
   const app = createApp(App)

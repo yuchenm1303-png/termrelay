@@ -1,0 +1,465 @@
+/* Smirel Relay standalone visual language.
+ * Mirrors the restrained glass/service-console language used by the
+ * Smirel download portal and service monitor without changing backend UI.
+ */
+html.relay-standalone {
+  --relay-text: #fff;
+  --relay-muted: rgba(255, 255, 255, 0.67);
+  --relay-soft: rgba(255, 255, 255, 0.42);
+  --relay-faint: rgba(255, 255, 255, 0.28);
+  --relay-card: rgba(0, 0, 0, 0.25);
+  --relay-card-strong: rgba(3, 8, 20, 0.42);
+  --relay-card-hover: rgba(0, 0, 0, 0.38);
+  --relay-line: rgba(255, 255, 255, 0.12);
+  --relay-line-soft: rgba(255, 255, 255, 0.08);
+  --relay-cyan: #bfeff3;
+  --relay-blue: #91c7e3;
+  --relay-violet: #c5a8e8;
+  --relay-green: #83efc7;
+  --relay-danger: #ff8d9c;
+  color-scheme: dark;
+  background: #52689f;
+}
+
+html.relay-standalone body {
+  min-height: 100vh;
+  color: var(--relay-text) !important;
+  background:
+    radial-gradient(ellipse at 20% 8%, rgba(255,255,255,.17), transparent 34%),
+    radial-gradient(ellipse at 80% 33%, rgba(142,232,232,.14), transparent 34%),
+    radial-gradient(ellipse at 28% 88%, rgba(222,174,235,.16), transparent 42%),
+    linear-gradient(180deg, #78a9c8 0%, #667fae 34%, #626e9e 60%, #746b9d 79%, #4e587f 100%) !important;
+  background-attachment: fixed !important;
+  font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.relay-standalone body::before,
+html.relay-standalone body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+html.relay-standalone body::before {
+  z-index: -3;
+  background:
+    radial-gradient(ellipse at 78% 44%, rgba(72, 211, 216, .17), transparent 33%),
+    radial-gradient(ellipse at 19% 82%, rgba(190, 120, 211, .16), transparent 40%),
+    linear-gradient(180deg, rgba(13, 23, 48, .04), rgba(5, 10, 30, .30));
+}
+
+html.relay-standalone body::after {
+  z-index: -2;
+  opacity: .72;
+  background-image:
+    radial-gradient(circle at 12% 19%, rgba(255,244,214,.88) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 26% 67%, rgba(205,235,242,.9) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 48% 32%, rgba(255,255,255,.78) 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 67% 71%, rgba(242,211,224,.78) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 85% 23%, rgba(205,235,242,.88) 0 1.1px, transparent 1.8px),
+    radial-gradient(circle at 92% 82%, rgba(255,244,214,.74) 0 .9px, transparent 1.5px);
+  background-size: 290px 270px, 330px 310px, 260px 300px, 360px 330px, 310px 280px, 390px 350px;
+  animation: relay-star-drift 36s linear infinite alternate;
+}
+
+@keyframes relay-star-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -22px, 0); }
+}
+
+html.relay-standalone #app {
+  min-height: 100vh;
+  color: var(--relay-text);
+  background: transparent;
+}
+
+/* Console shell */
+html.relay-standalone .relay-app-shell {
+  color: var(--relay-text) !important;
+  background: transparent !important;
+  isolation: isolate;
+}
+
+html.relay-standalone .relay-console-backdrop {
+  background:
+    radial-gradient(ellipse at 72% 4%, rgba(200, 238, 255, .10), transparent 34%),
+    radial-gradient(ellipse at 22% 90%, rgba(218, 179, 239, .10), transparent 38%),
+    linear-gradient(180deg, rgba(6, 12, 28, .22), rgba(4, 8, 20, .32)) !important;
+}
+
+/* Shared glass surfaces */
+html.relay-standalone .card,
+html.relay-standalone .glass-card,
+html.relay-standalone .card-glass,
+html.relay-standalone .stat-card,
+html.relay-standalone .table-container {
+  border: 1px solid var(--relay-line) !important;
+  border-radius: 8px !important;
+  color: var(--relay-text) !important;
+  background: var(--relay-card) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
+  backdrop-filter: blur(14px) saturate(115%);
+  box-shadow: 0 16px 45px rgba(5, 10, 28, .10) !important;
+}
+
+html.relay-standalone .card-hover {
+  transition: transform .22s ease, background-color .22s ease, border-color .22s ease !important;
+}
+
+html.relay-standalone .card-hover:hover {
+  transform: translateY(-1px) scale(1.005) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  background: var(--relay-card-hover) !important;
+  box-shadow: 0 18px 48px rgba(5, 10, 28, .14) !important;
+}
+
+html.relay-standalone .card-header,
+html.relay-standalone .card-footer {
+  border-color: var(--relay-line-soft) !important;
+}
+
+/* Buttons */
+html.relay-standalone .btn {
+  border-radius: 7px !important;
+  border: 1px solid var(--relay-line-soft);
+  box-shadow: none !important;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease !important;
+}
+
+html.relay-standalone .btn-primary,
+html.relay-standalone .btn-success {
+  color: #fff !important;
+  border-color: rgba(255,255,255,.14) !important;
+  background: rgba(255,255,255,.14) !important;
+}
+
+html.relay-standalone .btn-primary:hover,
+html.relay-standalone .btn-success:hover {
+  background: rgba(255,255,255,.21) !important;
+  border-color: rgba(255,255,255,.22) !important;
+}
+
+html.relay-standalone .btn-secondary,
+html.relay-standalone .btn-ghost {
+  color: rgba(255,255,255,.78) !important;
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(0,0,0,.12) !important;
+}
+
+html.relay-standalone .btn-secondary:hover,
+html.relay-standalone .btn-ghost:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.10) !important;
+}
+
+html.relay-standalone .btn-danger {
+  color: #ffd8dd !important;
+  border-color: rgba(255,141,156,.20) !important;
+  background: rgba(180,42,64,.18) !important;
+}
+
+html.relay-standalone .btn-lg,
+html.relay-standalone .btn-md,
+html.relay-standalone .btn-sm,
+html.relay-standalone .btn-icon {
+  border-radius: 7px !important;
+}
+
+/* Forms */
+html.relay-standalone .input,
+html.relay-standalone .relay-auth-card input,
+html.relay-standalone .relay-auth-card select,
+html.relay-standalone .relay-auth-card textarea {
+  color: #fff !important;
+  border-color: var(--relay-line-soft) !important;
+  border-radius: 7px !important;
+  background: rgba(0,0,0,.18) !important;
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+  box-shadow: none !important;
+}
+
+html.relay-standalone .input::placeholder,
+html.relay-standalone .relay-auth-card input::placeholder,
+html.relay-standalone textarea::placeholder {
+  color: rgba(255,255,255,.34) !important;
+}
+
+html.relay-standalone .input:focus,
+html.relay-standalone .relay-auth-card input:focus,
+html.relay-standalone .relay-auth-card select:focus,
+html.relay-standalone .relay-auth-card textarea:focus {
+  outline: none !important;
+  border-color: rgba(255,255,255,.23) !important;
+  background: rgba(0,0,0,.28) !important;
+  box-shadow: 0 0 0 2px rgba(191,239,243,.07) !important;
+}
+
+html.relay-standalone .input-label,
+html.relay-standalone .input-hint {
+  color: var(--relay-muted) !important;
+}
+
+/* Sidebar */
+html.relay-standalone .sidebar {
+  color: var(--relay-text) !important;
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(5, 10, 25, .42) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%);
+  backdrop-filter: blur(22px) saturate(120%);
+  box-shadow: 14px 0 50px rgba(4,8,22,.08);
+}
+
+html.relay-standalone .sidebar-header,
+html.relay-standalone .sidebar > .mt-auto {
+  border-color: var(--relay-line-soft) !important;
+}
+
+html.relay-standalone .sidebar-logo {
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+html.relay-standalone .sidebar-brand-title {
+  color: #fff !important;
+  font-weight: 650 !important;
+}
+
+html.relay-standalone .sidebar-section-title {
+  color: var(--relay-soft) !important;
+  font-size: 10px !important;
+  letter-spacing: .14em !important;
+}
+
+html.relay-standalone .sidebar-link {
+  min-height: 39px;
+  border: 1px solid transparent;
+  border-radius: 7px !important;
+  color: rgba(255,255,255,.62) !important;
+  font-weight: 520 !important;
+}
+
+html.relay-standalone .sidebar-link:hover {
+  color: #fff !important;
+  border-color: rgba(255,255,255,.06) !important;
+  background: rgba(255,255,255,.07) !important;
+}
+
+html.relay-standalone .sidebar-link-active {
+  color: #fff !important;
+  border-color: rgba(255,255,255,.12) !important;
+  background: rgba(255,255,255,.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* Fixed dark visual language on the public relay; hide the inherited theme toggle. */
+html.relay-standalone .sidebar > .mt-auto > button:first-child {
+  display: none !important;
+}
+
+/* App header and primary workflow nav */
+html.relay-standalone .glass.sticky.top-0 {
+  color: var(--relay-text) !important;
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(6, 11, 26, .38) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: none !important;
+}
+
+html.relay-standalone .relay-primary-nav-shell {
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(7, 12, 28, .30) !important;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+html.relay-standalone .relay-primary-nav-shell a {
+  border-radius: 6px !important;
+  color: rgba(255,255,255,.54) !important;
+  background: transparent !important;
+}
+
+html.relay-standalone .relay-primary-nav-shell a:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.07) !important;
+}
+
+html.relay-standalone .relay-primary-nav-shell a.router-link-active {
+  color: #fff !important;
+  background: rgba(255,255,255,.11) !important;
+}
+
+/* Typography */
+html.relay-standalone .page-title,
+html.relay-standalone .stat-value,
+html.relay-standalone .modal-title {
+  color: #fff !important;
+  font-weight: 620 !important;
+  letter-spacing: -.025em;
+}
+
+html.relay-standalone .page-description,
+html.relay-standalone .stat-label,
+html.relay-standalone .input-hint {
+  color: var(--relay-muted) !important;
+}
+
+/* Tables */
+html.relay-standalone .table-container {
+  overflow: hidden;
+}
+
+html.relay-standalone .table th {
+  color: var(--relay-soft) !important;
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(0,0,0,.14) !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+html.relay-standalone .table td {
+  color: rgba(255,255,255,.76) !important;
+  border-color: rgba(255,255,255,.06) !important;
+  background: transparent !important;
+}
+
+html.relay-standalone .table tbody tr:hover {
+  background: rgba(255,255,255,.045) !important;
+}
+
+/* Badges and status tokens */
+html.relay-standalone .badge {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px !important;
+  color: rgba(255,255,255,.72) !important;
+  background: rgba(255,255,255,.07) !important;
+}
+
+html.relay-standalone .badge-success {
+  color: #bdf6df !important;
+  border-color: rgba(131,239,199,.14) !important;
+  background: rgba(83,197,154,.10) !important;
+}
+
+html.relay-standalone .badge-danger {
+  color: #ffc4cc !important;
+  border-color: rgba(255,141,156,.14) !important;
+  background: rgba(200,61,82,.11) !important;
+}
+
+/* Menus, dialogs, modals, toasts */
+html.relay-standalone .dropdown,
+html.relay-standalone .modal-content,
+html.relay-standalone .dialog-container,
+html.relay-standalone .toast {
+  color: #fff !important;
+  border-color: var(--relay-line) !important;
+  border-radius: 8px !important;
+  background: rgba(5, 10, 24, .72) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(120%);
+  backdrop-filter: blur(24px) saturate(120%);
+  box-shadow: 0 24px 70px rgba(4,8,22,.24) !important;
+}
+
+html.relay-standalone .dropdown-item {
+  color: rgba(255,255,255,.72) !important;
+}
+
+html.relay-standalone .dropdown-item:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.08) !important;
+}
+
+html.relay-standalone .modal-header,
+html.relay-standalone .modal-footer,
+html.relay-standalone .dialog-header,
+html.relay-standalone .dialog-footer {
+  border-color: var(--relay-line-soft) !important;
+  background: transparent !important;
+}
+
+/* Tabs */
+html.relay-standalone .tabs {
+  border: 1px solid var(--relay-line-soft);
+  border-radius: 7px !important;
+  background: rgba(0,0,0,.14) !important;
+}
+
+html.relay-standalone .tab {
+  border-radius: 5px !important;
+  color: var(--relay-muted) !important;
+}
+
+html.relay-standalone .tab-active {
+  color: #fff !important;
+  background: rgba(255,255,255,.10) !important;
+  box-shadow: none !important;
+}
+
+/* Progress */
+html.relay-standalone .progress {
+  background: rgba(0,0,0,.22) !important;
+}
+
+html.relay-standalone .progress-bar {
+  background: linear-gradient(90deg, rgba(145,199,227,.82), rgba(197,168,232,.78)) !important;
+}
+
+/* Authentication */
+html.relay-standalone .relay-auth-shell {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+html.relay-standalone .relay-auth-topbar {
+  border-color: var(--relay-line-soft) !important;
+  background: rgba(6, 11, 26, .34) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+html.relay-standalone .relay-auth-card {
+  border: 1px solid var(--relay-line) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  background: var(--relay-card-strong) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  backdrop-filter: blur(18px) saturate(115%);
+  box-shadow: 0 24px 70px rgba(4,8,24,.17) !important;
+}
+
+html.relay-standalone .relay-auth-benefits {
+  border: 1px solid var(--relay-line) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  background: var(--relay-card) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: none !important;
+}
+
+html.relay-standalone .relay-auth-shell .auth-grid {
+  opacity: .16 !important;
+  background-image:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px) !important;
+  background-size: 64px 64px !important;
+}
+
+/* Avoid generic white/light panels leaking through on standalone console. */
+html.relay-standalone .bg-white,
+html.relay-standalone .dark\:bg-dark-800,
+html.relay-standalone .dark\:bg-dark-900 {
+  --tw-bg-opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.relay-standalone body::after {
+    animation: none;
+  }
+}
