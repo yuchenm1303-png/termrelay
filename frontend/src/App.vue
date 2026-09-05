@@ -5,6 +5,7 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelSourceCursor from '@/components/visual/SmirelSourceCursor.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
@@ -145,4 +146,5 @@ onMounted(async () => {
   <Toast />
   <AnnouncementPopup />
   <AdminComplianceDialog />
+  <SmirelSourceCursor />
 </template>
