@@ -1,8 +1,9 @@
 /*
- * Public Smirel home rebuilt from the first-level Download portal language.
- * Source of truth: Chen-s-Homepage/main/download/ (styles-v3 + portal-polish).
- * Keep the page on the shared photographic backdrop sampling path: no parent
- * transform/filter/isolation around glass surfaces.
+ * Smirel public gateway home.
+ * Visual source of truth: Chen-s-Homepage/main/download/.
+ * The layout is gateway-specific, but material, controls and motion remain
+ * first-level Smirel Portal language. Keep the photographic wallpaper and
+ * every glass surface on one backdrop sampling path.
  */
 
 html.relay-standalone .smh-home {
@@ -24,15 +25,15 @@ html.relay-standalone .smh-topbar {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 44px;
+  margin-bottom: 42px;
   padding: 0 4px;
 }
 
 html.relay-standalone .smh-brand {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 13px;
-  min-width: 0;
   color: #fff;
 }
 
@@ -114,15 +115,19 @@ html.relay-standalone .smh-portal-nav a:hover {
   transform: translateY(-1px);
 }
 
-html.relay-standalone .smh-locale > div > button {
+html.relay-standalone .smh-locale > div > button,
+html.relay-standalone .smh-service-status {
   min-height: 36px;
-  padding: 0 11px !important;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 999px !important;
   background: rgba(0,0,0,.10) !important;
   color: rgba(255,255,255,.64) !important;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+}
+
+html.relay-standalone .smh-locale > div > button {
+  padding: 0 11px !important;
 }
 
 html.relay-standalone .smh-locale > div > div {
@@ -140,38 +145,42 @@ html.relay-standalone .smh-service-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
   padding: 0 11px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 999px;
-  background: rgba(0,0,0,.10);
-  color: rgba(255,255,255,.68);
   font-size: .74rem;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
 }
 
 html.relay-standalone .smh-service-status i,
-html.relay-standalone .smh-live-dot {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
+html.relay-standalone .smh-title-chip.live::before,
+html.relay-standalone .smh-product-channel i,
+html.relay-standalone .smh-state-item.live i,
+html.relay-standalone .smh-provider-dot,
+html.relay-standalone .smh-footer-status i {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
   border-radius: 50%;
   background: #8df0ca;
+  box-shadow: 0 0 10px rgba(141,240,202,.5);
+}
+
+html.relay-standalone .smh-service-status i {
+  width: 6px;
+  height: 6px;
+  flex-basis: 6px;
   box-shadow: 0 0 12px rgba(141,240,202,.55);
 }
 
-html.relay-standalone .smh-title {
+html.relay-standalone .smh-console-intro {
   display: grid;
   grid-template-columns: minmax(0,1fr) auto;
-  gap: 46px;
+  gap: 40px;
   align-items: end;
-  margin: 0 0 31px;
+  margin-bottom: 26px;
+  padding: 0 4px;
 }
 
-html.relay-standalone .smh-title-copy {
-  max-width: 860px;
-  min-width: 0;
+html.relay-standalone .smh-console-intro-copy {
+  max-width: 800px;
 }
 
 html.relay-standalone .smh-eyebrow,
@@ -188,33 +197,36 @@ html.relay-standalone .smh-eyebrow {
   letter-spacing: .16em;
 }
 
-html.relay-standalone .smh-title h1 {
+html.relay-standalone .smh-console-intro h1 {
+  max-width: 760px;
   margin: 10px 0 0;
   color: #fff;
-  font-size: clamp(2.6rem, 4.2vw, 4.15rem);
+  font-size: clamp(2.35rem, 3.7vw, 3.65rem);
   line-height: 1.02;
   font-weight: 620;
   letter-spacing: -.045em;
 }
 
-html.relay-standalone .smh-title p:last-child {
-  max-width: 760px;
-  margin: 14px 0 0;
+html.relay-standalone .smh-console-intro-copy > p:last-child {
+  max-width: 740px;
+  margin: 13px 0 0;
   color: rgba(255,255,255,.67);
-  font-size: .90rem;
+  font-size: .88rem;
   line-height: 1.72;
 }
 
-html.relay-standalone .smh-title-meta {
+html.relay-standalone .smh-intro-status {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 5px;
 }
 
 html.relay-standalone .smh-title-chip,
 html.relay-standalone .smh-pill,
-html.relay-standalone .smh-state-item {
+html.relay-standalone .smh-state-item,
+html.relay-standalone .smh-product-channel {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -231,22 +243,6 @@ html.relay-standalone .smh-title-chip {
   font-size: .68rem;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-}
-
-html.relay-standalone .smh-title-chip.live::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #8df0ca;
-  box-shadow: 0 0 10px rgba(141,240,202,.54);
-}
-
-html.relay-standalone .smh-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0,1.68fr) minmax(390px,.82fr);
-  gap: 24px;
-  align-items: stretch;
 }
 
 html.relay-standalone .smh-card {
@@ -270,122 +266,112 @@ html.relay-standalone .smh-card:active {
   transform: scale(.98);
 }
 
-html.relay-standalone .smh-primary-card,
-html.relay-standalone .smh-start-card {
-  min-height: 470px;
+html.relay-standalone .smh-command-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1.52fr) minmax(330px,.72fr);
+  gap: 18px;
+  align-items: stretch;
 }
 
-html.relay-standalone .smh-primary-card {
-  padding: 34px 36px 32px;
+html.relay-standalone .smh-gateway-card {
+  min-height: 560px;
+  padding: 30px 32px 28px;
 }
 
-html.relay-standalone .smh-product {
+html.relay-standalone .smh-gateway-head,
+html.relay-standalone .smh-side-card-head {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+html.relay-standalone .smh-gateway-identity {
+  display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 31px;
+  gap: 14px;
 }
 
 html.relay-standalone .smh-product-icon {
   display: grid;
-  width: 52px;
-  height: 52px;
-  flex: 0 0 52px;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
   place-items: center;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 13px;
   background: rgba(255,255,255,.11);
   box-shadow: inset 0 1px rgba(255,255,255,.12);
-  font-size: .74rem;
+  color: rgba(255,255,255,.92);
+  font-size: .72rem;
   font-weight: 760;
   letter-spacing: .05em;
 }
 
-html.relay-standalone .smh-product-copy {
-  min-width: 0;
-}
-
-html.relay-standalone .smh-product-copy strong {
+html.relay-standalone .smh-gateway-identity strong {
   display: block;
+  margin-top: 5px;
   color: #fff;
-  font-size: 1.04rem;
+  font-size: 1.08rem;
   font-weight: 650;
 }
 
-html.relay-standalone .smh-product-copy span {
+html.relay-standalone .smh-gateway-identity div > span {
   display: block;
-  margin-top: 4px;
+  margin-top: 3px;
   color: rgba(255,255,255,.44);
-  font-size: .70rem;
+  font-size: .68rem;
 }
 
 html.relay-standalone .smh-product-channel {
-  margin-left: auto;
-  padding: 8px 11px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.08);
-  color: rgba(255,255,255,.65);
-  font-size: .64rem;
-  letter-spacing: .04em;
-  white-space: nowrap;
-}
-
-html.relay-standalone .smh-card-head,
-html.relay-standalone .smh-start-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-html.relay-standalone .smh-pill {
   min-height: 31px;
   padding: 0 11px;
+  color: rgba(255,255,255,.66);
+  font-size: .64rem;
+  letter-spacing: .04em;
+}
+
+html.relay-standalone .smh-endpoint-block {
+  margin-top: 56px;
+}
+
+html.relay-standalone .smh-endpoint-block > span {
+  display: block;
+  color: rgba(255,255,255,.38);
   font-size: .63rem;
+  letter-spacing: .12em;
 }
 
-html.relay-standalone .smh-endpoint-large {
-  margin-top: 11px;
-}
-
-html.relay-standalone .smh-endpoint-large code {
+html.relay-standalone .smh-endpoint-block code {
   display: block;
   overflow: hidden;
+  margin-top: 10px;
   color: #fff;
-  font: 580 clamp(2.25rem,4.4vw,4.45rem)/.98 ui-rounded,"SF Pro Rounded","Segoe UI","Microsoft YaHei UI",sans-serif;
+  font: 580 clamp(2.45rem,4.2vw,4.2rem)/.98 ui-rounded,"SF Pro Rounded","Segoe UI","Microsoft YaHei UI",sans-serif;
   letter-spacing: -.055em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html.relay-standalone .smh-endpoint-large span {
-  display: inline-flex;
-  margin-top: 13px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(0,0,0,.12);
-  color: rgba(255,255,255,.55);
-  font-size: .68rem;
-}
-
 html.relay-standalone .smh-summary {
-  max-width: 720px;
-  margin: 26px 0 0;
-  color: rgba(255,255,255,.76);
-  font-size: .92rem;
-  line-height: 1.82;
+  max-width: 760px;
+  margin: 22px 0 0;
+  color: rgba(255,255,255,.74);
+  font-size: .88rem;
+  line-height: 1.78;
 }
 
 html.relay-standalone .smh-state-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 8px;
   margin-top: 20px;
 }
 
 html.relay-standalone .smh-state-item {
-  min-height: 31px;
-  padding: 0 11px;
+  min-height: 30px;
+  padding: 0 10px;
   border-color: rgba(255,255,255,.055);
   background: rgba(0,0,0,.095);
   color: rgba(255,255,255,.58);
@@ -399,137 +385,155 @@ html.relay-standalone .smh-state-item i {
   background: rgba(255,255,255,.52);
 }
 
-html.relay-standalone .smh-state-item.live i {
-  background: #8df0ca;
-  box-shadow: 0 0 10px rgba(141,240,202,.5);
-}
-
-html.relay-standalone .smh-meta {
+html.relay-standalone .smh-gateway-controls {
   display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 12px;
-  margin-top: 26px;
+  grid-template-columns: minmax(0,1.35fr) minmax(180px,.65fr);
+  gap: 9px;
+  margin-top: 24px;
 }
 
-html.relay-standalone .smh-meta-item {
+html.relay-standalone .smh-primary-action,
+html.relay-standalone .smh-secondary-action,
+html.relay-standalone .smh-inline-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  color: #fff;
+  transition: background-color .2s ease, transform .2s ease, border-color .2s ease;
+}
+
+html.relay-standalone .smh-primary-action {
+  min-height: 62px;
+  padding: 0 17px 0 18px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.13);
+}
+
+html.relay-standalone .smh-primary-action > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+html.relay-standalone .smh-primary-action strong {
+  font-size: .90rem;
+  font-weight: 650;
+}
+
+html.relay-standalone .smh-primary-action small {
+  color: rgba(255,255,255,.50);
+  font-size: .65rem;
+}
+
+html.relay-standalone .smh-secondary-action {
+  min-height: 62px;
+  padding: 0 15px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.10);
+  color: rgba(255,255,255,.72);
+  font-size: .73rem;
+}
+
+html.relay-standalone .smh-primary-action:hover,
+html.relay-standalone .smh-secondary-action:hover,
+html.relay-standalone .smh-inline-link:hover {
+  background: rgba(255,255,255,.19);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+html.relay-standalone .smh-primary-action:active,
+html.relay-standalone .smh-secondary-action:active,
+html.relay-standalone .smh-inline-link:active {
+  transform: scale(.98);
+}
+
+html.relay-standalone .smh-action-arrow {
+  color: rgba(255,255,255,.55);
+  transition: transform .2s ease, color .2s ease;
+}
+
+html.relay-standalone :is(.smh-primary-action,.smh-secondary-action,.smh-inline-link,.smh-dock-item):hover .smh-action-arrow {
+  color: rgba(255,255,255,.92);
+  transform: translateX(3px);
+}
+
+html.relay-standalone .smh-gateway-meta {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+html.relay-standalone .smh-gateway-meta > div {
   min-width: 0;
-  padding: 14px 15px;
+  padding: 12px 13px;
   border: 1px solid rgba(255,255,255,.045);
-  border-radius: 9px;
+  border-radius: 8px;
   background: rgba(0,0,0,.10);
 }
 
-html.relay-standalone .smh-meta-item span {
+html.relay-standalone .smh-gateway-meta span,
+html.relay-standalone .smh-connection-line span {
   display: block;
-  color: rgba(255,255,255,.38);
-  font-size: .63rem;
-  letter-spacing: .02em;
+  color: rgba(255,255,255,.36);
+  font-size: .59rem;
+  letter-spacing: .05em;
 }
 
-html.relay-standalone .smh-meta-item strong {
+html.relay-standalone .smh-gateway-meta strong {
   display: block;
   overflow: hidden;
-  margin-top: 6px;
-  color: rgba(255,255,255,.82);
-  font-size: .78rem;
-  font-weight: 600;
+  margin-top: 5px;
+  color: rgba(255,255,255,.80);
+  font-size: .70rem;
+  font-weight: 590;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html.relay-standalone .smh-main-action {
-  display: flex;
-  width: 100%;
-  min-height: 68px;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding: 0 18px 0 20px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 11px;
-  background: rgba(255,255,255,.13);
+html.relay-standalone .smh-side-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 18px;
+}
+
+html.relay-standalone .smh-connection-card,
+html.relay-standalone .smh-access-card {
+  min-height: 271px;
+  padding: 24px;
+}
+
+html.relay-standalone .smh-side-card-head h2 {
+  margin: 6px 0 0;
   color: #fff;
-}
-
-html.relay-standalone .smh-main-action:hover {
-  background: rgba(255,255,255,.19);
-}
-
-html.relay-standalone .smh-main-action-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-}
-
-html.relay-standalone .smh-main-action-copy strong {
-  font-size: 1rem;
-  font-weight: 650;
-}
-
-html.relay-standalone .smh-main-action-copy small {
-  color: rgba(255,255,255,.52);
-  font-size: .69rem;
-}
-
-html.relay-standalone .smh-main-action-arrow {
-  color: rgba(255,255,255,.72);
-  font-size: 1.35rem;
-  transition: transform .2s ease;
-}
-
-html.relay-standalone .smh-main-action:hover .smh-main-action-arrow {
-  transform: translateX(3px);
-}
-
-html.relay-standalone .smh-start-card {
-  display: flex;
-  flex-direction: column;
-  padding: 34px 32px 30px;
-}
-
-html.relay-standalone .smh-start-head {
-  align-items: flex-start;
-}
-
-html.relay-standalone .smh-start-head h2 {
-  margin: 7px 0 0;
-  color: #fff;
-  font-size: 1.58rem;
-  line-height: 1.15;
+  font-size: 1.22rem;
   font-weight: 620;
+  letter-spacing: -.025em;
 }
 
-html.relay-standalone .smh-start-intro {
-  margin: 17px 0 0;
-  color: rgba(255,255,255,.62);
-  font-size: .83rem;
-  line-height: 1.72;
+html.relay-standalone .smh-pill {
+  min-height: 29px;
+  padding: 0 10px;
+  font-size: .61rem;
 }
 
 html.relay-standalone .smh-connection-panel {
-  display: grid;
-  gap: 10px;
-  margin-top: 25px;
-  padding: 14px;
+  margin-top: 20px;
+  padding: 3px 13px;
   border: 1px solid rgba(255,255,255,.05);
   border-radius: 9px;
   background: rgba(0,0,0,.10);
 }
 
 html.relay-standalone .smh-connection-line {
-  min-width: 0;
+  padding: 11px 0;
 }
 
 html.relay-standalone .smh-connection-line + .smh-connection-line {
-  padding-top: 10px;
   border-top: 1px solid rgba(255,255,255,.05);
-}
-
-html.relay-standalone .smh-connection-line span {
-  display: block;
-  color: rgba(255,255,255,.40);
-  font-size: .64rem;
 }
 
 html.relay-standalone .smh-connection-line code,
@@ -538,34 +542,31 @@ html.relay-standalone .smh-connection-line strong {
   overflow: hidden;
   margin-top: 5px;
   color: rgba(255,255,255,.78);
-  font-size: .72rem;
-  font-weight: 560;
+  font: 590 .68rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-html.relay-standalone .smh-access-flow {
-  margin-top: auto;
-  padding-top: 22px;
-  border-top: 1px solid rgba(255,255,255,.075);
-}
-
-html.relay-standalone .smh-flow-label {
-  color: rgba(255,255,255,.38);
-  font-size: .62rem;
-  letter-spacing: .12em;
+html.relay-standalone .smh-inline-link {
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.68);
+  font-size: .67rem;
 }
 
 html.relay-standalone .smh-flow-steps {
   display: grid;
   grid-template-columns: repeat(3,1fr);
-  gap: 9px;
-  margin-top: 12px;
+  gap: 7px;
+  margin-top: 23px;
 }
 
 html.relay-standalone .smh-flow-step {
   min-width: 0;
-  padding: 11px 10px 12px;
+  padding: 11px 9px 12px;
   border: 1px solid rgba(255,255,255,.045);
   border-radius: 8px;
   background: rgba(0,0,0,.10);
@@ -582,101 +583,156 @@ html.relay-standalone .smh-flow-step strong {
   display: block;
   margin-top: 5px;
   color: rgba(255,255,255,.72);
-  font-size: .67rem;
+  font-size: .65rem;
   font-weight: 580;
 }
 
-html.relay-standalone .smh-start-link {
-  display: inline-flex;
-  min-height: 40px;
+html.relay-standalone .smh-access-note {
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.075);
+  color: rgba(255,255,255,.48);
+  font-size: .68rem;
+  line-height: 1.65;
+}
+
+html.relay-standalone .smh-provider-rail {
+  display: grid;
+  grid-template-columns: minmax(210px,.68fr) minmax(0,1.9fr);
+  gap: 22px;
   align-items: center;
-  justify-content: center;
   margin-top: 18px;
-  padding: 0 13px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 9px;
-  background: rgba(255,255,255,.08);
-  color: rgba(255,255,255,.76);
-  font-size: .70rem;
+  padding: 17px 20px;
 }
 
-html.relay-standalone .smh-start-link:hover {
-  background: rgba(255,255,255,.14);
-  color: #fff;
+html.relay-standalone .smh-provider-rail:hover,
+html.relay-standalone .smh-provider-rail:active,
+html.relay-standalone .smh-control-dock:hover,
+html.relay-standalone .smh-control-dock:active {
+  transform: none;
 }
 
-html.relay-standalone .smh-utility-grid {
+html.relay-standalone .smh-provider-rail-copy strong {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255,255,255,.84);
+  font-size: .80rem;
+  font-weight: 600;
+}
+
+html.relay-standalone .smh-provider-list {
   display: grid;
   grid-template-columns: repeat(4,minmax(0,1fr));
-  gap: 18px;
-  margin-top: 24px;
+  gap: 6px;
 }
 
-html.relay-standalone .smh-utility-card {
-  position: relative;
-  min-height: 154px;
-  overflow: hidden;
-  padding: 24px 25px;
-  color: #fff;
+html.relay-standalone .smh-provider-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color .2s ease, border-color .2s ease;
 }
 
-html.relay-standalone .smh-utility-card::after {
-  content: "→";
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  color: rgba(255,255,255,.34);
-  font-size: 1rem;
-  transition: transform .22s ease, color .22s ease;
+html.relay-standalone .smh-provider-item:hover {
+  border-color: rgba(255,255,255,.05);
+  background: rgba(255,255,255,.055);
 }
 
-html.relay-standalone .smh-utility-card:hover::after {
-  transform: translateX(3px);
-  color: rgba(255,255,255,.75);
-}
-
-html.relay-standalone .smh-utility-icon {
-  display: inline-grid;
-  width: 31px;
-  height: 31px;
-  place-items: center;
-  border-radius: 9px;
-  background: rgba(255,255,255,.08);
-  color: rgba(255,255,255,.76);
-  font-size: .80rem;
-}
-
-html.relay-standalone .smh-utility-overline {
+html.relay-standalone .smh-provider-item strong {
   display: block;
-  margin-top: 15px;
+  color: rgba(255,255,255,.78);
+  font-size: .70rem;
+  font-weight: 600;
+}
+
+html.relay-standalone .smh-provider-item small {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
   color: rgba(255,255,255,.34);
   font-size: .57rem;
-  letter-spacing: .12em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-html.relay-standalone .smh-utility-card h3 {
-  margin: 6px 0 0;
+html.relay-standalone .smh-control-dock {
+  display: grid;
+  grid-template-columns: 1.18fr repeat(3,1fr);
+  gap: 1px;
+  overflow: hidden;
+  margin-top: 18px;
+  padding: 0;
+  background-color: rgba(4,18,30,.42);
+}
+
+html.relay-standalone .smh-dock-item {
+  position: relative;
+  display: grid;
+  min-height: 146px;
+  grid-template-columns: 32px minmax(0,1fr) auto;
+  gap: 11px;
+  align-items: start;
+  padding: 20px 18px;
+  border-right: 1px solid rgba(255,255,255,.065);
   color: #fff;
-  font-size: 1rem;
+  transition: background-color .2s ease;
+}
+
+html.relay-standalone .smh-dock-item:last-child {
+  border-right: 0;
+}
+
+html.relay-standalone .smh-dock-item:hover {
+  background: rgba(255,255,255,.07);
+}
+
+html.relay-standalone .smh-dock-primary {
+  background: rgba(255,255,255,.035);
+}
+
+html.relay-standalone .smh-dock-index {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 8px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.40);
+  font-size: .58rem;
+}
+
+html.relay-standalone .smh-dock-item h3 {
+  margin: 7px 0 0;
+  color: rgba(255,255,255,.88);
+  font-size: .90rem;
   font-weight: 620;
 }
 
-html.relay-standalone .smh-utility-card p {
-  max-width: 82%;
-  margin: 7px 0 0;
-  color: rgba(255,255,255,.50);
-  font-size: .73rem;
-  line-height: 1.65;
+html.relay-standalone .smh-dock-item p {
+  max-width: 220px;
+  margin: 6px 0 0;
+  color: rgba(255,255,255,.46);
+  font-size: .65rem;
+  line-height: 1.58;
+}
+
+html.relay-standalone .smh-dock-item > .smh-action-arrow {
+  margin-top: 5px;
 }
 
 html.relay-standalone .smh-footer {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 20px;
   padding: 0 4px 8px;
   color: rgba(255,255,255,.34);
-  font-size: .67rem;
+  font-size: .65rem;
 }
 
 html.relay-standalone .smh-footer-status {
@@ -685,119 +741,145 @@ html.relay-standalone .smh-footer-status {
   gap: 6px;
 }
 
-html.relay-standalone .smh-footer-status i {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.35);
-}
-
-@media (max-width: 1220px) {
+@media (max-width: 1180px) {
   html.relay-standalone .smh-shell {
     width: calc(100vw - 48px);
   }
 
-  html.relay-standalone .smh-dashboard {
-    grid-template-columns: minmax(0,1.48fr) minmax(350px,.92fr);
-    gap: 18px;
+  html.relay-standalone .smh-command-grid {
+    grid-template-columns: minmax(0,1.35fr) minmax(315px,.78fr);
   }
 
-  html.relay-standalone .smh-primary-card {
-    padding: 30px 31px;
+  html.relay-standalone .smh-gateway-card {
+    padding: 28px;
   }
 
-  html.relay-standalone .smh-start-card {
-    padding: 30px 28px 27px;
+  html.relay-standalone .smh-gateway-meta {
+    grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
 
 @media (max-width: 980px) {
   html.relay-standalone .smh-shell {
-    width: min(860px,calc(100vw - 40px));
+    width: min(860px, calc(100vw - 40px));
     padding-top: 22px;
   }
 
   html.relay-standalone .smh-topbar {
-    margin-bottom: 34px;
+    margin-bottom: 32px;
   }
 
   html.relay-standalone .smh-portal-nav {
     display: none;
   }
 
-  html.relay-standalone .smh-title {
+  html.relay-standalone .smh-console-intro {
     grid-template-columns: 1fr;
     gap: 15px;
-    margin-bottom: 27px;
   }
 
-  html.relay-standalone .smh-title-meta {
+  html.relay-standalone .smh-intro-status {
+    justify-content: flex-start;
     padding-bottom: 0;
   }
 
-  html.relay-standalone .smh-dashboard {
+  html.relay-standalone .smh-command-grid {
     grid-template-columns: 1fr;
-    gap: 18px;
   }
 
-  html.relay-standalone .smh-primary-card,
-  html.relay-standalone .smh-start-card {
+  html.relay-standalone .smh-gateway-card {
     min-height: auto;
-    padding: 30px;
   }
 
-  html.relay-standalone .smh-access-flow {
-    margin-top: 28px;
+  html.relay-standalone .smh-side-stack {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: none;
   }
 
-  html.relay-standalone .smh-utility-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    margin-top: 18px;
+  html.relay-standalone .smh-provider-rail {
+    grid-template-columns: 1fr;
+  }
+
+  html.relay-standalone .smh-control-dock {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  html.relay-standalone .smh-dock-item:nth-child(2) {
+    border-right: 0;
+  }
+
+  html.relay-standalone .smh-dock-item:nth-child(-n+2) {
+    border-bottom: 1px solid rgba(255,255,255,.065);
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 720px) {
   html.relay-standalone .smh-shell {
-    width: calc(100vw - 24px);
+    width: calc(100vw - 28px);
     padding: 18px 0 26px;
   }
 
   html.relay-standalone .smh-topbar {
-    min-height: 52px;
-    margin-bottom: 28px;
+    align-items: flex-start;
+    margin-bottom: 26px;
   }
 
-  html.relay-standalone .smh-brand-copy small,
   html.relay-standalone .smh-service-status {
     display: none;
   }
 
-  html.relay-standalone .smh-title {
-    gap: 12px;
-    margin-bottom: 22px;
+  html.relay-standalone .smh-console-intro h1 {
+    font-size: 2.35rem;
   }
 
-  html.relay-standalone .smh-title h1 {
-    margin-top: 8px;
-    font-size: 2.3rem;
-  }
-
-  html.relay-standalone .smh-title p:last-child {
-    margin-top: 11px;
-    font-size: .82rem;
-    line-height: 1.68;
-  }
-
-  html.relay-standalone .smh-title-meta {
-    flex-wrap: wrap;
-  }
-
-  html.relay-standalone .smh-primary-card,
-  html.relay-standalone .smh-start-card {
+  html.relay-standalone .smh-gateway-card,
+  html.relay-standalone .smh-connection-card,
+  html.relay-standalone .smh-access-card {
     padding: 22px;
   }
 
-  html.relay-standalone .smh-product {
+  html.relay-standalone .smh-endpoint-block {
+    margin-top: 40px;
+  }
+
+  html.relay-standalone .smh-endpoint-block code {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  html.relay-standalone .smh-gateway-controls,
+  html.relay-standalone .smh-side-stack {
+    grid-template-columns: 1fr;
+  }
+
+  html.relay-standalone .smh-provider-list {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  html.relay-standalone .smh-flow-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  html.relay-standalone .smh-brand-copy small,
+  html.relay-standalone .smh-locale {
+    display: none;
+  }
+
+  html.relay-standalone .smh-console-intro h1 {
+    font-size: 2.05rem;
+  }
+
+  html.relay-standalone .smh-intro-status {
+    gap: 6px;
+  }
+
+  html.relay-standalone .smh-title-chip:nth-child(3) {
+    display: none;
+  }
+
+  html.relay-standalone .smh-gateway-head {
     align-items: flex-start;
   }
 
@@ -805,22 +887,20 @@ html.relay-standalone .smh-footer-status i {
     display: none;
   }
 
-  html.relay-standalone .smh-endpoint-large code {
-    font-size: clamp(1.8rem,9.2vw,2.55rem);
-  }
-
-  html.relay-standalone .smh-meta,
-  html.relay-standalone .smh-flow-steps,
-  html.relay-standalone .smh-utility-grid {
+  html.relay-standalone .smh-gateway-meta,
+  html.relay-standalone .smh-provider-list,
+  html.relay-standalone .smh-control-dock {
     grid-template-columns: 1fr;
   }
 
-  html.relay-standalone .smh-utility-grid {
-    gap: 14px;
+  html.relay-standalone .smh-dock-item {
+    min-height: 126px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.065);
   }
 
-  html.relay-standalone .smh-utility-card {
-    min-height: 128px;
+  html.relay-standalone .smh-dock-item:last-child {
+    border-bottom: 0;
   }
 
   html.relay-standalone .smh-footer {
@@ -831,7 +911,10 @@ html.relay-standalone .smh-footer-status i {
 @media (prefers-reduced-motion: reduce) {
   html.relay-standalone .smh-card,
   html.relay-standalone .smh-portal-nav a,
-  html.relay-standalone .smh-main-action-arrow {
+  html.relay-standalone .smh-primary-action,
+  html.relay-standalone .smh-secondary-action,
+  html.relay-standalone .smh-inline-link,
+  html.relay-standalone .smh-action-arrow {
     transition: none !important;
   }
 }
