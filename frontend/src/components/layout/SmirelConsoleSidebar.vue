@@ -3,7 +3,7 @@
     class="sidebar smirel-console-sidebar"
     :class="[
       sidebarCollapsed ? 'w-[72px]' : 'w-64',
-      { '-translate-x-full lg:translate-x-0': !mobileOpen }
+      { '-translate-x-full lg:translate-x-0': !mobileOpen },
     ]"
   >
     <div class="sidebar-header" :class="{ 'sidebar-header-collapsed': sidebarCollapsed }">
@@ -24,10 +24,7 @@
 
     <nav class="sidebar-nav scrollbar-hide">
       <section v-for="section in navSections" :key="section.id" class="sidebar-section">
-        <div
-          v-if="!sidebarCollapsed"
-          class="sidebar-section-title"
-        >
+        <div v-if="!sidebarCollapsed" class="sidebar-section-title">
           {{ section.label }}
         </div>
 
@@ -41,14 +38,68 @@
             'sidebar-link-collapsed': sidebarCollapsed,
           }"
           :title="sidebarCollapsed ? item.label : undefined"
-          :data-tour="item.path === '/keys' ? 'sidebar-my-keys' : undefined"
-          @click="handleItemClick(item.path)"
+          @click="closeMobile"
         >
-          <Icon :name="item.icon" size="md" class="flex-shrink-0" />
+          <svg
+            class="h-5 w-5 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.6"
+            aria-hidden="true"
+          >
+            <path
+              v-if="item.kind === 'overview'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"
+            />
+            <path
+              v-else-if="item.kind === 'key'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"
+            />
+            <path
+              v-else-if="item.kind === 'chart'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 19V9m6 10V5m6 14v-7m4 7H2"
+            />
+            <path
+              v-else-if="item.kind === 'network'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 3v4m0 10v4M3 12h4m10 0h4M6.35 6.35l2.8 2.8m5.7 5.7 2.8 2.8m0-11.3-2.8 2.8m-5.7 5.7-2.8 2.8M12 8a4 4 0 100 8 4 4 0 000-8z"
+            />
+            <path
+              v-else-if="item.kind === 'security'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 3l7 3v5c0 4.4-2.8 8.1-7 10-4.2-1.9-7-5.6-7-10V6l7-3zm-2 9 1.4 1.4L15 9.8"
+            />
+            <path
+              v-else-if="item.kind === 'user'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20a7.5 7.5 0 0115 0"
+            />
+            <path
+              v-else-if="item.kind === 'settings'"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 8.25A3.75 3.75 0 1112 15.75 3.75 3.75 0 0112 8.25zm0-5.25 1 2.1a7.9 7.9 0 012 .8l2.2-.8 1.7 1.7-.8 2.2c.35.63.62 1.3.8 2L21 12l-2.1 1c-.18.7-.45 1.37-.8 2l.8 2.2-1.7 1.7-2.2-.8a7.9 7.9 0 01-2 .8L12 21l-1-2.1a7.9 7.9 0 01-2-.8l-2.2.8-1.7-1.7.8-2.2a7.9 7.9 0 01-.8-2L3 12l2.1-1a7.9 7.9 0 01.8-2l-.8-2.2 1.7-1.7 2.2.8a7.9 7.9 0 012-.8L12 3z"
+            />
+            <path
+              v-else
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 12h8m-4-4 4 4-4 4M5 5h5m-5 14h5"
+            />
+          </svg>
           <span
             class="sidebar-label"
             :class="{ 'sidebar-label-collapsed': sidebarCollapsed }"
-            :aria-hidden="sidebarCollapsed ? 'true' : 'false'"
           >
             {{ item.label }}
           </span>
@@ -64,7 +115,10 @@
         :title="sidebarCollapsed ? copy.theme : undefined"
         @click="toggleTheme"
       >
-        <Icon :name="isDark ? 'lightbulb' : 'clock'" size="md" class="flex-shrink-0" />
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path v-if="isDark" stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          <path v-else stroke-linecap="round" stroke-linejoin="round" d="M20.5 15.5A8 8 0 018.5 3.5 8.5 8.5 0 1020.5 15.5z" />
+        </svg>
         <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }">
           {{ isDark ? copy.lightMode : copy.darkMode }}
         </span>
@@ -77,7 +131,13 @@
         :title="sidebarCollapsed ? copy.expand : undefined"
         @click="toggleSidebar"
       >
-        <Icon :name="sidebarCollapsed ? 'arrowRight' : 'arrowLeft'" size="md" class="flex-shrink-0" />
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            :d="sidebarCollapsed ? 'M9 5l7 7-7 7' : 'M15 5l-7 7 7 7'"
+          />
+        </svg>
         <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }">
           {{ copy.collapse }}
         </span>
@@ -100,27 +160,17 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
+import { useAdminSettingsStore, useAppStore, useAuthStore } from '@/stores'
 import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
 import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { sanitizeUrl } from '@/utils/url'
-import Icon from '@/components/icons/Icon.vue'
 
-type IconName =
-  | 'grid'
-  | 'key'
-  | 'chart'
-  | 'globe'
-  | 'shield'
-  | 'cog'
-  | 'user'
-  | 'link'
-  | 'clock'
+type NavKind = 'overview' | 'key' | 'chart' | 'network' | 'security' | 'user' | 'settings' | 'link'
 
 type NavItem = {
   path: string
   label: string
-  icon: IconName
+  kind: NavKind
   exact?: boolean
 }
 
@@ -135,199 +185,145 @@ const { t, locale } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const adminSettingsStore = useAdminSettingsStore()
-const onboardingStore = useOnboardingStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const isDark = ref(document.documentElement.classList.contains('dark'))
-const isZh = computed(() => locale.value.toLowerCase().startsWith('zh'))
+const isZh = computed(() => String(locale.value).toLowerCase().startsWith('zh'))
 const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
 const siteName = computed(() => appStore.siteName || 'Smirel API')
-const siteLogo = computed(() =>
-  sanitizeUrl(appStore.siteLogo || '/smirel-mark.svg', { allowRelative: true, allowDataUrl: true }),
-)
+const siteLogo = computed(() => sanitizeUrl(appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
 
-const copy = computed(() =>
-  isZh.value
-    ? {
-        developerConsole: '开发者控制台',
-        adminConsole: '运营控制台',
-        overview: '概览',
-        api: 'API 与模型',
-        billing: '计费与账户',
-        operations: '运营总览',
-        access: '用户与权限',
-        supply: '上游与路由',
-        commerce: '商业化',
-        governance: '平台治理',
-        personal: '我的账户',
-        theme: '切换主题',
-        lightMode: '浅色模式',
-        darkMode: '深色模式',
-        collapse: '收起导航',
-        expand: '展开导航',
-      }
-    : {
-        developerConsole: 'Developer Console',
-        adminConsole: 'Operations Console',
-        overview: 'Overview',
-        api: 'API & Models',
-        billing: 'Billing & Account',
-        operations: 'Operations',
-        access: 'Users & Access',
-        supply: 'Upstream & Routing',
-        commerce: 'Commerce',
-        governance: 'Governance',
-        personal: 'My Account',
-        theme: 'Switch theme',
-        lightMode: 'Light mode',
-        darkMode: 'Dark mode',
-        collapse: 'Collapse navigation',
-        expand: 'Expand navigation',
-      },
-)
-
-function enabled(flag: (typeof FeatureFlags)[keyof typeof FeatureFlags]) {
-  return isFeatureFlagEnabled(flag)
-}
+const copy = computed(() => isZh.value ? {
+  developerConsole: '开发者控制台', adminConsole: '运营控制台', overview: '概览', api: 'API 与模型',
+  billing: '计费与账户', operations: '运营总览', access: '用户与权限', supply: '上游与路由',
+  commerce: '商业化', governance: '平台治理', personal: '我的账户', theme: '切换主题',
+  lightMode: '浅色模式', darkMode: '深色模式', collapse: '收起导航', expand: '展开导航',
+} : {
+  developerConsole: 'Developer Console', adminConsole: 'Operations Console', overview: 'Overview', api: 'API & Models',
+  billing: 'Billing & Account', operations: 'Operations', access: 'Users & Access', supply: 'Upstream & Routing',
+  commerce: 'Commerce', governance: 'Governance', personal: 'My Account', theme: 'Switch theme',
+  lightMode: 'Light mode', darkMode: 'Dark mode', collapse: 'Collapse navigation', expand: 'Expand navigation',
+})
 
 const userCustomItems = computed<NavItem[]>(() => {
   const items = appStore.cachedPublicSettings?.custom_menu_items ?? []
   return items
     .filter((item) => item.visibility === 'user')
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((item) => ({ path: `/custom/${item.id}`, label: item.label, icon: 'link' as const }))
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((item) => ({ path: `/custom/${item.id}`, label: String(item.label), kind: 'link' }))
 })
 
-const adminCustomItems = computed<NavItem[]>(() =>
-  adminSettingsStore.customMenuItems
-    .filter((item) => item.visibility === 'admin')
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((item) => ({ path: `/custom/${item.id}`, label: item.label, icon: 'link' as const })),
-)
+const adminCustomItems = computed<NavItem[]>(() => adminSettingsStore.customMenuItems
+  .filter((item) => item.visibility === 'admin')
+  .slice()
+  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  .map((item) => ({ path: `/custom/${item.id}`, label: String(item.label), kind: 'link' })))
 
 const userSections = computed<NavSection[]>(() => {
   const simple = authStore.isSimpleMode
   const apiItems: NavItem[] = [
-    { path: '/keys', label: t('nav.apiKeys'), icon: 'key' },
-    { path: '/usage', label: t('nav.usage'), icon: 'chart' },
+    { path: '/keys', label: t('nav.apiKeys'), kind: 'key' },
+    { path: '/usage', label: t('nav.usage'), kind: 'chart' },
   ]
 
-  if (!simple && enabled(FeatureFlags.availableChannels)) {
-    apiItems.push({ path: '/available-channels', label: t('nav.availableChannels'), icon: 'globe' })
+  if (!simple && isFeatureFlagEnabled(FeatureFlags.availableChannels)) {
+    apiItems.push({ path: '/available-channels', label: t('nav.availableChannels'), kind: 'network' })
   }
-  if (enabled(FeatureFlags.channelMonitor)) {
-    apiItems.push({ path: '/monitor', label: t('nav.channelStatus'), icon: 'clock' })
+  if (isFeatureFlagEnabled(FeatureFlags.channelMonitor)) {
+    apiItems.push({ path: '/monitor', label: t('nav.channelStatus'), kind: 'network' })
   }
-  if (!simple && enabled(FeatureFlags.modelPlaza)) {
-    apiItems.push({ path: '/model-plaza?embedded=1', label: t('nav.modelPlaza'), icon: 'grid' })
+  if (!simple && isFeatureFlagEnabled(FeatureFlags.modelPlaza)) {
+    apiItems.push({ path: '/model-plaza?embedded=1', label: t('nav.modelPlaza'), kind: 'overview' })
   }
   if (!simple && canUseBatchImage.value) {
-    apiItems.push({ path: '/batch-image', label: t('nav.batchImage'), icon: 'grid' })
+    apiItems.push({ path: '/batch-image', label: t('nav.batchImage'), kind: 'overview' })
   }
 
-  const billingItems: NavItem[] = []
+  const accountItems: NavItem[] = []
   if (!simple) {
-    billingItems.push({ path: '/subscriptions', label: t('nav.mySubscriptions'), icon: 'link' })
-    if (enabled(FeatureFlags.payment)) {
-      billingItems.push(
-        { path: '/purchase', label: t('nav.buySubscription'), icon: 'link' },
-        { path: '/orders', label: t('nav.myOrders'), icon: 'link' },
+    accountItems.push({ path: '/subscriptions', label: t('nav.mySubscriptions'), kind: 'link' })
+    if (isFeatureFlagEnabled(FeatureFlags.payment)) {
+      accountItems.push(
+        { path: '/purchase', label: t('nav.buySubscription'), kind: 'link' },
+        { path: '/orders', label: t('nav.myOrders'), kind: 'link' },
       )
     }
-    billingItems.push({ path: '/redeem', label: t('nav.redeem'), icon: 'link' })
-    if (enabled(FeatureFlags.affiliate)) {
-      billingItems.push({ path: '/affiliate', label: t('nav.affiliate'), icon: 'link' })
+    accountItems.push({ path: '/redeem', label: t('nav.redeem'), kind: 'link' })
+    if (isFeatureFlagEnabled(FeatureFlags.affiliate)) {
+      accountItems.push({ path: '/affiliate', label: t('nav.affiliate'), kind: 'link' })
     }
   }
-  billingItems.push({ path: '/profile', label: t('nav.profile'), icon: 'user' })
-  billingItems.push(...userCustomItems.value)
+  accountItems.push({ path: '/profile', label: t('nav.profile'), kind: 'user' }, ...userCustomItems.value)
 
   return [
-    {
-      id: 'overview',
-      label: copy.value.overview,
-      items: [{ path: '/dashboard', label: t('nav.dashboard'), icon: 'grid', exact: true }],
-    },
+    { id: 'overview', label: copy.value.overview, items: [{ path: '/dashboard', label: t('nav.dashboard'), kind: 'overview', exact: true }] },
     { id: 'api', label: copy.value.api, items: apiItems },
-    { id: 'billing', label: copy.value.billing, items: billingItems },
-  ].filter((section) => section.items.length > 0)
+    { id: 'billing', label: copy.value.billing, items: accountItems },
+  ]
 })
 
 const adminSections = computed<NavSection[]>(() => {
   const simple = authStore.isSimpleMode
-  const operations: NavItem[] = [
-    { path: '/admin/dashboard', label: t('nav.dashboard'), icon: 'grid', exact: true },
-  ]
+  const operations: NavItem[] = [{ path: '/admin/dashboard', label: t('nav.dashboard'), kind: 'overview', exact: true }]
   if (!simple && adminSettingsStore.opsMonitoringEnabled) {
-    operations.push({ path: '/admin/ops', label: t('nav.ops'), icon: 'chart' })
+    operations.push({ path: '/admin/ops', label: t('nav.ops'), kind: 'chart' })
   }
 
-  const access: NavItem[] = simple
-    ? []
-    : [
-        { path: '/admin/users', label: t('nav.users'), icon: 'user' },
-        { path: '/admin/groups', label: t('nav.groups'), icon: 'shield' },
-      ]
-
-  const supply: NavItem[] = [
-    { path: '/admin/accounts', label: t('nav.accounts'), icon: 'globe' },
+  const access: NavItem[] = simple ? [] : [
+    { path: '/admin/users', label: t('nav.users'), kind: 'user' },
+    { path: '/admin/groups', label: t('nav.groups'), kind: 'security' },
   ]
+
+  const supply: NavItem[] = [{ path: '/admin/accounts', label: t('nav.accounts'), kind: 'network' }]
   if (!simple) {
-    supply.push({ path: '/admin/channels/pricing', label: t('nav.channelPricing'), icon: 'link' })
-    if (enabled(FeatureFlags.channelMonitor)) {
-      supply.push({ path: '/admin/channels/monitor', label: t('nav.channelMonitor'), icon: 'clock' })
+    supply.push({ path: '/admin/channels/pricing', label: t('nav.channelPricing'), kind: 'network' })
+    if (isFeatureFlagEnabled(FeatureFlags.channelMonitor)) {
+      supply.push({ path: '/admin/channels/monitor', label: t('nav.channelMonitor'), kind: 'chart' })
     }
-    supply.push({ path: '/admin/proxies', label: t('nav.proxies'), icon: 'globe' })
+    supply.push({ path: '/admin/proxies', label: t('nav.proxies'), kind: 'network' })
   }
 
   const commerce: NavItem[] = []
   if (!simple) {
-    commerce.push({ path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: 'link' })
+    commerce.push({ path: '/admin/subscriptions', label: t('nav.subscriptions'), kind: 'link' })
     if (adminSettingsStore.paymentEnabled) {
       commerce.push(
-        { path: '/admin/orders/dashboard', label: t('nav.paymentDashboard'), icon: 'chart' },
-        { path: '/admin/orders', label: t('nav.orderManagement'), icon: 'link', exact: true },
-        { path: '/admin/orders/plans', label: t('nav.paymentPlans'), icon: 'link' },
+        { path: '/admin/orders/dashboard', label: t('nav.paymentDashboard'), kind: 'chart' },
+        { path: '/admin/orders', label: t('nav.orderManagement'), kind: 'link', exact: true },
+        { path: '/admin/orders/plans', label: t('nav.paymentPlans'), kind: 'link' },
       )
     }
     commerce.push(
-      { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: 'link' },
-      { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: 'link' },
+      { path: '/admin/redeem', label: t('nav.redeemCodes'), kind: 'link' },
+      { path: '/admin/promo-codes', label: t('nav.promoCodes'), kind: 'link' },
     )
-    if (enabled(FeatureFlags.affiliate)) {
+    if (isFeatureFlagEnabled(FeatureFlags.affiliate)) {
       commerce.push(
-        { path: '/admin/affiliates/invites', label: t('nav.affiliateInviteRecords'), icon: 'link' },
-        { path: '/admin/affiliates/rebates', label: t('nav.affiliateRebateRecords'), icon: 'link' },
-        { path: '/admin/affiliates/transfers', label: t('nav.affiliateTransferRecords'), icon: 'link' },
+        { path: '/admin/affiliates/invites', label: t('nav.affiliateInviteRecords'), kind: 'link' },
+        { path: '/admin/affiliates/rebates', label: t('nav.affiliateRebateRecords'), kind: 'link' },
+        { path: '/admin/affiliates/transfers', label: t('nav.affiliateTransferRecords'), kind: 'link' },
       )
     }
   }
 
-  const governance: NavItem[] = [
-    { path: '/admin/usage', label: t('nav.usage'), icon: 'chart' },
-  ]
+  const governance: NavItem[] = [{ path: '/admin/usage', label: t('nav.usage'), kind: 'chart' }]
   if (!simple) {
     governance.push(
-      { path: '/admin/announcements', label: t('nav.announcements'), icon: 'link' },
-      { path: '/admin/audit-logs', label: t('nav.auditLogs'), icon: 'shield' },
+      { path: '/admin/announcements', label: t('nav.announcements'), kind: 'link' },
+      { path: '/admin/audit-logs', label: t('nav.auditLogs'), kind: 'security' },
     )
-    if (enabled(FeatureFlags.riskControl)) {
+    if (isFeatureFlagEnabled(FeatureFlags.riskControl)) {
       governance.push(
-        { path: '/admin/risk-control', label: t('nav.contentModeration'), icon: 'shield' },
-        { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: 'shield' },
+        { path: '/admin/risk-control', label: t('nav.contentModeration'), kind: 'security' },
+        { path: '/admin/prompt-audit', label: t('nav.promptAudit'), kind: 'security' },
       )
     }
   }
-  governance.push({ path: '/admin/settings', label: t('nav.settings'), icon: 'cog' })
-  governance.push(...adminCustomItems.value)
-
-  const personal: NavItem[] = [
-    { path: '/keys', label: t('nav.apiKeys'), icon: 'key' },
-    { path: '/profile', label: t('nav.profile'), icon: 'user' },
-  ]
+  governance.push({ path: '/admin/settings', label: t('nav.settings'), kind: 'settings' }, ...adminCustomItems.value)
 
   return [
     { id: 'operations', label: copy.value.operations, items: operations },
@@ -335,28 +331,22 @@ const adminSections = computed<NavSection[]>(() => {
     { id: 'supply', label: copy.value.supply, items: supply },
     { id: 'commerce', label: copy.value.commerce, items: commerce },
     { id: 'governance', label: copy.value.governance, items: governance },
-    { id: 'personal', label: copy.value.personal, items: personal },
+    { id: 'personal', label: copy.value.personal, items: [
+      { path: '/keys', label: t('nav.apiKeys'), kind: 'key' },
+      { path: '/profile', label: t('nav.profile'), kind: 'user' },
+    ] },
   ].filter((section) => section.items.length > 0)
 })
 
-const navSections = computed(() => (isAdmin.value ? adminSections.value : userSections.value))
+const navSections = computed(() => isAdmin.value ? adminSections.value : userSections.value)
 
 function isActive(item: NavItem) {
-  const current = route.path
   const target = item.path.split('?')[0]
-  return item.exact ? current === target : current === target || current.startsWith(`${target}/`)
+  return item.exact ? route.path === target : route.path === target || route.path.startsWith(`${target}/`)
 }
 
 function closeMobile() {
   if (mobileOpen.value) appStore.setMobileOpen(false)
-}
-
-function handleItemClick(path: string) {
-  closeMobile()
-  const selector = path === '/keys' ? '[data-tour="sidebar-my-keys"]' : undefined
-  if (selector && onboardingStore.isCurrentStep(selector)) {
-    onboardingStore.nextStep(500)
-  }
 }
 
 function toggleSidebar() {
@@ -369,13 +359,9 @@ function toggleTheme() {
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
 }
 
-watch(
-  isAdmin,
-  (value) => {
-    if (value) void adminSettingsStore.fetch()
-  },
-  { immediate: true },
-)
+watch(isAdmin, (value) => {
+  if (value) void adminSettingsStore.fetch()
+}, { immediate: true })
 
 onMounted(() => {
   void refreshBatchImageAccess()
@@ -398,8 +384,8 @@ onMounted(() => {
 .sidebar-brand {
   min-width: 0;
   flex: 1 1 auto;
-  white-space: nowrap;
   max-width: 12rem;
+  white-space: nowrap;
   transition: max-width 0.2s ease, opacity 0.14s ease, transform 0.14s ease;
 }
 
