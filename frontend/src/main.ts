@@ -27,6 +27,7 @@ import './styles/smirel-source-compat.css'
 import './styles/smirel-source-background.css'
 import './styles/smirel-source-home.css'
 import './styles/smirel-source-workspace.css'
+import './styles/smirel-source-workspace-density.css'
 import './styles/smirel-source-interactions.css'
 
 function applyStandaloneRelayShell() {
@@ -34,6 +35,7 @@ function applyStandaloneRelayShell() {
 
   document.documentElement.classList.add('relay-standalone')
   applyStandaloneSmirelPreferences()
+  initIOSViewportZoomFix()
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
@@ -75,7 +77,6 @@ function initThemeClass() {
 async function bootstrap() {
   initThemeClass()
   applyStandaloneRelayShell()
-  initIOSViewportZoomFix()
 
   const app = createApp(App)
   const pinia = createPinia()
