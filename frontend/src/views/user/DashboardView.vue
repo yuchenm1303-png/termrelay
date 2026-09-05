@@ -1,45 +1,52 @@
 <template>
   <AppLayout>
-    <section class="smv3-page">
-      <div class="smv3-dashboard-hero">
-        <article class="smv3-hero-card">
-          <div class="smv3-hero-eyebrow">SMIREL API WORKSPACE</div>
+    <section class="smg-dashboard">
+      <div class="smg-dashboard-hero">
+        <GlassSurface class="smg-dashboard-intro">
+          <div class="smg-dashboard-kicker">SMIREL API WORKSPACE</div>
           <h1>{{ copy.heroTitle }}</h1>
           <p>{{ copy.heroDescription }}</p>
-          <div class="smv3-hero-actions">
-            <router-link to="/keys" class="smv3-primary-action">{{ copy.manageKeys }}</router-link>
-            <router-link to="/model-plaza?embedded=1" class="smv3-secondary-action">{{ copy.models }}</router-link>
-            <router-link to="/usage" class="smv3-secondary-action">{{ copy.usage }}</router-link>
+          <div class="smg-dashboard-actions">
+            <router-link to="/keys" class="smg-button smg-button--primary">{{ copy.manageKeys }}</router-link>
+            <router-link to="/model-plaza?embedded=1" class="smg-button">{{ copy.models }}</router-link>
+            <router-link to="/usage" class="smg-button">{{ copy.usage }}</router-link>
           </div>
-        </article>
+        </GlassSurface>
 
-        <article class="smv3-quickstart-card">
-          <div class="smv3-quickstart-label">{{ copy.quickstart }}</div>
-          <div class="smv3-code-block">
-            BASE_URL={{ apiBase }}<br />
-            AUTH=Bearer sk-••••••••<br /><br />
-            curl {{ apiBase }}/chat/completions
+        <GlassSurface class="smg-dashboard-quickstart">
+          <div class="smg-dashboard-kicker">{{ copy.quickstart }}</div>
+          <div class="smg-dashboard-code">
+            <span>BASE_URL</span>
+            <code>{{ apiBase }}</code>
+            <span>AUTH</span>
+            <code>Bearer sk-••••••••</code>
+            <span>REQUEST</span>
+            <code>curl {{ apiBase }}/chat/completions</code>
           </div>
-          <button type="button" class="smv3-secondary-action" style="width: 100%; margin-top: 10px" @click="copyApiBase">
+          <button type="button" class="smg-button smg-button--wide" @click="copyApiBase">
             {{ copied ? copy.copied : copy.copyBase }}
           </button>
-        </article>
+        </GlassSurface>
       </div>
 
-      <div class="smv3-stat-grid">
-        <article v-for="card in statCards" :key="card.label" class="smv3-stat">
-          <div class="smv3-stat-label">{{ card.label }}</div>
-          <div class="smv3-stat-value">{{ card.value }}</div>
-          <div class="smv3-stat-note">{{ card.note }}</div>
-        </article>
+      <div class="smg-dashboard-metrics">
+        <GlassMetric
+          v-for="card in statCards"
+          :key="card.label"
+          :label="card.label"
+          :value="card.value"
+          :note="card.note"
+        />
       </div>
 
-      <article class="smv3-section-card">
-        <div class="smv3-section-head">
-          <h2>{{ copy.trend }}</h2>
-          <span>{{ startDate }} → {{ endDate }}</span>
-        </div>
-        <div style="padding: 14px">
+      <GlassSurface class="smg-dashboard-panel">
+        <header class="smg-dashboard-panel-head">
+          <div>
+            <span>{{ copy.trend }}</span>
+            <strong>{{ startDate }} → {{ endDate }}</strong>
+          </div>
+        </header>
+        <div class="smg-dashboard-chart-surface">
           <UserDashboardCharts
             v-model:startDate="startDate"
             v-model:endDate="endDate"
@@ -52,41 +59,43 @@
             @refresh="refreshAll"
           />
         </div>
-      </article>
+      </GlassSurface>
 
-      <div class="smv3-dashboard-grid">
-        <article class="smv3-section-card">
-          <div class="smv3-section-head">
-            <h2>{{ copy.recent }}</h2>
-            <router-link to="/usage" style="color: var(--smv3-accent-strong); font-size: 9px; font-weight: 700">{{ copy.viewAll }}</router-link>
-          </div>
-          <div v-if="loadingUsage" class="smv3-empty">{{ copy.loading }}</div>
-          <div v-else-if="recentUsage.length === 0" class="smv3-empty">{{ copy.empty }}</div>
-          <div v-else class="smv3-recent-list">
-            <div v-for="log in recentUsage" :key="log.id" class="smv3-recent-row">
-              <div>
+      <div class="smg-dashboard-lower">
+        <GlassSurface class="smg-dashboard-panel">
+          <header class="smg-dashboard-panel-head">
+            <div><span>{{ copy.recent }}</span><strong>{{ copy.usage }}</strong></div>
+            <router-link to="/usage">{{ copy.viewAll }}</router-link>
+          </header>
+          <div v-if="loadingUsage" class="smg-dashboard-empty">{{ copy.loading }}</div>
+          <div v-else-if="recentUsage.length === 0" class="smg-dashboard-empty">{{ copy.empty }}</div>
+          <div v-else class="smg-dashboard-recent">
+            <div v-for="log in recentUsage" :key="log.id" class="smg-dashboard-recent-row">
+              <div class="smg-dashboard-request">
                 <strong>{{ log.model || 'model' }}</strong>
-                <span style="display:block; margin-top:2px">{{ formatTime(log.created_at) }}</span>
+                <span>{{ formatTime(log.created_at) }}</span>
               </div>
               <span>{{ formatCompact((log.input_tokens || 0) + (log.output_tokens || 0)) }} tokens</span>
               <span>${{ formatMoney(log.actual_cost || 0, 4) }}</span>
               <span>{{ formatDuration(log.duration_ms) }}</span>
             </div>
           </div>
-        </article>
+        </GlassSurface>
 
-        <article class="smv3-section-card">
-          <div class="smv3-section-head"><h2>{{ copy.next }}</h2><span>{{ copy.shortcuts }}</span></div>
-          <div class="smv3-action-list">
-            <router-link v-for="action in actions" :key="action.path" :to="action.path" class="smv3-action-row">
+        <GlassSurface class="smg-dashboard-panel">
+          <header class="smg-dashboard-panel-head">
+            <div><span>{{ copy.next }}</span><strong>{{ copy.shortcuts }}</strong></div>
+          </header>
+          <nav class="smg-dashboard-shortcuts">
+            <router-link v-for="action in actions" :key="action.path" :to="action.path" class="smg-dashboard-shortcut">
               <div>
                 <strong>{{ action.title }}</strong>
                 <span>{{ action.description }}</span>
               </div>
               <b>→</b>
             </router-link>
-          </div>
-        </article>
+          </nav>
+        </GlassSurface>
       </div>
     </section>
   </AppLayout>
@@ -99,6 +108,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { usageAPI, type UserDashboardStats as UserStatsType } from '@/api/usage'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import GlassMetric from '@/components/glass/GlassMetric.vue'
+import GlassSurface from '@/components/glass/GlassSurface.vue'
 import UserDashboardCharts from '@/components/user/dashboard/UserDashboardCharts.vue'
 import type { ModelStat, TrendDataPoint, UsageLog } from '@/types'
 import { formatDateLocalInput } from '@/utils/format'
