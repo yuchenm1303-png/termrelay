@@ -1,7 +1,5 @@
 <template>
   <div class="smg-auth">
-    <div class="smg-environment" aria-hidden="true"></div>
-
     <header class="smg-auth-nav smg-surface">
       <router-link to="/home" class="smg-auth-brand">
         <span class="smg-brand-mark">
