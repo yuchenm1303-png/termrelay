@@ -21,6 +21,7 @@ import './styles/smirel-public-pages.css'
 import './styles/smirel-relay-interactions.css'
 import './styles/smirel-v3.css'
 import './styles/smirel-v3-pages.css'
+import './styles/smirel-glass-v5.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
