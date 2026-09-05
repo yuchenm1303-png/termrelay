@@ -6,7 +6,7 @@
       class="smirel-console-workspace relative min-h-screen transition-[margin] duration-300"
       :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
     >
-      <SmirelConsoleHeader />
+      <AppHeader />
 
       <main class="smirel-page-stage">
         <div class="smirel-page-frame">
@@ -28,7 +28,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
 import SmirelConsoleSidebar from './SmirelConsoleSidebar.vue'
-import SmirelConsoleHeader from './SmirelConsoleHeader.vue'
+import AppHeader from './AppHeader.vue'
 import RelayAccessPanel from '@/components/user/RelayAccessPanel.vue'
 import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
