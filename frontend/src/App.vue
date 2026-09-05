@@ -5,8 +5,8 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelPortalShell from '@/components/layout/SmirelPortalShell.vue'
-import SmirelSourceBackground from '@/components/visual/SmirelSourceBackground.vue'
-import SmirelSourceCursor from '@/components/visual/SmirelSourceCursor.vue'
+import SmirelBackground from '@/components/visual/SmirelBackground.vue'
+import SmirelCursor from '@/components/visual/SmirelCursor.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
@@ -145,7 +145,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SmirelSourceBackground />
+  <SmirelBackground />
   <NavigationProgress />
   <RouterView v-slot="{ Component }">
     <SmirelPortalShell v-if="usePortalShell">
@@ -156,5 +156,5 @@ onMounted(async () => {
   <Toast />
   <AnnouncementPopup />
   <AdminComplianceDialog />
-  <SmirelSourceCursor />
+  <SmirelCursor />
 </template>
