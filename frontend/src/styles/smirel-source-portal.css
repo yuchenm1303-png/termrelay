@@ -1,0 +1,204 @@
+/*
+ * Canonical first-level Smirel Portal shell for utility and public service routes.
+ * It reuses the same portal navigation and source glass language as HomeView;
+ * no v3/relay-era colour system is allowed here.
+ */
+
+html.relay-standalone .smp-portal {
+  min-height: 100vh;
+  color: #fff;
+  background: transparent;
+}
+
+html.relay-standalone .smp-shell {
+  width: min(1360px, calc(100vw - (clamp(24px, 4vw, 72px) * 2)));
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 20px 0 36px;
+}
+
+html.relay-standalone .smp-topbar {
+  margin-bottom: 18px;
+}
+
+html.relay-standalone .smp-body {
+  min-width: 0;
+  min-height: calc(100svh - 98px);
+}
+
+/* Legacy utility views keep business logic but lose duplicated site chrome. */
+html.relay-standalone .smp-body > [class*="min-h-screen"] > header:first-child,
+html.relay-standalone .smp-body > [class*="min-h-screen"] > nav:first-child {
+  display: none !important;
+}
+
+html.relay-standalone .smp-body > [class*="min-h-screen"],
+html.relay-standalone .smp-body > [class*="min-h-screen"][class*="bg-"] {
+  min-height: auto !important;
+  color: #fff !important;
+  background: transparent !important;
+}
+
+html.relay-standalone .smp-body main {
+  color: #fff;
+}
+
+html.relay-standalone .smp-body :is(
+  [class*="rounded-2xl"][class*="bg-white"],
+  [class*="rounded-xl"][class*="bg-white"],
+  [class*="dark:bg-dark-800"],
+  [class*="dark:bg-dark-900"]
+) {
+  color: #fff !important;
+  border-color: rgba(255,255,255,.085) !important;
+  background: var(--smirel-glass) !important;
+  box-shadow: 0 18px 48px rgba(34,50,82,.10), inset 0 1px rgba(255,255,255,.035) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%);
+  backdrop-filter: blur(22px) saturate(120%);
+}
+
+html.relay-standalone .smp-body :is(input,select,textarea) {
+  color: rgba(255,255,255,.88) !important;
+  border-color: rgba(255,255,255,.09) !important;
+  background: rgba(0,0,0,.14) !important;
+}
+
+html.relay-standalone .smp-body :is(input,select,textarea)::placeholder {
+  color: rgba(255,255,255,.38) !important;
+}
+
+html.relay-standalone .smp-body button[class*="bg-primary"],
+html.relay-standalone .smp-body a[class*="bg-primary"] {
+  color: #fff !important;
+  border-color: rgba(255,255,255,.09) !important;
+  background: rgba(255,255,255,.12) !important;
+  box-shadow: none !important;
+}
+
+html.relay-standalone .smp-body button[class*="bg-primary"]:hover,
+html.relay-standalone .smp-body a[class*="bg-primary"]:hover {
+  background: rgba(255,255,255,.19) !important;
+}
+
+html.relay-standalone .smp-body :is(
+  [class*="text-gray-900"],
+  [class*="dark:text-white"]
+) {
+  color: rgba(255,255,255,.92) !important;
+}
+
+html.relay-standalone .smp-body :is(
+  [class*="text-gray-500"],
+  [class*="text-gray-400"],
+  [class*="dark:text-dark-400"],
+  [class*="dark:text-dark-500"]
+) {
+  color: rgba(255,255,255,.52) !important;
+}
+
+/* Public model catalog composition. */
+html.relay-standalone .smp-model-page {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+html.relay-standalone .smp-model-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+  padding: 18px 4px 8px;
+}
+
+html.relay-standalone .smp-model-head__copy {
+  max-width: 760px;
+}
+
+html.relay-standalone .smp-model-kicker {
+  color: rgba(255,255,255,.46);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+html.relay-standalone .smp-model-head h1 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+  line-height: 1.04;
+  font-weight: 620;
+  letter-spacing: -.04em;
+}
+
+html.relay-standalone .smp-model-head p {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: rgba(255,255,255,.67);
+  font-size: .84rem;
+  line-height: 1.7;
+}
+
+html.relay-standalone .smp-model-meta {
+  display: grid;
+  min-width: min(320px, 100%);
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  background: rgba(0,0,0,.10);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+html.relay-standalone .smp-model-meta span {
+  color: rgba(255,255,255,.42);
+  font-size: .58rem;
+  letter-spacing: .12em;
+}
+
+html.relay-standalone .smp-model-meta code {
+  overflow: hidden;
+  color: rgba(255,255,255,.84);
+  font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.relay-standalone .smp-model-panel {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 14px;
+  background: var(--smirel-glass);
+  box-shadow: 0 18px 48px rgba(34,50,82,.10), inset 0 1px rgba(255,255,255,.035);
+  -webkit-backdrop-filter: blur(22px) saturate(120%);
+  backdrop-filter: blur(22px) saturate(120%);
+}
+
+html.relay-standalone .smp-model-panel > * {
+  background: transparent !important;
+}
+
+@media (max-width: 820px) {
+  html.relay-standalone .smp-shell {
+    width: calc(100vw - 20px);
+    padding: 10px 0 24px;
+  }
+
+  html.relay-standalone .smp-topbar {
+    margin-bottom: 10px;
+  }
+
+  html.relay-standalone .smp-model-head {
+    grid-template-columns: 1fr;
+    padding-top: 10px;
+  }
+
+  html.relay-standalone .smp-model-meta {
+    min-width: 0;
+  }
+}

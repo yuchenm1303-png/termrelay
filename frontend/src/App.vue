@@ -4,7 +4,7 @@ import { computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
-import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelPortalShell from '@/components/layout/SmirelPortalShell.vue'
 import SmirelSourceBackground from '@/components/visual/SmirelSourceBackground.vue'
 import SmirelSourceCursor from '@/components/visual/SmirelSourceCursor.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
@@ -22,19 +22,27 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-const UTILITY_PATHS = [
+const PORTAL_PATHS = [
   '/key-usage',
+  '/model-plaza',
   '/setup',
   '/payment/result',
   '/payment/airwallex',
   '/payment/qrcode',
 ]
 
-const useUtilityShell = computed(() =>
-  route.name === 'NotFound'
-  || route.path.startsWith('/legal/')
-  || UTILITY_PATHS.some((path) => route.path === path || route.path.startsWith(`${path}/`)),
+const isEmbeddedModelPlaza = computed(() =>
+  route.path === '/model-plaza'
+  && route.query.embedded === '1'
+  && authStore.isAuthenticated,
 )
+
+const usePortalShell = computed(() => {
+  if (isEmbeddedModelPlaza.value) return false
+  return route.name === 'NotFound'
+    || route.path.startsWith('/legal/')
+    || PORTAL_PATHS.some((path) => route.path === path || route.path.startsWith(`${path}/`))
+})
 
 function updateDocumentTitle() {
   const customMenuItems = [
@@ -140,9 +148,9 @@ onMounted(async () => {
   <SmirelSourceBackground />
   <NavigationProgress />
   <RouterView v-slot="{ Component }">
-    <SmirelUtilityShell v-if="useUtilityShell">
+    <SmirelPortalShell v-if="usePortalShell">
       <component :is="Component" />
-    </SmirelUtilityShell>
+    </SmirelPortalShell>
     <component :is="Component" v-else />
   </RouterView>
   <Toast />
