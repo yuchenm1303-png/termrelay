@@ -7,6 +7,7 @@ import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
 import {
+  applyStandaloneSmirelPreferences,
   applyStandaloneSmirelPublicSettings,
   isStandaloneSmirelFrontend,
   SMIREL_API_BASE_URL,
@@ -26,6 +27,7 @@ function applyStandaloneRelayShell() {
   // Light/dark preference remains user-controlled instead of being coupled to
   // the legacy wallpaper/glass skin.
   document.documentElement.classList.add('relay-standalone')
+  applyStandaloneSmirelPreferences()
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
