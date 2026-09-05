@@ -23,10 +23,10 @@ function isStandaloneRelayFrontend() {
 function applyStandaloneRelayShell() {
   if (!isStandaloneRelayFrontend()) return
 
-  // The standalone relay intentionally uses the same fixed dark/glass visual
-  // language as the Smirel download portal and service monitor.
-  document.documentElement.classList.add('relay-standalone', 'dark')
-  localStorage.setItem('theme', 'dark')
+  // Mark the independently hosted Smirel console without forcing a theme.
+  // Light/dark preference remains user-controlled instead of being coupled to
+  // the legacy wallpaper/glass skin.
+  document.documentElement.classList.add('relay-standalone')
 }
 
 async function applyStandaloneRelayBrand(appStore: ReturnType<typeof useAppStore>) {
