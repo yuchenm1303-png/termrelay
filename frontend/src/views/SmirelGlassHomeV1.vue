@@ -43,26 +43,31 @@
           </div>
         </section>
 
-        <section id="access" class="smh-glass smh-access-bar" aria-label="API 接入信息">
-          <div class="smh-access-main">
-            <span>BASE URL</span>
-            <code>{{ apiBase }}</code>
+        <section id="access" class="smh-glass smh-access-card" aria-label="API 接入信息">
+          <div class="smh-access-top">
+            <div class="smh-access-main">
+              <span>BASE URL</span>
+              <code>{{ apiBase }}</code>
+            </div>
+            <button type="button" class="smh-copy-button" @click="copyBaseUrl">
+              {{ copied ? '已复制' : '复制地址' }}
+            </button>
           </div>
-          <div class="smh-access-item">
-            <span>认证</span>
-            <strong>Bearer API Key</strong>
+
+          <div class="smh-access-meta">
+            <div class="smh-access-item">
+              <span>认证</span>
+              <strong>Bearer API Key</strong>
+            </div>
+            <div class="smh-access-item">
+              <span>协议</span>
+              <strong>OpenAI Compatible</strong>
+            </div>
+            <div class="smh-access-item">
+              <span>计费</span>
+              <strong>按实际用量</strong>
+            </div>
           </div>
-          <div class="smh-access-item">
-            <span>协议</span>
-            <strong>OpenAI Compatible</strong>
-          </div>
-          <div class="smh-access-item">
-            <span>计费</span>
-            <strong>按实际用量</strong>
-          </div>
-          <button type="button" class="smh-copy-button" @click="copyBaseUrl">
-            {{ copied ? '已复制' : '复制地址' }}
-          </button>
         </section>
 
         <section class="smh-glass smh-process-card">
@@ -127,21 +132,21 @@ client = OpenAI(
           <router-link to="/model-plaza" class="smh-glass smh-quick-card smh-quick-card--wide">
             <span class="smh-quick-label">MODELS</span>
             <h3>模型与价格</h3>
-            <p>看当前可用模型、单价和服务状态。</p>
+            <p>查看当前可用模型、单价和服务状态。</p>
             <b>查看 →</b>
           </router-link>
 
           <router-link :to="keyPath" class="smh-glass smh-quick-card">
             <span class="smh-quick-label">API KEY</span>
             <h3>密钥</h3>
-            <p>创建和管理项目密钥。</p>
+            <p>创建、停用和管理项目密钥。</p>
             <b>{{ isAuthenticated ? '管理 →' : '登录 →' }}</b>
           </router-link>
 
           <router-link to="/key-usage" class="smh-glass smh-quick-card">
             <span class="smh-quick-label">USAGE</span>
             <h3>用量</h3>
-            <p>查看请求、Token 和费用。</p>
+            <p>查看请求、Token 和费用记录。</p>
             <b>查询 →</b>
           </router-link>
         </section>
@@ -257,8 +262,8 @@ onMounted(() => {
 .smh-nav a,
 .smh-status,
 .smh-login-link {
-  color: rgba(255, 255, 255, .68);
-  font-size: .76rem;
+  color: rgba(255, 255, 255, .70);
+  font-size: .78rem;
 }
 
 .smh-nav a,
@@ -310,11 +315,13 @@ onMounted(() => {
 
 .smh-kicker,
 .smh-section-label,
-.smh-quick-label {
+.smh-quick-label,
+.smh-access-main > span,
+.smh-access-item > span {
   margin: 0;
   color: rgba(255, 255, 255, .50);
-  font-size: .70rem;
-  letter-spacing: .13em;
+  font-size: .74rem;
+  letter-spacing: .12em;
 }
 
 .smh-hero h1 {
@@ -329,7 +336,7 @@ onMounted(() => {
 .smh-hero-description {
   max-width: 650px;
   margin: 20px 0 0;
-  color: rgba(255, 255, 255, .74);
+  color: rgba(255, 255, 255, .76);
   font-size: 1rem;
   line-height: 1.74;
 }
@@ -348,7 +355,7 @@ onMounted(() => {
   justify-content: center;
   padding: 0 18px;
   border-radius: 6px;
-  font-size: .82rem;
+  font-size: .84rem;
   font-weight: 620;
   transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
 }
@@ -372,7 +379,7 @@ onMounted(() => {
 .smh-button--quiet {
   border: 1px solid rgba(255, 255, 255, .08);
   background: rgba(4, 10, 16, .14);
-  color: rgba(255, 255, 255, .74);
+  color: rgba(255, 255, 255, .76);
 }
 
 .smh-button--quiet:hover {
@@ -388,64 +395,46 @@ onMounted(() => {
   backdrop-filter: blur(22px) saturate(118%);
 }
 
-.smh-access-bar {
-  display: grid;
-  grid-template-columns: minmax(350px, 2fr) repeat(3, minmax(135px, .72fr)) auto;
-  align-items: stretch;
+.smh-access-card {
   overflow: hidden;
 }
 
-.smh-access-main,
-.smh-access-item {
+.smh-access-top {
+  min-height: 124px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+  padding: 27px 30px;
+}
+
+.smh-access-main {
   min-width: 0;
-  min-height: 116px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 21px 24px;
-}
-
-.smh-access-item {
-  border-left: 1px solid rgba(255, 255, 255, .07);
-}
-
-.smh-access-main span,
-.smh-access-item span {
-  color: rgba(255, 255, 255, .46);
-  font-size: .67rem;
-  letter-spacing: .09em;
 }
 
 .smh-access-main code {
+  display: block;
   margin-top: 10px;
   overflow: hidden;
-  color: rgba(255, 255, 255, .97);
+  color: rgba(255, 255, 255, .98);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 1.10rem;
-  font-weight: 600;
+  font-size: clamp(1.12rem, 1.6vw, 1.34rem);
+  font-weight: 620;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.smh-access-item strong {
-  margin-top: 9px;
-  color: rgba(255, 255, 255, .88);
-  font-size: .82rem;
-  font-weight: 620;
-}
-
 .smh-copy-button {
-  align-self: center;
-  min-width: 96px;
-  min-height: 42px;
-  margin: 0 20px;
-  padding: 0 15px;
+  min-width: 106px;
+  min-height: 44px;
+  padding: 0 17px;
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 6px;
   background: rgba(255, 255, 255, .10);
-  color: rgba(255, 255, 255, .90);
+  color: rgba(255, 255, 255, .92);
   font: inherit;
-  font-size: .76rem;
+  font-size: .80rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color .18s ease, border-color .18s ease;
 }
@@ -455,46 +444,80 @@ onMounted(() => {
   border-color: rgba(255, 255, 255, .18);
 }
 
-.smh-process-card {
+.smh-access-meta {
   display: grid;
-  grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.smh-access-item {
+  min-height: 94px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 30px;
+}
+
+.smh-access-item + .smh-access-item {
+  border-left: 1px solid rgba(255, 255, 255, .07);
+}
+
+.smh-access-item strong {
+  margin-top: 9px;
+  color: rgba(255, 255, 255, .92);
+  font-size: .96rem;
+  font-weight: 630;
+}
+
+.smh-process-card,
+.smh-routing-card {
+  display: grid;
   gap: 0;
   margin-top: 18px;
   overflow: hidden;
 }
 
-.smh-process-copy {
-  min-height: 344px;
+.smh-process-card {
+  grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr);
+}
+
+.smh-process-copy,
+.smh-routing-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 44px 46px 42px;
+  padding: 46px 48px 44px;
+}
+
+.smh-process-copy {
+  min-height: 360px;
   border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
 .smh-process-copy h2,
 .smh-routing-copy h2 {
   margin: 12px 0 0;
-  font-size: clamp(2.35rem, 3.5vw, 3.25rem);
-  line-height: 1.08;
+  font-size: clamp(2.45rem, 3.6vw, 3.3rem);
+  line-height: 1.07;
   font-weight: 560;
-  letter-spacing: -.04em;
+  letter-spacing: -.042em;
 }
 
 .smh-process-copy > p:last-of-type,
 .smh-routing-copy > p:last-of-type {
-  max-width: 560px;
-  margin: 18px 0 0;
-  color: rgba(255, 255, 255, .60);
-  font-size: .92rem;
+  max-width: 570px;
+  margin: 19px 0 0;
+  color: rgba(255, 255, 255, .64);
+  font-size: 1rem;
   line-height: 1.72;
 }
 
 .smh-text-link {
   display: inline-flex;
+  align-self: flex-start;
   margin-top: 32px;
-  color: rgba(255, 255, 255, .84);
-  font-size: .82rem;
+  color: rgba(255, 255, 255, .86);
+  font-size: .86rem;
   font-weight: 620;
 }
 
@@ -506,16 +529,16 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr;
   align-content: stretch;
-  padding: 18px 30px;
+  padding: 18px 32px;
 }
 
 .smh-step {
-  min-height: 102px;
+  min-height: 108px;
   display: grid;
-  grid-template-columns: 52px minmax(170px, .7fr) minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 56px minmax(170px, .72fr) minmax(0, 1fr);
+  gap: 24px;
   align-items: center;
-  padding: 20px 8px;
+  padding: 22px 10px;
 }
 
 .smh-step + .smh-step {
@@ -523,40 +546,32 @@ onMounted(() => {
 }
 
 .smh-step > span {
-  color: rgba(255, 255, 255, .44);
-  font-size: .72rem;
+  color: rgba(255, 255, 255, .48);
+  font-size: .76rem;
   letter-spacing: .10em;
 }
 
 .smh-step h3 {
   margin: 0;
-  color: rgba(255, 255, 255, .94);
-  font-size: 1.18rem;
+  color: rgba(255, 255, 255, .96);
+  font-size: 1.28rem;
   line-height: 1.25;
-  font-weight: 630;
+  font-weight: 640;
 }
 
 .smh-step p {
   margin: 0;
-  color: rgba(255, 255, 255, .58);
-  font-size: .84rem;
-  line-height: 1.65;
+  color: rgba(255, 255, 255, .62);
+  font-size: .95rem;
+  line-height: 1.62;
 }
 
 .smh-routing-card {
-  display: grid;
   grid-template-columns: minmax(0, .92fr) minmax(440px, 1.08fr);
-  gap: 0;
-  margin-top: 18px;
-  overflow: hidden;
 }
 
 .smh-routing-copy {
-  min-height: 388px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 44px 46px 40px;
+  min-height: 380px;
   border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
@@ -565,14 +580,15 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 22px;
   margin-top: 30px;
-  color: rgba(255, 255, 255, .80);
-  font-size: .86rem;
+  color: rgba(255, 255, 255, .86);
+  font-size: .95rem;
+  font-weight: 600;
 }
 
 .smh-provider-line span + span::before {
   content: '/';
   margin-right: 22px;
-  color: rgba(255, 255, 255, .22);
+  color: rgba(255, 255, 255, .24);
 }
 
 .smh-client-example {
@@ -586,27 +602,27 @@ onMounted(() => {
 }
 
 .smh-client-example-head {
-  min-height: 52px;
+  min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 21px;
   border-bottom: 1px solid rgba(255, 255, 255, .07);
-  color: rgba(255, 255, 255, .48);
-  font-size: .72rem;
+  color: rgba(255, 255, 255, .52);
+  font-size: .76rem;
 }
 
 .smh-client-example pre {
   margin: 0;
-  padding: 32px 32px 36px;
+  padding: 34px 34px 38px;
   overflow-x: auto;
 }
 
 .smh-client-example code {
-  color: rgba(255, 255, 255, .88);
+  color: rgba(255, 255, 255, .90);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .90rem;
-  line-height: 1.85;
+  font-size: .96rem;
+  line-height: 1.82;
 }
 
 .smh-quick-grid {
@@ -618,7 +634,7 @@ onMounted(() => {
 
 .smh-quick-card {
   position: relative;
-  min-height: 196px;
+  min-height: 188px;
   padding: 30px 30px 28px;
   transition: transform .2s ease, background-color .2s ease;
 }
@@ -629,26 +645,27 @@ onMounted(() => {
 }
 
 .smh-quick-card h3 {
-  margin: 34px 0 0;
-  font-size: 1.26rem;
-  font-weight: 630;
+  margin: 24px 0 0;
+  font-size: 1.44rem;
+  line-height: 1.2;
+  font-weight: 640;
 }
 
 .smh-quick-card p {
   max-width: 88%;
-  margin: 10px 0 0;
-  color: rgba(255, 255, 255, .56);
-  font-size: .84rem;
-  line-height: 1.62;
+  margin: 11px 0 0;
+  color: rgba(255, 255, 255, .62);
+  font-size: .95rem;
+  line-height: 1.58;
 }
 
 .smh-quick-card b {
   position: absolute;
   right: 28px;
   bottom: 26px;
-  color: rgba(255, 255, 255, .68);
-  font-size: .78rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, .74);
+  font-size: .84rem;
+  font-weight: 610;
 }
 
 .smh-footer {
@@ -657,8 +674,8 @@ onMounted(() => {
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  color: rgba(255, 255, 255, .36);
-  font-size: .68rem;
+  color: rgba(255, 255, 255, .38);
+  font-size: .70rem;
 }
 
 .smh-footer > div {
@@ -675,22 +692,12 @@ onMounted(() => {
     width: calc(100vw - 48px);
   }
 
-  .smh-access-bar {
-    grid-template-columns: minmax(300px, 1.7fr) repeat(3, minmax(120px, .7fr));
-  }
-
-  .smh-copy-button {
-    grid-column: 1 / -1;
-    justify-self: end;
-    margin: 0 18px 16px;
-  }
-
   .smh-process-card {
-    grid-template-columns: minmax(320px, .82fr) minmax(0, 1.18fr);
+    grid-template-columns: minmax(310px, .78fr) minmax(0, 1.22fr);
   }
 
   .smh-step {
-    grid-template-columns: 48px minmax(150px, .7fr) minmax(0, 1fr);
+    grid-template-columns: 50px minmax(150px, .7fr) minmax(0, 1fr);
     gap: 18px;
   }
 
@@ -712,30 +719,6 @@ onMounted(() => {
     width: min(700px, 90vw);
   }
 
-  .smh-access-bar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .smh-access-main {
-    grid-column: 1 / -1;
-    border-bottom: 1px solid rgba(255, 255, 255, .07);
-  }
-
-  .smh-access-item {
-    border-left: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .07);
-  }
-
-  .smh-access-item:nth-of-type(even) {
-    border-left: 1px solid rgba(255, 255, 255, .07);
-  }
-
-  .smh-copy-button {
-    grid-column: 1 / -1;
-    justify-self: start;
-    margin: 16px 20px 18px;
-  }
-
   .smh-process-card,
   .smh-routing-card {
     grid-template-columns: 1fr;
@@ -749,7 +732,7 @@ onMounted(() => {
   }
 
   .smh-quick-grid {
-    grid-template-columns: 1.25fr 1fr;
+    grid-template-columns: 1.2fr 1fr;
   }
 
   .smh-quick-card:last-child {
@@ -782,7 +765,7 @@ onMounted(() => {
 
   .smh-hero-description {
     margin-top: 16px;
-    font-size: .90rem;
+    font-size: .92rem;
   }
 
   .smh-hero-actions {
@@ -790,20 +773,14 @@ onMounted(() => {
     margin-top: 22px;
   }
 
-  .smh-access-bar {
+  .smh-access-top {
     grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 23px 20px 20px;
   }
 
-  .smh-access-main,
-  .smh-access-item {
-    min-height: 94px;
-    padding: 18px 19px;
-  }
-
-  .smh-access-item,
-  .smh-access-item:nth-of-type(even) {
-    border-left: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .07);
+  .smh-copy-button {
+    justify-self: start;
   }
 
   .smh-access-main code {
@@ -811,9 +788,33 @@ onMounted(() => {
     overflow-wrap: anywhere;
   }
 
+  .smh-access-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .smh-access-item {
+    min-height: 82px;
+    padding: 17px 20px;
+  }
+
+  .smh-access-item + .smh-access-item {
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+  }
+
   .smh-process-copy,
   .smh-routing-copy {
     padding: 32px 26px 30px;
+  }
+
+  .smh-process-copy h2,
+  .smh-routing-copy h2 {
+    font-size: clamp(2.1rem, 10vw, 2.75rem);
+  }
+
+  .smh-process-copy > p:last-of-type,
+  .smh-routing-copy > p:last-of-type {
+    font-size: .92rem;
   }
 
   .smh-steps {
@@ -835,12 +836,12 @@ onMounted(() => {
   }
 
   .smh-step h3 {
-    font-size: 1.08rem;
+    font-size: 1.12rem;
   }
 
   .smh-step p {
     grid-column: 2;
-    font-size: .82rem;
+    font-size: .86rem;
   }
 
   .smh-client-example {
@@ -852,7 +853,7 @@ onMounted(() => {
   }
 
   .smh-client-example code {
-    font-size: .78rem;
+    font-size: .80rem;
   }
 
   .smh-quick-grid {
@@ -864,8 +865,17 @@ onMounted(() => {
   }
 
   .smh-quick-card {
-    min-height: 168px;
+    min-height: 158px;
     padding: 24px;
+  }
+
+  .smh-quick-card h3 {
+    margin-top: 18px;
+    font-size: 1.28rem;
+  }
+
+  .smh-quick-card p {
+    font-size: .88rem;
   }
 
   .smh-footer {
