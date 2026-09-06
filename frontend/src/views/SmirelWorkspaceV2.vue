@@ -3,7 +3,7 @@
     <div class="spg-environment sw2-environment" aria-hidden="true"></div>
 
     <div class="sw2-console">
-      <aside class="sw2-sidebar spg-surface" :class="{ 'sw2-sidebar--open': mobileNavOpen }">
+      <aside class="sw2-sidebar spg-surface smirel-card" :class="{ 'sw2-sidebar--open': mobileNavOpen }">
         <div class="sw2-sidebar-brand-row">
           <router-link to="/home" class="sw2-brand" aria-label="返回 Smirel 首页" @click="closeMobileNav">
             <img v-if="siteLogo" :src="siteLogo" alt="Smirel" />
@@ -12,7 +12,7 @@
           <button class="sw2-sidebar-close" type="button" aria-label="关闭导航" @click="closeMobileNav">×</button>
         </div>
 
-        <div class="sw2-sidebar-context">
+        <div class="sw2-sidebar-context smirel-card smirel-card--quiet">
           <div class="sw2-sidebar-context-head">
             <span>{{ isAdminWorkspace ? 'ADMIN CONSOLE' : 'WORKSPACE' }}</span>
             <span class="sw2-context-role">{{ isAdminWorkspace ? 'ADMIN' : 'USER' }}</span>
@@ -28,8 +28,11 @@
               v-for="item in section.items"
               :key="item.to"
               :to="item.to"
-              class="sw2-side-item"
-              :class="{ 'sw2-side-item--active': isActive(item.to) }"
+              class="sw2-side-item smirel-card smirel-card--quiet smirel-card--interactive"
+              :class="{
+                'sw2-side-item--active': isActive(item.to),
+                'smirel-card--active': isActive(item.to),
+              }"
               :aria-current="isActive(item.to) ? 'page' : undefined"
               @click="closeMobileNav"
             >
@@ -42,7 +45,7 @@
         </nav>
 
         <div class="sw2-sidebar-foot">
-          <router-link to="/profile" class="sw2-account-card" @click="closeMobileNav">
+          <router-link to="/profile" class="sw2-account-card smirel-card smirel-card--quiet smirel-card--interactive" @click="closeMobileNav">
             <span class="sw2-avatar">
               <img v-if="avatarUrl" :src="avatarUrl" alt="" />
               <span v-else>{{ initials }}</span>
@@ -66,7 +69,7 @@
       <button v-if="mobileNavOpen" class="sw2-nav-scrim" type="button" aria-label="关闭导航" @click="closeMobileNav"></button>
 
       <section class="sw2-workspace">
-        <header class="sw2-topbar">
+        <header class="sw2-topbar smirel-card">
           <div class="sw2-topbar-left">
             <button class="sw2-menu-button" type="button" aria-label="打开导航" @click="mobileNavOpen = true">
               <span></span><span></span><span></span>
@@ -120,6 +123,7 @@ import '@/styles/smirel-secondary-v2.css'
 import '@/styles/smirel-shared-glass-v1.css'
 import '@/styles/smirel-sidebar-fixed-v2.css'
 import '@/styles/smirel-workspace-functional-v2.css'
+import '@/styles/smirel-card-system-v1.css'
 
 const route = useRoute()
 const router = useRouter()

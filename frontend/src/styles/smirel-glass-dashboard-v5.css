@@ -1,4 +1,4 @@
-/* Dashboard is composed entirely from shared glass primitives. */
+/* Dashboard layout. Panels are composed from GlassSurface; nested data cards use the canonical card system. */
 .smg-dashboard {
   display: flex;
   min-width: 0;
@@ -97,9 +97,6 @@
   flex: 1;
   margin-top: 12px;
   padding: 13px;
-  border: 1px solid rgba(255,255,255,.065);
-  border-radius: var(--smg-radius-md);
-  background: var(--smg-data-strong);
 }
 
 .smg-dashboard-code span {
@@ -157,8 +154,6 @@
 .smg-dashboard-chart-surface {
   min-width: 0;
   padding: 3px;
-  border-radius: var(--smg-radius-md);
-  background: var(--smg-data);
 }
 
 .smg-dashboard-lower {

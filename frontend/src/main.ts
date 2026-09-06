@@ -25,6 +25,7 @@ import './styles/smirel-glass-auth-v5.css'
 import './styles/smirel-wordmark-v1.css'
 import './styles/smirel-shared-material-v1.css'
 import './styles/smirel-shared-interactions-v1.css'
+import './styles/smirel-card-system-v1.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
