@@ -1,58 +1,70 @@
 <template>
   <div class="sw2-admin-overview">
-    <div v-if="loading && !stats" class="sw2-admin-loading">正在读取平台运行数据…</div>
+    <section v-if="loading && !stats" class="sw2-panel sw2-admin-loading">正在读取平台运行数据…</section>
 
-    <div v-else-if="error && !stats" class="sw2-admin-error">
+    <section v-else-if="error && !stats" class="sw2-panel sw2-admin-error">
       <span>平台数据暂时没有加载成功。</span>
       <button type="button" @click="loadSnapshot">重新加载</button>
-    </div>
+    </section>
 
     <template v-else>
-      <header class="sw2-admin-overview-head">
-        <div class="sw2-admin-overview-head-copy">
-          <span>PLATFORM PULSE</span>
-          <strong>平台运行概览</strong>
-        </div>
-        <div class="sw2-admin-overview-head-actions">
-          <span v-if="lastUpdated" class="sw2-admin-updated">更新于 {{ lastUpdated }}</span>
-          <button class="sw2-admin-refresh" type="button" :disabled="loading || opsLoading" @click="loadSnapshot">
-            {{ loading || opsLoading ? '刷新中…' : '刷新' }}
-          </button>
-        </div>
-      </header>
+      <div class="sw2-admin-toolbar">
+        <span v-if="lastUpdated">数据更新于 {{ lastUpdated }}</span>
+        <button class="sw2-admin-refresh" type="button" :disabled="loading || opsLoading" @click="loadSnapshot">
+          {{ loading || opsLoading ? '刷新中…' : '刷新数据' }}
+        </button>
+      </div>
 
-      <div class="sw2-admin-grid">
-        <section class="sw2-admin-health">
-          <span class="sw2-admin-section-label">PLATFORM HEALTH</span>
-          <div class="sw2-admin-health-top">
-            <div class="sw2-admin-health-copy">
-              <strong>{{ healthHasIssues ? '需要关注' : '运行正常' }}</strong>
-              <p>{{ healthDescription }}</p>
+      <div class="sw2-admin-top-grid">
+        <section class="sw2-panel sw2-admin-health">
+          <header class="sw2-module-head">
+            <div>
+              <span class="sw2-admin-section-label">PLATFORM HEALTH</span>
+              <strong>平台健康</strong>
             </div>
             <span class="sw2-admin-health-state" :class="{ 'sw2-admin-health-state--warning': healthHasIssues }">
-              <i aria-hidden="true"></i>{{ healthHasIssues ? 'ATTENTION' : 'OPERATIONAL' }}
+              <i aria-hidden="true"></i>{{ healthHasIssues ? '需要关注' : '运行正常' }}
             </span>
+          </header>
+
+          <div class="sw2-admin-health-body">
+            <div class="sw2-admin-health-copy">
+              <strong>{{ healthHasIssues ? '存在异常上游' : '核心资源运行正常' }}</strong>
+              <p>{{ healthDescription }}</p>
+            </div>
+
+            <div class="sw2-admin-health-list">
+              <div class="sw2-admin-health-row">
+                <span>健康上游</span>
+                <strong>{{ formatCompact(stats?.normal_accounts) }} / {{ formatCompact(stats?.total_accounts) }}</strong>
+              </div>
+              <div class="sw2-admin-health-row">
+                <span>异常上游</span>
+                <strong :class="{ 'is-warning': healthHasIssues }">{{ formatCompact(stats?.error_accounts) }}</strong>
+              </div>
+              <div class="sw2-admin-health-row">
+                <span>活跃用户</span>
+                <strong>{{ formatCompact(stats?.active_users) }}</strong>
+              </div>
+            </div>
           </div>
 
-          <div class="sw2-admin-health-list">
-            <div class="sw2-admin-health-row">
-              <span>健康上游</span>
-              <strong>{{ formatCompact(stats?.normal_accounts) }} / {{ formatCompact(stats?.total_accounts) }}</strong>
-            </div>
-            <div class="sw2-admin-health-row">
-              <span>异常上游</span>
-              <strong :class="{ 'is-warning': healthHasIssues }">{{ formatCompact(stats?.error_accounts) }}</strong>
-            </div>
-            <div class="sw2-admin-health-row">
-              <span>活跃用户</span>
-              <strong>{{ formatCompact(stats?.active_users) }}</strong>
+          <div class="sw2-admin-health-foot">
+            <div v-for="item in secondaryMetrics.slice(0, 2)" :key="item.label">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
             </div>
           </div>
         </section>
 
-        <section class="sw2-admin-today">
-          <span class="sw2-admin-section-label">TODAY</span>
-          <p class="sw2-admin-today-intro">今天最需要关注的流量、结算、Token 和响应时间集中在这里，不再拆成一排独立 KPI 卡。</p>
+        <section class="sw2-panel sw2-admin-today">
+          <header class="sw2-module-head">
+            <div>
+              <span class="sw2-admin-section-label">TODAY</span>
+              <strong>今日运行</strong>
+            </div>
+            <span class="sw2-module-note">实时业务摘要</span>
+          </header>
 
           <div class="sw2-admin-metrics">
             <div v-for="metric in primaryMetrics" :key="metric.label" class="sw2-admin-metric">
@@ -61,37 +73,42 @@
               <small>{{ metric.note }}</small>
             </div>
           </div>
+
+          <div class="sw2-admin-today-foot">
+            <div v-for="item in secondaryMetrics.slice(2)" :key="item.label">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
         </section>
       </div>
 
-      <div class="sw2-admin-summary">
-        <div v-for="item in secondaryMetrics" :key="item.label" class="sw2-admin-summary-row">
-          <span>{{ item.label }}</span>
-          <strong>{{ item.value }}</strong>
-        </div>
-      </div>
-
-      <section class="sw2-admin-hour">
-        <header class="sw2-admin-hour-head">
+      <section class="sw2-panel sw2-admin-hour">
+        <header class="sw2-module-head sw2-admin-hour-head">
           <div>
             <span class="sw2-admin-section-label">LAST 1 HOUR</span>
             <strong>最近一小时</strong>
           </div>
-          <span v-if="opsEnabled && opsSnapshot" class="sw2-admin-hour-total">{{ formatCompact(opsOverview?.request_count_total) }} requests</span>
+          <span v-if="opsEnabled && opsSnapshot" class="sw2-module-note">{{ formatCompact(opsOverview?.request_count_total) }} requests</span>
         </header>
 
         <div v-if="!opsEnabled" class="sw2-admin-hour-empty">
-          <strong>运营监控未启用</strong>
-          <p>当前 Overview 保持可用；开启 Ops Monitoring 后，这里会显示近一小时的请求趋势和运行诊断。</p>
+          <div>
+            <strong>运营监控未启用</strong>
+            <p>开启 Ops Monitoring 后，这里会显示最近一小时的请求趋势、SLA、错误率和延迟。</p>
+          </div>
+          <span>Overview 其他数据正常可用</span>
         </div>
 
         <div v-else-if="opsLoading && !opsSnapshot" class="sw2-admin-hour-empty">
-          <strong>正在读取近一小时运行数据…</strong>
+          <div><strong>正在读取最近一小时运行数据…</strong></div>
         </div>
 
         <div v-else-if="opsError && !opsSnapshot" class="sw2-admin-hour-empty">
-          <strong>近一小时运行数据暂时不可用</strong>
-          <p>Platform Pulse 不受影响，可以稍后再次刷新。</p>
+          <div>
+            <strong>最近一小时数据暂时不可用</strong>
+            <p>Platform Health 和今日运行数据不受影响。</p>
+          </div>
         </div>
 
         <div v-else class="sw2-admin-hour-grid">
@@ -179,7 +196,7 @@ function formatPercentFraction(value: number | null | undefined): string {
 const healthHasIssues = computed(() => toFinite(stats.value?.error_accounts) > 0)
 const healthDescription = computed(() => healthHasIssues.value
   ? `当前有 ${formatCompact(stats.value?.error_accounts)} 个上游处于异常状态，优先检查账号池和调度健康度。`
-  : '当前没有检测到异常上游。平台核心调度资源处于正常状态。')
+  : '当前没有检测到异常上游，核心调度资源处于正常状态。')
 
 const primaryMetrics = computed(() => [
   { label: '今日请求', value: formatCompact(stats.value?.today_requests), note: `累计 ${formatCompact(stats.value?.total_requests)} 次` },
