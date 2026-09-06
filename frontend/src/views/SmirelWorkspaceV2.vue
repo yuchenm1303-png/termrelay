@@ -119,6 +119,7 @@ import SmirelAdminOverviewV2 from '@/views/admin/SmirelAdminOverviewV2.vue'
 import '@/styles/smirel-secondary-v2.css'
 import '@/styles/smirel-shared-glass-v1.css'
 import '@/styles/smirel-sidebar-fixed-v2.css'
+import '@/styles/smirel-workspace-functional-v2.css'
 
 const route = useRoute()
 const router = useRouter()
