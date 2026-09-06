@@ -221,66 +221,67 @@ onMounted(() => {
 
 <style scoped>
 /*
- * Homepage-only density pass.
- * The shared glass stylesheet is also used by secondary surfaces, so the
- * landing-page composition is tightened here instead of globally changing the
- * shared visual language.
+ * Desktop composition: keep the shared glass language, but let the homepage
+ * use the viewport as a canvas instead of sitting inside the shared 1360px
+ * content column. This is intentionally scoped to the landing page.
  */
 @media (min-width: 981px) {
   .spg-shell {
-    width: min(1320px, calc(100vw - 64px));
-    padding: 22px 0 28px;
+    width: min(1840px, calc(100vw - 32px));
+    padding: 20px 0 28px;
   }
 
   .spg-topbar {
     min-height: 54px;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
+    padding-inline: 8px;
   }
 
   .spg-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
-    gap: 28px;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, auto);
+    gap: 36px;
     margin-bottom: 22px;
+    padding-inline: 8px;
   }
 
   .spg-hero-copy {
-    max-width: 860px;
+    max-width: 980px;
   }
 
   .spg-hero h1 {
-    max-width: 860px;
+    max-width: 980px;
     margin-top: 8px;
-    font-size: clamp(2.7rem, 4.6vw, 4.3rem);
+    font-size: clamp(2.8rem, 4.7vw, 4.6rem);
     line-height: 1.01;
   }
 
   .spg-hero-description {
-    max-width: 720px;
+    max-width: 820px;
     margin-top: 14px;
     line-height: 1.62;
   }
 
   .spg-hero-meta {
-    max-width: 330px;
+    max-width: 390px;
     padding-bottom: 4px;
   }
 
   .spg-primary-grid {
-    grid-template-columns: minmax(0, 1.42fr) minmax(360px, .98fr);
-    gap: 16px;
+    grid-template-columns: minmax(0, 1.62fr) minmax(390px, .88fr);
+    gap: 14px;
   }
 
   .spg-access-card,
   .spg-account-card {
-    min-height: 412px;
+    min-height: 420px;
   }
 
   .spg-access-card {
-    padding: 28px 30px 26px;
+    padding: 30px 34px 28px;
   }
 
   .spg-account-card {
-    padding: 28px 26px 24px;
+    padding: 30px 28px 26px;
   }
 
   .spg-card-intro {
@@ -290,7 +291,7 @@ onMounted(() => {
 
   .spg-endpoint-block {
     margin-top: 22px;
-    padding: 14px 16px;
+    padding: 15px 18px;
   }
 
   .spg-state-row {
@@ -300,20 +301,20 @@ onMounted(() => {
 
   .spg-meta-grid {
     margin-top: 16px;
-    gap: 8px;
+    gap: 9px;
   }
 
   .spg-inset {
-    padding: 11px 12px;
+    padding: 12px 14px;
   }
 
   .spg-card-actions {
     margin-top: 16px;
-    gap: 8px;
+    gap: 9px;
   }
 
   .spg-action {
-    min-height: 46px;
+    min-height: 48px;
   }
 
   .spg-account-steps {
@@ -322,13 +323,13 @@ onMounted(() => {
   }
 
   .spg-step {
-    min-height: 56px;
-    padding: 9px 10px;
+    min-height: 57px;
+    padding: 9px 11px;
   }
 
   .spg-account-note {
     margin-top: 8px;
-    padding: 9px 10px;
+    padding: 9px 11px;
   }
 
   .spg-card-footer {
@@ -338,21 +339,21 @@ onMounted(() => {
 
   .spg-utility-grid {
     margin-top: 14px;
-    gap: 12px;
+    gap: 10px;
   }
 
   .spg-utility-card {
-    min-height: 138px;
-    padding: 18px 18px 16px;
+    min-height: 146px;
+    padding: 20px 22px 18px;
   }
 
   .spg-utility-card > b {
-    top: 16px;
-    right: 16px;
+    top: 18px;
+    right: 20px;
   }
 
   .spg-utility-card .spg-overline {
-    margin-top: 12px;
+    margin-top: 13px;
   }
 
   .spg-utility-card h3 {
@@ -360,29 +361,40 @@ onMounted(() => {
   }
 
   .spg-utility-card p {
-    margin-top: 5px;
+    max-width: 92%;
+    margin-top: 6px;
     line-height: 1.5;
   }
 
   .spg-provider-card {
+    grid-template-columns: minmax(320px, .72fr) minmax(0, 1.28fr);
     margin-top: 14px;
-    padding: 24px 26px;
-    gap: 22px;
+    padding: 26px 30px;
+    gap: 28px;
+  }
+
+  .spg-provider-list {
+    gap: 10px;
+  }
+
+  .spg-provider-list .spg-inset {
+    min-height: 74px;
   }
 
   .spg-footer {
     min-height: 46px;
     margin-top: 14px;
+    padding-inline: 8px;
   }
 }
 
 @media (min-width: 981px) and (max-width: 1220px) {
   .spg-shell {
-    width: min(1120px, calc(100vw - 48px));
+    width: calc(100vw - 28px);
   }
 
   .spg-primary-grid {
-    grid-template-columns: minmax(0, 1.28fr) minmax(340px, .92fr);
+    grid-template-columns: minmax(0, 1.32fr) minmax(340px, .92fr);
   }
 }
 </style>
