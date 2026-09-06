@@ -21,6 +21,27 @@ html.relay-standalone {
   --smirel-card-backdrop: blur(22px) saturate(118%);
   --smirel-card-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
   --smirel-card-transition: 180ms cubic-bezier(.2, .7, .2, 1);
+
+  /*
+   * Legacy-token bridge.
+   *
+   * Older SPG/SMG page CSS still reads these variables while markup is being
+   * migrated. Pinning them here prevents those layers from silently restoring
+   * their old 6px/18px radii or a second glass recipe.
+   */
+  --spg-radius: var(--smirel-card-radius);
+  --spg-surface: var(--smirel-card-bg);
+  --spg-surface-hover: var(--smirel-card-bg-hover);
+  --spg-inset: var(--smirel-card-bg-data);
+  --spg-line: var(--smirel-card-border);
+  --smg-radius-xl: var(--smirel-card-radius);
+  --smg-radius-lg: var(--smirel-card-radius);
+  --smg-line: var(--smirel-card-border);
+  --smg-glass: var(--smirel-card-bg);
+  --smg-glass-hover: var(--smirel-card-bg-hover);
+  --smg-glass-quiet: var(--smirel-card-bg-quiet);
+  --smg-data: var(--smirel-card-bg-data);
+  --smg-data-hover: var(--smirel-card-bg-hover);
 }
 
 /* Canonical primitive. */
@@ -69,9 +90,12 @@ html.relay-standalone .smirel-card--interactive {
 /*
  * Compatibility adapters. These old class names no longer own a material;
  * they all resolve to the canonical card recipe while their markup is migrated.
+ *
+ * The generic SPG/SMG aliases are intentional: several routed/public pages
+ * still render these legacy primitives outside the V2 workspace wrapper.
  */
 html.relay-standalone .spg-page.smh-home .smh-glass,
-html.relay-standalone .spg-page.sw2-page .spg-surface,
+html.relay-standalone .spg-page .spg-surface,
 html.relay-standalone .spg-page.sw2-page .sw2-panel,
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context,
 html.relay-standalone .spg-page.sw2-page .sw2-account-card,
@@ -90,6 +114,13 @@ html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-data-panel,
 html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-page-toolbar,
 html.relay-standalone .spg-page.sw2-page .sw2-route-content .card,
 html.relay-standalone .smg-shell .smg-surface,
+html.relay-standalone .smg-shell .smg-sidebar,
+html.relay-standalone .smg-shell .smg-topbar,
+html.relay-standalone .smg-shell .smg-sidebar-context,
+html.relay-standalone .smg-shell .smg-profile-support,
+html.relay-standalone .smg-shell .smg-catalog-panel,
+html.relay-standalone .smg-shell .smg-page-toolbar,
+html.relay-standalone .smg-shell .smg-data-panel,
 html.relay-standalone .smg-shell .card {
   border: 1px solid var(--smirel-card-border) !important;
   border-radius: var(--smirel-card-radius) !important;
@@ -117,6 +148,7 @@ html.relay-standalone .smg-shell :is(
   .smg-surface--data,
   .smg-auth-fact,
   .smg-auth-code,
+  .smg-data-pagination,
   .smg-dashboard-code,
   .smg-dashboard-chart-surface
 ),
@@ -130,6 +162,14 @@ html.relay-standalone .spg-page :is(.spg-endpoint-block, .spg-inset, .spg-step) 
   box-shadow: var(--smirel-card-shadow) !important;
 }
 
+/* Quiet nested legacy cards use the same hierarchy as .smirel-card--quiet. */
+html.relay-standalone .smg-shell .smg-sidebar-context,
+html.relay-standalone .smg-shell .smg-surface--quiet,
+html.relay-standalone .spg-page.sw2-page .sw2-account-card,
+html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
+  background: var(--smirel-card-bg-quiet) !important;
+}
+
 /* Sidebar chrome is visually a card in the floating V2 shell. */
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar.spg-surface {
   border: 1px solid var(--smirel-card-border) !important;
@@ -138,14 +178,19 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar.spg-surface {
   overflow: hidden;
 }
 
-/* These are true nested cards; navigation rows are owned by smirel-navigation-v1.css. */
-html.relay-standalone .spg-page.sw2-page .sw2-account-card,
-html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
-  background: var(--smirel-card-bg-quiet) !important;
+/* Legacy interactive surface aliases follow the same hover material contract. */
+html.relay-standalone .spg-page .spg-surface--interactive,
+html.relay-standalone .smg-shell .smg-surface--interactive {
+  transition:
+    transform var(--smirel-card-transition),
+    background-color var(--smirel-card-transition),
+    border-color var(--smirel-card-transition) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html.relay-standalone .spg-page.sw2-page .sw2-account-card:hover {
+  html.relay-standalone .spg-page.sw2-page .sw2-account-card:hover,
+  html.relay-standalone .spg-page .spg-surface--interactive:hover,
+  html.relay-standalone .smg-shell .smg-surface--interactive:hover {
     border-color: var(--smirel-card-border-active) !important;
     background: var(--smirel-card-bg-hover) !important;
   }
@@ -154,8 +199,8 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   html.relay-standalone .smirel-card,
   html.relay-standalone .spg-page.smh-home .smh-glass,
+  html.relay-standalone .spg-page .spg-surface,
   html.relay-standalone .spg-page.sw2-page :is(
-    .spg-surface,
     .sw2-panel,
     .sw2-sidebar-context,
     .sw2-account-card,
@@ -166,7 +211,17 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
     .sw2-route-content .smg-surface,
     .sw2-route-content .card
   ),
-  html.relay-standalone .smg-shell :is(.smg-surface, .card) {
+  html.relay-standalone .smg-shell :is(
+    .smg-surface,
+    .smg-sidebar,
+    .smg-topbar,
+    .smg-sidebar-context,
+    .smg-profile-support,
+    .smg-catalog-panel,
+    .smg-page-toolbar,
+    .smg-data-panel,
+    .card
+  ) {
     background: rgba(5, 18, 29, .82) !important;
   }
 }

@@ -37,6 +37,29 @@ describe('Smirel canonical card system', () => {
     expect(cardSystem).toContain('.smirel-card--active')
   })
 
+  it('bridges remaining SPG and SMG card tokens into the canonical material', () => {
+    expect(cardSystem).toContain('--spg-radius: var(--smirel-card-radius)')
+    expect(cardSystem).toContain('--spg-surface: var(--smirel-card-bg)')
+    expect(cardSystem).toContain('--spg-inset: var(--smirel-card-bg-data)')
+    expect(cardSystem).toContain('--smg-radius-xl: var(--smirel-card-radius)')
+    expect(cardSystem).toContain('--smg-radius-lg: var(--smirel-card-radius)')
+    expect(cardSystem).toContain('--smg-glass: var(--smirel-card-bg)')
+    expect(cardSystem).toContain('--smg-glass-quiet: var(--smirel-card-bg-quiet)')
+    expect(cardSystem).toContain('--smg-data: var(--smirel-card-bg-data)')
+  })
+
+  it('normalizes first-level legacy surfaces that can render outside the V2 workspace wrapper', () => {
+    expect(cardSystem).toContain('.spg-page .spg-surface')
+    expect(cardSystem).toContain('.smg-shell .smg-sidebar')
+    expect(cardSystem).toContain('.smg-shell .smg-topbar')
+    expect(cardSystem).toContain('.smg-shell .smg-sidebar-context')
+    expect(cardSystem).toContain('.smg-shell .smg-profile-support')
+    expect(cardSystem).toContain('.smg-shell .smg-catalog-panel')
+    expect(cardSystem).toContain('.smg-shell .smg-page-toolbar')
+    expect(cardSystem).toContain('.smg-shell .smg-data-panel')
+    expect(cardSystem).toContain('.spg-page .spg-surface--interactive')
+  })
+
   it('keeps workspace cards canonical while navigation uses a dedicated interaction primitive', () => {
     expect(workspaceSource).toContain('sw2-sidebar spg-surface smirel-card')
     expect(workspaceSource).toContain('sw2-sidebar-context smirel-card smirel-card--quiet')
