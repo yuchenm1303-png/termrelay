@@ -1,6 +1,6 @@
 <template>
-  <div class="sw2-page" :class="{ 'sw2-page--admin': isAdminWorkspace }">
-    <div class="sw2-environment" aria-hidden="true"></div>
+  <div class="spg-page sw2-page" :class="{ 'sw2-page--admin': isAdminWorkspace }">
+    <div class="spg-environment sw2-environment" aria-hidden="true"></div>
 
     <div class="sw2-console">
       <aside class="sw2-sidebar spg-surface" :class="{ 'sw2-sidebar--open': mobileNavOpen }">
@@ -91,7 +91,7 @@
 
             <SmirelAdminOverviewV2 v-if="isAdminWorkspace && isOverview" />
 
-            <section v-else class="sw2-panel sw2-placeholder">
+            <section v-else class="spg-surface sw2-panel sw2-placeholder">
               <span>{{ pageMeta.kicker }}</span>
               <strong>{{ pageMeta.title }} 正在重新设计</strong>
               <p>这个页面不会接回旧布局，会在当前 Workspace Canvas 中重新实现。</p>
