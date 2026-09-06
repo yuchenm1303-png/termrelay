@@ -3,7 +3,7 @@
     <div class="sw2-environment" aria-hidden="true"></div>
 
     <div class="sw2-console">
-      <aside class="sw2-sidebar" :class="{ 'sw2-sidebar--open': mobileNavOpen }">
+      <aside class="sw2-sidebar spg-surface" :class="{ 'sw2-sidebar--open': mobileNavOpen }">
         <div class="sw2-sidebar-brand-row">
           <router-link to="/home" class="sw2-brand" aria-label="返回 Smirel 首页" @click="closeMobileNav">
             <img v-if="siteLogo" :src="siteLogo" alt="Smirel" />
@@ -110,6 +110,8 @@ import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 import SmirelAdminOverviewV2 from '@/views/admin/SmirelAdminOverviewV2.vue'
 import '@/styles/smirel-secondary-v2.css'
+import '@/styles/smirel-shared-glass-v1.css'
+import '@/styles/smirel-sidebar-fixed-v2.css'
 
 const route = useRoute()
 const appStore = useAppStore()
