@@ -1,4 +1,147 @@
-/* Home page composition only. Glass/card material stays owned by app.css. */
+/* Commercial dark homepage: page-local material tokens and composition. */
+.home-page {
+  --commercial-bg: #0a0a0b;
+  --commercial-surface: #111113;
+  --commercial-surface-2: #151518;
+  --commercial-border: #252529;
+  --commercial-border-strong: #303036;
+  --commercial-text: #f4f4f5;
+  --commercial-muted: #8d8d96;
+  --commercial-subtle: #62626b;
+  --commercial-accent: #48c7e8;
+  --commercial-success: #49d6a2;
+  min-height: 100vh;
+  color: var(--commercial-text);
+  background: var(--commercial-bg);
+}
+
+.home-page .site-environment {
+  background: var(--commercial-bg);
+}
+
+.home-page .site-environment::after {
+  display: none;
+}
+
+.home-page .glass {
+  border-color: var(--commercial-border);
+  background: var(--commercial-surface);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.home-page .home-topbar {
+  border-bottom: 1px solid var(--commercial-border);
+  background: rgba(10, 10, 11, .96);
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.home-page .brand-link img {
+  width: 30px;
+  height: 30px;
+}
+
+.home-page .brand-link strong {
+  color: var(--commercial-text);
+}
+
+.home-page .brand-link small,
+.home-page .home-nav,
+.home-page .quiet-link,
+.home-page .service-state,
+.home-page .hero-copy,
+.home-page .feature-copy p,
+.home-page .quick-card > small,
+.home-page .home-footer {
+  color: var(--commercial-muted);
+}
+
+.home-page .home-nav a,
+.home-page .quiet-link,
+.home-page .top-console,
+.home-page .primary-button,
+.home-page .secondary-button,
+.home-page .endpoint-card > button,
+.home-page .quick-card {
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.home-page .home-nav a:hover,
+.home-page .quiet-link:hover,
+.home-page .feature-link:hover,
+.home-page .quick-card:hover > b {
+  color: var(--commercial-text);
+}
+
+.home-page .service-state i {
+  background: var(--commercial-success);
+  box-shadow: none;
+}
+
+.home-page .top-console {
+  border: 1px solid var(--commercial-border-strong);
+  background: var(--commercial-surface-2);
+  color: #e9e9ec;
+}
+
+.home-page .top-console:hover {
+  background: #1b1b1f;
+  border-color: #3a3a40;
+}
+
+.home-page .account-trigger {
+  border-color: var(--commercial-border-strong);
+  background: var(--commercial-surface-2);
+}
+
+.home-page .account-menu {
+  border-radius: 8px;
+}
+
+.home-page .account-menu > a:hover,
+.home-page .account-menu > button:hover {
+  background: #1a1a1e;
+}
+
+.home-page .eyebrow {
+  color: var(--commercial-accent);
+  letter-spacing: .12em;
+}
+
+.home-page .hero-section h1 {
+  color: #f7f7f8;
+  font-weight: 600;
+}
+
+.home-page .primary-button,
+.home-page .secondary-button {
+  border-radius: 7px;
+  min-height: 38px;
+}
+
+.home-page .primary-button {
+  border-color: #e8e8eb;
+  background: #f2f2f3;
+  color: #111113;
+}
+
+.home-page .primary-button:hover {
+  background: #ffffff;
+  transform: none;
+}
+
+.home-page .secondary-button {
+  border-color: var(--commercial-border-strong);
+  background: var(--commercial-surface);
+  color: #d5d5d9;
+}
+
+.home-page .secondary-button:hover {
+  background: var(--commercial-surface-2);
+}
 
 .home-intro-grid,
 .home-feature-grid {
@@ -15,12 +158,53 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.home-page .endpoint-card,
+.home-page .feature-panel,
+.home-page .quick-card {
+  border-radius: 7px;
+}
+
+.home-page .endpoint-card {
+  background: var(--commercial-surface);
+}
+
+.home-page .endpoint-main span,
+.home-page .endpoint-meta span,
+.home-page .quick-card > span,
+.home-page .compact-code header,
+.home-page .compact-steps b {
+  color: var(--commercial-subtle);
+}
+
+.home-page .endpoint-main code,
+.home-page .endpoint-meta strong,
+.home-page .compact-code code {
+  color: #e6e6e9;
+}
+
+.home-page .endpoint-card > button {
+  border-color: var(--commercial-border-strong);
+  background: var(--commercial-surface-2);
+  color: #d7d7db;
+}
+
+.home-page .endpoint-card > button:hover {
+  background: #1b1b1f;
+}
+
+.home-page .endpoint-meta {
+  border-top-color: var(--commercial-border);
+}
+
+.home-page .endpoint-meta span + span {
+  border-left-color: var(--commercial-border);
+}
+
 .feature-panel {
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(190px, .78fr) minmax(0, 1.22fr);
   overflow: hidden;
-  border-radius: 8px;
 }
 
 .feature-panel--routing {
@@ -37,10 +221,11 @@
 
 .feature-copy h2 {
   margin: 6px 0 0;
+  color: var(--commercial-text);
   font-size: 1.34rem;
   line-height: 1.08;
   letter-spacing: -.035em;
-  font-weight: 580;
+  font-weight: 590;
 }
 
 .feature-copy p {
@@ -48,20 +233,23 @@
   margin: 8px 0 0;
   font-size: .68rem;
   line-height: 1.5;
-  color: rgba(255,255,255,.57);
 }
 
 .feature-link {
   margin-top: 11px;
   font-size: .64rem;
-  color: rgba(255,255,255,.82);
+  color: #d4d4d8;
+}
+
+.provider-line {
+  color: #b8b8bf;
 }
 
 .compact-steps,
 .compact-code {
   min-width: 0;
-  border-left: 1px solid rgba(255,255,255,.07);
-  background: rgba(3,13,21,.12);
+  border-left: 1px solid var(--commercial-border);
+  background: #0e0e10;
 }
 
 .compact-steps {
@@ -79,24 +267,24 @@
 }
 
 .compact-steps > div + div {
-  border-top: 1px solid rgba(255,255,255,.065);
+  border-top: 1px solid var(--commercial-border);
 }
 
 .compact-steps b {
   font-size: .53rem;
-  color: rgba(255,255,255,.34);
 }
 
 .compact-steps strong {
+  color: #e2e2e5;
   font-size: .70rem;
   font-weight: 620;
 }
 
 .compact-steps span {
   min-width: 0;
+  color: #777780;
   font-size: .60rem;
   line-height: 1.35;
-  color: rgba(255,255,255,.46);
 }
 
 .compact-code {
@@ -110,9 +298,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255,255,255,.065);
+  border-bottom: 1px solid var(--commercial-border);
   font-size: .53rem;
-  color: rgba(255,255,255,.42);
 }
 
 .compact-code pre {
@@ -129,7 +316,24 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: .60rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: rgba(255,255,255,.80);
+}
+
+.home-page .quick-card {
+  border-color: var(--commercial-border);
+  background: var(--commercial-surface);
+}
+
+.home-page .quick-card:hover {
+  border-color: var(--commercial-border-strong);
+  background: var(--commercial-surface-2);
+}
+
+.home-page .quick-card > strong {
+  color: #e6e6e9;
+}
+
+.home-page .quick-card > b {
+  color: #8b8b94;
 }
 
 @media (min-width: 981px) {
@@ -294,7 +498,7 @@
   .compact-steps,
   .compact-code {
     border-left: 0;
-    border-top: 1px solid rgba(255,255,255,.07);
+    border-top: 1px solid var(--commercial-border);
   }
 
   .feature-copy {
@@ -315,6 +519,10 @@
     height: auto;
     min-height: 100vh;
     overflow: visible;
+  }
+
+  .home-page .home-topbar {
+    background: #0a0a0b;
   }
 
   .home-content {
@@ -346,7 +554,7 @@
   .compact-steps,
   .compact-code {
     border-left: 0;
-    border-top: 1px solid rgba(255,255,255,.07);
+    border-top: 1px solid var(--commercial-border);
   }
 
   .compact-steps > div {
