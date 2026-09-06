@@ -1,5 +1,5 @@
 <template>
-  <div v-if="useStandaloneHost" class="sw2-route-content">
+  <div v-if="useStandaloneHost" class="smg-shell sw2-route-content">
     <RelayAccessPanel v-if="showRelayAccessPanel" />
     <BillingAccessPanel v-if="showBillingAccessPanel" />
     <slot />
