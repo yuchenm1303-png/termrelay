@@ -1,4 +1,4 @@
-/* Authentication uses the same scene and glass primitives as the customer console. */
+/* Authentication layout. All card material comes from GlassSurface. */
 .smg-auth {
   position: relative;
   min-height: 100vh;
@@ -17,7 +17,6 @@
   gap: 16px;
   margin: 0 auto;
   padding: 8px 10px 8px 12px;
-  border-radius: var(--smg-radius-lg) !important;
 }
 
 .smg-auth-brand {
@@ -111,9 +110,6 @@
 .smg-auth-fact {
   min-width: 0;
   padding: 13px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: var(--smg-radius-md);
-  background: var(--smg-data);
 }
 
 .smg-auth-fact strong {
@@ -134,9 +130,6 @@
 .smg-auth-code {
   margin-top: 24px;
   padding: 14px;
-  border: 1px solid rgba(255,255,255,.065);
-  border-radius: var(--smg-radius-md);
-  background: var(--smg-data-strong);
 }
 
 .smg-auth-code span {
