@@ -1,0 +1,257 @@
+/*
+ * Functional V2 shell integration.
+ *
+ * These rules deliberately style only the new shell contracts introduced when
+ * real router views are hosted by SmirelWorkspaceV2. They are kept separate
+ * from the broad visual foundation so functional wiring is not coupled to an
+ * unrelated redesign pass.
+ */
+
+.sw2-sidebar-context {
+  padding: 13px 13px 14px;
+  border-color: rgba(177, 222, 251, .09);
+  background:
+    linear-gradient(145deg, rgba(158, 216, 250, .055), transparent 52%),
+    rgba(255, 255, 255, .026);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+.sw2-sidebar-context-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sw2-sidebar-context-head > span:first-child {
+  color: rgba(255, 255, 255, .34);
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+.sw2-context-role {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border: 1px solid rgba(175, 222, 252, .10);
+  border-radius: 999px;
+  background: rgba(154, 215, 250, .055);
+  color: rgba(199, 235, 255, .60);
+  font-size: .47rem;
+  font-weight: 720;
+  letter-spacing: .10em;
+}
+
+.sw2-sidebar-context strong {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, .84);
+  font-size: .81rem;
+  font-weight: 640;
+}
+
+.sw2-sidebar-context small {
+  display: block;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, .37);
+  font-size: .54rem;
+  line-height: 1.45;
+}
+
+.sw2-side-item {
+  cursor: pointer;
+}
+
+.sw2-sidebar-foot {
+  background: rgba(2, 10, 17, .16);
+}
+
+.sw2-account-card {
+  position: relative;
+  min-height: 62px;
+  padding: 10px 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, .045);
+  background:
+    linear-gradient(100deg, rgba(161, 219, 253, .055), transparent 72%),
+    rgba(255, 255, 255, .025);
+  transition: background-color 160ms var(--sw2-ease), border-color 160ms var(--sw2-ease);
+}
+
+.sw2-avatar,
+.sw2-topbar-avatar {
+  overflow: hidden;
+}
+
+.sw2-avatar img,
+.sw2-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.sw2-avatar > span,
+.sw2-topbar-avatar > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+
+.sw2-avatar {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  border: 1px solid rgba(188, 228, 252, .09);
+  background: rgba(178, 225, 253, .11);
+}
+
+.sw2-account-copy {
+  flex: 1;
+}
+
+.sw2-account-copy strong {
+  color: rgba(255, 255, 255, .83);
+  font-size: .65rem;
+  font-weight: 640;
+}
+
+.sw2-account-copy small {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, .37);
+}
+
+.sw2-account-chevron {
+  flex: 0 0 auto;
+  color: rgba(211, 238, 255, .34);
+  font-size: 1rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.sw2-footer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 36px;
+}
+
+.sw2-home-link,
+.sw2-logout-button {
+  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, .38);
+  font: inherit;
+  font-size: .54rem;
+  cursor: pointer;
+  transition: color 150ms var(--sw2-ease), background-color 150ms var(--sw2-ease);
+}
+
+.sw2-home-link {
+  border-right: 1px solid rgba(255, 255, 255, .045);
+}
+
+.sw2-logout-button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.sw2-topbar-avatar {
+  border: 1px solid rgba(191, 231, 255, .08);
+  text-decoration: none;
+}
+
+.sw2-breadcrumb {
+  min-width: 0;
+}
+
+.sw2-breadcrumb > span,
+.sw2-breadcrumb > strong {
+  white-space: nowrap;
+}
+
+.sw2-route-stage,
+.sw2-route-content {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Retain the canonical .smg-shell-scoped component skin without nesting its
+ * old sidebar/topbar or forcing another viewport-height application shell. */
+.sw2-route-content.smg-shell {
+  min-height: 0;
+  isolation: auto;
+}
+
+.sw2-canvas--route {
+  padding-top: 18px;
+}
+
+.sw2-canvas--route .sw2-canvas-inner {
+  width: min(100%, 1540px);
+}
+
+.sw2-route-content > .smg-page,
+.sw2-route-stage > .smg-page {
+  width: 100%;
+  margin: 0;
+}
+
+.sw2-route-content .smg-page-head {
+  padding-top: 4px;
+}
+
+.sw2-route-content .smg-page-title {
+  font-size: clamp(1.5rem, 2.1vw, 2rem);
+}
+
+.sw2-route-content .smg-data-panel,
+.sw2-route-content .smg-page-toolbar,
+.sw2-route-content .card {
+  max-width: 100%;
+}
+
+.sw2-route-content .smg-data-scroll {
+  max-width: 100%;
+}
+
+.sw2-account-card:focus-visible,
+.sw2-topbar-avatar:focus-visible,
+.sw2-logout-button:focus-visible {
+  outline: 1px solid rgba(199, 237, 255, .82);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sw2-account-card:hover {
+    border-bottom-color: rgba(177, 223, 250, .08);
+    background:
+      linear-gradient(100deg, rgba(161, 219, 253, .075), transparent 72%),
+      rgba(255, 255, 255, .036);
+  }
+
+  .sw2-home-link:hover,
+  .sw2-logout-button:hover {
+    background: rgba(255, 255, 255, .035);
+    color: rgba(255, 255, 255, .70);
+  }
+}
+
+@media (max-width: 720px) {
+  .sw2-canvas--route {
+    padding-top: 12px;
+  }
+
+  .sw2-breadcrumb > span:nth-of-type(2),
+  .sw2-breadcrumb > b:first-of-type {
+    display: none;
+  }
+}
