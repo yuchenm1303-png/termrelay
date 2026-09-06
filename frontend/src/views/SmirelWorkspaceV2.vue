@@ -54,12 +54,11 @@
               <strong>{{ displayName }}</strong>
               <small>{{ accountLabel }}</small>
             </span>
-            <span class="sw2-account-chevron" aria-hidden="true">›</span>
           </router-link>
 
           <div class="sw2-footer-actions">
             <router-link to="/home" class="sw2-footer-action sw2-home-link" @click="closeMobileNav">
-              <span>返回首页</span><span aria-hidden="true">↗</span>
+              返回首页
             </router-link>
             <button type="button" class="sw2-footer-action sw2-logout-button" :disabled="loggingOut" @click="logout">
               {{ loggingOut ? '退出中…' : '退出登录' }}
@@ -145,7 +144,7 @@ const siteLogo = computed(() => sanitizeUrl(
 ))
 const avatarUrl = computed(() => sanitizeUrl(user.value?.avatar_url || '', { allowRelative: true, allowDataUrl: true }))
 const displayName = computed(() => {
-  if (isSmirelUiPreview) return '预览管理员'
+  if (isSmirelUiPreview) return '管理员预览'
 
   const username = user.value?.username?.trim()
   if (username) return username
@@ -156,7 +155,7 @@ const displayName = computed(() => {
   return authStore.isAdmin ? 'Administrator' : 'Account'
 })
 const accountLabel = computed(() => {
-  if (isSmirelUiPreview) return '界面预览 · 非真实账号'
+  if (isSmirelUiPreview) return '非真实账号'
   return user.value?.email || (authStore.isAdmin ? '平台管理员' : '用户账户')
 })
 const initials = computed(() => (displayName.value || 'S').trim().slice(0, 1).toUpperCase())
