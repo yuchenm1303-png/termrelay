@@ -1,7 +1,72 @@
 /* Shared console page compositions built on GlassSurface. */
-.smg-page{display:flex;min-width:0;flex-direction:column;gap:12px}.smg-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:8px 3px 12px}.smg-page-kicker{margin-bottom:6px;color:var(--smg-soft);font-size:9.5px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}.smg-page-title{margin:0;color:#fff;font-size:clamp(24px,2.5vw,34px);font-weight:620;letter-spacing:-.04em;line-height:1.05}.smg-page-description{max-width:760px;margin:9px 0 0;color:var(--smg-muted);font-size:11.5px;line-height:1.65}.smg-page-actions{display:flex;align-items:center;gap:8px}.smg-page-toolbar{padding:10px}.smg-page-filters{min-width:0}.smg-data-panel{overflow:hidden}.smg-data-scroll{min-height:320px;overflow:auto}.smg-data-pagination{padding:11px 13px;border-top:1px solid rgba(255,255,255,.065);background:var(--smg-data)}
+.smg-page{display:flex;min-width:0;flex-direction:column;gap:12px}.smg-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:8px 3px 12px}.smg-page-kicker{margin-bottom:6px;color:var(--smg-soft);font-size:9.5px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}.smg-page-title{margin:0;color:#fff;font-size:clamp(24px,2.5vw,34px);font-weight:620;letter-spacing:-.04em;line-height:1.05}.smg-page-description{max-width:760px;margin:9px 0 0;color:var(--smg-muted);font-size:11.5px;line-height:1.65}.smg-page-actions{display:flex;align-items:center;gap:8px}.smg-page-toolbar{padding:10px}.smg-page-filters{min-width:0}
+
+/*
+ * TablePageLayout contract.
+ *
+ * The outer GlassSurface is a first-level card. The toolbar/table/pagination are
+ * nested data surfaces and must stay inset from its edge. DataTable still owns
+ * behavior (sorting, sticky columns, virtualization); this layer owns the Smirel
+ * optical treatment so legacy gray/dark Tailwind backgrounds cannot leak through.
+ */
+.smg-data-panel{display:grid;gap:10px;padding:10px;overflow:hidden}.smg-data-scroll{min-height:320px;overflow:auto;border:1px solid rgba(255,255,255,.075);border-radius:var(--smg-radius-md);background:rgba(4,17,27,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.smg-data-pagination{padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:var(--smg-radius-md);background:var(--smg-data)}
+
+/* Canonical Smirel data-table surface. Kill the legacy opaque gray/black planes. */
+html.relay-standalone .smg-data-panel .table-wrapper{background:transparent!important}
+html.relay-standalone .smg-data-panel table{border-color:rgba(255,255,255,.065)!important;background:transparent!important}
+html.relay-standalone .smg-data-panel .table-header,
+html.relay-standalone.dark .smg-data-panel .table-header,
+html.relay-standalone .smg-data-panel .sticky-header-cell,
+html.relay-standalone.dark .smg-data-panel .sticky-header-cell{
+  background:rgba(88,112,130,.34)!important;
+  color:var(--smg-muted)!important;
+  border-color:rgba(255,255,255,.065)!important;
+  box-shadow:inset 0 -1px 0 rgba(255,255,255,.045)!important;
+}
+html.relay-standalone .smg-data-panel .sticky-header-cell:hover,
+html.relay-standalone.dark .smg-data-panel .sticky-header-cell:hover{
+  background:rgba(126,158,180,.28)!important;
+  color:var(--smg-text)!important;
+}
+html.relay-standalone .smg-data-panel .table-body,
+html.relay-standalone.dark .smg-data-panel .table-body{
+  background:transparent!important;
+  border-color:rgba(255,255,255,.06)!important;
+}
+html.relay-standalone .smg-data-panel .table-body>tr,
+html.relay-standalone.dark .smg-data-panel .table-body>tr{
+  background:rgba(7,22,34,.10)!important;
+  border-color:rgba(255,255,255,.055)!important;
+}
+html.relay-standalone .smg-data-panel .table-body>tr:hover,
+html.relay-standalone.dark .smg-data-panel .table-body>tr:hover{
+  background:rgba(155,220,255,.065)!important;
+}
+
+/* Sticky cells need enough opacity to cover scrolled content, but remain blue-gray glass. */
+html.relay-standalone .smg-data-panel tbody .sticky-col,
+html.relay-standalone.dark .smg-data-panel tbody .sticky-col{
+  background:rgba(48,70,86,.82)!important;
+}
+html.relay-standalone .smg-data-panel tbody tr:hover .sticky-col,
+html.relay-standalone.dark .smg-data-panel tbody tr:hover .sticky-col{
+  background:rgba(58,84,102,.88)!important;
+}
+html.relay-standalone .smg-data-panel .is-scrollable .sticky-col-left::after,
+html.relay-standalone .smg-data-panel .is-scrollable .sticky-col-left-second::after{
+  background:linear-gradient(to right,rgba(7,18,27,.16),transparent)!important;
+}
+html.relay-standalone .smg-data-panel .is-scrollable .sticky-col-right::before{
+  background:linear-gradient(to left,rgba(7,18,27,.16),transparent)!important;
+}
+
+/* Empty/loading rows stay part of the data surface instead of becoming opaque cards. */
+html.relay-standalone .smg-data-panel .table-wrapper :is(td,th){border-color:rgba(255,255,255,.055)!important}
+html.relay-standalone .smg-data-panel .table-wrapper [class*="bg-gray-200"],
+html.relay-standalone .smg-data-panel .table-wrapper [class*="dark:bg-dark-700"]{background:rgba(225,239,248,.11)!important}
+
 .smg-profile-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px;align-items:start}.smg-profile-column{display:flex;min-width:0;flex-direction:column;gap:14px}.smg-profile-section-label{margin:4px 2px -4px;color:var(--smg-soft);font-size:9px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}.smg-profile-support{padding:17px;border:1px solid rgba(155,220,255,.10);border-radius:var(--smg-radius-lg);background:var(--smg-data);box-shadow:var(--smg-shadow-soft)}.smg-profile-support-label{color:var(--smg-blue);font-size:9px;font-weight:750;letter-spacing:.14em}.smg-profile-support strong{display:block;margin-top:8px;color:var(--smg-text);font-size:12px;font-weight:680}.smg-profile-support p{margin:5px 0 0;color:var(--smg-muted);font-size:10.5px;line-height:1.6}.smg-profile-grid .card{border-color:var(--smg-line)!important;background:var(--smg-glass)!important;border-radius:var(--smg-radius-lg)!important}
 .smg-catalog-panel{overflow:hidden;border:1px solid var(--smg-line);border-radius:var(--smg-radius-lg);background:var(--smg-glass);box-shadow:var(--smg-shadow-soft);-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%)}.smg-catalog-panel>*{background:transparent!important}.smg-catalog-panel [class*="rounded-2xl"],.smg-catalog-panel [class*="rounded-xl"]{border-color:rgba(255,255,255,.065)!important;background:var(--smg-data)!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .smg-shell [class*="absolute"][class*="bg-white"],.smg-shell [role="dialog"] .card,.smg-shell .modal-content,.smg-shell .dropdown-menu{border-color:rgba(255,255,255,.10)!important;background:rgba(6,19,30,.88)!important;color:var(--smg-text)!important;-webkit-backdrop-filter:blur(24px) saturate(120%)!important;backdrop-filter:blur(24px) saturate(120%)!important;box-shadow:0 24px 72px rgba(1,8,14,.34)!important}.smg-shell .space-y-6>.card,.smg-shell .space-y-4>.card,.smg-shell [class*="grid"]>.card{border-color:var(--smg-line)!important;background:var(--smg-glass)!important;-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%)}.smg-shell canvas,.smg-shell svg{max-width:100%}.smg-shell .subscription-grid,.smg-shell .payment-grid{gap:12px!important}
 @media(max-width:960px){.smg-profile-grid{grid-template-columns:1fr}}
-@media(max-width:820px){.smg-page-head{align-items:flex-start;flex-direction:column}.smg-page-actions{width:100%;justify-content:flex-start}}
+@media(max-width:820px){.smg-page-head{align-items:flex-start;flex-direction:column}.smg-page-actions{width:100%;justify-content:flex-start}.smg-data-panel{padding:8px}.smg-data-panel{gap:8px}}
