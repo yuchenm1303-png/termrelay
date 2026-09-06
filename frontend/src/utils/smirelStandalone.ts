@@ -1,7 +1,9 @@
 import type { PublicSettings } from '@/types'
 
+const SMIREL_PUBLIC_BASE = String(import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
+
 export const SMIREL_SITE_NAME = 'Smirel API'
-export const SMIREL_SITE_LOGO = '/smirel-logo.png'
+export const SMIREL_SITE_LOGO = `${SMIREL_PUBLIC_BASE}smirel-logo.png`
 export const SMIREL_SITE_SUBTITLE = 'Unified AI API Gateway'
 export const SMIREL_API_BASE_URL = 'https://api.smirel.com/v1'
 
@@ -11,6 +13,7 @@ const UPSTREAM_DEFAULT_HIDDEN_KEY_COLUMNS = ['id', 'rate_limit', 'last_used_at',
 const SMIREL_DEFAULT_HIDDEN_KEY_COLUMNS = ['group', 'current_concurrency']
 
 export function isStandaloneSmirelFrontend(): boolean {
+  if (import.meta.env.VITE_SMIREL_STANDALONE === 'true') return true
   if (typeof window === 'undefined') return false
   const host = window.location.hostname.toLowerCase()
   return host === 'relay.smirel.com' || host.endsWith('.vercel.app')

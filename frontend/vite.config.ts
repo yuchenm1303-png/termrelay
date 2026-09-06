@@ -82,11 +82,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080'
   const devPort = Number(env.VITE_DEV_PORT || 3000)
+  const publicBase = env.VITE_PUBLIC_BASE?.trim() || '/'
   // TermRelay release builds keep embedding the frontend into the Go binary.
   // Vercel/standalone builds emit a normal frontend/dist directory instead.
   const standaloneBuild = process.env.VERCEL === '1' || env.VITE_STANDALONE === 'true'
 
   return {
+    base: publicBase,
     plugins: [
       vue(),
       checker({
