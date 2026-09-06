@@ -141,7 +141,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SmirelHomeVNext v-if="showRebuiltHomepage" />
+  <div v-if="showRebuiltHomepage" class="sr-rebuilt-layer">
+    <SmirelHomeVNext />
+  </div>
 
   <div v-else-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
     <div class="smg-environment" style="z-index: 0"></div>
@@ -160,3 +162,14 @@ onMounted(async () => {
     <AdminComplianceDialog />
   </template>
 </template>
+
+<style scoped>
+/* Keep rebuilt surfaces in their own stacking context so their negative-z
+ * environment layers stay behind content without falling behind body/#app. */
+.sr-rebuilt-layer {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  min-height: 100vh;
+}
+</style>
