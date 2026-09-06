@@ -26,6 +26,7 @@ const adminSettingsStore = useAdminSettingsStore()
 // standalone frontend only exposes secondary surfaces that are rebuilt from
 // the clean V2 information architecture. Everything else remains background-only.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
+const workspaceV2Paths = new Set(['/dashboard', '/admin/dashboard'])
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -144,7 +145,7 @@ onMounted(async () => {
 <template>
   <template v-if="interfaceResetMode">
     <SmirelGlassHomeV1 v-if="route.path === '/home'" />
-    <SmirelWorkspaceV2 v-else-if="route.path === '/dashboard'" />
+    <SmirelWorkspaceV2 v-else-if="workspaceV2Paths.has(route.path)" />
 
     <div v-else class="smg-shell" aria-hidden="true">
       <div class="smg-environment" style="z-index: 0"></div>
