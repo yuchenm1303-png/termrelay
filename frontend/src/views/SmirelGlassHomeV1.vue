@@ -218,3 +218,171 @@ onMounted(() => {
   if (!appStore.publicSettingsLoaded) void appStore.fetchPublicSettings()
 })
 </script>
+
+<style scoped>
+/*
+ * Homepage-only density pass.
+ * The shared glass stylesheet is also used by secondary surfaces, so the
+ * landing-page composition is tightened here instead of globally changing the
+ * shared visual language.
+ */
+@media (min-width: 981px) {
+  .spg-shell {
+    width: min(1320px, calc(100vw - 64px));
+    padding: 22px 0 28px;
+  }
+
+  .spg-topbar {
+    min-height: 54px;
+    margin-bottom: 30px;
+  }
+
+  .spg-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+    gap: 28px;
+    margin-bottom: 22px;
+  }
+
+  .spg-hero-copy {
+    max-width: 860px;
+  }
+
+  .spg-hero h1 {
+    max-width: 860px;
+    margin-top: 8px;
+    font-size: clamp(2.7rem, 4.6vw, 4.3rem);
+    line-height: 1.01;
+  }
+
+  .spg-hero-description {
+    max-width: 720px;
+    margin-top: 14px;
+    line-height: 1.62;
+  }
+
+  .spg-hero-meta {
+    max-width: 330px;
+    padding-bottom: 4px;
+  }
+
+  .spg-primary-grid {
+    grid-template-columns: minmax(0, 1.42fr) minmax(360px, .98fr);
+    gap: 16px;
+  }
+
+  .spg-access-card,
+  .spg-account-card {
+    min-height: 412px;
+  }
+
+  .spg-access-card {
+    padding: 28px 30px 26px;
+  }
+
+  .spg-account-card {
+    padding: 28px 26px 24px;
+  }
+
+  .spg-card-intro {
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+
+  .spg-endpoint-block {
+    margin-top: 22px;
+    padding: 14px 16px;
+  }
+
+  .spg-state-row {
+    margin-top: 12px;
+    gap: 7px;
+  }
+
+  .spg-meta-grid {
+    margin-top: 16px;
+    gap: 8px;
+  }
+
+  .spg-inset {
+    padding: 11px 12px;
+  }
+
+  .spg-card-actions {
+    margin-top: 16px;
+    gap: 8px;
+  }
+
+  .spg-action {
+    min-height: 46px;
+  }
+
+  .spg-account-steps {
+    margin-top: 18px;
+    gap: 7px;
+  }
+
+  .spg-step {
+    min-height: 56px;
+    padding: 9px 10px;
+  }
+
+  .spg-account-note {
+    margin-top: 8px;
+    padding: 9px 10px;
+  }
+
+  .spg-card-footer {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .spg-utility-grid {
+    margin-top: 14px;
+    gap: 12px;
+  }
+
+  .spg-utility-card {
+    min-height: 138px;
+    padding: 18px 18px 16px;
+  }
+
+  .spg-utility-card > b {
+    top: 16px;
+    right: 16px;
+  }
+
+  .spg-utility-card .spg-overline {
+    margin-top: 12px;
+  }
+
+  .spg-utility-card h3 {
+    margin-top: 5px;
+  }
+
+  .spg-utility-card p {
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+
+  .spg-provider-card {
+    margin-top: 14px;
+    padding: 24px 26px;
+    gap: 22px;
+  }
+
+  .spg-footer {
+    min-height: 46px;
+    margin-top: 14px;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1220px) {
+  .spg-shell {
+    width: min(1120px, calc(100vw - 48px));
+  }
+
+  .spg-primary-grid {
+    grid-template-columns: minmax(0, 1.28fr) minmax(340px, .92fr);
+  }
+}
+</style>
