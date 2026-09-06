@@ -22,8 +22,10 @@ const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
 // Temporary UI reset: keep the complete legacy interface in place, but only
-// expose the new homepage while the rest of the Smirel interface is rebuilt.
+// expose surfaces that have been rebuilt on the shared Smirel visual system.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
+const rebuiltSecondaryPaths = new Set(['/login', '/register'])
+const showRebuiltSecondary = computed(() => interfaceResetMode && rebuiltSecondaryPaths.has(route.path))
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -142,6 +144,13 @@ onMounted(async () => {
 <template>
   <template v-if="interfaceResetMode">
     <SmirelGlassHomeV1 v-if="route.path === '/home'" />
+
+    <template v-else-if="showRebuiltSecondary">
+      <NavigationProgress />
+      <RouterView />
+      <Toast />
+    </template>
+
     <div v-else class="smg-shell" aria-hidden="true">
       <div class="smg-environment" style="z-index: 0"></div>
     </div>
