@@ -1,4 +1,110 @@
-/* Smirel page/modal motion only. Pointer interactions are intentionally deferred. */
+/*
+ * Smirel shared interaction language.
+ * Card/control motion and page/modal motion are kept here.
+ * Custom cursor rendering and click-firework effects are intentionally excluded.
+ */
+
+html.relay-standalone {
+  --smirel-motion-fast: 180ms;
+  --smirel-motion-card: 220ms;
+  --smirel-motion-ease: cubic-bezier(.2, .7, .2, 1);
+  --smirel-motion-focus-ring: rgba(199, 237, 255, .88);
+  --smirel-motion-focus-halo: rgba(155, 220, 255, .18);
+  --smirel-motion-disabled-opacity: .45;
+}
+
+html.relay-standalone.smirel-download-interactions :is(a, button) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html.relay-standalone.smirel-download-interactions .smirel-download-card-motion {
+  --smirel-motion-x: 0px;
+  --smirel-motion-y: 0px;
+  --smirel-motion-scale: 1;
+  --smirel-motion-duration: 220ms;
+  --smirel-motion-ease: ease;
+  position: relative;
+  transform-origin: center;
+  transform:
+    translate3d(var(--smirel-motion-x), var(--smirel-motion-y), 0)
+    scale(var(--smirel-motion-scale)) !important;
+  transition:
+    transform var(--smirel-motion-duration) var(--smirel-motion-ease),
+    background-color .3s,
+    border-color .3s !important;
+  will-change: transform;
+}
+
+html.relay-standalone.smirel-download-interactions
+.smirel-download-card-motion--utility.smirel-download-card-motion--hot {
+  background: var(--smirel-card-bg-hover, rgba(0, 0, 0, .40)) !important;
+}
+
+html.relay-standalone.smirel-download-interactions .smirel-download-control-motion {
+  transform-origin: center;
+  transition-property: transform, color, background-color, border-color, opacity, box-shadow !important;
+  transition-duration: var(--smirel-motion-fast) !important;
+  transition-timing-function: var(--smirel-motion-ease) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:hover {
+    transform: translateY(-1px) !important;
+  }
+
+  html.relay-standalone.smirel-download-interactions :is(
+    .smh-quick-card,
+    .spg-utility-card,
+    .sw2-account-card,
+    .sw2-home-link
+  ):hover :is(
+    b,
+    .sw2-account-chevron,
+    .sw2-home-link > span
+  ) {
+    transform: translateX(3px);
+  }
+}
+
+html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:active {
+  transform: scale(.98) !important;
+}
+
+html.relay-standalone.smirel-download-interactions :is(
+  .smh-quick-card b,
+  .spg-action b,
+  .spg-utility-card > b,
+  .sw2-account-chevron,
+  .sw2-home-link > span
+) {
+  transition: transform var(--smirel-motion-fast) var(--smirel-motion-ease),
+    color var(--smirel-motion-fast) var(--smirel-motion-ease);
+}
+
+html.relay-standalone.smirel-download-interactions :is(
+  a[href],
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea
+):focus-visible {
+  outline: 1px solid var(--smirel-motion-focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--smirel-motion-focus-halo);
+}
+
+html.relay-standalone.smirel-download-interactions :is(
+  button:disabled,
+  [aria-disabled="true"],
+  .is-disabled
+) {
+  opacity: var(--smirel-motion-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
 
 html.relay-standalone.smirel-page-motion .smirel-page-enter {
   animation: smirel-shell-in .65s ease both;
@@ -50,6 +156,8 @@ html.relay-standalone.smirel-page-motion .modal-leave-to .modal-content {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.relay-standalone.smirel-download-interactions .smirel-download-card-motion,
+  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion,
   html.relay-standalone.smirel-page-motion .smirel-page-enter,
   html.relay-standalone.smirel-page-motion .modal-enter-active,
   html.relay-standalone.smirel-page-motion .modal-enter-active .modal-content,
@@ -59,6 +167,9 @@ html.relay-standalone.smirel-page-motion .modal-leave-to .modal-content {
     transition: none !important;
   }
 
+  html.relay-standalone.smirel-download-interactions .smirel-download-card-motion,
+  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:hover,
+  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:active,
   html.relay-standalone.smirel-page-motion .modal-content {
     transform: none !important;
     filter: none !important;
