@@ -1,8 +1,8 @@
 <template>
   <div class="sw2-admin-overview">
-    <section v-if="loading && !stats" class="sw2-panel sw2-admin-loading">正在读取平台运行数据…</section>
+    <section v-if="loading && !stats" class="spg-surface sw2-admin-loading">正在读取平台运行数据…</section>
 
-    <section v-else-if="error && !stats" class="sw2-panel sw2-admin-error">
+    <section v-else-if="error && !stats" class="spg-surface sw2-admin-error">
       <span>平台数据暂时没有加载成功。</span>
       <button type="button" @click="loadSnapshot">重新加载</button>
     </section>
@@ -16,7 +16,7 @@
       </div>
 
       <div class="sw2-admin-top-grid">
-        <section class="sw2-panel sw2-admin-health">
+        <section class="spg-surface sw2-admin-health">
           <header class="sw2-module-head">
             <div>
               <span class="sw2-admin-section-label">PLATFORM HEALTH</span>
@@ -57,7 +57,7 @@
           </div>
         </section>
 
-        <section class="sw2-panel sw2-admin-today">
+        <section class="spg-surface sw2-admin-today">
           <header class="sw2-module-head">
             <div>
               <span class="sw2-admin-section-label">TODAY</span>
@@ -83,7 +83,7 @@
         </section>
       </div>
 
-      <section class="sw2-panel sw2-admin-hour">
+      <section class="spg-surface sw2-admin-hour">
         <header class="sw2-module-head sw2-admin-hour-head">
           <div>
             <span class="sw2-admin-section-label">LAST 1 HOUR</span>
