@@ -20,6 +20,10 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
+// Temporary UI reset: keep the complete legacy interface in place, but do not
+// render it on the standalone Smirel frontend while the new shell is designed.
+const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
+
 const UTILITY_PATHS = [
   '/key-usage',
   '/setup',
@@ -135,14 +139,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <NavigationProgress />
-  <RouterView v-slot="{ Component }">
-    <SmirelUtilityShell v-if="useUtilityShell">
-      <component :is="Component" />
-    </SmirelUtilityShell>
-    <component :is="Component" v-else />
-  </RouterView>
-  <Toast />
-  <AnnouncementPopup />
-  <AdminComplianceDialog />
+  <div v-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
+    <div class="smg-environment" style="z-index: 0"></div>
+  </div>
+
+  <template v-else>
+    <NavigationProgress />
+    <RouterView v-slot="{ Component }">
+      <SmirelUtilityShell v-if="useUtilityShell">
+        <component :is="Component" />
+      </SmirelUtilityShell>
+      <component :is="Component" v-else />
+    </RouterView>
+    <Toast />
+    <AnnouncementPopup />
+    <AdminComplianceDialog />
+  </template>
 </template>
