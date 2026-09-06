@@ -2,8 +2,12 @@
   --spg-motion-fast: 180ms;
   --spg-motion-card: 220ms;
   --spg-motion-ease: cubic-bezier(.2, .7, .2, 1);
-  --spg-scale-card-hover: 1.01;
-  --spg-scale-link-hover: 1.02;
+  --spg-scale-surface-hover: 1.004;
+  --spg-scale-card-hover: 1.009;
+  --spg-scale-compact-hover: 1.012;
+  --spg-scale-link-hover: 1.016;
+  --spg-scale-surface-press: .997;
+  --spg-scale-card-press: .992;
   --spg-scale-press: .985;
   --spg-focus-ring: rgba(199, 237, 255, .88);
   --spg-focus-halo: rgba(155, 220, 255, .18);
@@ -12,25 +16,27 @@
 
 /*
  * Shared interaction layer.
- * Surfaces keep the same material; interaction only changes scale, tint and
- * very small directional motion. Avoid shadows/glows that would create a
- * second visual language.
+ * Interaction amplitude is normalized by visual mass:
+ * large layout surfaces move least, normal cards move a little more,
+ * compact cards and links get the clearest feedback.
  */
 .spg-page :is(a, button) {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-/* Legacy/shared surface interaction contract. */
+/* Large/shared surfaces: calm motion so full-width glass never feels floaty. */
 .spg-surface {
+  transform-origin: center;
   transition:
     transform var(--spg-motion-card) var(--spg-motion-ease),
-    background-color var(--spg-motion-card) var(--spg-motion-ease);
+    background-color var(--spg-motion-card) var(--spg-motion-ease),
+    border-color var(--spg-motion-card) var(--spg-motion-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .spg-surface:hover {
-    transform: scale(var(--spg-scale-card-hover));
+    transform: scale(var(--spg-scale-surface-hover));
   }
 
   .spg-surface--interactive:hover {
@@ -39,7 +45,10 @@
   }
 }
 
-.spg-surface:active,
+.spg-surface:active {
+  transform: scale(var(--spg-scale-surface-press));
+}
+
 .spg-surface--interactive:active {
   transform: scale(var(--spg-scale-press));
 }
@@ -66,13 +75,15 @@
 /*
  * Current homepage bridge.
  * The homepage was renamed from spg-* to smh-* during the layout refactor.
- * Keep the original interaction system attached without changing its glass
- * material or the current layout.
+ * Keep the same interaction tiers instead of giving homepage cards a separate
+ * motion language.
  */
 .spg-page.smh-home .smh-glass {
+  transform-origin: center;
   transition:
     transform var(--spg-motion-card) var(--spg-motion-ease),
-    background-color var(--spg-motion-card) var(--spg-motion-ease);
+    background-color var(--spg-motion-card) var(--spg-motion-ease),
+    border-color var(--spg-motion-card) var(--spg-motion-ease);
 }
 
 .spg-page.smh-home :is(
@@ -121,8 +132,11 @@
   }
 }
 
+.spg-page.smh-home .smh-glass:active {
+  transform: scale(var(--spg-scale-card-press));
+}
+
 .spg-page.smh-home :is(
-  .smh-glass,
   .smh-quick-card,
   .smh-nav a,
   .smh-login-link,
@@ -131,6 +145,75 @@
   .smh-copy-button
 ):active {
   transform: scale(var(--spg-scale-press));
+}
+
+/*
+ * Workspace / Overview bridge.
+ * Large dashboard modules keep the surface tier. KPI and diagnostic cards use
+ * the card tier; segmented stat cells use the compact tier. This intentionally
+ * overrides the old Overview transform lock without changing its layout CSS.
+ */
+.spg-page .sw2-admin-overview .sw2-admin-module {
+  transform-origin: center;
+  transition:
+    transform var(--spg-motion-card) var(--spg-motion-ease),
+    background-color var(--spg-motion-card) var(--spg-motion-ease),
+    border-color var(--spg-motion-card) var(--spg-motion-ease) !important;
+}
+
+.spg-page .sw2-admin-overview :is(
+  .sw2-admin-metric,
+  .sw2-admin-diagnostic,
+  .sw2-admin-health-metric,
+  .sw2-admin-health-foot > div,
+  .sw2-admin-today-foot > div
+) {
+  position: relative;
+  transform-origin: center;
+  transition:
+    transform var(--spg-motion-card) var(--spg-motion-ease),
+    background-color var(--spg-motion-card) var(--spg-motion-ease),
+    border-color var(--spg-motion-card) var(--spg-motion-ease);
+}
+
+.spg-page .sw2-admin-overview .sw2-admin-metric-icon {
+  transition:
+    transform var(--spg-motion-fast) var(--spg-motion-ease),
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    border-color var(--spg-motion-fast) var(--spg-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spg-page .sw2-admin-overview .sw2-admin-module:hover {
+    transform: scale(var(--spg-scale-surface-hover)) !important;
+    border-color: rgba(255, 255, 255, .095);
+  }
+
+  .spg-page .sw2-admin-overview :is(
+    .sw2-admin-metric,
+    .sw2-admin-diagnostic
+  ):hover {
+    z-index: 2;
+    transform: scale(var(--spg-scale-card-hover));
+    border-color: rgba(181, 226, 255, .13);
+    background-color: rgba(255, 255, 255, .028);
+  }
+
+  .spg-page .sw2-admin-overview :is(
+    .sw2-admin-health-metric,
+    .sw2-admin-health-foot > div,
+    .sw2-admin-today-foot > div
+  ):hover {
+    z-index: 2;
+    transform: scale(var(--spg-scale-compact-hover));
+    background-color: rgba(255, 255, 255, .035);
+  }
+
+  .spg-page .sw2-admin-overview .sw2-admin-metric:hover .sw2-admin-metric-icon {
+    transform: translateY(-1px) scale(1.05);
+    border-color: rgba(173, 225, 255, .15);
+    background-color: rgba(136, 205, 248, .11);
+  }
 }
 
 /* Keyboard focus is visible without introducing a different material. */
@@ -176,7 +259,14 @@
   .spg-page.smh-home .smh-text-link,
   .spg-page.smh-home .smh-copy-button,
   .spg-page.smh-home .smh-quick-card,
-  .spg-page.smh-home .smh-quick-card b {
+  .spg-page.smh-home .smh-quick-card b,
+  .spg-page .sw2-admin-overview .sw2-admin-module,
+  .spg-page .sw2-admin-overview .sw2-admin-metric,
+  .spg-page .sw2-admin-overview .sw2-admin-diagnostic,
+  .spg-page .sw2-admin-overview .sw2-admin-health-metric,
+  .spg-page .sw2-admin-overview .sw2-admin-health-foot > div,
+  .spg-page .sw2-admin-overview .sw2-admin-today-foot > div,
+  .spg-page .sw2-admin-overview .sw2-admin-metric-icon {
     transition: none !important;
   }
 
@@ -206,7 +296,14 @@
   .spg-page.smh-home .smh-copy-button:active,
   .spg-page.smh-home .smh-quick-card:hover,
   .spg-page.smh-home .smh-quick-card:active,
-  .spg-page.smh-home .smh-quick-card:hover b {
+  .spg-page.smh-home .smh-quick-card:hover b,
+  .spg-page .sw2-admin-overview .sw2-admin-module:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-metric:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-diagnostic:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-health-metric:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-health-foot > div:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-today-foot > div:hover,
+  .spg-page .sw2-admin-overview .sw2-admin-metric:hover .sw2-admin-metric-icon {
     transform: none !important;
   }
 }
