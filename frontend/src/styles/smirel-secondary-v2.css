@@ -41,11 +41,6 @@
   touch-action: manipulation;
 }
 
-/*
- * Workspace keeps the same photographic world as the homepage, but deliberately
- * lowers its contrast. The secondary product should feel calmer and more useful
- * for long sessions without becoming a separate dark SaaS theme.
- */
 .sw2-environment {
   position: fixed;
   inset: 0;
@@ -77,7 +72,6 @@
   padding: 22px 0 34px;
 }
 
-/* Global workspace bar: one calm line, no sidebar and no second toolbar. */
 .sw2-bar {
   min-height: 58px;
   display: grid;
@@ -260,7 +254,6 @@
   background: var(--sw2-success);
 }
 
-/* One root surface only. Business modules will be introduced after the shell is approved. */
 .sw2-stage {
   min-height: 560px;
   display: flex;
@@ -319,6 +312,12 @@
   display: grid;
   place-items: center;
   padding: 64px 28px;
+}
+
+.sw2-stage-body.sw2-stage-body--live {
+  display: block;
+  place-items: initial;
+  padding: 0;
 }
 
 .sw2-stage-note {
