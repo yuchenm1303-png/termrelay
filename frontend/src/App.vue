@@ -5,6 +5,7 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelBusinessHome from '@/views/SmirelBusinessHome.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
@@ -23,6 +24,7 @@ const adminSettingsStore = useAdminSettingsStore()
 // Temporary UI reset: keep the complete legacy interface in place, but do not
 // render it on the standalone Smirel frontend while the new visual system is designed.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
+const showBusinessHome = computed(() => interfaceResetMode && (route.path === '/' || route.path === '/home'))
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -139,7 +141,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
+  <SmirelBusinessHome v-if="showBusinessHome" />
+
+  <div v-else-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
     <div class="smg-environment" style="z-index: 0"></div>
   </div>
 
