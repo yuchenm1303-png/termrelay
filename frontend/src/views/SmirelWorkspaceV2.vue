@@ -45,7 +45,7 @@
         </nav>
 
         <div class="sw2-sidebar-foot">
-          <router-link to="/profile" class="sw2-account-card smirel-card smirel-card--quiet smirel-card--interactive" @click="closeMobileNav">
+          <router-link to="/profile" class="sw2-account-entry" aria-label="账户设置" @click="closeMobileNav">
             <span class="sw2-avatar">
               <img v-if="avatarUrl" :src="avatarUrl" alt="" />
               <span v-else>{{ initials }}</span>
@@ -58,8 +58,10 @@
           </router-link>
 
           <div class="sw2-footer-actions">
-            <router-link to="/home" class="sw2-home-link" @click="closeMobileNav">返回首页 <span>↗</span></router-link>
-            <button type="button" class="sw2-logout-button" :disabled="loggingOut" @click="logout">
+            <router-link to="/home" class="sw2-footer-action sw2-home-link" @click="closeMobileNav">
+              <span>返回首页</span><span aria-hidden="true">↗</span>
+            </router-link>
+            <button type="button" class="sw2-footer-action sw2-logout-button" :disabled="loggingOut" @click="logout">
               {{ loggingOut ? '退出中…' : '退出登录' }}
             </button>
           </div>
