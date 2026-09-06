@@ -61,8 +61,10 @@ jobs:
         env:
           VITE_STANDALONE: 'true'
           VITE_SMIREL_STANDALONE: 'true'
+          VITE_UI_PREVIEW: 'true'
           VITE_PUBLIC_BASE: '/termrelay/'
-          VITE_API_BASE_URL: 'https://api.smirel.com/api/v1'
+          # Preview must never send authenticated UI actions to production.
+          VITE_API_BASE_URL: '/termrelay/__preview_api__'
 
       - name: Add SPA fallback
         run: |

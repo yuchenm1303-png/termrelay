@@ -12,6 +12,7 @@ import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
 import { getSetupStatus } from '@/api/setup'
 import { updateFavicon } from '@/utils/branding'
+import { isSmirelUiPreview } from '@/utils/smirelUiPreview'
 
 const router = useRouter()
 const route = useRoute()
@@ -85,12 +86,14 @@ watch(
 )
 
 function onVisibilityChange() {
+  if (isSmirelUiPreview) return
   if (document.visibilityState === 'visible' && authStore.isAuthenticated) {
     announcementStore.fetchAnnouncements()
   }
 }
 
 function onAdminComplianceRequired(event: Event) {
+  if (isSmirelUiPreview) return
   const detail = (event as CustomEvent<Record<string, string>>).detail || {}
   adminComplianceStore.requireAcknowledgement(detail)
 }
@@ -98,6 +101,10 @@ function onAdminComplianceRequired(event: Event) {
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated, oldValue) => {
+    // Static GitHub Pages preview uses a local review identity and deterministic
+    // fixtures. Do not start authenticated production side effects there.
+    if (isSmirelUiPreview) return
+
     if (isAuthenticated) {
       if (authStore.isAdmin) {
         adminComplianceStore.fetchStatus().catch((error) => {
@@ -128,6 +135,7 @@ watch(
 )
 
 router.afterEach(() => {
+  if (isSmirelUiPreview) return
   if (authStore.isAuthenticated) announcementStore.fetchAnnouncements()
 })
 
@@ -137,6 +145,11 @@ onBeforeUnmount(() => {
 })
 
 onMounted(async () => {
+  if (isSmirelUiPreview) {
+    updateDocumentTitle()
+    return
+  }
+
   window.addEventListener('admin-compliance-required', onAdminComplianceRequired)
 
   try {
