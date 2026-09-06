@@ -1,0 +1,114 @@
+:root {
+  --spg-motion-fast: 180ms;
+  --spg-motion-card: 220ms;
+  --spg-motion-ease: cubic-bezier(.2, .7, .2, 1);
+  --spg-scale-card-hover: 1.01;
+  --spg-scale-link-hover: 1.02;
+  --spg-scale-press: .985;
+  --spg-focus-ring: rgba(199, 237, 255, .88);
+  --spg-focus-halo: rgba(155, 220, 255, .18);
+  --spg-disabled-opacity: .45;
+}
+
+/*
+ * Shared interaction layer.
+ * Surfaces keep the same material; interaction only changes scale, tint and
+ * very small directional motion. Avoid shadows/glows that would create a
+ * second visual language.
+ */
+.spg-page :is(a, button) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Every primary glass surface belongs to the same motion family. */
+.spg-surface {
+  transition:
+    transform var(--spg-motion-card) var(--spg-motion-ease),
+    background-color var(--spg-motion-card) var(--spg-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spg-surface:hover {
+    transform: scale(var(--spg-scale-card-hover));
+  }
+
+  .spg-surface--interactive:hover {
+    transform: scale(var(--spg-scale-link-hover));
+    background-color: var(--spg-surface-hover);
+  }
+}
+
+.spg-surface:active,
+.spg-surface--interactive:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+/* Navigation and buttons share one hover/press rhythm. */
+.spg-nav a,
+.spg-account-link,
+.spg-action {
+  transition-duration: var(--spg-motion-fast);
+  transition-timing-function: var(--spg-motion-ease);
+}
+
+.spg-nav a:active,
+.spg-account-link:active,
+.spg-action:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+.spg-action b,
+.spg-utility-card > b {
+  transition-duration: var(--spg-motion-fast);
+  transition-timing-function: var(--spg-motion-ease);
+}
+
+/* Keyboard focus is visible without introducing a different material. */
+.spg-page :is(
+  .spg-brand,
+  .spg-nav a,
+  .spg-account-link,
+  .spg-action,
+  .spg-surface--interactive
+):focus-visible {
+  outline: 1px solid var(--spg-focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--spg-focus-halo);
+}
+
+/* One disabled language for future buttons/links across all pages. */
+.spg-page :is(button:disabled, [aria-disabled="true"], .is-disabled) {
+  opacity: var(--spg-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
+/* Reduced motion removes motion itself, not just transition time. */
+@media (prefers-reduced-motion: reduce) {
+  .spg-surface,
+  .spg-surface--interactive,
+  .spg-nav a,
+  .spg-account-link,
+  .spg-action,
+  .spg-action b,
+  .spg-utility-card > b {
+    transition: none !important;
+  }
+
+  .spg-surface:hover,
+  .spg-surface:active,
+  .spg-surface--interactive:hover,
+  .spg-surface--interactive:active,
+  .spg-nav a:hover,
+  .spg-nav a:active,
+  .spg-account-link:hover,
+  .spg-account-link:active,
+  .spg-action:hover,
+  .spg-action:active,
+  .spg-action:hover b,
+  .spg-utility-card:hover > b {
+    transform: none !important;
+  }
+}
