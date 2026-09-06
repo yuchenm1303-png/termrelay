@@ -1,7 +1,7 @@
 import type { PublicSettings } from '@/types'
 
 export const SMIREL_SITE_NAME = 'Smirel API'
-export const SMIREL_SITE_LOGO = '/smirel-mark.svg'
+export const SMIREL_SITE_LOGO = '/smirel-logo.svg'
 export const SMIREL_SITE_SUBTITLE = 'Unified AI API Gateway'
 export const SMIREL_API_BASE_URL = 'https://api.smirel.com/v1'
 
@@ -61,7 +61,7 @@ export function applyStandaloneSmirelPreferences(): void {
         ? parsed.filter((value): value is string => typeof value === 'string')
         : []
     } else {
-      hiddenColumns = [...UPSTREAM_DEFAULT_HIDDEN_KEY_COLUMNS]
+      hiddenColumns = [...UPSTREAM_DEFAULT_HIDDEN_COLUMNS]
     }
 
     for (const column of SMIREL_DEFAULT_HIDDEN_KEY_COLUMNS) {
