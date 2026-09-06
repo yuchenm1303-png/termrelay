@@ -115,3 +115,60 @@ onMounted(() => void load())
     </section>
   </section>
 </template>
+
+<style scoped>
+/*
+ * The health card is a large information surface, so its secondary copy must
+ * not use the compact table-scale typography from the rest of the console.
+ */
+.health-panel > header > span {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: rgba(255, 255, 255, .54);
+}
+
+.health-panel > header > b {
+  font-size: .72rem;
+  font-weight: 650;
+}
+
+.health-hero {
+  padding: 24px 0 20px;
+}
+
+.health-hero strong {
+  font-size: clamp(1.5rem, 1.8vw, 1.82rem);
+  line-height: 1.08;
+  letter-spacing: -.028em;
+  font-weight: 620;
+}
+
+.health-hero p {
+  margin-top: 8px;
+  max-width: 560px;
+  font-size: .76rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, .60);
+}
+
+.health-row {
+  gap: 18px;
+  padding-top: 16px;
+}
+
+.health-row span {
+  font-size: .66rem;
+  line-height: 1.35;
+  font-weight: 560;
+  color: rgba(255, 255, 255, .52);
+}
+
+.health-row strong {
+  margin-top: 6px;
+  font-size: .96rem;
+  line-height: 1.2;
+  font-weight: 650;
+  color: rgba(255, 255, 255, .90);
+}
+</style>
