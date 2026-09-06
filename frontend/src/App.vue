@@ -24,7 +24,7 @@ const adminSettingsStore = useAdminSettingsStore()
 // Temporary UI reset: keep the complete legacy interface in place, but only
 // expose surfaces that have been rebuilt on the shared Smirel visual system.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
-const rebuiltSecondaryPaths = new Set(['/login', '/register', '/dashboard', '/keys'])
+const rebuiltSecondaryPaths = new Set(['/login', '/register', '/dashboard', '/keys', '/usage'])
 const showRebuiltSecondary = computed(() => interfaceResetMode && rebuiltSecondaryPaths.has(route.path))
 
 const UTILITY_PATHS = [
