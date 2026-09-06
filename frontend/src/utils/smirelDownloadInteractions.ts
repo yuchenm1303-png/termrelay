@@ -44,18 +44,16 @@ const CONTROL_SELECTOR = 'a[href], button, [role="button"]'
 const CONTROL_EXCLUDE_SELECTOR = [
   '[data-smirel-motion="none"]',
   '.sw2-nav-scrim',
-  '[disabled]',
-  '[aria-disabled="true"]',
 ].join(',')
 
-const PAGE_SHELL_SELECTOR = [
+const PREFERRED_PAGE_SHELL_SELECTOR = [
   '.smh-shell',
   '.sw2-console',
   '.smg-shell',
-  '.spg-page:not(.sw2-page)',
   '[data-smirel-page-shell]',
 ].join(',')
 
+const FALLBACK_PAGE_SHELL_SELECTOR = '.spg-page:not(.sw2-page)'
 const ROUTE_STAGE_CHILD_SELECTOR = '.sw2-route-stage > *'
 
 interface Point {
@@ -278,9 +276,8 @@ function installControlInteractions() {
   const boundControls = new WeakSet<HTMLElement>()
 
   const bindControl = (control: HTMLElement) => {
-    if (boundControls.has(control)) return
+    if (boundControls.has(control) || control.matches(CONTROL_EXCLUDE_SELECTOR)) return
     boundControls.add(control)
-    if (control.matches(CONTROL_EXCLUDE_SELECTOR)) return
     if (control.classList.contains('smirel-download-card-motion')) return
     control.classList.add('smirel-download-control-motion')
   }
@@ -301,16 +298,42 @@ function installPageEntryMotion(reducedMotion: boolean) {
     if (reducedMotion || animated.has(element)) return
     animated.add(element)
     element.classList.add('smirel-download-page-enter')
+    element.addEventListener('animationend', () => {
+      element.classList.remove('smirel-download-page-enter')
+    }, { once: true })
   }
+
+  const preferredShell = document.querySelector<HTMLElement>(PREFERRED_PAGE_SHELL_SELECTOR)
+  const fallbackShell = document.querySelector<HTMLElement>(FALLBACK_PAGE_SHELL_SELECTOR)
+  animate(preferredShell ?? fallbackShell ?? document.body)
 
   const bindFrom = (root: ParentNode) => {
     if (root instanceof HTMLElement) {
-      if (root.matches(PAGE_SHELL_SELECTOR) || root.matches(ROUTE_STAGE_CHILD_SELECTOR)) animate(root)
+      if (root.matches(ROUTE_STAGE_CHILD_SELECTOR)) {
+        animate(root)
+        return
+      }
+      if (root.matches(PREFERRED_PAGE_SHELL_SELECTOR) || root.matches(FALLBACK_PAGE_SHELL_SELECTOR)) {
+        animate(root)
+      }
     }
-    root.querySelectorAll<HTMLElement>(`${PAGE_SHELL_SELECTOR}, ${ROUTE_STAGE_CHILD_SELECTOR}`).forEach(animate)
+
+    const routeStageChild = root.querySelector<HTMLElement>(ROUTE_STAGE_CHILD_SELECTOR)
+    if (routeStageChild) {
+      animate(routeStageChild)
+      return
+    }
+
+    const preferredShellChild = root.querySelector<HTMLElement>(PREFERRED_PAGE_SHELL_SELECTOR)
+    if (preferredShellChild) {
+      animate(preferredShellChild)
+      return
+    }
+
+    const fallbackShellChild = root.querySelector<HTMLElement>(FALLBACK_PAGE_SHELL_SELECTOR)
+    if (fallbackShellChild) animate(fallbackShellChild)
   }
 
-  bindFrom(document)
   return bindFrom
 }
 
