@@ -22,11 +22,10 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-// Secondary UI reset: legacy business pages stay in the repository, but the
-// standalone frontend only exposes secondary surfaces that are rebuilt from
-// the clean V2 information architecture. Everything else remains background-only.
+// The standalone Smirel build supplies the shell, but the actual route component
+// remains the source of truth for each business feature. This prevents the V2
+// navigation from advertising pages that are not actually mounted.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
-const workspaceV2Paths = new Set(['/dashboard', '/admin/dashboard'])
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -41,6 +40,19 @@ const useUtilityShell = computed(() =>
   || route.path.startsWith('/legal/')
   || UTILITY_PATHS.some((path) => route.path === path || route.path.startsWith(`${path}/`)),
 )
+
+const useStandaloneWorkspace = computed(() => {
+  if (!interfaceResetMode || route.path === '/home' || useUtilityShell.value) return false
+
+  // Protected routes are real authenticated workspace surfaces. Model Plaza is
+  // public by route definition, but its authenticated embedded form belongs in
+  // the workspace as well.
+  if (route.meta.requiresAuth !== false) return true
+
+  return authStore.isAuthenticated
+    && route.path === '/model-plaza'
+    && route.query.embedded === '1'
+})
 
 function updateDocumentTitle() {
   const customMenuItems = [
@@ -143,25 +155,32 @@ onMounted(async () => {
 </script>
 
 <template>
+  <NavigationProgress />
+
   <template v-if="interfaceResetMode">
     <SmirelGlassHomeV1 v-if="route.path === '/home'" />
-    <SmirelWorkspaceV2 v-else-if="workspaceV2Paths.has(route.path)" />
 
-    <div v-else class="smg-shell" aria-hidden="true">
-      <div class="smg-environment" style="z-index: 0"></div>
-    </div>
-  </template>
-
-  <template v-else>
-    <NavigationProgress />
-    <RouterView v-slot="{ Component }">
+    <RouterView v-else v-slot="{ Component }">
       <SmirelUtilityShell v-if="useUtilityShell">
         <component :is="Component" />
       </SmirelUtilityShell>
+
+      <SmirelWorkspaceV2 v-else-if="useStandaloneWorkspace">
+        <component :is="Component" />
+      </SmirelWorkspaceV2>
+
       <component :is="Component" v-else />
     </RouterView>
-    <Toast />
-    <AnnouncementPopup />
-    <AdminComplianceDialog />
   </template>
+
+  <RouterView v-else v-slot="{ Component }">
+    <SmirelUtilityShell v-if="useUtilityShell">
+      <component :is="Component" />
+    </SmirelUtilityShell>
+    <component :is="Component" v-else />
+  </RouterView>
+
+  <Toast />
+  <AnnouncementPopup />
+  <AdminComplianceDialog />
 </template>
