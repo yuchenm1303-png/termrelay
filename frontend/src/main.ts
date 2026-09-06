@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import { restoreSession } from './smirel/core/session'
 import './smirel/styles/app.css'
+import './smirel/styles/card-motion.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
