@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - release/smirel-ui-next
+      - release/smirel-commercial-dark
     paths:
       - 'frontend/**'
       - '.github/workflows/smirel-ui-preview.yml'
