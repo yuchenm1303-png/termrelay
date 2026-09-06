@@ -16,6 +16,7 @@ const mainSource = read('main.ts')
 const primitiveSource = read('components/glass/GlassSurface.vue')
 const workspaceSource = read('views/SmirelWorkspaceV2.vue')
 const cardSystem = read('styles/smirel-card-system-v1.css')
+const navigationSystem = read('styles/smirel-navigation-v1.css')
 const sharedMaterial = read('styles/smirel-shared-material-v1.css')
 const workspaceLayout = read('styles/smirel-secondary-v2.css')
 const workspaceFunctional = read('styles/smirel-workspace-functional-v2.css')
@@ -36,12 +37,22 @@ describe('Smirel canonical card system', () => {
     expect(cardSystem).toContain('.smirel-card--active')
   })
 
-  it('makes workspace shell cards call the canonical primitive instead of drawing material locally', () => {
+  it('keeps workspace cards canonical while navigation uses a dedicated interaction primitive', () => {
     expect(workspaceSource).toContain('sw2-sidebar spg-surface smirel-card')
     expect(workspaceSource).toContain('sw2-sidebar-context smirel-card smirel-card--quiet')
-    expect(workspaceSource).toContain('sw2-side-item smirel-card smirel-card--quiet smirel-card--interactive')
+    expect(workspaceSource).toContain('sw2-side-item smirel-nav-item')
+    expect(workspaceSource).toContain("'smirel-nav-item--active': isActive(item.to)")
+    expect(workspaceSource).not.toContain('sw2-side-item smirel-card')
     expect(workspaceSource).toContain('sw2-account-card smirel-card smirel-card--quiet smirel-card--interactive')
     expect(workspaceSource).toContain('sw2-topbar smirel-card')
+    expect(workspaceSource).toContain("import '@/styles/smirel-navigation-v1.css'")
+
+    expect(cardSystem).not.toContain('.sw2-side-item')
+    expect(navigationSystem).toContain('--smirel-nav-radius: 10px')
+    expect(navigationSystem).toContain('.smirel-nav-item')
+    expect(navigationSystem).toContain('.smirel-nav-item--active')
+    expect(navigationSystem).not.toContain('backdrop-filter')
+    expect(navigationSystem).not.toContain('box-shadow')
 
     expect(workspaceLayout).not.toContain('--sw2-radius')
     expect(workspaceLayout).not.toContain('--sw2-panel:')
