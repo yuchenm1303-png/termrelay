@@ -344,47 +344,59 @@ onMounted(() => {
 .smh-hero-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 27px;
+  gap: 12px;
+  margin-top: 34px;
 }
 
 .smh-button {
-  min-height: 46px;
+  min-height: 58px;
+  min-width: 172px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 18px;
-  border-radius: 6px;
-  font-size: .84rem;
-  font-weight: 620;
-  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: .98rem;
+  font-weight: 640;
+  letter-spacing: -.01em;
+  -webkit-backdrop-filter: blur(18px) saturate(118%);
+  backdrop-filter: blur(18px) saturate(118%);
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 
 .smh-button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .smh-button--primary {
-  border: 1px solid rgba(255, 255, 255, .14);
-  background: rgba(255, 255, 255, .16);
-  color: rgba(255, 255, 255, .98);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  min-width: 188px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .20);
+  color: rgba(255, 255, 255, .99);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .12),
+    0 12px 30px rgba(3, 10, 16, .12);
 }
 
 .smh-button--primary:hover {
-  background: rgba(255, 255, 255, .22);
+  border-color: rgba(255, 255, 255, .30);
+  background: rgba(255, 255, 255, .27);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .16),
+    0 16px 34px rgba(3, 10, 16, .16);
 }
 
 .smh-button--quiet {
-  border: 1px solid rgba(255, 255, 255, .08);
-  background: rgba(4, 10, 16, .14);
-  color: rgba(255, 255, 255, .76);
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(6, 16, 25, .28);
+  color: rgba(255, 255, 255, .90);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
 }
 
 .smh-button--quiet:hover {
-  color: rgba(255, 255, 255, .96);
-  border-color: rgba(255, 255, 255, .14);
+  color: rgba(255, 255, 255, .99);
+  background: rgba(10, 22, 32, .38);
+  border-color: rgba(255, 255, 255, .22);
 }
 
 .smh-glass {
@@ -769,8 +781,22 @@ onMounted(() => {
   }
 
   .smh-hero-actions {
+    width: 100%;
     flex-wrap: wrap;
-    margin-top: 22px;
+    gap: 10px;
+    margin-top: 26px;
+  }
+
+  .smh-button {
+    min-width: 0;
+    min-height: 52px;
+    flex: 1 1 158px;
+    padding: 0 18px;
+    font-size: .90rem;
+  }
+
+  .smh-button--primary {
+    min-width: 0;
   }
 
   .smh-access-top {
