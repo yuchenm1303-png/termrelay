@@ -1,0 +1,364 @@
+/* Home page composition only. Glass/card material stays owned by app.css. */
+
+.home-intro-grid,
+.home-feature-grid {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-intro-grid {
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, .95fr);
+}
+
+.home-feature-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feature-panel {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(190px, .78fr) minmax(0, 1.22fr);
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.feature-panel--routing {
+  grid-template-columns: minmax(210px, .9fr) minmax(0, 1.1fr);
+}
+
+.feature-copy {
+  min-width: 0;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.feature-copy h2 {
+  margin: 6px 0 0;
+  font-size: 1.34rem;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  font-weight: 580;
+}
+
+.feature-copy p {
+  max-width: 330px;
+  margin: 8px 0 0;
+  font-size: .68rem;
+  line-height: 1.5;
+  color: rgba(255,255,255,.57);
+}
+
+.feature-link {
+  margin-top: 11px;
+  font-size: .64rem;
+  color: rgba(255,255,255,.82);
+}
+
+.compact-steps,
+.compact-code {
+  min-width: 0;
+  border-left: 1px solid rgba(255,255,255,.07);
+  background: rgba(3,13,21,.12);
+}
+
+.compact-steps {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  padding: 4px 14px;
+}
+
+.compact-steps > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(90px, .75fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-steps > div + div {
+  border-top: 1px solid rgba(255,255,255,.065);
+}
+
+.compact-steps b {
+  font-size: .53rem;
+  color: rgba(255,255,255,.34);
+}
+
+.compact-steps strong {
+  font-size: .70rem;
+  font-weight: 620;
+}
+
+.compact-steps span {
+  min-width: 0;
+  font-size: .60rem;
+  line-height: 1.35;
+  color: rgba(255,255,255,.46);
+}
+
+.compact-code {
+  display: flex;
+  flex-direction: column;
+}
+
+.compact-code header {
+  min-height: 30px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.065);
+  font-size: .53rem;
+  color: rgba(255,255,255,.42);
+}
+
+.compact-code pre {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 12px 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.compact-code code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: .60rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: rgba(255,255,255,.80);
+}
+
+@media (min-width: 981px) {
+  .home-page {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-content {
+    width: min(1320px, calc(100vw - 72px));
+    flex: 1;
+    min-height: 0;
+    margin: 0 auto;
+    padding: 10px 0 8px;
+    display: grid;
+    grid-template-rows: minmax(0, 1.08fr) minmax(0, .92fr) 82px;
+    gap: 10px;
+  }
+
+  .home-intro-grid,
+  .home-feature-grid,
+  .quick-grid {
+    min-height: 0;
+  }
+
+  .hero-section {
+    min-height: 0;
+    height: 100%;
+    padding: 14px 8px 14px 0;
+  }
+
+  .hero-section h1 {
+    width: min(650px, 100%);
+    font-size: clamp(2rem, 2.65vw, 2.65rem);
+  }
+
+  .hero-copy {
+    max-width: 580px;
+    margin-top: 9px;
+  }
+
+  .hero-actions {
+    margin-top: 13px;
+  }
+
+  .endpoint-card {
+    height: 100%;
+    min-height: 0;
+    align-self: stretch;
+  }
+
+  .endpoint-main {
+    min-height: 0;
+    padding: 12px 16px;
+  }
+
+  .endpoint-meta span {
+    min-height: 40px;
+    padding: 7px 14px;
+  }
+
+  .feature-panel {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .quick-grid {
+    margin-top: 0;
+    grid-template-columns: 1.08fr .96fr .96fr;
+    gap: 10px;
+  }
+
+  .quick-card {
+    min-height: 0;
+    height: 100%;
+    padding: 12px 15px;
+  }
+
+  .quick-card > strong {
+    margin-top: 5px;
+    font-size: .80rem;
+  }
+
+  .quick-card > small {
+    margin-top: 3px;
+    font-size: .60rem;
+  }
+
+  .quick-card > b {
+    bottom: 10px;
+  }
+
+  .home-footer {
+    width: min(1320px, calc(100vw - 72px));
+    height: 28px;
+    flex: 0 0 28px;
+  }
+}
+
+@media (min-width: 981px) and (max-height: 760px) {
+  .home-content {
+    padding-top: 7px;
+    gap: 7px;
+    grid-template-rows: minmax(0, 1fr) minmax(0, .92fr) 72px;
+  }
+
+  .hero-section h1 {
+    margin-top: 5px;
+    font-size: clamp(1.72rem, 2.35vw, 2.2rem);
+  }
+
+  .hero-copy {
+    margin-top: 7px;
+    font-size: .70rem;
+  }
+
+  .hero-actions {
+    margin-top: 9px;
+  }
+
+  .primary-button,
+  .secondary-button {
+    min-height: 34px;
+  }
+
+  .feature-copy {
+    padding: 13px 16px;
+  }
+
+  .feature-copy h2 {
+    font-size: 1.12rem;
+  }
+
+  .feature-copy p {
+    margin-top: 6px;
+    font-size: .62rem;
+  }
+
+  .feature-link,
+  .provider-line {
+    margin-top: 8px;
+  }
+
+  .compact-code pre {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 981px) {
+  .home-intro-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, .88fr);
+  }
+
+  .feature-panel,
+  .feature-panel--routing {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-steps,
+  .compact-code {
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.07);
+  }
+
+  .feature-copy {
+    padding: 12px 15px 9px;
+  }
+
+  .feature-copy p {
+    display: none;
+  }
+
+  .compact-steps {
+    padding: 2px 12px;
+  }
+}
+
+@media (max-width: 980px) {
+  .home-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .home-content {
+    display: block;
+  }
+
+  .home-intro-grid,
+  .home-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-intro-grid > * + *,
+  .home-feature-grid,
+  .quick-grid {
+    margin-top: 8px;
+  }
+
+  .feature-panel {
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 680px) {
+  .feature-panel,
+  .feature-panel--routing {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-steps,
+  .compact-code {
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.07);
+  }
+
+  .compact-steps > div {
+    min-height: 58px;
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .compact-steps span {
+    grid-column: 2;
+  }
+
+  .compact-code pre {
+    overflow: visible;
+  }
+}
