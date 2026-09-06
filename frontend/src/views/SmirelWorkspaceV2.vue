@@ -28,10 +28,10 @@
               v-for="item in section.items"
               :key="item.to"
               :to="item.to"
-              class="sw2-side-item smirel-card smirel-card--quiet smirel-card--interactive"
+              class="sw2-side-item smirel-nav-item"
               :class="{
                 'sw2-side-item--active': isActive(item.to),
-                'smirel-card--active': isActive(item.to),
+                'smirel-nav-item--active': isActive(item.to),
               }"
               :aria-current="isActive(item.to) ? 'page' : undefined"
               @click="closeMobileNav"
@@ -124,6 +124,7 @@ import '@/styles/smirel-shared-glass-v1.css'
 import '@/styles/smirel-sidebar-fixed-v2.css'
 import '@/styles/smirel-workspace-functional-v2.css'
 import '@/styles/smirel-card-system-v1.css'
+import '@/styles/smirel-navigation-v1.css'
 
 const route = useRoute()
 const router = useRouter()
