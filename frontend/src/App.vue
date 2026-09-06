@@ -25,7 +25,13 @@ const adminSettingsStore = useAdminSettingsStore()
 // expose surfaces that have been rebuilt on the shared Smirel visual system.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
 const rebuiltSecondaryPaths = new Set(['/login', '/register', '/dashboard', '/keys', '/usage'])
-const showRebuiltSecondary = computed(() => interfaceResetMode && rebuiltSecondaryPaths.has(route.path))
+const showRebuiltSecondary = computed(() =>
+  interfaceResetMode
+  && (
+    rebuiltSecondaryPaths.has(route.path)
+    || (route.path === '/model-plaza' && route.query.embedded === '1')
+  ),
+)
 
 const UTILITY_PATHS = [
   '/key-usage',
