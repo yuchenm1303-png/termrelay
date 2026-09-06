@@ -189,6 +189,7 @@ import { computed, onMounted } from 'vue'
 import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 import '@/styles/smirel-shared-glass-v1.css'
+import '@/styles/smirel-shared-interactions-v1.css'
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
