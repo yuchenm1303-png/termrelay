@@ -98,7 +98,6 @@ html.relay-standalone .spg-page.smh-home .smh-glass,
 html.relay-standalone .spg-page .spg-surface,
 html.relay-standalone .spg-page.sw2-page .sw2-panel,
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context,
-html.relay-standalone .spg-page.sw2-page .sw2-account-card,
 html.relay-standalone .spg-page.sw2-page .sw2-topbar,
 html.relay-standalone .spg-page.sw2-page .sw2-admin-module,
 html.relay-standalone .spg-page.sw2-page .sw2-admin-loading,
@@ -165,7 +164,6 @@ html.relay-standalone .spg-page :is(.spg-endpoint-block, .spg-inset, .spg-step) 
 /* Quiet nested legacy cards use the same hierarchy as .smirel-card--quiet. */
 html.relay-standalone .smg-shell .smg-sidebar-context,
 html.relay-standalone .smg-shell .smg-surface--quiet,
-html.relay-standalone .spg-page.sw2-page .sw2-account-card,
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
   background: var(--smirel-card-bg-quiet) !important;
 }
@@ -188,7 +186,6 @@ html.relay-standalone .smg-shell .smg-surface--interactive {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html.relay-standalone .spg-page.sw2-page .sw2-account-card:hover,
   html.relay-standalone .spg-page .spg-surface--interactive:hover,
   html.relay-standalone .smg-shell .smg-surface--interactive:hover {
     border-color: var(--smirel-card-border-active) !important;
@@ -203,7 +200,6 @@ html.relay-standalone .smg-shell .smg-surface--interactive {
   html.relay-standalone .spg-page.sw2-page :is(
     .sw2-panel,
     .sw2-sidebar-context,
-    .sw2-account-card,
     .sw2-topbar,
     .sw2-admin-module,
     .sw2-admin-loading,
