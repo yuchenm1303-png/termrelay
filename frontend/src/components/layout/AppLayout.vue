@@ -1,5 +1,11 @@
 <template>
-  <div class="smg-shell">
+  <div v-if="useStandaloneHost" class="sw2-route-content">
+    <RelayAccessPanel v-if="showRelayAccessPanel" />
+    <BillingAccessPanel v-if="showBillingAccessPanel" />
+    <slot />
+  </div>
+
+  <div v-else class="smg-shell">
     <div class="smg-environment" aria-hidden="true"></div>
     <div class="smg-app-grid">
       <SmirelGlassSidebar />
@@ -31,6 +37,7 @@ import BillingAccessPanel from '@/components/user/BillingAccessPanel.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const useStandaloneHost = document.documentElement.classList.contains('relay-standalone')
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 const showRelayAccessPanel = computed(() => !isAdmin.value && route.path === '/keys')
 const showBillingAccessPanel = computed(
