@@ -6,6 +6,7 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
+import { installSmirelDownloadInteractions } from '@/utils/smirelDownloadInteractions'
 import {
   applyStandaloneSmirelPreferences,
   applyStandaloneSmirelPublicSettings,
@@ -24,10 +25,10 @@ import './styles/smirel-glass-dashboard-v5.css'
 import './styles/smirel-glass-auth-v5.css'
 import './styles/smirel-wordmark-v1.css'
 import './styles/smirel-shared-material-v1.css'
-import './styles/smirel-shared-interactions-v1.css'
 import './styles/smirel-card-system-v1.css'
 import './styles/smirel-inset-system-v1.css'
 import './styles/smirel-home-topbar-v1.css'
+import './styles/smirel-shared-interactions-v1.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
@@ -99,6 +100,7 @@ async function bootstrap() {
   app.use(i18n)
   await router.isReady()
   app.mount('#app')
+  installSmirelDownloadInteractions()
 }
 
 bootstrap()
