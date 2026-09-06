@@ -1,16 +1,18 @@
+/*
+ * Workspace V2 layout and typography.
+ *
+ * Card material is deliberately not defined here. Any element that behaves as
+ * a card consumes smirel-card-system-v1.css through .smirel-card or a legacy
+ * compatibility alias. This file owns only geometry, typography and controls.
+ */
+
 :root {
   --sw2-sidebar: 236px;
   --sw2-text: rgba(255, 255, 255, .95);
   --sw2-muted: rgba(255, 255, 255, .58);
   --sw2-soft: rgba(255, 255, 255, .36);
   --sw2-faint: rgba(255, 255, 255, .24);
-  --sw2-line: rgba(255, 255, 255, .07);
-  --sw2-panel: rgba(4, 18, 30, .46);
-  --sw2-sidebar-bg: rgba(3, 13, 22, .62);
-  --sw2-topbar-bg: rgba(4, 16, 26, .34);
-  --sw2-inset: rgba(0, 0, 0, .10);
   --sw2-success: #83efc7;
-  --sw2-radius: 6px;
   --sw2-ease: cubic-bezier(.2, .7, .2, 1);
 }
 
@@ -74,10 +76,6 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, .065);
-  background: var(--sw2-sidebar-bg);
-  -webkit-backdrop-filter: blur(22px) saturate(118%);
-  backdrop-filter: blur(22px) saturate(118%);
 }
 
 .sw2-sidebar-brand-row {
@@ -109,12 +107,13 @@
   letter-spacing: -.025em;
 }
 
+/* Native shell controls are not cards. */
 .sw2-sidebar-close {
   display: none;
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, .05);
   color: rgba(255, 255, 255, .62);
   cursor: pointer;
@@ -123,9 +122,6 @@
 .sw2-sidebar-context {
   margin: 16px 14px 8px;
   padding: 14px 12px;
-  border: 1px solid rgba(255, 255, 255, .05);
-  border-radius: var(--sw2-radius);
-  background: rgba(255, 255, 255, .035);
 }
 
 .sw2-sidebar-context > span,
@@ -194,12 +190,10 @@
   gap: 10px;
   margin: 2px 0;
   padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 5px;
   color: rgba(255, 255, 255, .58);
   font-size: .68rem;
   font-weight: 560;
-  transition: color 160ms var(--sw2-ease), background-color 160ms var(--sw2-ease), border-color 160ms var(--sw2-ease);
+  transition: color 160ms var(--sw2-ease);
 }
 
 .sw2-side-icon {
@@ -217,8 +211,6 @@
 }
 
 .sw2-side-item--active {
-  border-color: rgba(174, 222, 255, .10);
-  background: rgba(137, 201, 244, .11);
   color: rgba(255, 255, 255, .94);
 }
 
@@ -243,8 +235,6 @@
   gap: 10px;
   min-width: 0;
   padding: 10px 14px;
-  border-radius: 0;
-  background: rgba(255, 255, 255, .035);
 }
 
 .sw2-avatar,
@@ -313,10 +303,6 @@
   justify-content: space-between;
   gap: 18px;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, .055);
-  background: var(--sw2-topbar-bg);
-  -webkit-backdrop-filter: blur(18px) saturate(116%);
-  backdrop-filter: blur(18px) saturate(116%);
 }
 
 .sw2-topbar-left,
@@ -348,6 +334,7 @@
   font-weight: 600;
 }
 
+/* Pills are controls/status affordances, not cards. */
 .sw2-endpoint,
 .sw2-service-state,
 .sw2-role-pill {
@@ -382,7 +369,7 @@
   width: 34px;
   height: 34px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, .05);
   cursor: pointer;
 }
@@ -441,12 +428,9 @@
   white-space: nowrap;
 }
 
+/* .sw2-panel is a legacy card alias; its material comes from the card system. */
 .sw2-panel {
-  border: 1px solid rgba(255, 255, 255, .065);
-  border-radius: var(--sw2-radius);
-  background: var(--sw2-panel);
-  -webkit-backdrop-filter: blur(22px) saturate(118%);
-  backdrop-filter: blur(22px) saturate(118%);
+  min-width: 0;
 }
 
 .sw2-placeholder {
@@ -489,12 +473,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .sw2-side-item:not(.sw2-side-item--pending):hover {
-    background: rgba(255, 255, 255, .055);
     color: rgba(255, 255, 255, .86);
-  }
-
-  .sw2-side-item--active:hover {
-    background: rgba(137, 201, 244, .14);
   }
 
   .sw2-home-link:hover,
