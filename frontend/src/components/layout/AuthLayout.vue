@@ -2,7 +2,7 @@
   <div class="smg-auth">
     <div class="smg-environment" aria-hidden="true"></div>
 
-    <header class="smg-auth-nav smg-surface">
+    <GlassSurface as="header" class="smg-auth-nav">
       <router-link to="/home" class="smg-auth-brand">
         <span class="smg-brand-mark">
           <img v-if="siteLogo" :src="siteLogo" alt="Smirel" />
@@ -15,7 +15,7 @@
         <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">{{ copy.docs }}</a>
         <LocaleSwitcher />
       </div>
-    </header>
+    </GlassSurface>
 
     <main class="smg-auth-main">
       <GlassSurface class="smg-auth-story">
@@ -24,18 +24,24 @@
         <p>{{ copy.description }}</p>
 
         <div class="smg-auth-facts">
-          <article v-for="fact in facts" :key="fact.title" class="smg-auth-fact">
+          <GlassSurface
+            v-for="fact in facts"
+            :key="fact.title"
+            as="article"
+            tone="data"
+            class="smg-auth-fact"
+          >
             <strong>{{ fact.title }}</strong>
             <span>{{ fact.description }}</span>
-          </article>
+          </GlassSurface>
         </div>
 
-        <div class="smg-auth-code">
+        <GlassSurface tone="data" class="smg-auth-code">
           <span>BASE_URL</span>
           <code>{{ apiBase }}</code>
           <span>AUTH</span>
           <code>Authorization: Bearer sk-••••••••</code>
-        </div>
+        </GlassSurface>
       </GlassSurface>
 
       <GlassSurface class="smg-auth-card">
