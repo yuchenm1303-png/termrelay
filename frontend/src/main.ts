@@ -15,6 +15,7 @@ import './styles/smirel-glass-controls-v5.css'
 import './styles/smirel-glass-dashboard-v5.css'
 import './styles/smirel-glass-auth-v5.css'
 import './styles/smirel-wordmark-v1.css'
+import './styles/smirel-shared-material-v1.css'
 import './styles/smirel-shared-interactions-v1.css'
 
 function applyStandaloneRelayShell(){if(!isStandaloneSmirelFrontend())return;document.documentElement.classList.add('relay-standalone');applyStandaloneSmirelPreferences()}
