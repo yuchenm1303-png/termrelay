@@ -1,22 +1,37 @@
 <template>
   <div class="sw2-admin-overview">
-    <section v-if="loading && !stats" class="spg-surface sw2-admin-loading">正在读取平台运行数据…</section>
+    <section v-if="loading && !stats" class="spg-surface sw2-admin-loading">
+      <span class="sw2-admin-loading-mark" aria-hidden="true"></span>
+      <strong>正在读取平台运行数据</strong>
+      <p>同步账户池、请求与结算快照…</p>
+    </section>
 
     <section v-else-if="error && !stats" class="spg-surface sw2-admin-error">
-      <span>平台数据暂时没有加载成功。</span>
+      <strong>平台数据暂时没有加载成功</strong>
+      <p>当前 Overview 无法取得最新快照，可以重新请求一次。</p>
       <button type="button" @click="loadSnapshot">重新加载</button>
     </section>
 
     <template v-else>
       <div class="sw2-admin-toolbar">
-        <span v-if="lastUpdated">数据更新于 {{ lastUpdated }}</span>
-        <button class="sw2-admin-refresh" type="button" :disabled="loading || opsLoading" @click="loadSnapshot">
-          {{ loading || opsLoading ? '刷新中…' : '刷新数据' }}
-        </button>
+        <div class="sw2-admin-snapshot-label">
+          <span class="sw2-admin-live-dot" aria-hidden="true"></span>
+          <span>LIVE SNAPSHOT</span>
+          <strong>运营快照</strong>
+        </div>
+        <div class="sw2-admin-toolbar-actions">
+          <span v-if="lastUpdated">数据更新于 {{ lastUpdated }}</span>
+          <button class="sw2-admin-refresh" type="button" :disabled="loading || opsLoading" @click="loadSnapshot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7v5h-5M4 17v-5h5M18.1 9A7 7 0 006.7 6.4L4 9m2 6a7 7 0 0011.3 2.6L20 15" />
+            </svg>
+            {{ loading || opsLoading ? '刷新中…' : '刷新数据' }}
+          </button>
+        </div>
       </div>
 
       <div class="sw2-admin-top-grid">
-        <section class="spg-surface sw2-admin-health">
+        <section class="spg-surface sw2-admin-module sw2-admin-health">
           <header class="sw2-module-head">
             <div>
               <span class="sw2-admin-section-label">PLATFORM HEALTH</span>
@@ -27,25 +42,27 @@
             </span>
           </header>
 
-          <div class="sw2-admin-health-body">
+          <div class="sw2-admin-health-hero">
+            <div class="sw2-admin-health-orb" :class="{ 'is-warning': healthHasIssues }" aria-hidden="true">
+              <svg v-if="healthHasIssues" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4l9 16H3L12 4zm0 5.5v4.5m0 3h.01" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.2 4.2L19 7" />
+              </svg>
+            </div>
             <div class="sw2-admin-health-copy">
-              <strong>{{ healthHasIssues ? '存在异常上游' : '核心资源运行正常' }}</strong>
+              <span>SYSTEM STATUS</span>
+              <strong>{{ healthHasIssues ? '上游资源需要检查' : '核心资源运行正常' }}</strong>
               <p>{{ healthDescription }}</p>
             </div>
+          </div>
 
-            <div class="sw2-admin-health-list">
-              <div class="sw2-admin-health-row">
-                <span>健康上游</span>
-                <strong>{{ formatCompact(stats?.normal_accounts) }} / {{ formatCompact(stats?.total_accounts) }}</strong>
-              </div>
-              <div class="sw2-admin-health-row">
-                <span>异常上游</span>
-                <strong :class="{ 'is-warning': healthHasIssues }">{{ formatCompact(stats?.error_accounts) }}</strong>
-              </div>
-              <div class="sw2-admin-health-row">
-                <span>活跃用户</span>
-                <strong>{{ formatCompact(stats?.active_users) }}</strong>
-              </div>
+          <div class="sw2-admin-health-grid">
+            <div v-for="item in healthMetrics" :key="item.label" class="sw2-admin-health-metric">
+              <span>{{ item.label }}</span>
+              <strong :class="{ 'is-warning': item.warning }">{{ item.value }}</strong>
+              <small>{{ item.note }}</small>
             </div>
           </div>
 
@@ -57,58 +74,90 @@
           </div>
         </section>
 
-        <section class="spg-surface sw2-admin-today">
+        <section class="spg-surface sw2-admin-module sw2-admin-today">
           <header class="sw2-module-head">
             <div>
               <span class="sw2-admin-section-label">TODAY</span>
               <strong>今日运行</strong>
             </div>
-            <span class="sw2-module-note">实时业务摘要</span>
+            <span class="sw2-module-note">{{ todayLabel }}</span>
           </header>
 
           <div class="sw2-admin-metrics">
-            <div v-for="metric in primaryMetrics" :key="metric.label" class="sw2-admin-metric">
-              <span>{{ metric.label }}</span>
+            <article v-for="metric in primaryMetrics" :key="metric.label" class="sw2-admin-metric">
+              <div class="sw2-admin-metric-head">
+                <span class="sw2-admin-metric-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path stroke-linecap="round" stroke-linejoin="round" :d="metric.icon" />
+                  </svg>
+                </span>
+                <span>{{ metric.label }}</span>
+              </div>
               <strong>{{ metric.value }}</strong>
               <small>{{ metric.note }}</small>
-            </div>
+              <span class="sw2-admin-metric-rule" aria-hidden="true"></span>
+            </article>
           </div>
 
           <div class="sw2-admin-today-foot">
             <div v-for="item in secondaryMetrics.slice(2)" :key="item.label">
               <span>{{ item.label }}</span>
               <strong>{{ item.value }}</strong>
+              <small>{{ item.note }}</small>
             </div>
           </div>
         </section>
       </div>
 
-      <section class="spg-surface sw2-admin-hour">
+      <section class="spg-surface sw2-admin-module sw2-admin-hour">
         <header class="sw2-module-head sw2-admin-hour-head">
           <div>
             <span class="sw2-admin-section-label">LAST 1 HOUR</span>
             <strong>最近一小时</strong>
           </div>
-          <span v-if="opsEnabled && opsSnapshot" class="sw2-module-note">{{ formatCompact(opsOverview?.request_count_total) }} requests</span>
+          <div class="sw2-admin-hour-status">
+            <span :class="{ 'is-live': opsEnabled && !!opsSnapshot }"><i aria-hidden="true"></i>{{ opsEnabled ? 'OPS MONITORING' : 'MONITORING OFF' }}</span>
+            <b v-if="opsEnabled && opsSnapshot">{{ formatCompact(opsOverview?.request_count_total) }} requests</b>
+          </div>
         </header>
 
-        <div v-if="!opsEnabled" class="sw2-admin-hour-empty">
-          <div>
-            <strong>运营监控未启用</strong>
-            <p>开启 Ops Monitoring 后，这里会显示最近一小时的请求趋势、SLA、错误率和延迟。</p>
+        <div v-if="!opsEnabled" class="sw2-admin-hour-shell">
+          <div class="sw2-admin-monitor-canvas sw2-admin-monitor-canvas--empty">
+            <div class="sw2-admin-monitor-axis sw2-admin-monitor-axis--y" aria-hidden="true">
+              <span>4</span><span>3</span><span>2</span><span>1</span><span>0</span>
+            </div>
+            <div class="sw2-admin-monitor-grid" aria-hidden="true"></div>
+            <div class="sw2-admin-monitor-axis sw2-admin-monitor-axis--x" aria-hidden="true">
+              <span>60m ago</span><span>45m</span><span>30m</span><span>15m</span><span>now</span>
+            </div>
+            <div class="sw2-admin-monitor-empty-copy">
+              <span class="sw2-admin-monitor-empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 18V9m5 9V5m5 13v-7m5 7V7" />
+                </svg>
+              </span>
+              <strong>运营监控尚未启用</strong>
+              <p>启用 Ops Monitoring 后，这里会呈现真实请求趋势、SLA、错误率与端到端延迟。</p>
+            </div>
           </div>
-          <span>Overview 其他数据正常可用</span>
+
+          <aside class="sw2-admin-monitor-insight">
+            <span class="sw2-admin-section-label">OPERATIONS</span>
+            <strong>实时运行洞察</strong>
+            <p>当前基础 Overview 数据保持可用。监控开启后，会补齐请求质量与异常定位视角。</p>
+            <ul>
+              <li v-for="item in monitorCapabilities" :key="item"><i aria-hidden="true">✓</i>{{ item }}</li>
+            </ul>
+          </aside>
         </div>
 
-        <div v-else-if="opsLoading && !opsSnapshot" class="sw2-admin-hour-empty">
-          <div><strong>正在读取最近一小时运行数据…</strong></div>
+        <div v-else-if="opsLoading && !opsSnapshot" class="sw2-admin-hour-state">
+          <span class="sw2-admin-loading-mark" aria-hidden="true"></span>
+          <div><strong>正在读取最近一小时运行数据</strong><p>同步吞吐量、SLA 与延迟指标…</p></div>
         </div>
 
-        <div v-else-if="opsError && !opsSnapshot" class="sw2-admin-hour-empty">
-          <div>
-            <strong>最近一小时数据暂时不可用</strong>
-            <p>Platform Health 和今日运行数据不受影响。</p>
-          </div>
+        <div v-else-if="opsError && !opsSnapshot" class="sw2-admin-hour-state sw2-admin-hour-state--error">
+          <div><strong>最近一小时数据暂时不可用</strong><p>Platform Health 与今日运行数据不受影响。</p></div>
         </div>
 
         <div v-else class="sw2-admin-hour-grid">
@@ -120,6 +169,7 @@
             </div>
 
             <div class="sw2-admin-sparkline" aria-label="最近一小时请求趋势">
+              <div class="sw2-admin-sparkline-grid" aria-hidden="true"></div>
               <svg viewBox="0 0 100 36" preserveAspectRatio="none" role="img">
                 <line x1="0" y1="35" x2="100" y2="35" class="sw2-admin-sparkline-base" />
                 <polyline v-if="sparklinePoints" :points="sparklinePoints" class="sw2-admin-sparkline-line" />
@@ -160,6 +210,20 @@ const opsError = ref(false)
 const opsEnabled = computed(() => adminSettingsStore.opsMonitoringEnabled)
 const opsOverview = computed(() => opsSnapshot.value?.overview ?? null)
 
+const metricIcons = {
+  requests: 'M4 12l15-7-4.5 14-3.1-5.1L4 12zm7.4 1.9L19 5',
+  settlement: 'M5 7.5C5 5.6 8.1 4 12 4s7 1.6 7 3.5S15.9 11 12 11 5 9.4 5 7.5zm0 0V12c0 1.9 3.1 3.5 7 3.5s7-1.6 7-3.5V7.5m-14 4.5v4.5c0 1.9 3.1 3.5 7 3.5s7-1.6 7-3.5V12',
+  tokens: 'M6 3.75h9l3 3v13.5H6V3.75zm9 0v3h3M9 11h6m-6 3h6m-6 3h4',
+  latency: 'M13 2L5.5 13H11l-1 9 8.5-12H13V2z',
+}
+
+const monitorCapabilities = [
+  '请求吞吐量与延迟趋势',
+  'SLA 与可用性监控',
+  '错误率与异常分析',
+  '业务限流与峰值定位',
+]
+
 function formatLocalDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
@@ -193,23 +257,50 @@ function formatPercentFraction(value: number | null | undefined): string {
   return `${(value * 100).toFixed(value * 100 >= 10 ? 1 : 2)}%`
 }
 
+const todayLabel = computed(() => new Intl.DateTimeFormat('zh-CN', {
+  month: 'long',
+  day: 'numeric',
+  weekday: 'short',
+}).format(new Date()))
+
 const healthHasIssues = computed(() => toFinite(stats.value?.error_accounts) > 0)
 const healthDescription = computed(() => healthHasIssues.value
   ? `当前有 ${formatCompact(stats.value?.error_accounts)} 个上游处于异常状态，优先检查账号池和调度健康度。`
   : '当前没有检测到异常上游，核心调度资源处于正常状态。')
 
+const healthMetrics = computed(() => [
+  {
+    label: '健康上游',
+    value: `${formatCompact(stats.value?.normal_accounts)} / ${formatCompact(stats.value?.total_accounts)}`,
+    note: '当前可调度资源',
+    warning: false,
+  },
+  {
+    label: '异常上游',
+    value: formatCompact(stats.value?.error_accounts),
+    note: healthHasIssues.value ? '需要优先处理' : '未发现异常资源',
+    warning: healthHasIssues.value,
+  },
+  {
+    label: '活跃用户',
+    value: formatCompact(stats.value?.active_users),
+    note: '当前活跃账户',
+    warning: false,
+  },
+])
+
 const primaryMetrics = computed(() => [
-  { label: '今日请求', value: formatCompact(stats.value?.today_requests), note: `累计 ${formatCompact(stats.value?.total_requests)} 次` },
-  { label: '今日结算', value: formatCost(stats.value?.today_actual_cost), note: '用户侧实际结算' },
-  { label: '今日 Token', value: formatCompact(stats.value?.today_tokens), note: '输入与输出合计' },
-  { label: '平均响应', value: formatDuration(stats.value?.average_duration_ms), note: '当前平均耗时' },
+  { label: '今日请求', value: formatCompact(stats.value?.today_requests), note: `累计 ${formatCompact(stats.value?.total_requests)} 次`, icon: metricIcons.requests },
+  { label: '今日结算', value: formatCost(stats.value?.today_actual_cost), note: '用户侧实际结算', icon: metricIcons.settlement },
+  { label: '今日 Token', value: formatCompact(stats.value?.today_tokens), note: '输入与输出合计', icon: metricIcons.tokens },
+  { label: '平均响应', value: formatDuration(stats.value?.average_duration_ms), note: '当前平均耗时', icon: metricIcons.latency },
 ])
 
 const secondaryMetrics = computed(() => [
-  { label: 'API Keys', value: `${formatCompact(stats.value?.active_api_keys)} / ${formatCompact(stats.value?.total_api_keys)} 启用` },
-  { label: '今日新增用户', value: `+${formatCompact(stats.value?.today_new_users)}` },
-  { label: '当前 RPM', value: formatCompact(stats.value?.rpm) },
-  { label: '今日上游成本', value: formatCost(stats.value?.today_account_cost) },
+  { label: 'API Keys', value: `${formatCompact(stats.value?.active_api_keys)} / ${formatCompact(stats.value?.total_api_keys)} 启用`, note: '可用密钥' },
+  { label: '今日新增用户', value: `+${formatCompact(stats.value?.today_new_users)}`, note: '自然日新增' },
+  { label: '当前 RPM', value: formatCompact(stats.value?.rpm), note: '当前请求速率' },
+  { label: '今日上游成本', value: formatCost(stats.value?.today_account_cost), note: '上游实际成本' },
 ])
 
 const sparklinePoints = computed(() => {
