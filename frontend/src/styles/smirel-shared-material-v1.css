@@ -45,6 +45,13 @@
   border-left: 0;
   border-right: 1px solid var(--spg-line);
   border-radius: 0;
+  transform: none;
+}
+
+/* A full-height navigation rail is structural chrome, not an interactive card. */
+.spg-page.sw2-page .sw2-sidebar.spg-surface:hover,
+.spg-page.sw2-page .sw2-sidebar.spg-surface:active {
+  transform: none;
 }
 
 .spg-page.sw2-page .sw2-topbar {
