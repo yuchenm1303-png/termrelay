@@ -1,15 +1,7 @@
 .PHONY: build build-backend build-frontend test test-backend test-frontend test-frontend-critical
 
 FRONTEND_CRITICAL_VITEST := \
-	src/views/auth/__tests__/LinuxDoCallbackView.spec.ts \
-	src/views/auth/__tests__/WechatCallbackView.spec.ts \
-	src/views/user/__tests__/PaymentView.spec.ts \
-	src/views/user/__tests__/PaymentResultView.spec.ts \
-	src/components/user/profile/__tests__/ProfileInfoCard.spec.ts \
-	src/components/layout/__tests__/smirelWorkspaceNavigation.spec.ts \
-	src/components/layout/__tests__/SmirelCardSystem.spec.ts \
-	src/components/layout/__tests__/SmirelInsetSystem.spec.ts \
-	src/views/admin/__tests__/SettingsView.spec.ts
+	src/smirel/__tests__/purity.spec.ts
 
 # 一键编译前后端
 build: build-backend build-frontend
