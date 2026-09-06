@@ -61,10 +61,11 @@
   backdrop-filter: var(--spg-backdrop);
 }
 
-/* Keep nested data cells subordinate to the parent glass surface. */
+/* Keep true nested data cells subordinate to the parent glass surface.
+ * The sidebar account area is shell-level chrome, so it deliberately does
+ * not participate in this inset-cell material family. */
 .spg-page.sw2-page :is(
   .sw2-sidebar-context,
-  .sw2-account-card,
   .sw2-admin-health-foot,
   .sw2-admin-today-foot,
   .sw2-admin-metric,
