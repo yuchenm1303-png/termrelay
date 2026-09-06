@@ -1,0 +1,76 @@
+:root {
+  /*
+   * Canonical Smirel glass material.
+   * The homepage is the visual source of truth; secondary workspaces consume
+   * the same surface, edge, radius and environment treatment through these
+   * shared tokens instead of maintaining a second dark-panel recipe.
+   */
+  --spg-surface: rgba(5, 18, 29, .42);
+  --spg-surface-hover: rgba(5, 18, 29, .50);
+  --spg-line: rgba(255, 255, 255, .08);
+  --spg-radius: 8px;
+  --spg-backdrop: blur(22px) saturate(118%);
+  --spg-environment-overlay:
+    linear-gradient(180deg, rgba(4, 10, 16, .13), rgba(4, 10, 16, .26)),
+    radial-gradient(ellipse at 55% 40%, rgba(5, 12, 18, 0) 25%, rgba(5, 12, 18, .18) 100%);
+}
+
+/* Homepage and workspace cards are the same material, not look-alike copies. */
+.spg-page.smh-home .smh-glass,
+.spg-page.sw2-page .spg-surface,
+.spg-page.sw2-page .sw2-panel {
+  border: 1px solid var(--spg-line);
+  border-radius: var(--spg-radius);
+  background: var(--spg-surface);
+  -webkit-backdrop-filter: var(--spg-backdrop);
+  backdrop-filter: var(--spg-backdrop);
+  box-shadow: none;
+}
+
+/* Reuse the homepage environment treatment so the wallpaper can participate
+ * in the glass instead of being buried under the old 52–62% dark scrim. */
+.spg-page.smh-home .smh-environment::after,
+.spg-page.sw2-page .spg-environment::after {
+  background: var(--spg-environment-overlay);
+}
+
+.spg-page.sw2-page {
+  background: #21313c;
+}
+
+/* Shell chrome uses the same material recipe but keeps edge semantics. */
+.spg-page.sw2-page .sw2-sidebar.spg-surface {
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 1px solid var(--spg-line);
+  border-radius: 0;
+}
+
+.spg-page.sw2-page .sw2-topbar {
+  border-bottom-color: var(--spg-line);
+  background: rgba(5, 18, 29, .30);
+  -webkit-backdrop-filter: var(--spg-backdrop);
+  backdrop-filter: var(--spg-backdrop);
+}
+
+/* Keep nested data cells subordinate to the parent glass surface. */
+.spg-page.sw2-page :is(
+  .sw2-sidebar-context,
+  .sw2-account-card,
+  .sw2-admin-health-foot,
+  .sw2-admin-today-foot,
+  .sw2-admin-metric,
+  .sw2-admin-diagnostic
+) {
+  background-color: rgba(0, 0, 0, .075);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .spg-page.smh-home .smh-glass,
+  .spg-page.sw2-page .spg-surface,
+  .spg-page.sw2-page .sw2-panel,
+  .spg-page.sw2-page .sw2-topbar {
+    background: rgba(5, 18, 29, .78);
+  }
+}
