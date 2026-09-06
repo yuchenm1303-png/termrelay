@@ -1,19 +1,13 @@
 /*
  * Functional V2 shell integration.
  *
- * These rules deliberately style only the new shell contracts introduced when
- * real router views are hosted by SmirelWorkspaceV2. They are kept separate
- * from the broad visual foundation so functional wiring is not coupled to an
- * unrelated redesign pass.
+ * This file owns layout/wiring only. Card material is intentionally forbidden
+ * here: backgrounds, card borders, radii, blur and shadows come from
+ * smirel-card-system-v1.css / GlassSurface.vue.
  */
 
 .sw2-sidebar-context {
   padding: 13px 13px 14px;
-  border-color: rgba(177, 222, 251, .09);
-  background:
-    linear-gradient(145deg, rgba(158, 216, 250, .055), transparent 52%),
-    rgba(255, 255, 255, .026);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
 }
 
 .sw2-sidebar-context-head {
@@ -63,19 +57,10 @@
   cursor: pointer;
 }
 
-.sw2-sidebar-foot {
-  background: rgba(2, 10, 17, .16);
-}
-
 .sw2-account-card {
   position: relative;
   min-height: 62px;
   padding: 10px 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, .045);
-  background:
-    linear-gradient(100deg, rgba(161, 219, 253, .055), transparent 72%),
-    rgba(255, 255, 255, .025);
-  transition: background-color 160ms var(--sw2-ease), border-color 160ms var(--sw2-ease);
 }
 
 .sw2-avatar,
@@ -184,8 +169,7 @@
   min-width: 0;
 }
 
-/* Retain the canonical .smg-shell-scoped component skin without nesting its
- * old sidebar/topbar or forcing another viewport-height application shell. */
+/* Retain the existing business-page skin without nesting its old shell. */
 .sw2-route-content.smg-shell {
   min-height: 0;
   isolation: auto;
@@ -231,13 +215,6 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .sw2-account-card:hover {
-    border-bottom-color: rgba(177, 223, 250, .08);
-    background:
-      linear-gradient(100deg, rgba(161, 219, 253, .075), transparent 72%),
-      rgba(255, 255, 255, .036);
-  }
-
   .sw2-home-link:hover,
   .sw2-logout-button:hover {
     background: rgba(255, 255, 255, .035);
@@ -257,59 +234,21 @@
 }
 
 /*
- * Shell-wide separation policy.
- *
- * Structural hierarchy is carried by spacing, surface tone and glass depth —
- * not by 1px frames. Borders remain available to real controls, status pills,
- * icon affordances and focus states where an explicit boundary has meaning.
+ * Structural dividers may still disappear where spacing already establishes
+ * hierarchy. Card edges are deliberately excluded from this reset; those are
+ * owned by the canonical card system.
  */
-.sw2-page {
-  --sw2-line: transparent;
-}
-
-.sw2-page .sw2-admin-overview {
-  --sao-line: transparent;
-  --sao-line-soft: transparent;
-}
-
-.sw2-page .sw2-route-content.smg-shell {
-  --smg-line: transparent;
-  --smg-line-strong: transparent;
-}
-
-.sw2-page .sw2-sidebar,
 .sw2-page .sw2-sidebar-brand-row,
-.sw2-page .sw2-sidebar-context,
-.sw2-page .sw2-side-item,
 .sw2-page .sw2-sidebar-foot,
-.sw2-page .sw2-account-card,
 .sw2-page .sw2-home-link,
-.sw2-page .sw2-topbar,
-.sw2-page .sw2-panel,
-.sw2-page .sw2-admin-module,
-.sw2-page .sw2-admin-loading,
-.sw2-page .sw2-admin-error,
 .sw2-page .sw2-module-head,
-.sw2-page .sw2-admin-health-grid,
 .sw2-page .sw2-admin-health-metric,
 .sw2-page .sw2-admin-health-foot,
 .sw2-page .sw2-admin-today-foot,
 .sw2-page .sw2-admin-health-foot > div,
 .sw2-page .sw2-admin-today-foot > div,
-.sw2-page .sw2-admin-metric,
-.sw2-page .sw2-admin-monitor-canvas,
-.sw2-page .sw2-admin-monitor-insight ul,
-.sw2-page .sw2-admin-trend,
-.sw2-page .sw2-admin-trend-copy,
-.sw2-page .sw2-admin-diagnostic,
-.sw2-page .sw2-route-content .smg-surface,
-.sw2-page .sw2-route-content .smg-data-panel,
-.sw2-page .sw2-route-content .smg-page-toolbar,
-.sw2-page .sw2-route-content .smg-sidebar-context,
 .sw2-page .sw2-route-content .smg-sidebar-head,
 .sw2-page .sw2-route-content .smg-sidebar-foot,
-.sw2-page .sw2-route-content .smg-nav-item,
-.sw2-page .sw2-route-content .card,
 .sw2-page .sw2-route-content th,
 .sw2-page .sw2-route-content td {
   border-color: transparent !important;
