@@ -77,12 +77,35 @@ function injectPublicSettings(backendUrl: string): Plugin {
   }
 }
 
+/**
+ * GitHub Pages 没有 Go 后端来执行生产环境的 index.html 品牌注入。
+ * 仅在明确的 Smirel standalone 构建中写入静态壳品牌，生产默认构建不受影响。
+ */
+function injectStandaloneSmirelBranding(publicBase: string, enabled: boolean): Plugin {
+  return {
+    name: 'inject-standalone-smirel-branding',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        if (!enabled) return html
+        const normalizedBase = publicBase.endsWith('/') ? publicBase : `${publicBase}/`
+        return injectBranding(html, {
+          site_name: 'Smirel API',
+          site_logo: `${normalizedBase}smirel-logo.png`,
+        })
+      },
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080'
   const devPort = Number(env.VITE_DEV_PORT || 3000)
   const publicBase = env.VITE_PUBLIC_BASE?.trim() || '/'
+  const smirelStandaloneBuild = env.VITE_SMIREL_STANDALONE === 'true'
   // TermRelay release builds keep embedding the frontend into the Go binary.
   // Vercel/standalone builds emit a normal frontend/dist directory instead.
   const standaloneBuild = process.env.VERCEL === '1' || env.VITE_STANDALONE === 'true'
@@ -94,7 +117,8 @@ export default defineConfig(({ mode }) => {
       checker({
         vueTsc: true
       }),
-      injectPublicSettings(backendUrl)
+      injectPublicSettings(backendUrl),
+      injectStandaloneSmirelBranding(publicBase, smirelStandaloneBuild)
     ],
     resolve: {
       alias: {
