@@ -44,25 +44,33 @@
         </section>
 
         <section class="sw2-stage" :aria-label="isAdminWorkspace ? '管理员工作区内容区域' : '工作区内容区域'">
-          <header class="sw2-stage-head">
-            <div class="sw2-stage-label">
-              <span>{{ isAdminWorkspace ? 'ADMIN CONTENT AREA' : 'CONTENT AREA' }}</span>
-              <strong>{{ isAdminWorkspace ? 'Operations canvas' : 'Workspace canvas' }}</strong>
+          <template v-if="isAdminWorkspace">
+            <div class="sw2-stage-body sw2-stage-body--live">
+              <SmirelAdminOverviewV2 />
             </div>
-            <span class="sw2-stage-mark">V2 FOUNDATION</span>
-          </header>
+          </template>
 
-          <div class="sw2-stage-body">
-            <div class="sw2-stage-note">
-              <span>{{ isAdminWorkspace ? 'ADMIN WORKSPACE V2' : 'SECONDARY UI V2' }}</span>
-              <strong>{{ stageTitle }}</strong>
-              <p>{{ stageDescription }}</p>
+          <template v-else>
+            <header class="sw2-stage-head">
+              <div class="sw2-stage-label">
+                <span>CONTENT AREA</span>
+                <strong>Workspace canvas</strong>
+              </div>
+              <span class="sw2-stage-mark">V2 FOUNDATION</span>
+            </header>
+
+            <div class="sw2-stage-body">
+              <div class="sw2-stage-note">
+                <span>SECONDARY UI V2</span>
+                <strong>先把工作区本身做对，再放业务内容。</strong>
+                <p>下一步会在这个母版里重新设计 Overview，而不是把旧 Dashboard、Sidebar 或卡片重新接回来。</p>
+              </div>
             </div>
-          </div>
+          </template>
 
           <footer class="sw2-stage-foot">
             <span>Single root surface · no nested glass</span>
-            <span>{{ isAdminWorkspace ? 'Legacy admin modules intentionally not mounted' : 'Business modules intentionally not mounted' }}</span>
+            <span>{{ isAdminWorkspace ? 'Live data · legacy admin layout not mounted' : 'Business modules intentionally not mounted' }}</span>
           </footer>
         </section>
       </main>
@@ -75,6 +83,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
+import SmirelAdminOverviewV2 from '@/views/admin/SmirelAdminOverviewV2.vue'
 import '@/styles/smirel-secondary-v2.css'
 
 const route = useRoute()
@@ -112,14 +121,6 @@ const navItems = computed(() => {
 })
 
 const headingDescription = computed(() => isAdminWorkspace.value
-  ? '这里会集中呈现平台运行状态、用户与上游资源、调度健康度和近期异常。当前先确认管理员工作区的信息架构与空间，不接回旧 Admin Dashboard。'
+  ? '先看平台是否健康，再处理用户、上游资源、调度和成本。Overview 只保留真正需要第一时间判断的运行数据。'
   : '这里将集中呈现账户状态、调用情况和近期活动。当前版本只确认二级工作区的导航、空间和材质，不接入旧 Dashboard 结构。')
-
-const stageTitle = computed(() => isAdminWorkspace.value
-  ? '先把管理员工作区的骨架做对，再放运营数据。'
-  : '先把工作区本身做对，再放业务内容。')
-
-const stageDescription = computed(() => isAdminWorkspace.value
-  ? '下一步会在这个母版里重新设计 Admin Overview。Users、Accounts、Channels、Billing、Operations 和 Settings 都会从零组织，不挂载旧后台页面。'
-  : '下一步会在这个母版里重新设计 Overview，而不是把旧 Dashboard、Sidebar 或卡片重新接回来。')
 </script>
