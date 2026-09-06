@@ -6,25 +6,34 @@
  * read as primary content, which made the desktop UI feel uniformly enlarged.
  * This layer keeps desktop density close to mature SaaS / developer platforms
  * without using transform: scale() and without shrinking mobile touch targets.
+ *
+ * Horizontal composition intentionally uses two rails: the dense 1200px body
+ * rail and the wider 1480px global-chrome rail. The topbar must not collapse
+ * onto the body rail just because its controls are compact.
  */
 
+.smh-home {
+  --smh-content-rail: 1200px;
+  --smh-chrome-rail: 1480px;
+}
+
 .smh-home .smh-shell {
-  width: min(1200px, calc(100vw - 96px));
+  width: min(var(--smh-content-rail), calc(100vw - 96px));
   padding-bottom: 18px;
 }
 
-/* Full-bleed chrome stays full width; only its internal density is reduced. */
+/* Full-bleed chrome stays wide; density only reduces its vertical/control size. */
 .smh-home .smh-header {
-  min-height: 60px;
+  min-height: 64px;
   padding:
-    5px
-    max(20px, calc((100vw - 1200px) / 2)) !important;
+    6px
+    max(24px, calc((100vw - var(--smh-chrome-rail)) / 2 + 18px)) !important;
 }
 
 .smh-home .smh-header .spg-brand-logo {
   width: auto;
-  max-width: 126px;
-  max-height: 32px;
+  max-width: 132px;
+  max-height: 34px;
 }
 
 .smh-home .smh-header .spg-brand-copy strong {
@@ -36,12 +45,12 @@
 }
 
 .smh-home .smh-header-right {
-  gap: 7px;
+  gap: 10px;
 }
 
 .smh-home .smh-nav {
-  gap: 15px;
-  margin-right: 0;
+  gap: 18px;
+  margin-right: 4px;
 }
 
 .smh-home .smh-nav a,
@@ -50,28 +59,28 @@
 .smh-home .smh-register-link,
 .smh-home .smh-console-link,
 .smh-home .smh-account-trigger {
-  font-size: .64rem;
+  font-size: .66rem;
 }
 
 .smh-home .smh-status {
-  gap: 4px;
+  gap: 5px;
 }
 
 .smh-home .smh-status i {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 .smh-home .smh-console-link,
 .smh-home .smh-account-trigger,
 .smh-home .smh-register-link,
 .smh-home .smh-login-link {
-  min-height: 32px;
+  min-height: 34px;
 }
 
 .smh-home .smh-console-link,
 .smh-home .smh-register-link {
-  padding-inline: 11px;
+  padding-inline: 12px;
   border-radius: 9px;
 }
 
@@ -81,7 +90,7 @@
 }
 
 .smh-home .smh-account-trigger {
-  min-width: 42px;
+  min-width: 44px;
   padding: 2px 5px 2px 3px;
   border-radius: 10px;
 }
