@@ -1,14 +1,12 @@
 /*
  * Smirel Card System v1
  *
- * This file is the single source of truth for card material across the
- * standalone Smirel experience. Page/layout styles may control geometry and
- * content spacing, but they must not invent their own card background, edge,
- * radius, blur or shadow recipe.
+ * Single source of truth for card material across the standalone Smirel UI.
+ * Layout/page styles may control geometry and spacing, but must not invent
+ * their own card background, edge, radius, blur or shadow recipe.
  *
- * New UI should use .smirel-card (or GlassSurface.vue). The selector bridges
- * below keep existing smh-/spg-/smg-/sw2- pages on the same material while
- * they are migrated to the primitive.
+ * New UI calls .smirel-card directly or uses GlassSurface.vue. Legacy aliases
+ * below are compatibility adapters only and all resolve to this same material.
  */
 
 html.relay-standalone {
@@ -69,9 +67,8 @@ html.relay-standalone .smirel-card--interactive {
 }
 
 /*
- * Compatibility bridge: every existing card family consumes the exact same
- * material. These selectors are deliberately more specific than legacy page
- * CSS so old per-page recipes can no longer win the cascade.
+ * Compatibility adapters. These old class names no longer own a material;
+ * they all resolve to the canonical card recipe while their markup is migrated.
  */
 html.relay-standalone .spg-page.smh-home .smh-glass,
 html.relay-standalone .spg-page.sw2-page .spg-surface,
@@ -103,17 +100,30 @@ html.relay-standalone .smg-shell .card {
   box-shadow: var(--smirel-card-shadow) !important;
 }
 
-/* Inset/data surfaces remain subordinate but keep the same radius and edge. */
+/* Nested information surfaces use the same primitive with the data tone. */
 html.relay-standalone .spg-page.sw2-page :is(
   .sw2-admin-health-grid,
   .sw2-admin-metric,
   .sw2-admin-diagnostic,
-  .sw2-route-content .smg-data-panel
+  .sw2-route-content .smg-data-panel,
+  .sw2-route-content .smg-dashboard-code,
+  .sw2-route-content .smg-dashboard-chart-surface
 ),
-html.relay-standalone .smg-shell .smg-surface--data {
+html.relay-standalone .smg-shell :is(
+  .smg-surface--data,
+  .smg-auth-fact,
+  .smg-auth-code,
+  .smg-dashboard-code,
+  .smg-dashboard-chart-surface
+),
+html.relay-standalone .spg-page.smh-home .smh-client-example,
+html.relay-standalone .spg-page :is(.spg-endpoint-block, .spg-inset, .spg-step) {
+  border: 1px solid var(--smirel-card-border) !important;
+  border-radius: var(--smirel-card-radius) !important;
   background: var(--smirel-card-bg-data) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+  box-shadow: var(--smirel-card-shadow) !important;
 }
 
 /* Sidebar chrome is visually a card in the floating V2 shell. */
@@ -124,7 +134,7 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar.spg-surface {
   overflow: hidden;
 }
 
-/* Navigation is one card language: same shape/material, state only changes tint. */
+/* Navigation is one card language; state changes tint, never geometry. */
 html.relay-standalone .spg-page.sw2-page .sw2-side-item {
   background: var(--smirel-card-bg-quiet) !important;
 }
@@ -149,25 +159,6 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
   html.relay-standalone .spg-page.sw2-page .sw2-side-item--active:hover {
     background: rgba(91, 166, 215, .27) !important;
   }
-}
-
-/* Pills, avatars, icon wells and native controls are not cards. */
-html.relay-standalone .spg-page.sw2-page :is(
-  .sw2-endpoint,
-  .sw2-service-state,
-  .sw2-role-pill,
-  .sw2-context-role,
-  .sw2-avatar,
-  .sw2-topbar-avatar,
-  .sw2-admin-health-state,
-  .sw2-admin-health-orb,
-  .sw2-admin-metric-icon,
-  button,
-  input,
-  select,
-  textarea
-) {
-  box-shadow: revert-layer;
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
