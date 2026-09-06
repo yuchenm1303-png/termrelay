@@ -24,7 +24,7 @@ const adminSettingsStore = useAdminSettingsStore()
 // Temporary UI reset: keep the complete legacy interface in place, but only
 // expose surfaces that have been rebuilt on the shared Smirel visual system.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
-const rebuiltSecondaryPaths = new Set(['/login', '/register'])
+const rebuiltSecondaryPaths = new Set(['/login', '/register', '/dashboard'])
 const showRebuiltSecondary = computed(() => interfaceResetMode && rebuiltSecondaryPaths.has(route.path))
 
 const UTILITY_PATHS = [
@@ -149,6 +149,8 @@ onMounted(async () => {
       <NavigationProgress />
       <RouterView />
       <Toast />
+      <AnnouncementPopup v-if="authStore.isAuthenticated" />
+      <AdminComplianceDialog v-if="authStore.isAdmin" />
     </template>
 
     <div v-else class="smg-shell" aria-hidden="true">
