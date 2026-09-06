@@ -27,6 +27,7 @@ import './styles/smirel-shared-material-v1.css'
 import './styles/smirel-shared-interactions-v1.css'
 import './styles/smirel-card-system-v1.css'
 import './styles/smirel-inset-system-v1.css'
+import './styles/smirel-home-topbar-v1.css'
 
 function applyStandaloneRelayShell() {
   if (!isStandaloneSmirelFrontend()) return
