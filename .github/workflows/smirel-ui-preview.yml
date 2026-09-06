@@ -19,7 +19,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-preview:
+  preview:
+    environment:
+      name: smirel-ui-preview
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,35 +32,29 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: '20'
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test Smirel preview contract
-        run: >-
-          pnpm exec vitest run
-          src/components/layout/__tests__/smirelWorkspaceNavigation.spec.ts
-          src/components/layout/__tests__/LegacyUiCleanup.spec.ts
-          src/components/layout/__tests__/siteLogoSanitization.spec.ts
-          src/router/__tests__/guards.spec.ts
-          src/router/__tests__/title.spec.ts
-
-      - name: Build GitHub Pages preview
-        run: pnpm build
+      # Preview is intentionally a visual fast path. Typecheck, critical Vitest,
+      # and the full standalone build continue to run in the normal CI workflow
+      # in parallel, so they do not block visual review.
+      - name: Build preview bundle
+        run: |
+          pnpm exec vite build
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
         env:
           VITE_STANDALONE: 'true'
           VITE_SMIREL_STANDALONE: 'true'
@@ -65,11 +62,6 @@ jobs:
           VITE_PUBLIC_BASE: '/termrelay/'
           # Preview must never send authenticated UI actions to production.
           VITE_API_BASE_URL: '/termrelay/__preview_api__'
-
-      - name: Add SPA fallback
-        run: |
-          cp dist/index.html dist/404.html
-          touch dist/.nojekyll
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -79,42 +71,6 @@ jobs:
         with:
           path: frontend/dist
 
-  deploy:
-    environment:
-      name: smirel-ui-preview
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build-preview
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-
-  regression-report:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Full frontend regression report
-        run: pnpm test:run
