@@ -43,28 +43,6 @@
             </router-link>
           </section>
         </nav>
-
-        <div class="sw2-sidebar-foot">
-          <router-link to="/profile" class="sw2-account-entry" aria-label="账户设置" @click="closeMobileNav">
-            <span class="sw2-avatar">
-              <img v-if="avatarUrl" :src="avatarUrl" alt="" />
-              <span v-else>{{ initials }}</span>
-            </span>
-            <span class="sw2-account-copy">
-              <strong>{{ displayName }}</strong>
-              <small>{{ accountLabel }}</small>
-            </span>
-          </router-link>
-
-          <div class="sw2-footer-actions">
-            <router-link to="/home" class="sw2-footer-action sw2-home-link" @click="closeMobileNav">
-              返回首页
-            </router-link>
-            <button type="button" class="sw2-footer-action sw2-logout-button" :disabled="loggingOut" @click="logout">
-              {{ loggingOut ? '退出中…' : '退出登录' }}
-            </button>
-          </div>
-        </div>
       </aside>
 
       <button v-if="mobileNavOpen" class="sw2-nav-scrim" type="button" aria-label="关闭导航" @click="closeMobileNav"></button>
@@ -133,7 +111,6 @@ const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const mobileNavOpen = ref(false)
-const loggingOut = ref(false)
 
 const settings = computed(() => appStore.cachedPublicSettings)
 const user = computed(() => authStore.user)
@@ -153,10 +130,6 @@ const displayName = computed(() => {
   if (email) return email.split('@')[0]
 
   return authStore.isAdmin ? 'Administrator' : 'Account'
-})
-const accountLabel = computed(() => {
-  if (isSmirelUiPreview) return '非真实账号'
-  return user.value?.email || (authStore.isAdmin ? '平台管理员' : '用户账户')
 })
 const initials = computed(() => (displayName.value || 'S').trim().slice(0, 1).toUpperCase())
 const isAdminWorkspace = computed(() => authStore.isAdmin || route.path.startsWith('/admin'))
@@ -192,17 +165,6 @@ function isActive(target: string): boolean {
 
 function closeMobileNav() {
   mobileNavOpen.value = false
-}
-
-async function logout() {
-  if (loggingOut.value) return
-  loggingOut.value = true
-  try {
-    await authStore.logout()
-    await router.replace('/login')
-  } finally {
-    loggingOut.value = false
-  }
 }
 
 watch(() => route.fullPath, closeMobileNav)
