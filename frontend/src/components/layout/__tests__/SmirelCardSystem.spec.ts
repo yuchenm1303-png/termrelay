@@ -7,6 +7,10 @@ const dir = dirname(fileURLToPath(import.meta.url))
 const srcRoot = resolve(dir, '../../..')
 
 const read = (path: string) => readFileSync(resolve(srcRoot, path), 'utf8')
+const block = (source: string, selector: string) => {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return source.match(new RegExp(`${escaped}\\s*\\{[^}]*\\}`, 's'))?.[0] || ''
+}
 
 const mainSource = read('main.ts')
 const primitiveSource = read('components/glass/GlassSurface.vue')
@@ -18,6 +22,8 @@ const workspaceFunctional = read('styles/smirel-workspace-functional-v2.css')
 const authLayout = read('components/layout/AuthLayout.vue')
 const authCss = read('styles/smirel-glass-auth-v5.css')
 const dashboardCss = read('styles/smirel-glass-dashboard-v5.css')
+
+const cardMaterialDeclaration = /(background\s*:|border-radius\s*:|backdrop-filter\s*:|box-shadow\s*:)/
 
 describe('Smirel canonical card system', () => {
   it('loads one global card material and exposes it through GlassSurface', () => {
@@ -42,6 +48,10 @@ describe('Smirel canonical card system', () => {
     expect(workspaceLayout).not.toContain('--sw2-sidebar-bg')
     expect(workspaceLayout).not.toContain('--sw2-topbar-bg')
     expect(workspaceLayout).not.toContain('border-radius: 0')
+    expect(block(workspaceLayout, '.sw2-sidebar-context')).not.toMatch(cardMaterialDeclaration)
+    expect(block(workspaceLayout, '.sw2-side-item')).not.toMatch(cardMaterialDeclaration)
+    expect(block(workspaceLayout, '.sw2-account-card')).not.toMatch(cardMaterialDeclaration)
+    expect(block(workspaceLayout, '.sw2-topbar')).not.toMatch(cardMaterialDeclaration)
     expect(workspaceFunctional).not.toContain('linear-gradient(145deg, rgba(158, 216, 250')
     expect(workspaceFunctional).not.toContain('linear-gradient(100deg, rgba(161, 219, 253')
   })
@@ -53,17 +63,18 @@ describe('Smirel canonical card system', () => {
     expect(sharedMaterial).toContain('Card/surface material moved to smirel-card-system-v1.css')
   })
 
-  it('composes authentication cards through GlassSurface and keeps page css material-free', () => {
+  it('composes authentication cards through GlassSurface and keeps their page css material-free', () => {
     expect(authLayout).toContain('<GlassSurface as="header" class="smg-auth-nav">')
     expect(authLayout).toContain('tone="data"')
-    expect(authCss).not.toContain('background: var(--smg-data-strong)')
-    expect(authCss).not.toContain('background: var(--smg-data);')
+    expect(block(authCss, '.smg-auth-fact')).not.toMatch(cardMaterialDeclaration)
+    expect(block(authCss, '.smg-auth-code')).not.toMatch(cardMaterialDeclaration)
   })
 
   it('routes dashboard nested data cards through the centralized compatibility adapter', () => {
     expect(cardSystem).toContain('.smg-dashboard-code')
     expect(cardSystem).toContain('.smg-dashboard-chart-surface')
-    expect(dashboardCss).not.toContain('background: var(--smg-data-strong)')
+    expect(block(dashboardCss, '.smg-dashboard-code')).not.toMatch(cardMaterialDeclaration)
+    expect(block(dashboardCss, '.smg-dashboard-chart-surface')).not.toMatch(cardMaterialDeclaration)
   })
 
   it('keeps homepage, admin and legacy route aliases pinned to the same material during migration', () => {
