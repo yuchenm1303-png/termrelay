@@ -1,0 +1,367 @@
+/*
+ * Smirel homepage density contract.
+ *
+ * The homepage was designed with touch-sized vertical rhythm across every
+ * section, which made the desktop experience feel uniformly oversized. This
+ * layer normalizes desktop typography, controls and section geometry without
+ * scaling the page or changing the underlying information architecture.
+ */
+
+.smh-home .smh-shell {
+  width: min(1360px, calc(100vw - 96px));
+  padding-bottom: 28px;
+}
+
+/* Navigation remains full-bleed, but its contents align with the denser rail. */
+.smh-home .smh-header {
+  min-height: 80px;
+  padding:
+    10px
+    max(24px, calc((100vw - 1360px) / 2)) !important;
+}
+
+.smh-home .smh-header-right {
+  gap: 11px;
+}
+
+.smh-home .smh-nav {
+  gap: 22px;
+  margin-right: 4px;
+}
+
+.smh-home .smh-nav a,
+.smh-home .smh-status,
+.smh-home .smh-login-link,
+.smh-home .smh-register-link,
+.smh-home .smh-console-link,
+.smh-home .smh-account-trigger {
+  font-size: .74rem;
+}
+
+.smh-home .smh-console-link,
+.smh-home .smh-account-trigger,
+.smh-home .smh-register-link {
+  min-height: 40px;
+}
+
+.smh-home .smh-console-link {
+  padding-inline: 15px;
+}
+
+.smh-home .smh-account-trigger {
+  min-width: 52px;
+}
+
+/* Hero: keep the statement dominant without letting it occupy half a screen. */
+.smh-home .smh-hero {
+  min-height: 326px;
+  padding: 30px 0 34px;
+}
+
+.smh-home .smh-hero-copy {
+  width: min(720px, 58vw);
+}
+
+.smh-home .smh-kicker,
+.smh-home .smh-section-label,
+.smh-home .smh-quick-label,
+.smh-home .smh-access-main > span,
+.smh-home .smh-access-item > span {
+  font-size: .68rem;
+  letter-spacing: .11em;
+}
+
+.smh-home .smh-hero h1 {
+  max-width: 720px;
+  margin-top: 10px;
+  font-size: clamp(2.75rem, 4.15vw, 3.75rem);
+  line-height: 1.015;
+  letter-spacing: -.045em;
+}
+
+.smh-home .smh-hero-description {
+  max-width: 610px;
+  margin-top: 16px;
+  font-size: .92rem;
+  line-height: 1.62;
+}
+
+.smh-home .smh-hero-actions {
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.smh-home .smh-button {
+  min-width: 146px;
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: .88rem;
+}
+
+.smh-home .smh-button--primary {
+  min-width: 160px;
+}
+
+/* Endpoint card: one concise information strip instead of a large dashboard tile. */
+.smh-home .smh-access-top {
+  min-height: 92px;
+  gap: 22px;
+  padding: 20px 25px;
+}
+
+.smh-home .smh-access-main code {
+  margin-top: 8px;
+  font-size: clamp(1rem, 1.28vw, 1.16rem);
+}
+
+.smh-home .smh-copy-button {
+  min-width: 92px;
+  min-height: 38px;
+  padding-inline: 14px;
+  font-size: .74rem;
+}
+
+.smh-home .smh-access-item {
+  min-height: 70px;
+  padding: 14px 25px;
+}
+
+.smh-home .smh-access-item strong {
+  margin-top: 6px;
+  font-size: .86rem;
+}
+
+/* Section cards: reduce dead space and keep text closer to its associated data. */
+.smh-home .smh-process-card,
+.smh-home .smh-routing-card,
+.smh-home .smh-quick-grid {
+  margin-top: 14px;
+}
+
+.smh-home .smh-process-card {
+  grid-template-columns: minmax(310px, .74fr) minmax(0, 1.26fr);
+}
+
+.smh-home .smh-process-copy,
+.smh-home .smh-routing-copy {
+  padding: 32px 36px 30px;
+}
+
+.smh-home .smh-process-copy {
+  min-height: 286px;
+}
+
+.smh-home .smh-process-copy h2,
+.smh-home .smh-routing-copy h2 {
+  margin-top: 9px;
+  font-size: clamp(2rem, 2.8vw, 2.55rem);
+  line-height: 1.06;
+}
+
+.smh-home .smh-process-copy > p:last-of-type,
+.smh-home .smh-routing-copy > p:last-of-type {
+  margin-top: 14px;
+  font-size: .90rem;
+  line-height: 1.62;
+}
+
+.smh-home .smh-text-link {
+  margin-top: 23px;
+  font-size: .80rem;
+}
+
+.smh-home .smh-steps {
+  padding: 12px 26px;
+}
+
+.smh-home .smh-step {
+  min-height: 86px;
+  grid-template-columns: 48px minmax(150px, .68fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px 8px;
+}
+
+.smh-home .smh-step > span {
+  font-size: .70rem;
+}
+
+.smh-home .smh-step h3 {
+  font-size: 1.08rem;
+}
+
+.smh-home .smh-step p {
+  font-size: .86rem;
+  line-height: 1.5;
+}
+
+.smh-home .smh-routing-card {
+  grid-template-columns: minmax(0, .86fr) minmax(390px, 1.14fr);
+}
+
+.smh-home .smh-routing-copy {
+  min-height: 304px;
+}
+
+.smh-home .smh-provider-line {
+  gap: 18px;
+  margin-top: 22px;
+  font-size: .86rem;
+}
+
+.smh-home .smh-provider-line span + span::before {
+  margin-right: 18px;
+}
+
+.smh-home .smh-client-example {
+  margin: 18px;
+}
+
+.smh-home .smh-client-example-head {
+  min-height: 46px;
+  padding-inline: 18px;
+  font-size: .70rem;
+}
+
+.smh-home .smh-client-example pre {
+  padding: 25px 26px 28px;
+}
+
+.smh-home .smh-client-example code {
+  font-size: .84rem;
+  line-height: 1.72;
+}
+
+/* Quick actions are supporting navigation, not hero-sized cards. */
+.smh-home .smh-quick-grid {
+  gap: 10px;
+}
+
+.smh-home .smh-quick-card {
+  min-height: 148px;
+  padding: 23px 24px 21px;
+}
+
+.smh-home .smh-quick-card h3 {
+  margin-top: 17px;
+  font-size: 1.22rem;
+}
+
+.smh-home .smh-quick-card p {
+  margin-top: 8px;
+  font-size: .84rem;
+  line-height: 1.48;
+}
+
+.smh-home .smh-quick-card b {
+  right: 22px;
+  bottom: 20px;
+  font-size: .76rem;
+}
+
+.smh-home .smh-footer {
+  min-height: 62px;
+  font-size: .66rem;
+}
+
+@media (max-width: 1180px) {
+  .smh-home .smh-shell {
+    width: calc(100vw - 56px);
+  }
+
+  .smh-home .smh-header {
+    padding-inline: 28px !important;
+  }
+
+  .smh-home .smh-hero-copy {
+    width: min(680px, 68vw);
+  }
+
+  .smh-home .smh-process-card {
+    grid-template-columns: minmax(285px, .72fr) minmax(0, 1.28fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .smh-home .smh-shell {
+    width: calc(100vw - 40px);
+  }
+
+  .smh-home .smh-header {
+    min-height: 72px;
+    padding-inline: 20px !important;
+  }
+
+  .smh-home .smh-hero {
+    min-height: 310px;
+  }
+
+  .smh-home .smh-hero-copy {
+    width: min(660px, 88vw);
+  }
+
+  .smh-home .smh-process-card,
+  .smh-home .smh-routing-card {
+    grid-template-columns: 1fr;
+  }
+
+  .smh-home .smh-process-copy,
+  .smh-home .smh-routing-copy {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .smh-home .smh-shell {
+    width: calc(100vw - 28px);
+  }
+
+  .smh-home .smh-header {
+    min-height: 68px;
+    padding: 7px 14px !important;
+  }
+
+  .smh-home .smh-hero {
+    min-height: 318px;
+    padding: 28px 0 34px;
+  }
+
+  .smh-home .smh-hero-copy {
+    width: 100%;
+  }
+
+  .smh-home .smh-hero h1 {
+    font-size: clamp(2.35rem, 12vw, 3.15rem);
+  }
+
+  .smh-home .smh-hero-description {
+    font-size: .90rem;
+  }
+
+  .smh-home .smh-button {
+    min-height: 50px;
+  }
+
+  .smh-home .smh-access-top {
+    min-height: auto;
+    padding: 22px 20px 19px;
+  }
+
+  .smh-home .smh-access-item {
+    min-height: 76px;
+    padding: 16px 20px;
+  }
+
+  .smh-home .smh-process-copy,
+  .smh-home .smh-routing-copy {
+    padding: 30px 25px 28px;
+  }
+
+  .smh-home .smh-step {
+    min-height: 108px;
+  }
+
+  .smh-home .smh-quick-card {
+    min-height: 150px;
+    padding: 23px;
+  }
+}
