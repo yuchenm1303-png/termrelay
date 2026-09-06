@@ -1,0 +1,275 @@
+/* Shared catalog layer for model/service directories.
+ * Root catalog groups use the canonical Smirel glass surface; filters and
+ * pricing rows stay inset/transparent so the page never becomes nested glass.
+ */
+
+.spw-layout .smg-catalog-panel {
+  min-width: 0;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 {
+  display: grid;
+  gap: 14px;
+}
+
+/* Optional markdown description */
+.spw-layout .smg-catalog-panel .plaza-description {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: var(--spg-radius) !important;
+  background: var(--spg-surface) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, .54) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-description h1,
+.spw-layout .smg-catalog-panel .plaza-description h2,
+.spw-layout .smg-catalog-panel .plaza-description h3 {
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-description p,
+.spw-layout .smg-catalog-panel .plaza-description li,
+.spw-layout .smg-catalog-panel .plaza-description blockquote {
+  color: rgba(255, 255, 255, .50) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-description code {
+  border: 1px solid rgba(255, 255, 255, .045) !important;
+  background: rgba(0, 0, 0, .11) !important;
+  color: rgba(230, 247, 255, .68) !important;
+}
+
+/* Faceted filter bar is one root surface; chips are inset controls. */
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 {
+  padding: 16px 18px !important;
+  border: 0 !important;
+  border-radius: var(--spg-radius) !important;
+  background: var(--spg-surface) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 > .flex {
+  min-height: 34px;
+  align-items: center !important;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 > .flex > span:first-child {
+  color: rgba(255, 255, 255, .28) !important;
+  font-size: .52rem !important;
+  font-weight: 640 !important;
+  letter-spacing: .10em !important;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 button {
+  min-height: 31px;
+  border: 1px solid rgba(255, 255, 255, .05) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .09) !important;
+  color: rgba(255, 255, 255, .44) !important;
+  box-shadow: none !important;
+  font-size: .57rem !important;
+  transition:
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    color var(--spg-motion-fast) var(--spg-motion-ease),
+    border-color var(--spg-motion-fast) var(--spg-motion-ease),
+    transform var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, .085) !important;
+  background: rgba(255, 255, 255, .06) !important;
+  color: rgba(255, 255, 255, .86) !important;
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 button:active:not(:disabled) {
+  transform: scale(var(--spg-scale-press));
+}
+
+.spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 button:disabled {
+  opacity: .30 !important;
+  filter: none !important;
+}
+
+/* Platform accent stays informative but never changes the material. */
+.spw-layout .smg-catalog-panel .chip-tinted {
+  border-color: color-mix(in srgb, var(--chip-accent) 18%, transparent) !important;
+  background: color-mix(in srgb, var(--chip-accent) 7%, rgba(0, 0, 0, .09)) !important;
+  color: color-mix(in srgb, var(--chip-accent) 42%, white) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .smg-catalog-panel .chip-tinted-active {
+  border-color: color-mix(in srgb, var(--chip-accent) 24%, transparent) !important;
+  background: color-mix(in srgb, var(--chip-accent) 13%, rgba(255, 255, 255, .05)) !important;
+  color: color-mix(in srgb, var(--chip-accent) 30%, white) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .smg-catalog-panel .bg-gradient-to-r {
+  border-color: rgba(199, 237, 255, .15) !important;
+  background: rgba(199, 237, 255, .10) !important;
+  color: rgba(231, 248, 255, .90) !important;
+  box-shadow: none !important;
+}
+
+/* Model group sections are root glass cards. */
+.spw-layout .smg-catalog-panel .space-y-5 > section {
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: var(--spg-radius) !important;
+  background: var(--spg-surface) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: none !important;
+  transform: none;
+  transition:
+    transform var(--spg-motion-card) var(--spg-motion-ease),
+    background-color var(--spg-motion-card) var(--spg-motion-ease) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spw-layout .smg-catalog-panel .space-y-5 > section:hover {
+    transform: scale(var(--spg-scale-card-hover));
+    background: var(--spg-surface-hover) !important;
+  }
+}
+
+.spw-layout .smg-catalog-panel .space-y-5 > section:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+.spw-layout .smg-catalog-panel .space-y-5 > section > header {
+  border-color: rgba(255, 255, 255, .06) !important;
+  background: rgba(0, 0, 0, .045) !important;
+}
+
+.spw-layout .smg-catalog-panel .space-y-5 > section > header p {
+  color: rgba(255, 255, 255, .36) !important;
+  font-size: .58rem !important;
+}
+
+/* Keep exclusive/subscription states compact and subdued. */
+.spw-layout .smg-catalog-panel .space-y-5 > section > header .bg-purple-50,
+.spw-layout .smg-catalog-panel .space-y-5 > section > header .dark\:bg-purple-900\/20,
+.spw-layout .smg-catalog-panel .space-y-5 > section > header .bg-violet-50,
+.spw-layout .smg-catalog-panel .space-y-5 > section > header .dark\:bg-violet-900\/20 {
+  border: 1px solid rgba(255, 255, 255, .05) !important;
+  background: rgba(255, 255, 255, .055) !important;
+  color: rgba(255, 255, 255, .55) !important;
+  box-shadow: none !important;
+}
+
+/* Pricing table lives inside the group surface without another card. */
+.spw-layout .smg-catalog-panel .plaza-pricing-table,
+.spw-layout .smg-catalog-panel .plaza-pricing-table table,
+.spw-layout .smg-catalog-panel .plaza-pricing-table thead,
+.spw-layout .smg-catalog-panel .plaza-pricing-table tbody {
+  background: transparent !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table th,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td,
+.spw-layout .smg-catalog-panel .plaza-pricing-table tr {
+  border-color: rgba(255, 255, 255, .05) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table thead {
+  background: rgba(0, 0, 0, .055) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table th {
+  color: rgba(255, 255, 255, .28) !important;
+  font-size: .50rem !important;
+  font-weight: 620 !important;
+  letter-spacing: .07em !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table td {
+  color: rgba(255, 255, 255, .47) !important;
+  font-size: .57rem !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .text-gray-900,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .dark\:text-white,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .dark\:text-gray-50 {
+  color: rgba(255, 255, 255, .86) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .text-gray-500,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .text-gray-400,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .dark\:text-dark-400,
+.spw-layout .smg-catalog-panel .plaza-pricing-table td .dark\:text-dark-500 {
+  color: rgba(255, 255, 255, .30) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table tbody tr {
+  background: transparent !important;
+  transition: background-color var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table tbody tr:hover {
+  background: rgba(255, 255, 255, .035) !important;
+}
+
+/* Paid-price columns retain only a restrained platform tint. */
+.spw-layout .smg-catalog-panel .plaza-pricing-table .pz-bg,
+.spw-layout .smg-catalog-panel .plaza-pricing-table .pz-cell {
+  background: color-mix(in srgb, var(--plaza-accent) 4%, transparent) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table .pz-title {
+  border-color: color-mix(in srgb, var(--plaza-accent) 18%, transparent) !important;
+  color: color-mix(in srgb, var(--plaza-accent) 28%, white) !important;
+}
+
+.spw-layout .smg-catalog-panel .plaza-pricing-table .pz-unit {
+  color: rgba(255, 255, 255, .26) !important;
+}
+
+/* Inline billing-mode pills remain inset. */
+.spw-layout .smg-catalog-panel .plaza-pricing-table .rounded-md.bg-gray-100,
+.spw-layout .smg-catalog-panel .plaza-pricing-table .rounded-md.dark\:bg-dark-700\/70,
+.spw-layout .smg-catalog-panel .plaza-pricing-table .rounded-md.dark\:bg-dark-700\/60 {
+  border: 1px solid rgba(255, 255, 255, .045) !important;
+  background: rgba(0, 0, 0, .10) !important;
+  color: rgba(255, 255, 255, .38) !important;
+}
+
+/* Loading/error/empty states */
+.spw-layout .smg-catalog-panel .border-dashed {
+  border-color: rgba(255, 255, 255, .09) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .07) !important;
+  color: rgba(255, 255, 255, .34) !important;
+}
+
+.spw-layout .smg-catalog-panel .border-red-200,
+.spw-layout .smg-catalog-panel .dark\:border-red-500\/30 {
+  border-color: rgba(255, 173, 173, .15) !important;
+  border-radius: 6px !important;
+  background: rgba(255, 173, 173, .055) !important;
+  color: #ffadad !important;
+}
+
+@media (max-width: 760px) {
+  .spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 {
+    padding: 14px !important;
+  }
+
+  .spw-layout .smg-catalog-panel > .space-y-5 > .space-y-3 > .flex {
+    align-items: flex-start !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spw-layout .smg-catalog-panel .space-y-5 > section,
+  .spw-layout .smg-catalog-panel button {
+    transition: none !important;
+    transform: none !important;
+  }
+}
