@@ -22,46 +22,82 @@
 }
 
 /* Every primary glass surface belongs to the same motion family. */
-.spg-surface {
+.spg-surface,
+.smh-glass {
   transition:
     transform var(--spg-motion-card) var(--spg-motion-ease),
     background-color var(--spg-motion-card) var(--spg-motion-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .spg-surface:hover {
+  .spg-surface:hover,
+  .smh-glass:hover {
     transform: scale(var(--spg-scale-card-hover));
   }
 
-  .spg-surface--interactive:hover {
+  .spg-surface--interactive:hover,
+  .smh-quick-card:hover {
     transform: scale(var(--spg-scale-link-hover));
     background-color: var(--spg-surface-hover);
   }
 }
 
 .spg-surface:active,
-.spg-surface--interactive:active {
+.spg-surface--interactive:active,
+.smh-glass:active,
+.smh-quick-card:active {
   transform: scale(var(--spg-scale-press));
 }
 
-/* Navigation and buttons share one hover/press rhythm. */
+/* Navigation and controls share one hover/press rhythm. */
 .spg-nav a,
 .spg-account-link,
-.spg-action {
+.spg-action,
+.smh-nav a,
+.smh-login-link,
+.smh-button,
+.smh-text-link,
+.smh-copy-button {
   transition-duration: var(--spg-motion-fast);
   transition-timing-function: var(--spg-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .smh-nav a:hover,
+  .smh-login-link:hover,
+  .smh-text-link:hover,
+  .smh-copy-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .smh-button:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .spg-nav a:active,
 .spg-account-link:active,
-.spg-action:active {
+.spg-action:active,
+.smh-nav a:active,
+.smh-login-link:active,
+.smh-button:active,
+.smh-text-link:active,
+.smh-copy-button:active {
   transform: scale(var(--spg-scale-press));
 }
 
 .spg-action b,
-.spg-utility-card > b {
+.spg-utility-card > b,
+.smh-quick-card b {
   transition-duration: var(--spg-motion-fast);
   transition-timing-function: var(--spg-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .smh-quick-card:hover b {
+    color: rgba(255, 255, 255, .96);
+    transform: translateX(3px);
+  }
 }
 
 /* Keyboard focus is visible without introducing a different material. */
@@ -70,7 +106,13 @@
   .spg-nav a,
   .spg-account-link,
   .spg-action,
-  .spg-surface--interactive
+  .spg-surface--interactive,
+  .smh-nav a,
+  .smh-login-link,
+  .smh-button,
+  .smh-text-link,
+  .smh-copy-button,
+  .smh-quick-card
 ):focus-visible {
   outline: 1px solid var(--spg-focus-ring);
   outline-offset: 3px;
@@ -93,7 +135,15 @@
   .spg-account-link,
   .spg-action,
   .spg-action b,
-  .spg-utility-card > b {
+  .spg-utility-card > b,
+  .smh-glass,
+  .smh-nav a,
+  .smh-login-link,
+  .smh-button,
+  .smh-text-link,
+  .smh-copy-button,
+  .smh-quick-card,
+  .smh-quick-card b {
     transition: none !important;
   }
 
@@ -108,7 +158,22 @@
   .spg-action:hover,
   .spg-action:active,
   .spg-action:hover b,
-  .spg-utility-card:hover > b {
+  .spg-utility-card:hover > b,
+  .smh-glass:hover,
+  .smh-glass:active,
+  .smh-nav a:hover,
+  .smh-nav a:active,
+  .smh-login-link:hover,
+  .smh-login-link:active,
+  .smh-button:hover,
+  .smh-button:active,
+  .smh-text-link:hover,
+  .smh-text-link:active,
+  .smh-copy-button:hover,
+  .smh-copy-button:active,
+  .smh-quick-card:hover,
+  .smh-quick-card:active,
+  .smh-quick-card:hover b {
     transform: none !important;
   }
 }
