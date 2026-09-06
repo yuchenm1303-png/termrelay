@@ -1,0 +1,386 @@
+/* Shared analytics layer for workspace dashboards and usage pages.
+ * Analytics surfaces keep the same root glass material as the homepage and
+ * workspace. Inner switches, date controls and chart legends remain inset only.
+ */
+
+/* Root analytics cards */
+.spw-layout .card {
+  border: 0 !important;
+  border-radius: var(--spg-radius) !important;
+  background: var(--spg-surface) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, .66) !important;
+  transform: none;
+  transition:
+    transform var(--spg-motion-card) var(--spg-motion-ease),
+    background-color var(--spg-motion-card) var(--spg-motion-ease) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spw-layout .card:hover {
+    transform: scale(var(--spg-scale-card-hover));
+    background: var(--spg-surface-hover) !important;
+  }
+}
+
+.spw-layout .card:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+/* Analytics typography */
+.spw-layout .card h1,
+.spw-layout .card h2,
+.spw-layout .card h3,
+.spw-layout .card .text-gray-900,
+.spw-layout .card .dark\:text-white {
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+.spw-layout .card .text-gray-700,
+.spw-layout .card .dark\:text-gray-300 {
+  color: rgba(255, 255, 255, .58) !important;
+}
+
+.spw-layout .card .text-gray-600,
+.spw-layout .card .text-gray-500,
+.spw-layout .card .dark\:text-gray-400 {
+  color: rgba(255, 255, 255, .38) !important;
+}
+
+.spw-layout .card .text-gray-400,
+.spw-layout .card .dark\:text-gray-500 {
+  color: rgba(255, 255, 255, .26) !important;
+}
+
+/* Metric cards: neutral icon tiles, large calm numbers. */
+.spw-layout > .spw-app-grid .grid.grid-cols-2 > .card,
+.spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card {
+  min-height: 112px;
+  padding: 15px 16px !important;
+}
+
+.spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card > div:first-child {
+  border: 1px solid rgba(255, 255, 255, .055) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .10) !important;
+  color: rgba(220, 243, 255, .60) !important;
+}
+
+.spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card p.text-xl {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, .94) !important;
+  font-size: 1.42rem !important;
+  line-height: 1 !important;
+  font-weight: 560 !important;
+  letter-spacing: -.035em;
+}
+
+.spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card p.text-xs {
+  line-height: 1.45;
+}
+
+/* Date range control */
+.spw-layout .date-picker-trigger {
+  min-height: 38px !important;
+  border: 1px solid rgba(255, 255, 255, .065) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .12) !important;
+  color: rgba(255, 255, 255, .68) !important;
+  box-shadow: none !important;
+  transition:
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    border-color var(--spg-motion-fast) var(--spg-motion-ease),
+    transform var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .date-picker-trigger:hover,
+.spw-layout .date-picker-trigger-open {
+  border-color: rgba(255, 255, 255, .10) !important;
+  background: rgba(0, 0, 0, .17) !important;
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+.spw-layout .date-picker-trigger:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+.spw-layout .date-picker-icon,
+.spw-layout .date-picker-chevron {
+  color: rgba(255, 255, 255, .34) !important;
+}
+
+.spw-layout .date-picker-dropdown {
+  z-index: 80 !important;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .075) !important;
+  border-radius: 6px !important;
+  background: rgba(4, 18, 30, .90) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .24) !important;
+  color: rgba(255, 255, 255, .62) !important;
+}
+
+.spw-layout .date-picker-presets,
+.spw-layout .date-picker-custom,
+.spw-layout .date-picker-actions {
+  background: transparent !important;
+}
+
+.spw-layout .date-picker-divider,
+.spw-layout .date-picker-actions {
+  border-color: rgba(255, 255, 255, .06) !important;
+}
+
+.spw-layout .date-picker-preset {
+  border-radius: 5px !important;
+  color: rgba(255, 255, 255, .46) !important;
+  transition:
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    color var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .date-picker-preset:hover,
+.spw-layout .date-picker-preset-active {
+  background: rgba(255, 255, 255, .07) !important;
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+.spw-layout .date-picker-label {
+  color: rgba(255, 255, 255, .36) !important;
+  font-size: .56rem !important;
+}
+
+.spw-layout .date-picker-input {
+  border: 1px solid rgba(255, 255, 255, .065) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .13) !important;
+  color: rgba(255, 255, 255, .74) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .date-picker-input:focus {
+  outline: none !important;
+  border-color: rgba(199, 237, 255, .30) !important;
+  box-shadow: 0 0 0 3px rgba(165, 222, 248, .08) !important;
+}
+
+.spw-layout .date-picker-apply {
+  min-height: 34px !important;
+  border: 1px solid rgba(255, 255, 255, .07) !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, .13) !important;
+  color: rgba(255, 255, 255, .90) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .date-picker-apply:hover {
+  background: rgba(255, 255, 255, .19) !important;
+}
+
+/* Chart toggle groups: inset, never another glass card. */
+.spw-layout .card .inline-flex.rounded-lg,
+.spw-layout .card .inline-flex.rounded-md {
+  border-color: rgba(255, 255, 255, .045) !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, .10) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .card .inline-flex.rounded-lg > button,
+.spw-layout .card .inline-flex.rounded-md > button {
+  border-radius: 5px !important;
+  color: rgba(255, 255, 255, .39) !important;
+  box-shadow: none !important;
+  transition:
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    color var(--spg-motion-fast) var(--spg-motion-ease),
+    transform var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .card .inline-flex.rounded-lg > button:hover,
+.spw-layout .card .inline-flex.rounded-md > button:hover {
+  background: rgba(255, 255, 255, .055) !important;
+  color: rgba(255, 255, 255, .82) !important;
+}
+
+.spw-layout .card .inline-flex.rounded-lg > button.bg-white,
+.spw-layout .card .inline-flex.rounded-md > button.bg-white,
+.spw-layout .card .inline-flex.rounded-lg > button.dark\:bg-dark-700,
+.spw-layout .card .inline-flex.rounded-md > button.dark\:bg-dark-700 {
+  background: rgba(255, 255, 255, .10) !important;
+  color: rgba(255, 255, 255, .92) !important;
+}
+
+.spw-layout .card .inline-flex.rounded-lg > button:active,
+.spw-layout .card .inline-flex.rounded-md > button:active {
+  transform: scale(var(--spg-scale-press));
+}
+
+/* Distribution tables inside charts are inset information, not nested glass. */
+.spw-layout .card table {
+  background: transparent !important;
+}
+
+.spw-layout .card table thead,
+.spw-layout .card table tbody,
+.spw-layout .card table tr,
+.spw-layout .card table td,
+.spw-layout .card table th {
+  border-color: rgba(255, 255, 255, .055) !important;
+  background: transparent !important;
+}
+
+.spw-layout .card table th {
+  color: rgba(255, 255, 255, .29) !important;
+  font-weight: 610 !important;
+}
+
+.spw-layout .card table td {
+  color: rgba(255, 255, 255, .48) !important;
+}
+
+.spw-layout .card table tbody tr:hover {
+  background: rgba(255, 255, 255, .035) !important;
+}
+
+/* Filter panels */
+.spw-layout .card > .flex.flex-wrap,
+.spw-layout .card > .flex.items-center {
+  color: rgba(255, 255, 255, .52) !important;
+}
+
+.spw-layout .card .input-label {
+  color: rgba(255, 255, 255, .45) !important;
+}
+
+/* Small column popovers in analytics pages. */
+.spw-layout .card .absolute.z-50 {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .075) !important;
+  border-radius: 6px !important;
+  background: rgba(4, 18, 30, .90) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(120%) !important;
+  backdrop-filter: blur(22px) saturate(120%) !important;
+  box-shadow: 0 18px 56px rgba(0, 0, 0, .22) !important;
+}
+
+.spw-layout .card .absolute.z-50 button {
+  color: rgba(255, 255, 255, .54) !important;
+}
+
+.spw-layout .card .absolute.z-50 button:hover {
+  background: rgba(255, 255, 255, .06) !important;
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+/* Tabs */
+.spw-layout .tab {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid transparent !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, .35) !important;
+  box-shadow: none !important;
+  font-size: .59rem !important;
+  font-weight: 620 !important;
+  transition:
+    color var(--spg-motion-fast) var(--spg-motion-ease),
+    background-color var(--spg-motion-fast) var(--spg-motion-ease),
+    border-color var(--spg-motion-fast) var(--spg-motion-ease) !important;
+}
+
+.spw-layout .tab:hover {
+  background: rgba(255, 255, 255, .035) !important;
+  color: rgba(255, 255, 255, .72) !important;
+}
+
+.spw-layout .tab-active {
+  border-bottom-color: rgba(199, 237, 255, .44) !important;
+  color: rgba(231, 248, 255, .92) !important;
+}
+
+/* Usage tables are the same data surface as /keys. */
+.spw-layout .card.overflow-hidden {
+  padding: 0 !important;
+}
+
+.spw-layout .card.overflow-hidden > .overflow-auto {
+  background: transparent !important;
+}
+
+.spw-layout .card.overflow-hidden > .border-b {
+  border-color: rgba(255, 255, 255, .06) !important;
+  background: rgba(0, 0, 0, .055) !important;
+}
+
+/* Pagination used directly by analytics pages (outside TablePageLayout). */
+.spw-layout .card + .flex.items-center.justify-between.border-t,
+.spw-layout .card ~ .flex.items-center.justify-between.border-t,
+.spw-layout main > div .flex.items-center.justify-between.border-t.bg-white {
+  border-color: rgba(255, 255, 255, .06) !important;
+  border-radius: 0 0 6px 6px !important;
+  background: rgba(4, 18, 30, .54) !important;
+  color: rgba(255, 255, 255, .42) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .flex.items-center.justify-between.border-t button {
+  border-color: rgba(255, 255, 255, .055) !important;
+  background: rgba(0, 0, 0, .10) !important;
+  color: rgba(255, 255, 255, .46) !important;
+  box-shadow: none !important;
+}
+
+.spw-layout .flex.items-center.justify-between.border-t button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .06) !important;
+  color: rgba(255, 255, 255, .88) !important;
+}
+
+.spw-layout .flex.items-center.justify-between.border-t button[aria-current="page"] {
+  border-color: rgba(199, 237, 255, .18) !important;
+  background: rgba(199, 237, 255, .10) !important;
+  color: rgba(231, 248, 255, .90) !important;
+}
+
+/* Tooltip surfaces */
+.spw-layout .card .group .absolute.bg-white,
+.spw-layout .card .group .absolute.dark\:bg-dark-800 {
+  border-color: rgba(255, 255, 255, .075) !important;
+  background: rgba(4, 18, 30, .92) !important;
+  color: rgba(255, 255, 255, .58) !important;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, .22) !important;
+}
+
+@media (max-width: 900px) {
+  .spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card {
+    min-height: 102px;
+  }
+}
+
+@media (max-width: 640px) {
+  .spw-layout .card {
+    border-radius: 6px !important;
+  }
+
+  .spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 {
+    gap: 8px !important;
+  }
+
+  .spw-layout .grid.grid-cols-2.gap-4.lg\:grid-cols-4 > .card {
+    padding: 13px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spw-layout .card,
+  .spw-layout .date-picker-trigger,
+  .spw-layout .tab,
+  .spw-layout .card button {
+    transition: none !important;
+    transform: none !important;
+  }
+}
