@@ -1,14 +1,12 @@
 <template>
-  <div class="spw-layout spg-page">
-    <div class="spg-environment" aria-hidden="true"></div>
-
-    <div class="spw-app-grid">
+  <div class="smg-shell">
+    <div class="smg-environment" aria-hidden="true"></div>
+    <div class="smg-app-grid">
       <SmirelGlassSidebar />
-
-      <div class="spw-workspace">
+      <div class="smg-workspace">
         <SmirelGlassTopbar />
-        <main class="spw-main">
-          <div class="spw-main-inner">
+        <main class="smg-main">
+          <div class="smg-main-inner">
             <RelayAccessPanel v-if="showRelayAccessPanel" />
             <BillingAccessPanel v-if="showBillingAccessPanel" />
             <slot />
@@ -21,12 +19,6 @@
 
 <script setup lang="ts">
 import '@/styles/onboarding.css'
-import '@/styles/smirel-shared-glass-v1.css'
-import '@/styles/smirel-shared-interactions-v1.css'
-import '@/styles/smirel-workspace-v1.css'
-import '@/styles/smirel-workspace-data-v1.css'
-import '@/styles/smirel-workspace-analytics-v1.css'
-import '@/styles/smirel-workspace-catalog-v1.css'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'

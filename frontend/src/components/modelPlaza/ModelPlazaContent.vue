@@ -1,7 +1,6 @@
 <template>
   <div class="space-y-5">
     <section
-      v-if="!embedded"
       class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900"
       :class="embedded ? '' : 'mt-1'"
     >

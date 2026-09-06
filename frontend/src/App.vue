@@ -21,21 +21,10 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-// Temporary UI reset: keep the complete legacy interface in place, but only
-// expose surfaces that have been rebuilt on the shared Smirel visual system.
+// Secondary UI reset: keep legacy business code in the repository, but do not
+// render any secondary interface on the standalone Smirel frontend while the
+// new workspace is redesigned from a clean information architecture.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
-const rebuiltSecondaryPaths = new Set(['/login', '/register', '/dashboard', '/keys', '/usage'])
-const showRebuiltSecondary = computed(() =>
-  interfaceResetMode
-  && (
-    rebuiltSecondaryPaths.has(route.path)
-    || (
-      route.path === '/model-plaza'
-      && route.query.embedded === '1'
-      && authStore.isAuthenticated
-    )
-  ),
-)
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -154,14 +143,6 @@ onMounted(async () => {
 <template>
   <template v-if="interfaceResetMode">
     <SmirelGlassHomeV1 v-if="route.path === '/home'" />
-
-    <template v-else-if="showRebuiltSecondary">
-      <NavigationProgress />
-      <RouterView />
-      <Toast />
-      <AnnouncementPopup v-if="authStore.isAuthenticated" />
-      <AdminComplianceDialog v-if="authStore.isAdmin" />
-    </template>
 
     <div v-else class="smg-shell" aria-hidden="true">
       <div class="smg-environment" style="z-index: 0"></div>
