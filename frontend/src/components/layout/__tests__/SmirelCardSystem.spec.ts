@@ -67,6 +67,16 @@ describe('Smirel canonical card system', () => {
     expect(workspaceFunctional).not.toContain('linear-gradient(100deg, rgba(161, 219, 253')
   })
 
+  it('keeps footer button typography local instead of resetting it through a font shorthand', () => {
+    const buttonBase = block(workspaceLayout, '.sw2-page button')
+    expect(buttonBase).toContain('font-family: inherit')
+    expect(buttonBase).not.toContain('font: inherit')
+    expect(workspaceFunctional).toContain('font-size: .54rem')
+    expect(workspaceFunctional).toContain('width: calc(100% - 16px)')
+    expect(workspaceSource).toContain("if (isSmirelUiPreview) return '预览管理员'")
+    expect(workspaceSource).toContain("if (isSmirelUiPreview) return '界面预览 · 非真实账号'")
+  })
+
   it('keeps shared material focused on the scene rather than defining a second card recipe', () => {
     expect(sharedMaterial).not.toContain('--spg-surface:')
     expect(sharedMaterial).not.toContain('--spg-radius:')
