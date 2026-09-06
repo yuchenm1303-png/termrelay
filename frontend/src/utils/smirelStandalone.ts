@@ -61,7 +61,7 @@ export function applyStandaloneSmirelPreferences(): void {
         ? parsed.filter((value): value is string => typeof value === 'string')
         : []
     } else {
-      hiddenColumns = [...UPSTREAM_DEFAULT_HIDDEN_COLUMNS]
+      hiddenColumns = [...UPSTREAM_DEFAULT_HIDDEN_KEY_COLUMNS]
     }
 
     for (const column of SMIREL_DEFAULT_HIDDEN_KEY_COLUMNS) {
