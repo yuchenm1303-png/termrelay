@@ -1,132 +1,10 @@
-/*
- * Smirel shared interaction language.
- *
- * This is the CSS half of the interaction runtime ported from the production
- * download page. The JS runtime owns pointer-follow cards, deepest-card
- * arbitration, touch rebound, cursor lag and click fireworks. This file owns
- * the corresponding transform contract plus page/modal/control motion.
- *
- * Important: layout and material files may define geometry and color, but they
- * must not define a second transform language in the standalone Smirel UI.
- */
+/* Smirel page/modal motion only. Pointer interactions are intentionally deferred. */
 
-html.relay-standalone {
-  --smirel-motion-fast: 180ms;
-  --smirel-motion-card: 220ms;
-  --smirel-motion-ease: cubic-bezier(.2, .7, .2, 1);
-  --smirel-motion-focus-ring: rgba(199, 237, 255, .88);
-  --smirel-motion-focus-halo: rgba(155, 220, 255, .18);
-  --smirel-motion-disabled-opacity: .45;
+html.relay-standalone.smirel-page-motion .smirel-page-enter {
+  animation: smirel-shell-in .65s ease both;
 }
 
-html.relay-standalone.smirel-download-interactions :is(a, button) {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-/*
- * Card transform primitive.
- * Values deliberately match download/app-v7.js:
- *   normal hover 1.01, utility hover 1.02, press .98,
- *   desktop travel ±5px / ±4px, touch travel ±3.2px / ±2.8px.
- * JS updates the custom properties so transform is composed in one place.
- */
-html.relay-standalone.smirel-download-interactions .smirel-download-card-motion {
-  --smirel-motion-x: 0px;
-  --smirel-motion-y: 0px;
-  --smirel-motion-scale: 1;
-  --smirel-motion-duration: 220ms;
-  --smirel-motion-ease: ease;
-  position: relative;
-  transform-origin: center;
-  transform:
-    translate3d(var(--smirel-motion-x), var(--smirel-motion-y), 0)
-    scale(var(--smirel-motion-scale)) !important;
-  transition:
-    transform var(--smirel-motion-duration) var(--smirel-motion-ease),
-    background-color .3s,
-    border-color .3s !important;
-  will-change: transform;
-}
-
-html.relay-standalone.smirel-download-interactions
-.smirel-download-card-motion--utility.smirel-download-card-motion--hot {
-  background: var(--smirel-card-bg-hover, rgba(0, 0, 0, .40)) !important;
-}
-
-/* Compact controls use the download page's directional feedback, not card tilt. */
-html.relay-standalone.smirel-download-interactions .smirel-download-control-motion {
-  transform-origin: center;
-  transition-property: transform, color, background-color, border-color, opacity, box-shadow !important;
-  transition-duration: var(--smirel-motion-fast) !important;
-  transition-timing-function: var(--smirel-motion-ease) !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:hover {
-    transform: translateY(-1px) !important;
-  }
-
-  html.relay-standalone.smirel-download-interactions :is(
-    .smh-quick-card,
-    .spg-utility-card,
-    .sw2-account-card,
-    .sw2-home-link
-  ):hover :is(
-    b,
-    .sw2-account-chevron,
-    .sw2-home-link > span
-  ) {
-    transform: translateX(3px);
-  }
-}
-
-html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:active {
-  transform: scale(.98) !important;
-}
-
-html.relay-standalone.smirel-download-interactions :is(
-  .smh-quick-card b,
-  .spg-action b,
-  .spg-utility-card > b,
-  .sw2-account-chevron,
-  .sw2-home-link > span
-) {
-  transition: transform var(--smirel-motion-fast) var(--smirel-motion-ease),
-    color var(--smirel-motion-fast) var(--smirel-motion-ease);
-}
-
-/* One focus/disabled language across public, workspace and admin surfaces. */
-html.relay-standalone.smirel-download-interactions :is(
-  a[href],
-  button,
-  [role="button"],
-  input,
-  select,
-  textarea
-):focus-visible {
-  outline: 1px solid var(--smirel-motion-focus-ring);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px var(--smirel-motion-focus-halo);
-}
-
-html.relay-standalone.smirel-download-interactions :is(
-  button:disabled,
-  [aria-disabled="true"],
-  .is-disabled
-) {
-  opacity: var(--smirel-motion-disabled-opacity);
-  cursor: not-allowed;
-  pointer-events: none;
-  transform: none !important;
-}
-
-/* Download-page shell entrance: scale(1.08) + blur(7px) + fade for .65s. */
-html.relay-standalone.smirel-download-interactions .smirel-download-page-enter {
-  animation: smirel-download-shell-in .65s ease both;
-}
-
-@keyframes smirel-download-shell-in {
+@keyframes smirel-shell-in {
   from {
     transform: scale(1.08);
     opacity: 0;
@@ -140,141 +18,49 @@ html.relay-standalone.smirel-download-interactions .smirel-download-page-enter {
   }
 }
 
-/*
- * BaseDialog previously entered from .95, the opposite direction to the
- * download page. The standalone skin now uses the download modal contract:
- * mask fade .3s, panel scale 1.05 -> 1 in .32s. Exit is fade-only so the old
- * shrink language cannot leak back in.
- */
-html.relay-standalone.smirel-download-interactions .modal-enter-active {
+html.relay-standalone.smirel-page-motion .modal-enter-active {
   transition: opacity .3s ease !important;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-enter-active .modal-content {
+html.relay-standalone.smirel-page-motion .modal-enter-active .modal-content {
   transition: transform .32s ease, opacity .32s ease !important;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-enter-from,
-html.relay-standalone.smirel-download-interactions .modal-leave-to {
+html.relay-standalone.smirel-page-motion .modal-enter-from,
+html.relay-standalone.smirel-page-motion .modal-leave-to {
   opacity: 0;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-enter-from .modal-content {
+html.relay-standalone.smirel-page-motion .modal-enter-from .modal-content {
   opacity: 0;
   transform: scale(1.05) !important;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-leave-active {
+html.relay-standalone.smirel-page-motion .modal-leave-active {
   transition: opacity .2s ease !important;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-leave-active .modal-content {
+html.relay-standalone.smirel-page-motion .modal-leave-active .modal-content {
   transition: opacity .2s ease !important;
 }
 
-html.relay-standalone.smirel-download-interactions .modal-leave-to .modal-content {
+html.relay-standalone.smirel-page-motion .modal-leave-to .modal-content {
   opacity: 0;
   transform: scale(1) !important;
 }
 
-/* Desktop cursor copied from download/cursor-desktop-v2.js. */
-.smirel-cursor-dot,
-.smirel-cursor-follow {
-  position: fixed !important;
-  left: 0 !important;
-  top: 0 !important;
-  border: 0 !important;
-  border-radius: 50% !important;
-  background: #fff !important;
-  box-shadow: none !important;
-  pointer-events: none !important;
-}
-
-.smirel-cursor-dot {
-  width: 10px !important;
-  height: 10px !important;
-  margin: -5px 0 0 -5px !important;
-  z-index: 10087 !important;
-  opacity: 0 !important;
-}
-
-.smirel-cursor-dot.cursor-visible {
-  opacity: 1 !important;
-}
-
-.smirel-cursor-follow {
-  width: 18px !important;
-  height: 18px !important;
-  margin: 0 !important;
-  z-index: 10086 !important;
-  opacity: .25 !important;
-  transform: scale(1) !important;
-  transition: .2s ease-in-out !important;
-  transition-property: background, opacity, transform !important;
-}
-
-.smirel-cursor-follow.hidden {
-  opacity: 0 !important;
-}
-
-.smirel-cursor-follow.active {
-  opacity: .5 !important;
-  transform: scale(.5) !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html.relay-standalone.smirel-custom-cursor,
-  html.relay-standalone.smirel-custom-cursor body,
-  html.relay-standalone.smirel-custom-cursor a,
-  html.relay-standalone.smirel-custom-cursor button,
-  html.relay-standalone.smirel-custom-cursor input,
-  html.relay-standalone.smirel-custom-cursor select,
-  html.relay-standalone.smirel-custom-cursor textarea,
-  html.relay-standalone.smirel-custom-cursor [role="button"] {
-    cursor: none !important;
-  }
-}
-
-@media (max-width: 720px), (pointer: coarse) {
-  .smirel-cursor-dot,
-  .smirel-cursor-follow {
-    display: none !important;
-  }
-}
-
-/* Click fireworks use the exact production download-page palette and z-layer. */
-.smirel-fireworks {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 999;
-  pointer-events: none;
-}
-
-/* Reduced motion removes transform animation, cursor and fireworks entirely. */
 @media (prefers-reduced-motion: reduce) {
-  html.relay-standalone.smirel-download-interactions .smirel-download-card-motion,
-  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion,
-  html.relay-standalone.smirel-download-interactions .smirel-download-page-enter,
-  html.relay-standalone.smirel-download-interactions .modal-enter-active,
-  html.relay-standalone.smirel-download-interactions .modal-enter-active .modal-content,
-  html.relay-standalone.smirel-download-interactions .modal-leave-active,
-  html.relay-standalone.smirel-download-interactions .modal-leave-active .modal-content {
+  html.relay-standalone.smirel-page-motion .smirel-page-enter,
+  html.relay-standalone.smirel-page-motion .modal-enter-active,
+  html.relay-standalone.smirel-page-motion .modal-enter-active .modal-content,
+  html.relay-standalone.smirel-page-motion .modal-leave-active,
+  html.relay-standalone.smirel-page-motion .modal-leave-active .modal-content {
     animation: none !important;
     transition: none !important;
   }
 
-  html.relay-standalone.smirel-download-interactions .smirel-download-card-motion,
-  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:hover,
-  html.relay-standalone.smirel-download-interactions .smirel-download-control-motion:active,
-  html.relay-standalone.smirel-download-interactions .modal-content {
+  html.relay-standalone.smirel-page-motion .modal-content {
     transform: none !important;
     filter: none !important;
-  }
-
-  .smirel-cursor-dot,
-  .smirel-cursor-follow,
-  .smirel-fireworks {
-    display: none !important;
   }
 }
