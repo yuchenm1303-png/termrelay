@@ -5,6 +5,7 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelHomeVNext from '@/views/SmirelHomeVNext.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
@@ -20,9 +21,10 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-// Temporary UI reset: keep the complete legacy interface in place, but do not
-// render it on the standalone Smirel frontend while the new shell is designed.
+// Temporary UI reset: keep the complete legacy interface in place, but only
+// expose explicitly rebuilt surfaces on the standalone Smirel frontend.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
+const showRebuiltHomepage = computed(() => interfaceResetMode && route.path === '/home')
 
 const UTILITY_PATHS = [
   '/key-usage',
@@ -139,7 +141,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
+  <SmirelHomeVNext v-if="showRebuiltHomepage" />
+
+  <div v-else-if="interfaceResetMode" class="smg-shell" aria-hidden="true">
     <div class="smg-environment" style="z-index: 0"></div>
   </div>
 
