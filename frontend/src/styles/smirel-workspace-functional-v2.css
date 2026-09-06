@@ -57,10 +57,13 @@
   cursor: pointer;
 }
 
+/* Account identity remains a canonical card, but its geometry is compact. */
 .sw2-account-card {
   position: relative;
-  min-height: 62px;
-  padding: 10px 13px;
+  width: calc(100% - 16px);
+  min-height: 54px;
+  margin: 0 8px 5px;
+  padding: 8px 10px;
 }
 
 .sw2-avatar,
@@ -85,9 +88,9 @@
 }
 
 .sw2-avatar {
-  width: 36px;
-  height: 36px;
-  flex-basis: 36px;
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
   border: 1px solid rgba(188, 228, 252, .09);
   background: rgba(178, 225, 253, .11);
 }
@@ -98,50 +101,62 @@
 
 .sw2-account-copy strong {
   color: rgba(255, 255, 255, .83);
-  font-size: .65rem;
+  font-size: .62rem;
   font-weight: 640;
 }
 
 .sw2-account-copy small {
-  margin-top: 4px;
-  color: rgba(255, 255, 255, .37);
+  margin-top: 3px;
+  color: rgba(255, 255, 255, .34);
+  font-size: .50rem;
+  line-height: 1.35;
 }
 
 .sw2-account-chevron {
   flex: 0 0 auto;
-  color: rgba(211, 238, 255, .34);
-  font-size: 1rem;
+  color: rgba(211, 238, 255, .28);
+  font-size: .82rem;
   line-height: 1;
-  transform: translateY(-1px);
 }
 
+/* Footer utilities are controls, not cards or large action buttons. */
 .sw2-footer-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 36px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 7px;
 }
 
 .sw2-home-link,
 .sw2-logout-button {
   min-width: 0;
-  min-height: 36px;
-  display: flex;
+  min-height: 30px;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
+  gap: 6px;
   margin: 0;
-  padding: 0 10px;
+  padding: 0 5px;
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, .38);
-  font: inherit;
+  font-family: inherit;
   font-size: .54rem;
+  font-weight: 540;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color 150ms var(--sw2-ease), background-color 150ms var(--sw2-ease);
+  transition: color 150ms var(--sw2-ease), opacity 150ms var(--sw2-ease);
 }
 
 .sw2-home-link {
-  border-right: 1px solid rgba(255, 255, 255, .045);
+  justify-content: flex-start;
+}
+
+.sw2-logout-button {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .sw2-logout-button:disabled {
@@ -217,8 +232,7 @@
 @media (hover: hover) and (pointer: fine) {
   .sw2-home-link:hover,
   .sw2-logout-button:hover {
-    background: rgba(255, 255, 255, .035);
-    color: rgba(255, 255, 255, .70);
+    color: rgba(255, 255, 255, .72);
   }
 }
 
