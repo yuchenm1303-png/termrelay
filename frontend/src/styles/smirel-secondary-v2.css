@@ -232,17 +232,18 @@
 }
 
 .sw2-sidebar-foot {
-  padding: 12px 14px 14px;
+  padding: 0;
   border-top: 1px solid rgba(255, 255, 255, .055);
 }
 
 .sw2-account-card {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 10px 14px;
+  border-radius: 0;
   background: rgba(255, 255, 255, .035);
 }
 
@@ -291,8 +292,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 7px;
-  padding: 7px 10px;
+  margin-top: 0;
+  padding: 9px 14px 11px;
   color: rgba(255, 255, 255, .34);
   font-size: .57rem;
 }
