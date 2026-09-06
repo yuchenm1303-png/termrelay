@@ -1,38 +1,23 @@
+/*
+ * Shared scene material only.
+ *
+ * Card/surface material moved to smirel-card-system-v1.css. This file is kept
+ * for the common environment treatment and must not define card background,
+ * border, radius, blur or shadow recipes.
+ */
+
 :root {
-  /*
-   * Canonical Smirel glass material.
-   * The homepage is the visual source of truth; secondary workspaces consume
-   * the same surface, edge, radius and environment treatment through these
-   * shared tokens instead of maintaining a second dark-panel recipe.
-   */
-  --spg-surface: rgba(5, 18, 29, .42);
-  --spg-surface-hover: rgba(5, 18, 29, .50);
-  --spg-line: rgba(255, 255, 255, .08);
-  --spg-radius: 8px;
-  --spg-backdrop: blur(22px) saturate(118%);
   --spg-environment-overlay:
     linear-gradient(180deg, rgba(4, 10, 16, .13), rgba(4, 10, 16, .26)),
     radial-gradient(ellipse at 55% 40%, rgba(5, 12, 18, 0) 25%, rgba(5, 12, 18, .18) 100%);
 }
 
-/* Homepage and workspace cards are the same material, not look-alike copies. */
-.spg-page.smh-home .smh-glass,
-.spg-page.sw2-page .spg-surface,
-.spg-page.sw2-page .sw2-panel {
-  border: 1px solid var(--spg-line);
-  border-radius: var(--spg-radius);
-  background: var(--spg-surface);
-  -webkit-backdrop-filter: var(--spg-backdrop);
-  backdrop-filter: var(--spg-backdrop);
-  box-shadow: none;
-}
-
-/* The homepage keeps its ambient treatment, but the workspace must not carry
- * a page-wide dark veil. Workspace contrast comes from local glass surfaces. */
 .spg-page.smh-home .smh-environment::after {
   background: var(--spg-environment-overlay);
 }
 
+/* Workspace contrast is provided by canonical cards rather than a page-wide
+ * dark veil, so the wallpaper remains the single continuous scene. */
 .spg-page.sw2-page .spg-environment::after {
   content: none;
   background: none;
@@ -42,47 +27,9 @@
   background: transparent;
 }
 
-/* Shell chrome uses the same material recipe but keeps edge semantics. */
-.spg-page.sw2-page .sw2-sidebar.spg-surface {
-  border-top: 0;
-  border-bottom: 0;
-  border-left: 0;
-  border-right: 1px solid var(--spg-line);
-  border-radius: 0;
+/* The navigation rail is fixed shell chrome; interaction must never move the
+ * whole rail. Its visual material is still supplied by the card system. */
+.spg-page.sw2-page .sw2-sidebar:hover,
+.spg-page.sw2-page .sw2-sidebar:active {
   transform: none;
-}
-
-/* A full-height navigation rail is structural chrome, not an interactive card. */
-.spg-page.sw2-page .sw2-sidebar.spg-surface:hover,
-.spg-page.sw2-page .sw2-sidebar.spg-surface:active {
-  transform: none;
-}
-
-.spg-page.sw2-page .sw2-topbar {
-  border-bottom-color: var(--spg-line);
-  background: rgba(5, 18, 29, .30);
-  -webkit-backdrop-filter: var(--spg-backdrop);
-  backdrop-filter: var(--spg-backdrop);
-}
-
-/* Keep true nested data cells subordinate to the parent glass surface.
- * The sidebar account area is shell-level chrome, so it deliberately does
- * not participate in this inset-cell material family. */
-.spg-page.sw2-page :is(
-  .sw2-sidebar-context,
-  .sw2-admin-health-foot,
-  .sw2-admin-today-foot,
-  .sw2-admin-metric,
-  .sw2-admin-diagnostic
-) {
-  background-color: rgba(0, 0, 0, .075);
-}
-
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .spg-page.smh-home .smh-glass,
-  .spg-page.sw2-page .spg-surface,
-  .spg-page.sw2-page .sw2-panel,
-  .spg-page.sw2-page .sw2-topbar {
-    background: rgba(5, 18, 29, .78);
-  }
 }
