@@ -2,7 +2,7 @@
   <div class="spg-page smh-home">
     <div class="spg-environment smh-environment" aria-hidden="true"></div>
 
-    <div class="smh-hero-shell">
+    <div class="smh-shell">
       <header class="smh-header">
         <router-link to="/home" class="spg-brand" aria-label="Smirel 首页">
           <img v-if="siteLogo" :src="siteLogo" alt="" class="spg-brand-logo" />
@@ -30,22 +30,20 @@
         <section class="smh-hero">
           <div class="smh-hero-copy">
             <p class="smh-kicker">SMIREL API</p>
-            <h1>OpenAI、Claude、Gemini，用一个 API 地址接入。</h1>
+            <h1>一个 API 地址，调用 OpenAI、Claude 和 Gemini。</h1>
             <p class="smh-hero-description">
-              把客户端的 Base URL 改成 Smirel，再填入自己的 API Key。现有 OpenAI SDK 和常用客户端可以直接继续用。
+              把 Base URL 改成 Smirel，再填入自己的 API Key。OpenAI SDK 和常用客户端可以按原来的方式继续用。
             </p>
             <div class="smh-hero-actions">
               <router-link :to="startPath" class="smh-button smh-button--primary">
                 {{ isAuthenticated ? '打开控制台' : '注册账户' }}
               </router-link>
-              <router-link to="/model-plaza" class="smh-button smh-button--quiet">
-                查看模型价格
-              </router-link>
+              <router-link to="/model-plaza" class="smh-button smh-button--quiet">查看模型价格</router-link>
             </div>
           </div>
         </section>
 
-        <section id="access" class="smh-access-bar" aria-label="API 接入信息">
+        <section id="access" class="smh-glass smh-access-bar" aria-label="API 接入信息">
           <div class="smh-access-main">
             <span>BASE URL</span>
             <code>{{ apiBase }}</code>
@@ -55,7 +53,7 @@
             <strong>Bearer API Key</strong>
           </div>
           <div class="smh-access-item">
-            <span>接口</span>
+            <span>协议</span>
             <strong>OpenAI Compatible</strong>
           </div>
           <div class="smh-access-item">
@@ -66,16 +64,15 @@
             {{ copied ? '已复制' : '复制地址' }}
           </button>
         </section>
-      </main>
-    </div>
 
-    <section class="smh-body">
-      <div class="smh-body-inner">
-        <section class="smh-steps-section">
-          <div class="smh-section-heading">
-            <p>开始调用</p>
-            <h2>第一次调用，只需要三步。</h2>
-            <span>不用换客户端，也不用改原来的请求格式。</span>
+        <section class="smh-glass smh-process-card">
+          <div class="smh-process-copy">
+            <p class="smh-section-label">开始使用</p>
+            <h2>三步接入。</h2>
+            <p>注册、创建 Key、替换地址。其他调用方式不用改。</p>
+            <router-link :to="startPath" class="smh-text-link">
+              {{ isAuthenticated ? '进入控制台' : '创建账户' }} →
+            </router-link>
           </div>
 
           <div class="smh-steps" aria-label="开始使用流程">
@@ -87,28 +84,29 @@
             <div class="smh-step">
               <span>02</span>
               <h3>创建 API Key</h3>
-              <p>为项目生成自己的密钥。</p>
+              <p>给项目生成一把密钥。</p>
             </div>
             <div class="smh-step">
               <span>03</span>
               <h3>替换 Base URL</h3>
-              <p>把客户端地址改成上面的 API 地址。</p>
+              <p>把客户端地址改成 Smirel。</p>
             </div>
           </div>
         </section>
 
-        <section class="smh-routing-section">
+        <section class="smh-glass smh-routing-card">
           <div class="smh-routing-copy">
             <p class="smh-section-label">模型接入</p>
-            <h2>换模型，不用换接入方式。</h2>
+            <h2>模型可以换，接入地址不用换。</h2>
             <p>
-              OpenAI、Anthropic 和 Google 的上游配置由服务端处理。客户端仍然使用同一个 Base URL 和 API Key。
+              使用支持的模型时，Base URL 和 API Key 保持不变。可用模型和价格直接在模型页查看。
             </p>
             <div class="smh-provider-line" aria-label="支持的模型服务">
               <span>OpenAI</span>
               <span>Anthropic</span>
               <span>Google</span>
             </div>
+            <router-link to="/model-plaza" class="smh-text-link">查看模型价格 →</router-link>
           </div>
 
           <div class="smh-client-example" aria-label="OpenAI SDK 配置示例">
@@ -125,44 +123,38 @@ client = OpenAI(
           </div>
         </section>
 
-        <section class="smh-links-section" aria-label="常用入口">
-          <router-link to="/model-plaza" class="smh-link-row">
-            <span class="smh-link-index">01</span>
-            <div>
-              <h3>模型与价格</h3>
-              <p>查看可用模型和当前单价。</p>
-            </div>
+        <section class="smh-quick-grid" aria-label="常用入口">
+          <router-link to="/model-plaza" class="smh-glass smh-quick-card smh-quick-card--wide">
+            <span class="smh-quick-label">MODELS</span>
+            <h3>模型与价格</h3>
+            <p>看当前可用模型、单价和服务状态。</p>
             <b>查看 →</b>
           </router-link>
 
-          <router-link :to="keyPath" class="smh-link-row">
-            <span class="smh-link-index">02</span>
-            <div>
-              <h3>API Key</h3>
-              <p>创建、停用和管理自己的密钥。</p>
-            </div>
+          <router-link :to="keyPath" class="smh-glass smh-quick-card">
+            <span class="smh-quick-label">API KEY</span>
+            <h3>密钥</h3>
+            <p>创建和管理项目密钥。</p>
             <b>{{ isAuthenticated ? '管理 →' : '登录 →' }}</b>
           </router-link>
 
-          <router-link to="/key-usage" class="smh-link-row">
-            <span class="smh-link-index">03</span>
-            <div>
-              <h3>用量记录</h3>
-              <p>按 Key 查看请求、Token 和费用。</p>
-            </div>
+          <router-link to="/key-usage" class="smh-glass smh-quick-card">
+            <span class="smh-quick-label">USAGE</span>
+            <h3>用量</h3>
+            <p>查看请求、Token 和费用。</p>
             <b>查询 →</b>
           </router-link>
         </section>
+      </main>
 
-        <footer class="smh-footer">
-          <span>© {{ currentYear }} {{ siteName }}</span>
-          <div>
-            <span>{{ apiBase }}</span>
-            <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">接入文档</a>
-          </div>
-        </footer>
-      </div>
-    </section>
+      <footer class="smh-footer">
+        <span>© {{ currentYear }} {{ siteName }}</span>
+        <div>
+          <span>{{ apiBase }}</span>
+          <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">接入文档</a>
+        </div>
+      </footer>
+    </div>
   </div>
 </template>
 
@@ -215,7 +207,8 @@ onMounted(() => {
 
 <style scoped>
 .smh-home {
-  background: #111a21;
+  min-height: 100vh;
+  background: transparent;
 }
 
 .smh-home a {
@@ -225,16 +218,17 @@ onMounted(() => {
 
 .smh-environment::after {
   background:
-    linear-gradient(180deg, rgba(4, 10, 16, .15), rgba(4, 10, 16, .34)),
-    linear-gradient(90deg, rgba(5, 12, 18, .24) 0%, rgba(5, 12, 18, .08) 52%, rgba(5, 12, 18, .18) 100%);
+    linear-gradient(180deg, rgba(4, 10, 16, .13), rgba(4, 10, 16, .26)),
+    radial-gradient(ellipse at 55% 40%, rgba(5, 12, 18, 0) 25%, rgba(5, 12, 18, .18) 100%);
 }
 
-.smh-hero-shell {
+.smh-shell {
   position: relative;
   z-index: 1;
-  width: min(1500px, calc(100vw - 96px));
+  width: min(1480px, calc(100vw - 72px));
+  min-height: 100vh;
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 24px 0 34px;
 }
 
 .smh-header {
@@ -253,11 +247,11 @@ onMounted(() => {
 }
 
 .smh-header-right {
-  gap: 20px;
+  gap: 18px;
 }
 
 .smh-nav {
-  gap: 24px;
+  gap: 22px;
 }
 
 .smh-nav a,
@@ -269,7 +263,7 @@ onMounted(() => {
 
 .smh-nav a,
 .smh-login-link {
-  transition: color .18s ease;
+  transition: color .18s ease, background-color .18s ease;
 }
 
 .smh-nav a:hover,
@@ -296,55 +290,55 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .10);
   border-radius: 999px;
-  background: rgba(7, 15, 22, .16);
+  background: rgba(6, 16, 25, .16);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
 .smh-hero {
-  min-height: 430px;
+  min-height: 390px;
   display: flex;
   align-items: center;
-  padding: 40px 0 54px;
+  padding: 34px 0 46px;
 }
 
 .smh-hero-copy {
-  width: min(760px, 60vw);
+  width: min(790px, 62vw);
 }
 
 .smh-kicker,
 .smh-section-label,
-.smh-section-heading > p {
+.smh-quick-label {
   margin: 0;
-  color: rgba(255, 255, 255, .46);
-  font-size: .66rem;
+  color: rgba(255, 255, 255, .44);
+  font-size: .64rem;
   letter-spacing: .15em;
 }
 
 .smh-hero h1 {
-  max-width: 760px;
+  max-width: 790px;
   margin: 12px 0 0;
-  font-size: clamp(3.1rem, 5.2vw, 4.7rem);
+  font-size: clamp(3rem, 5vw, 4.55rem);
   line-height: 1.02;
   font-weight: 560;
   letter-spacing: -.052em;
 }
 
 .smh-hero-description {
-  max-width: 670px;
+  max-width: 650px;
   margin: 20px 0 0;
   color: rgba(255, 255, 255, .72);
-  font-size: .96rem;
-  line-height: 1.78;
+  font-size: .95rem;
+  line-height: 1.74;
 }
 
 .smh-hero-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 27px;
 }
 
 .smh-button {
@@ -377,7 +371,7 @@ onMounted(() => {
 
 .smh-button--quiet {
   border: 1px solid rgba(255, 255, 255, .08);
-  background: rgba(4, 10, 16, .16);
+  background: rgba(4, 10, 16, .14);
   color: rgba(255, 255, 255, .72);
 }
 
@@ -386,36 +380,39 @@ onMounted(() => {
   border-color: rgba(255, 255, 255, .14);
 }
 
+.smh-glass {
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  background: rgba(5, 18, 29, .42);
+  -webkit-backdrop-filter: blur(22px) saturate(118%);
+  backdrop-filter: blur(22px) saturate(118%);
+}
+
 .smh-access-bar {
   display: grid;
-  grid-template-columns: minmax(330px, 2fr) repeat(3, minmax(130px, .72fr)) auto;
+  grid-template-columns: minmax(330px, 2fr) repeat(3, minmax(125px, .72fr)) auto;
   align-items: stretch;
-  border: 1px solid rgba(255, 255, 255, .10);
-  border-radius: 8px;
-  background: rgba(7, 18, 27, .56);
-  -webkit-backdrop-filter: blur(24px) saturate(118%);
-  backdrop-filter: blur(24px) saturate(118%);
   overflow: hidden;
 }
 
 .smh-access-main,
 .smh-access-item {
   min-width: 0;
-  min-height: 112px;
+  min-height: 108px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 20px 22px;
+  padding: 19px 22px;
 }
 
 .smh-access-item {
-  border-left: 1px solid rgba(255, 255, 255, .08);
+  border-left: 1px solid rgba(255, 255, 255, .07);
 }
 
 .smh-access-main span,
 .smh-access-item span {
-  color: rgba(255, 255, 255, .42);
-  font-size: .61rem;
+  color: rgba(255, 255, 255, .40);
+  font-size: .60rem;
   letter-spacing: .10em;
 }
 
@@ -424,7 +421,7 @@ onMounted(() => {
   overflow: hidden;
   color: rgba(255, 255, 255, .97);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-weight: 580;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -433,7 +430,7 @@ onMounted(() => {
 .smh-access-item strong {
   margin-top: 8px;
   color: rgba(255, 255, 255, .82);
-  font-size: .73rem;
+  font-size: .72rem;
   font-weight: 610;
 }
 
@@ -443,7 +440,7 @@ onMounted(() => {
   min-height: 40px;
   margin: 0 18px;
   padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, .13);
+  border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 6px;
   background: rgba(255, 255, 255, .10);
   color: rgba(255, 255, 255, .86);
@@ -458,116 +455,120 @@ onMounted(() => {
   border-color: rgba(255, 255, 255, .18);
 }
 
-.smh-body {
-  position: relative;
-  z-index: 2;
-  background: rgba(14, 23, 30, .985);
-  border-top: 1px solid rgba(255, 255, 255, .06);
-  color: #fff;
+.smh-process-card {
+  display: grid;
+  grid-template-columns: minmax(280px, .82fr) minmax(0, 1.68fr);
+  gap: 0;
+  margin-top: 18px;
+  overflow: hidden;
 }
 
-.smh-body-inner {
-  width: min(1360px, calc(100vw - 96px));
-  margin: 0 auto;
-  padding: 96px 0 34px;
+.smh-process-copy {
+  min-height: 260px;
+  padding: 34px 34px 30px;
+  border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
-.smh-section-heading {
-  max-width: 680px;
-}
-
-.smh-section-heading h2,
+.smh-process-copy h2,
 .smh-routing-copy h2 {
-  margin: 12px 0 0;
-  font-size: clamp(2rem, 3.3vw, 3rem);
-  line-height: 1.12;
+  margin: 10px 0 0;
+  font-size: clamp(1.9rem, 3vw, 2.7rem);
+  line-height: 1.1;
   font-weight: 560;
   letter-spacing: -.038em;
 }
 
-.smh-section-heading > span {
-  display: block;
-  margin-top: 14px;
-  color: rgba(255, 255, 255, .48);
-  font-size: .86rem;
-  line-height: 1.7;
+.smh-process-copy > p:last-of-type,
+.smh-routing-copy > p:last-of-type {
+  max-width: 520px;
+  margin: 16px 0 0;
+  color: rgba(255, 255, 255, .54);
+  font-size: .82rem;
+  line-height: 1.72;
+}
+
+.smh-text-link {
+  display: inline-flex;
+  margin-top: 30px;
+  color: rgba(255, 255, 255, .78);
+  font-size: .73rem;
+  font-weight: 600;
+}
+
+.smh-text-link:hover {
+  color: rgba(255, 255, 255, .98);
 }
 
 .smh-steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 54px;
-  border-top: 1px solid rgba(255, 255, 255, .10);
-  border-bottom: 1px solid rgba(255, 255, 255, .10);
 }
 
 .smh-step {
-  min-height: 180px;
-  padding: 32px 34px 34px 0;
+  min-height: 260px;
+  padding: 34px 30px 30px;
 }
 
 .smh-step + .smh-step {
-  padding-left: 34px;
-  border-left: 1px solid rgba(255, 255, 255, .10);
+  border-left: 1px solid rgba(255, 255, 255, .07);
 }
 
-.smh-step > span,
-.smh-link-index {
+.smh-step > span {
   color: rgba(255, 255, 255, .34);
-  font-size: .64rem;
+  font-size: .62rem;
   letter-spacing: .10em;
 }
 
 .smh-step h3 {
-  margin: 34px 0 0;
-  font-size: 1.12rem;
+  margin: 88px 0 0;
+  font-size: 1.04rem;
   font-weight: 620;
 }
 
 .smh-step p {
-  margin: 10px 0 0;
-  color: rgba(255, 255, 255, .48);
-  font-size: .78rem;
+  margin: 9px 0 0;
+  color: rgba(255, 255, 255, .47);
+  font-size: .75rem;
   line-height: 1.6;
 }
 
-.smh-routing-section {
+.smh-routing-card {
   display: grid;
-  grid-template-columns: minmax(0, .82fr) minmax(460px, 1.18fr);
-  gap: 86px;
-  align-items: center;
-  margin-top: 112px;
-  padding-top: 88px;
-  border-top: 1px solid rgba(255, 255, 255, .10);
+  grid-template-columns: minmax(0, .92fr) minmax(440px, 1.08fr);
+  gap: 0;
+  margin-top: 18px;
+  overflow: hidden;
 }
 
-.smh-routing-copy > p:last-of-type {
-  max-width: 520px;
-  margin: 22px 0 0;
-  color: rgba(255, 255, 255, .52);
-  font-size: .85rem;
-  line-height: 1.8;
+.smh-routing-copy {
+  min-height: 360px;
+  padding: 38px 38px 34px;
+  border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
 .smh-provider-line {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 34px;
-  color: rgba(255, 255, 255, .72);
-  font-size: .78rem;
+  gap: 22px;
+  margin-top: 28px;
+  color: rgba(255, 255, 255, .74);
+  font-size: .77rem;
 }
 
 .smh-provider-line span + span::before {
   content: '/';
-  margin-right: 24px;
+  margin-right: 22px;
   color: rgba(255, 255, 255, .20);
 }
 
 .smh-client-example {
-  border-top: 1px solid rgba(255, 255, 255, .14);
-  border-bottom: 1px solid rgba(255, 255, 255, .10);
-  background: rgba(255, 255, 255, .025);
+  min-width: 0;
+  margin: 22px;
+  align-self: stretch;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .11);
+  overflow: hidden;
 }
 
 .smh-client-example-head {
@@ -576,69 +577,74 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
   color: rgba(255, 255, 255, .40);
-  font-size: .66rem;
+  font-size: .65rem;
 }
 
 .smh-client-example pre {
   margin: 0;
-  padding: 30px 32px 34px;
+  padding: 30px 30px 34px;
   overflow-x: auto;
 }
 
 .smh-client-example code {
   color: rgba(255, 255, 255, .84);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .82rem;
+  font-size: .81rem;
   line-height: 1.8;
 }
 
-.smh-links-section {
-  margin-top: 112px;
-  border-top: 1px solid rgba(255, 255, 255, .11);
-}
-
-.smh-link-row {
-  min-height: 126px;
+.smh-quick-grid {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, .10);
-  transition: background-color .18s ease;
+  grid-template-columns: 1.28fr .86fr .86fr;
+  gap: 12px;
+  margin-top: 18px;
 }
 
-.smh-link-row:hover {
-  background: rgba(255, 255, 255, .025);
+.smh-quick-card {
+  position: relative;
+  min-height: 178px;
+  padding: 26px 26px 24px;
+  transition: transform .2s ease, background-color .2s ease;
 }
 
-.smh-link-row h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 610;
+.smh-quick-card:hover {
+  transform: translateY(-2px);
+  background: rgba(5, 18, 29, .50);
 }
 
-.smh-link-row p {
+.smh-quick-card h3 {
+  margin: 32px 0 0;
+  font-size: 1.08rem;
+  font-weight: 620;
+}
+
+.smh-quick-card p {
+  max-width: 88%;
   margin: 8px 0 0;
-  color: rgba(255, 255, 255, .43);
-  font-size: .76rem;
+  color: rgba(255, 255, 255, .47);
+  font-size: .75rem;
+  line-height: 1.58;
 }
 
-.smh-link-row b {
+.smh-quick-card b {
+  position: absolute;
+  right: 24px;
+  bottom: 22px;
   color: rgba(255, 255, 255, .58);
-  font-size: .72rem;
+  font-size: .71rem;
   font-weight: 580;
 }
 
 .smh-footer {
-  min-height: 88px;
+  min-height: 76px;
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  color: rgba(255, 255, 255, .32);
-  font-size: .65rem;
+  color: rgba(255, 255, 255, .34);
+  font-size: .64rem;
 }
 
 .smh-footer > div {
@@ -647,21 +653,16 @@ onMounted(() => {
 }
 
 .smh-footer a:hover {
-  color: rgba(255, 255, 255, .70);
+  color: rgba(255, 255, 255, .72);
 }
 
-@media (max-width: 1120px) {
-  .smh-hero-shell,
-  .smh-body-inner {
+@media (max-width: 1180px) {
+  .smh-shell {
     width: calc(100vw - 48px);
   }
 
-  .smh-nav {
-    gap: 16px;
-  }
-
   .smh-access-bar {
-    grid-template-columns: minmax(280px, 1.6fr) repeat(3, minmax(120px, .7fr));
+    grid-template-columns: minmax(280px, 1.7fr) repeat(3, minmax(115px, .7fr));
   }
 
   .smh-copy-button {
@@ -670,22 +671,22 @@ onMounted(() => {
     margin: 0 18px 16px;
   }
 
-  .smh-routing-section {
-    gap: 52px;
+  .smh-process-card {
+    grid-template-columns: minmax(250px, .72fr) minmax(0, 1.78fr);
+  }
+
+  .smh-routing-card {
+    grid-template-columns: minmax(0, .88fr) minmax(400px, 1.12fr);
   }
 }
 
 @media (max-width: 980px) {
-  .smh-header-right {
-    gap: 12px;
-  }
-
   .smh-nav {
     display: none;
   }
 
   .smh-hero {
-    min-height: 390px;
+    min-height: 360px;
   }
 
   .smh-hero-copy {
@@ -698,16 +699,16 @@ onMounted(() => {
 
   .smh-access-main {
     grid-column: 1 / -1;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
   }
 
   .smh-access-item {
     border-left: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
   }
 
   .smh-access-item:nth-of-type(even) {
-    border-left: 1px solid rgba(255, 255, 255, .08);
+    border-left: 1px solid rgba(255, 255, 255, .07);
   }
 
   .smh-copy-button {
@@ -716,19 +717,30 @@ onMounted(() => {
     margin: 16px 20px 18px;
   }
 
-  .smh-routing-section {
+  .smh-process-card,
+  .smh-routing-card {
     grid-template-columns: 1fr;
-    gap: 42px;
+  }
+
+  .smh-process-copy,
+  .smh-routing-copy {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+  }
+
+  .smh-quick-grid {
+    grid-template-columns: 1.25fr 1fr;
+  }
+
+  .smh-quick-card:last-child {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 720px) {
-  .smh-hero-shell,
-  .smh-body-inner {
+  .smh-shell {
     width: calc(100vw - 28px);
-  }
-
-  .smh-hero-shell {
     padding-top: 16px;
   }
 
@@ -737,8 +749,8 @@ onMounted(() => {
   }
 
   .smh-hero {
-    min-height: 350px;
-    padding: 36px 0 42px;
+    min-height: 330px;
+    padding: 32px 0 40px;
   }
 
   .smh-hero-copy {
@@ -746,7 +758,7 @@ onMounted(() => {
   }
 
   .smh-hero h1 {
-    font-size: clamp(2.5rem, 13vw, 3.45rem);
+    font-size: clamp(2.45rem, 13vw, 3.4rem);
   }
 
   .smh-hero-description {
@@ -765,14 +777,14 @@ onMounted(() => {
 
   .smh-access-main,
   .smh-access-item {
-    min-height: 90px;
+    min-height: 88px;
     padding: 17px 18px;
   }
 
   .smh-access-item,
   .smh-access-item:nth-of-type(even) {
     border-left: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
   }
 
   .smh-access-main code {
@@ -780,37 +792,32 @@ onMounted(() => {
     overflow-wrap: anywhere;
   }
 
-  .smh-body-inner {
-    padding-top: 72px;
+  .smh-process-copy,
+  .smh-routing-copy {
+    padding: 28px 24px 26px;
   }
 
   .smh-steps {
     grid-template-columns: 1fr;
-    margin-top: 40px;
   }
 
   .smh-step,
   .smh-step + .smh-step {
-    min-height: 138px;
-    padding: 26px 0;
+    min-height: 132px;
+    padding: 24px;
     border-left: 0;
   }
 
   .smh-step + .smh-step {
-    border-top: 1px solid rgba(255, 255, 255, .10);
+    border-top: 1px solid rgba(255, 255, 255, .07);
   }
 
   .smh-step h3 {
-    margin-top: 24px;
+    margin-top: 28px;
   }
 
-  .smh-routing-section,
-  .smh-links-section {
-    margin-top: 82px;
-  }
-
-  .smh-routing-section {
-    padding-top: 64px;
+  .smh-client-example {
+    margin: 14px;
   }
 
   .smh-client-example pre {
@@ -821,22 +828,23 @@ onMounted(() => {
     font-size: .74rem;
   }
 
-  .smh-link-row {
-    min-height: 118px;
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 14px;
-    padding: 18px 0;
+  .smh-quick-grid {
+    grid-template-columns: 1fr;
   }
 
-  .smh-link-row b {
-    grid-column: 2;
-    margin-top: -4px;
+  .smh-quick-card:last-child {
+    grid-column: auto;
+  }
+
+  .smh-quick-card {
+    min-height: 150px;
+    padding: 22px;
   }
 
   .smh-footer {
     align-items: flex-start;
     flex-direction: column;
-    padding: 34px 0 12px;
+    padding: 30px 0 10px;
   }
 
   .smh-footer > div {
@@ -850,7 +858,7 @@ onMounted(() => {
   .smh-login-link,
   .smh-button,
   .smh-copy-button,
-  .smh-link-row {
+  .smh-quick-card {
     transition: none !important;
   }
 }
