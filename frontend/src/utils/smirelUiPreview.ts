@@ -123,14 +123,12 @@ export function installSmirelUiPreview(): void {
   document.documentElement.classList.add('smirel-ui-preview')
 
   const authStore = useAuthStore()
-  authStore.$patch({
-    token: 'smirel-ui-preview-session',
-    user: PREVIEW_ADMIN_USER,
-  })
+  authStore.token = 'smirel-ui-preview-session'
+  authStore.user = PREVIEW_ADMIN_USER
 
   // Route guards should not make a production compliance request in preview.
   const complianceStore = useAdminComplianceStore()
-  complianceStore.$patch({ initialized: true })
+  complianceStore.initialized = true
 
   // Keep the Overview on its deterministic non-Ops state in static preview.
   const adminSettingsStore = useAdminSettingsStore()
