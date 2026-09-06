@@ -100,12 +100,17 @@ html.relay-standalone .smg-shell .card {
   box-shadow: var(--smirel-card-shadow) !important;
 }
 
-/* Nested information surfaces use the same primitive with the data tone. */
+/* Nested information/control surfaces use the data tone of the same primitive. */
 html.relay-standalone .spg-page.sw2-page :is(
   .sw2-admin-health-grid,
+  .sw2-admin-health-foot,
+  .sw2-admin-today-foot,
+  .sw2-admin-hour-state,
   .sw2-admin-metric,
   .sw2-admin-diagnostic,
   .sw2-route-content .smg-data-panel,
+  .sw2-route-content .account-bulk-actions,
+  .sw2-route-content .smg-data-pagination,
   .sw2-route-content .smg-dashboard-code,
   .sw2-route-content .smg-dashboard-chart-surface
 ),

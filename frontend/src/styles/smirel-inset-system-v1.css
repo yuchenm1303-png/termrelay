@@ -1,0 +1,84 @@
+/*
+ * Smirel Inset System v1
+ *
+ * Geometry contract for nested UI. When a card, data surface or control group
+ * lives inside another card, a visible gutter must remain between the child
+ * and the parent edge. Material still belongs to smirel-card-system-v1.css.
+ *
+ * First-level shell regions are intentionally excluded. In particular the
+ * sidebar account area is a first-level component by design, not a nested card.
+ */
+
+html.relay-standalone {
+  --smirel-inset-space: 16px;
+  --smirel-inset-gap: 12px;
+}
+
+/* Overview: every subordinate surface stays visibly inside its module. */
+html.relay-standalone .spg-page.sw2-page .sw2-admin-health-grid {
+  margin: 0 var(--smirel-inset-space) var(--smirel-inset-space) !important;
+}
+
+html.relay-standalone .spg-page.sw2-page :is(
+  .sw2-admin-health-foot,
+  .sw2-admin-today-foot
+) {
+  margin: 0 var(--smirel-inset-space) var(--smirel-inset-space) !important;
+  overflow: hidden;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-admin-metrics {
+  gap: var(--smirel-inset-gap) !important;
+  padding: var(--smirel-inset-space) !important;
+}
+
+html.relay-standalone .spg-page.sw2-page :is(
+  .sw2-admin-hour-shell,
+  .sw2-admin-hour-grid
+) {
+  min-width: 0;
+  gap: var(--smirel-inset-gap) !important;
+  margin: var(--smirel-inset-space) !important;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-admin-hour-state {
+  margin: var(--smirel-inset-space) !important;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-admin-diagnostics {
+  gap: var(--smirel-inset-gap) !important;
+}
+
+/*
+ * Routed business pages: filters already live in a toolbar card; keep the
+ * toolbar padding canonical and inset selection/pagination control strips when
+ * they sit inside a data-panel card.
+ */
+html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-page-toolbar {
+  padding: var(--smirel-inset-space) !important;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-page-toolbar :is(
+  .account-table-filters,
+  .account-table-actions
+) {
+  min-width: 0;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-data-panel .account-bulk-actions {
+  margin: var(--smirel-inset-gap) var(--smirel-inset-gap) 0 !important;
+  overflow: hidden;
+}
+
+html.relay-standalone .spg-page.sw2-page .sw2-route-content .smg-data-panel .smg-data-pagination {
+  margin: 0 var(--smirel-inset-gap) var(--smirel-inset-gap) !important;
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  html.relay-standalone .spg-page.sw2-page .sw2-admin-overview,
+  html.relay-standalone .spg-page.sw2-page .sw2-route-content {
+    --smirel-inset-space: 12px;
+    --smirel-inset-gap: 10px;
+  }
+}

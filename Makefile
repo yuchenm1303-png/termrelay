@@ -8,6 +8,7 @@ FRONTEND_CRITICAL_VITEST := \
 	src/components/user/profile/__tests__/ProfileInfoCard.spec.ts \
 	src/components/layout/__tests__/smirelWorkspaceNavigation.spec.ts \
 	src/components/layout/__tests__/SmirelCardSystem.spec.ts \
+	src/components/layout/__tests__/SmirelInsetSystem.spec.ts \
 	src/views/admin/__tests__/SettingsView.spec.ts
 
 # 一键编译前后端
