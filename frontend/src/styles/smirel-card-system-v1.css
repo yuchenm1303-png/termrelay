@@ -74,7 +74,6 @@ html.relay-standalone .spg-page.smh-home .smh-glass,
 html.relay-standalone .spg-page.sw2-page .spg-surface,
 html.relay-standalone .spg-page.sw2-page .sw2-panel,
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context,
-html.relay-standalone .spg-page.sw2-page .sw2-side-item,
 html.relay-standalone .spg-page.sw2-page .sw2-account-card,
 html.relay-standalone .spg-page.sw2-page .sw2-topbar,
 html.relay-standalone .spg-page.sw2-page .sw2-admin-module,
@@ -139,30 +138,16 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar.spg-surface {
   overflow: hidden;
 }
 
-/* Navigation is one card language; state changes tint, never geometry. */
-html.relay-standalone .spg-page.sw2-page .sw2-side-item {
-  background: var(--smirel-card-bg-quiet) !important;
-}
-
-html.relay-standalone .spg-page.sw2-page .sw2-side-item--active {
-  border-color: var(--smirel-card-border-active) !important;
-  background: var(--smirel-card-bg-active) !important;
-}
-
+/* These are true nested cards; navigation rows are owned by smirel-navigation-v1.css. */
 html.relay-standalone .spg-page.sw2-page .sw2-account-card,
 html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
   background: var(--smirel-card-bg-quiet) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html.relay-standalone .spg-page.sw2-page .sw2-side-item:not(.sw2-side-item--pending):hover,
   html.relay-standalone .spg-page.sw2-page .sw2-account-card:hover {
     border-color: var(--smirel-card-border-active) !important;
     background: var(--smirel-card-bg-hover) !important;
-  }
-
-  html.relay-standalone .spg-page.sw2-page .sw2-side-item--active:hover {
-    background: rgba(91, 166, 215, .27) !important;
   }
 }
 
@@ -173,7 +158,6 @@ html.relay-standalone .spg-page.sw2-page .sw2-sidebar-context {
     .spg-surface,
     .sw2-panel,
     .sw2-sidebar-context,
-    .sw2-side-item,
     .sw2-account-card,
     .sw2-topbar,
     .sw2-admin-module,
