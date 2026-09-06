@@ -1,9 +1,8 @@
 /*
  * Functional V2 shell integration.
  *
- * This file owns layout/wiring only. Card material is intentionally forbidden
- * here: backgrounds, card borders, radii, blur and shadows come from
- * smirel-card-system-v1.css / GlassSurface.vue.
+ * This file owns layout/wiring and control interaction feedback. Card material
+ * remains centralized in smirel-card-system-v1.css / GlassSurface.vue.
  */
 
 .sw2-sidebar-context {
@@ -57,13 +56,23 @@
   cursor: pointer;
 }
 
-/* Account identity remains a canonical card, but its geometry is compact. */
-.sw2-account-card {
+/* Account identity is a compact navigation/control row, not a card. */
+.sw2-account-entry {
   position: relative;
   width: calc(100% - 16px);
-  min-height: 54px;
-  margin: 0 8px 5px;
-  padding: 8px 10px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 3px 8px 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  transition:
+    background-color 150ms var(--sw2-ease),
+    color 150ms var(--sw2-ease);
 }
 
 .sw2-avatar,
@@ -88,80 +97,79 @@
 }
 
 .sw2-avatar {
-  width: 32px;
-  height: 32px;
-  flex-basis: 32px;
-  border: 1px solid rgba(188, 228, 252, .09);
-  background: rgba(178, 225, 253, .11);
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 1px solid rgba(188, 228, 252, .08);
+  background: rgba(178, 225, 253, .09);
+  font-size: .58rem;
 }
 
 .sw2-account-copy {
+  min-width: 0;
   flex: 1;
 }
 
 .sw2-account-copy strong {
-  color: rgba(255, 255, 255, .83);
-  font-size: .62rem;
-  font-weight: 640;
+  color: rgba(255, 255, 255, .78);
+  font-size: .60rem;
+  font-weight: 620;
 }
 
 .sw2-account-copy small {
-  margin-top: 3px;
-  color: rgba(255, 255, 255, .34);
-  font-size: .50rem;
-  line-height: 1.35;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, .31);
+  font-size: .48rem;
+  line-height: 1.3;
 }
 
 .sw2-account-chevron {
   flex: 0 0 auto;
-  color: rgba(211, 238, 255, .28);
-  font-size: .82rem;
+  color: rgba(211, 238, 255, .25);
+  font-size: .76rem;
   line-height: 1;
 }
 
-/* Footer utilities are controls, not cards or large action buttons. */
+/* Home/logout are peers: one shared control recipe, identical geometry/type. */
 .sw2-footer-actions {
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 10px 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px 8px 8px;
 }
 
-.sw2-home-link,
-.sw2-logout-button {
+.sw2-footer-action {
+  width: 100%;
   min-width: 0;
   min-height: 30px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 5px;
   margin: 0;
-  padding: 0 5px;
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, .38);
+  padding: 0 8px;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, .055);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .025);
+  color: rgba(255, 255, 255, .50);
+  box-shadow: none;
   font-family: inherit;
   font-size: .54rem;
-  font-weight: 540;
+  font-weight: 560;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  transition: color 150ms var(--sw2-ease), opacity 150ms var(--sw2-ease);
-}
-
-.sw2-home-link {
-  justify-content: flex-start;
-}
-
-.sw2-logout-button {
-  justify-content: flex-end;
-  margin-left: auto;
+  transition:
+    background-color 150ms var(--sw2-ease),
+    border-color 150ms var(--sw2-ease),
+    color 150ms var(--sw2-ease),
+    opacity 150ms var(--sw2-ease);
 }
 
 .sw2-logout-button:disabled {
   cursor: wait;
-  opacity: .55;
+  opacity: .48;
 }
 
 .sw2-topbar-avatar {
@@ -222,17 +230,22 @@
   max-width: 100%;
 }
 
-.sw2-account-card:focus-visible,
-.sw2-topbar-avatar:focus-visible,
-.sw2-logout-button:focus-visible {
-  outline: 1px solid rgba(199, 237, 255, .82);
+.sw2-account-entry:focus-visible,
+.sw2-footer-action:focus-visible,
+.sw2-topbar-avatar:focus-visible {
+  outline: 1px solid rgba(199, 237, 255, .72);
   outline-offset: -2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .sw2-home-link:hover,
-  .sw2-logout-button:hover {
-    color: rgba(255, 255, 255, .72);
+  .sw2-account-entry:hover {
+    background: rgba(255, 255, 255, .035);
+  }
+
+  .sw2-footer-action:hover {
+    border-color: rgba(183, 227, 255, .11);
+    background: rgba(255, 255, 255, .045);
+    color: rgba(255, 255, 255, .74);
   }
 }
 
@@ -249,12 +262,10 @@
 
 /*
  * Structural dividers may still disappear where spacing already establishes
- * hierarchy. Card edges are deliberately excluded from this reset; those are
- * owned by the canonical card system.
+ * hierarchy. Card edges and footer-control edges are deliberately excluded.
  */
 .sw2-page .sw2-sidebar-brand-row,
 .sw2-page .sw2-sidebar-foot,
-.sw2-page .sw2-home-link,
 .sw2-page .sw2-module-head,
 .sw2-page .sw2-admin-health-metric,
 .sw2-page .sw2-admin-health-foot,
