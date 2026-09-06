@@ -6,7 +6,7 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
-import { installSmirelDownloadInteractions } from '@/utils/smirelDownloadInteractions'
+import { installSmirelPageMotion } from '@/utils/smirelPageMotion'
 import {
   applyStandaloneSmirelPreferences,
   applyStandaloneSmirelPublicSettings,
@@ -101,7 +101,7 @@ async function bootstrap() {
   app.use(i18n)
   await router.isReady()
   app.mount('#app')
-  installSmirelDownloadInteractions()
+  installSmirelPageMotion()
 }
 
 bootstrap()
