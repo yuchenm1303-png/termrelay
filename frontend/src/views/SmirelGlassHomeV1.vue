@@ -69,7 +69,7 @@
           <div class="smh-process-copy">
             <p class="smh-section-label">开始使用</p>
             <h2>三步接入。</h2>
-            <p>注册、创建 Key、替换地址。其他调用方式不用改。</p>
+            <p>注册、创建 Key、替换地址。然后就可以按原来的方式调用。</p>
             <router-link :to="startPath" class="smh-text-link">
               {{ isAuthenticated ? '进入控制台' : '创建账户' }} →
             </router-link>
@@ -84,7 +84,7 @@
             <div class="smh-step">
               <span>02</span>
               <h3>创建 API Key</h3>
-              <p>给项目生成一把密钥。</p>
+              <p>给项目生成一把独立密钥。</p>
             </div>
             <div class="smh-step">
               <span>03</span>
@@ -258,7 +258,7 @@ onMounted(() => {
 .smh-status,
 .smh-login-link {
   color: rgba(255, 255, 255, .68);
-  font-size: .72rem;
+  font-size: .76rem;
 }
 
 .smh-nav a,
@@ -285,11 +285,11 @@ onMounted(() => {
 }
 
 .smh-login-link {
-  min-height: 36px;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
+  padding: 0 15px;
   border: 1px solid rgba(255, 255, 255, .10);
   border-radius: 999px;
   background: rgba(6, 16, 25, .16);
@@ -312,9 +312,9 @@ onMounted(() => {
 .smh-section-label,
 .smh-quick-label {
   margin: 0;
-  color: rgba(255, 255, 255, .44);
-  font-size: .64rem;
-  letter-spacing: .15em;
+  color: rgba(255, 255, 255, .50);
+  font-size: .70rem;
+  letter-spacing: .13em;
 }
 
 .smh-hero h1 {
@@ -329,8 +329,8 @@ onMounted(() => {
 .smh-hero-description {
   max-width: 650px;
   margin: 20px 0 0;
-  color: rgba(255, 255, 255, .72);
-  font-size: .95rem;
+  color: rgba(255, 255, 255, .74);
+  font-size: 1rem;
   line-height: 1.74;
 }
 
@@ -342,13 +342,13 @@ onMounted(() => {
 }
 
 .smh-button {
-  min-height: 44px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 17px;
+  padding: 0 18px;
   border-radius: 6px;
-  font-size: .78rem;
+  font-size: .82rem;
   font-weight: 620;
   transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
 }
@@ -372,7 +372,7 @@ onMounted(() => {
 .smh-button--quiet {
   border: 1px solid rgba(255, 255, 255, .08);
   background: rgba(4, 10, 16, .14);
-  color: rgba(255, 255, 255, .72);
+  color: rgba(255, 255, 255, .74);
 }
 
 .smh-button--quiet:hover {
@@ -390,7 +390,7 @@ onMounted(() => {
 
 .smh-access-bar {
   display: grid;
-  grid-template-columns: minmax(330px, 2fr) repeat(3, minmax(125px, .72fr)) auto;
+  grid-template-columns: minmax(350px, 2fr) repeat(3, minmax(135px, .72fr)) auto;
   align-items: stretch;
   overflow: hidden;
 }
@@ -398,11 +398,11 @@ onMounted(() => {
 .smh-access-main,
 .smh-access-item {
   min-width: 0;
-  min-height: 108px;
+  min-height: 116px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 19px 22px;
+  padding: 21px 24px;
 }
 
 .smh-access-item {
@@ -411,41 +411,41 @@ onMounted(() => {
 
 .smh-access-main span,
 .smh-access-item span {
-  color: rgba(255, 255, 255, .40);
-  font-size: .60rem;
-  letter-spacing: .10em;
+  color: rgba(255, 255, 255, .46);
+  font-size: .67rem;
+  letter-spacing: .09em;
 }
 
 .smh-access-main code {
-  margin-top: 9px;
+  margin-top: 10px;
   overflow: hidden;
   color: rgba(255, 255, 255, .97);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 1rem;
-  font-weight: 580;
+  font-size: 1.10rem;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .smh-access-item strong {
-  margin-top: 8px;
-  color: rgba(255, 255, 255, .82);
-  font-size: .72rem;
-  font-weight: 610;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, .88);
+  font-size: .82rem;
+  font-weight: 620;
 }
 
 .smh-copy-button {
   align-self: center;
-  min-width: 92px;
-  min-height: 40px;
-  margin: 0 18px;
-  padding: 0 14px;
+  min-width: 96px;
+  min-height: 42px;
+  margin: 0 20px;
+  padding: 0 15px;
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 6px;
   background: rgba(255, 255, 255, .10);
-  color: rgba(255, 255, 255, .86);
+  color: rgba(255, 255, 255, .90);
   font: inherit;
-  font-size: .72rem;
+  font-size: .76rem;
   cursor: pointer;
   transition: background-color .18s ease, border-color .18s ease;
 }
@@ -457,42 +457,45 @@ onMounted(() => {
 
 .smh-process-card {
   display: grid;
-  grid-template-columns: minmax(280px, .82fr) minmax(0, 1.68fr);
+  grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr);
   gap: 0;
   margin-top: 18px;
   overflow: hidden;
 }
 
 .smh-process-copy {
-  min-height: 260px;
-  padding: 34px 34px 30px;
+  min-height: 344px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 46px 42px;
   border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
 .smh-process-copy h2,
 .smh-routing-copy h2 {
-  margin: 10px 0 0;
-  font-size: clamp(1.9rem, 3vw, 2.7rem);
-  line-height: 1.1;
+  margin: 12px 0 0;
+  font-size: clamp(2.35rem, 3.5vw, 3.25rem);
+  line-height: 1.08;
   font-weight: 560;
-  letter-spacing: -.038em;
+  letter-spacing: -.04em;
 }
 
 .smh-process-copy > p:last-of-type,
 .smh-routing-copy > p:last-of-type {
-  max-width: 520px;
-  margin: 16px 0 0;
-  color: rgba(255, 255, 255, .54);
-  font-size: .82rem;
+  max-width: 560px;
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, .60);
+  font-size: .92rem;
   line-height: 1.72;
 }
 
 .smh-text-link {
   display: inline-flex;
-  margin-top: 30px;
-  color: rgba(255, 255, 255, .78);
-  font-size: .73rem;
-  font-weight: 600;
+  margin-top: 32px;
+  color: rgba(255, 255, 255, .84);
+  font-size: .82rem;
+  font-weight: 620;
 }
 
 .smh-text-link:hover {
@@ -501,35 +504,43 @@ onMounted(() => {
 
 .smh-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  align-content: stretch;
+  padding: 18px 30px;
 }
 
 .smh-step {
-  min-height: 260px;
-  padding: 34px 30px 30px;
+  min-height: 102px;
+  display: grid;
+  grid-template-columns: 52px minmax(170px, .7fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  padding: 20px 8px;
 }
 
 .smh-step + .smh-step {
-  border-left: 1px solid rgba(255, 255, 255, .07);
+  border-top: 1px solid rgba(255, 255, 255, .08);
 }
 
 .smh-step > span {
-  color: rgba(255, 255, 255, .34);
-  font-size: .62rem;
+  color: rgba(255, 255, 255, .44);
+  font-size: .72rem;
   letter-spacing: .10em;
 }
 
 .smh-step h3 {
-  margin: 88px 0 0;
-  font-size: 1.04rem;
-  font-weight: 620;
+  margin: 0;
+  color: rgba(255, 255, 255, .94);
+  font-size: 1.18rem;
+  line-height: 1.25;
+  font-weight: 630;
 }
 
 .smh-step p {
-  margin: 9px 0 0;
-  color: rgba(255, 255, 255, .47);
-  font-size: .75rem;
-  line-height: 1.6;
+  margin: 0;
+  color: rgba(255, 255, 255, .58);
+  font-size: .84rem;
+  line-height: 1.65;
 }
 
 .smh-routing-card {
@@ -541,8 +552,11 @@ onMounted(() => {
 }
 
 .smh-routing-copy {
-  min-height: 360px;
-  padding: 38px 38px 34px;
+  min-height: 388px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 46px 40px;
   border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
@@ -550,20 +564,20 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 22px;
-  margin-top: 28px;
-  color: rgba(255, 255, 255, .74);
-  font-size: .77rem;
+  margin-top: 30px;
+  color: rgba(255, 255, 255, .80);
+  font-size: .86rem;
 }
 
 .smh-provider-line span + span::before {
   content: '/';
   margin-right: 22px;
-  color: rgba(255, 255, 255, .20);
+  color: rgba(255, 255, 255, .22);
 }
 
 .smh-client-example {
   min-width: 0;
-  margin: 22px;
+  margin: 24px;
   align-self: stretch;
   border: 1px solid rgba(255, 255, 255, .07);
   border-radius: 6px;
@@ -572,27 +586,27 @@ onMounted(() => {
 }
 
 .smh-client-example-head {
-  min-height: 48px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 20px;
   border-bottom: 1px solid rgba(255, 255, 255, .07);
-  color: rgba(255, 255, 255, .40);
-  font-size: .65rem;
+  color: rgba(255, 255, 255, .48);
+  font-size: .72rem;
 }
 
 .smh-client-example pre {
   margin: 0;
-  padding: 30px 30px 34px;
+  padding: 32px 32px 36px;
   overflow-x: auto;
 }
 
 .smh-client-example code {
-  color: rgba(255, 255, 255, .84);
+  color: rgba(255, 255, 255, .88);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .81rem;
-  line-height: 1.8;
+  font-size: .90rem;
+  line-height: 1.85;
 }
 
 .smh-quick-grid {
@@ -604,8 +618,8 @@ onMounted(() => {
 
 .smh-quick-card {
   position: relative;
-  min-height: 178px;
-  padding: 26px 26px 24px;
+  min-height: 196px;
+  padding: 30px 30px 28px;
   transition: transform .2s ease, background-color .2s ease;
 }
 
@@ -615,26 +629,26 @@ onMounted(() => {
 }
 
 .smh-quick-card h3 {
-  margin: 32px 0 0;
-  font-size: 1.08rem;
-  font-weight: 620;
+  margin: 34px 0 0;
+  font-size: 1.26rem;
+  font-weight: 630;
 }
 
 .smh-quick-card p {
   max-width: 88%;
-  margin: 8px 0 0;
-  color: rgba(255, 255, 255, .47);
-  font-size: .75rem;
-  line-height: 1.58;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, .56);
+  font-size: .84rem;
+  line-height: 1.62;
 }
 
 .smh-quick-card b {
   position: absolute;
-  right: 24px;
-  bottom: 22px;
-  color: rgba(255, 255, 255, .58);
-  font-size: .71rem;
-  font-weight: 580;
+  right: 28px;
+  bottom: 26px;
+  color: rgba(255, 255, 255, .68);
+  font-size: .78rem;
+  font-weight: 600;
 }
 
 .smh-footer {
@@ -643,8 +657,8 @@ onMounted(() => {
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  color: rgba(255, 255, 255, .34);
-  font-size: .64rem;
+  color: rgba(255, 255, 255, .36);
+  font-size: .68rem;
 }
 
 .smh-footer > div {
@@ -662,7 +676,7 @@ onMounted(() => {
   }
 
   .smh-access-bar {
-    grid-template-columns: minmax(280px, 1.7fr) repeat(3, minmax(115px, .7fr));
+    grid-template-columns: minmax(300px, 1.7fr) repeat(3, minmax(120px, .7fr));
   }
 
   .smh-copy-button {
@@ -672,7 +686,12 @@ onMounted(() => {
   }
 
   .smh-process-card {
-    grid-template-columns: minmax(250px, .72fr) minmax(0, 1.78fr);
+    grid-template-columns: minmax(320px, .82fr) minmax(0, 1.18fr);
+  }
+
+  .smh-step {
+    grid-template-columns: 48px minmax(150px, .7fr) minmax(0, 1fr);
+    gap: 18px;
   }
 
   .smh-routing-card {
@@ -763,7 +782,7 @@ onMounted(() => {
 
   .smh-hero-description {
     margin-top: 16px;
-    font-size: .86rem;
+    font-size: .90rem;
   }
 
   .smh-hero-actions {
@@ -777,8 +796,8 @@ onMounted(() => {
 
   .smh-access-main,
   .smh-access-item {
-    min-height: 88px;
-    padding: 17px 18px;
+    min-height: 94px;
+    padding: 18px 19px;
   }
 
   .smh-access-item,
@@ -794,26 +813,34 @@ onMounted(() => {
 
   .smh-process-copy,
   .smh-routing-copy {
-    padding: 28px 24px 26px;
+    padding: 32px 26px 30px;
   }
 
   .smh-steps {
-    grid-template-columns: 1fr;
+    padding: 8px 22px 14px;
   }
 
-  .smh-step,
-  .smh-step + .smh-step {
-    min-height: 132px;
-    padding: 24px;
-    border-left: 0;
+  .smh-step {
+    min-height: 118px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 8px 14px;
+    padding: 22px 0;
   }
 
-  .smh-step + .smh-step {
-    border-top: 1px solid rgba(255, 255, 255, .07);
+  .smh-step > span {
+    grid-row: 1 / -1;
+    align-self: start;
+    padding-top: 4px;
   }
 
   .smh-step h3 {
-    margin-top: 28px;
+    font-size: 1.08rem;
+  }
+
+  .smh-step p {
+    grid-column: 2;
+    font-size: .82rem;
   }
 
   .smh-client-example {
@@ -825,7 +852,7 @@ onMounted(() => {
   }
 
   .smh-client-example code {
-    font-size: .74rem;
+    font-size: .78rem;
   }
 
   .smh-quick-grid {
@@ -837,8 +864,8 @@ onMounted(() => {
   }
 
   .smh-quick-card {
-    min-height: 150px;
-    padding: 22px;
+    min-height: 168px;
+    padding: 24px;
   }
 
   .smh-footer {
