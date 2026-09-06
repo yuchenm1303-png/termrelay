@@ -27,15 +27,19 @@
   box-shadow: none;
 }
 
-/* Reuse the homepage environment treatment so the wallpaper can participate
- * in the glass instead of being buried under the old 52–62% dark scrim. */
-.spg-page.smh-home .smh-environment::after,
-.spg-page.sw2-page .spg-environment::after {
+/* The homepage keeps its ambient treatment, but the workspace must not carry
+ * a page-wide dark veil. Workspace contrast comes from local glass surfaces. */
+.spg-page.smh-home .smh-environment::after {
   background: var(--spg-environment-overlay);
 }
 
+.spg-page.sw2-page .spg-environment::after {
+  content: none;
+  background: none;
+}
+
 .spg-page.sw2-page {
-  background: #21313c;
+  background: transparent;
 }
 
 /* Shell chrome uses the same material recipe but keeps edge semantics. */
