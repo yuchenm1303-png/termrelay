@@ -72,13 +72,16 @@ async function signOut() {
     <section class="workspace-main">
       <header class="workspace-topbar glass">
         <div class="workspace-topbar-left">
-          <button class="mobile-menu" type="button" @click="mobileOpen = true"><span></span><span></span><span></span></button>
-          <p><span>Smirel</span><b>/</b><span>{{ isAdmin ? 'Admin' : 'Workspace' }}</span><b>/</b><strong>{{ route.meta.title }}</strong></p>
+          <button class="mobile-menu" type="button" aria-label="打开导航" @click="mobileOpen = true"><span></span><span></span><span></span></button>
+          <div class="workspace-topbar-copy">
+            <span>{{ isAdmin ? 'ADMIN CONSOLE' : 'WORKSPACE' }}</span>
+            <strong>{{ route.meta.title }}</strong>
+          </div>
         </div>
         <div class="workspace-topbar-right">
-          <span class="endpoint-pill">api.smirel.com/v1</span>
+          <span class="endpoint-pill"><i>API</i><b>api.smirel.com/v1</b></span>
           <span v-if="isAdmin" class="admin-pill">ADMIN</span>
-          <RouterLink to="/profile" class="mini-avatar">{{ initials }}</RouterLink>
+          <RouterLink to="/profile" class="mini-avatar" aria-label="账户设置">{{ initials }}</RouterLink>
         </div>
       </header>
       <main class="workspace-canvas"><slot /></main>
