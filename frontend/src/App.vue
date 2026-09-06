@@ -5,6 +5,7 @@ import Toast from '@/components/common/Toast.vue'
 import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
+import SmirelHomeAccountRail from '@/components/home/SmirelHomeAccountRail.vue'
 import SmirelGlassHomeV1 from '@/views/SmirelGlassHomeV1.vue'
 import SmirelWorkspaceV2 from '@/views/SmirelWorkspaceV2.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
@@ -171,7 +172,10 @@ onMounted(async () => {
   <NavigationProgress />
 
   <template v-if="interfaceResetMode">
-    <SmirelGlassHomeV1 v-if="route.path === '/home'" />
+    <div v-if="route.path === '/home'" class="smh-home-composition">
+      <SmirelGlassHomeV1 />
+      <SmirelHomeAccountRail />
+    </div>
 
     <RouterView v-else v-slot="{ Component }">
       <SmirelUtilityShell v-if="useUtilityShell">
