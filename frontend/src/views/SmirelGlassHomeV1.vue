@@ -15,14 +15,74 @@
 
         <div class="smh-header-right">
           <nav class="smh-nav" aria-label="首页导航">
-            <router-link to="/model-plaza">模型价格</router-link>
+            <router-link to="/model-plaza">模型与价格</router-link>
             <router-link to="/key-usage">用量查询</router-link>
             <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer">接入文档</a>
           </nav>
+
           <span class="smh-status"><i></i>服务正常</span>
-          <router-link :to="accountPath" class="smh-login-link">
-            {{ isAuthenticated ? '进入控制台' : '登录' }}
-          </router-link>
+
+          <div v-if="isAuthenticated" ref="accountMenuRoot" class="smh-account-area">
+            <router-link :to="accountPath" class="smh-console-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                <rect x="4" y="4" width="6" height="6" rx="1.2" />
+                <rect x="14" y="4" width="6" height="6" rx="1.2" />
+                <rect x="4" y="14" width="6" height="6" rx="1.2" />
+                <rect x="14" y="14" width="6" height="6" rx="1.2" />
+              </svg>
+              <span>{{ authStore.isAdmin ? '管理控制台' : '控制台' }}</span>
+            </router-link>
+
+            <button
+              type="button"
+              class="smh-account-trigger"
+              aria-label="打开账户菜单"
+              aria-haspopup="menu"
+              :aria-expanded="accountMenuOpen"
+              @click="accountMenuOpen = !accountMenuOpen"
+            >
+              <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+              <span v-else>{{ accountInitial }}</span>
+              <svg class="smh-account-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 8l3.5 3.5L13.5 8" />
+              </svg>
+            </button>
+
+            <div v-if="accountMenuOpen" class="smh-account-menu" role="menu">
+              <div class="smh-account-summary">
+                <div class="smh-account-avatar smh-account-avatar--large">
+                  <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+                  <span v-else>{{ accountInitial }}</span>
+                </div>
+                <div class="smh-account-summary-copy">
+                  <strong>{{ accountLabel }}</strong>
+                  <span v-if="accountEmail">{{ accountEmail }}</span>
+                  <small>{{ authStore.isAdmin ? '管理员账户' : 'Smirel 账户' }}</small>
+                </div>
+              </div>
+
+              <div class="smh-account-menu-group">
+                <router-link to="/profile" role="menuitem" @click="accountMenuOpen = false">
+                  <span>账户设置</span><b>→</b>
+                </router-link>
+                <router-link to="/keys" role="menuitem" @click="accountMenuOpen = false">
+                  <span>API Key</span><b>→</b>
+                </router-link>
+                <router-link to="/usage" role="menuitem" @click="accountMenuOpen = false">
+                  <span>用量与日志</span><b>→</b>
+                </router-link>
+              </div>
+
+              <button type="button" class="smh-account-logout" role="menuitem" @click="handleLogout">
+                退出登录
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="smh-auth-actions">
+            <router-link to="/login" class="smh-login-link">登录</router-link>
+            <router-link to="/register" class="smh-register-link">注册账户</router-link>
+          </div>
         </div>
       </header>
 
@@ -164,7 +224,7 @@ client = OpenAI(
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
 import '@/styles/smirel-shared-glass-v1.css'
@@ -172,6 +232,8 @@ import '@/styles/smirel-shared-glass-v1.css'
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const copied = ref(false)
+const accountMenuOpen = ref(false)
+const accountMenuRoot = ref<HTMLElement | null>(null)
 
 const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Smirel')
 const siteLogo = computed(() => sanitizeUrl(
@@ -191,6 +253,10 @@ const accountPath = computed(() => isAuthenticated.value
 const startPath = computed(() => isAuthenticated.value ? accountPath.value : '/register')
 const keyPath = computed(() => isAuthenticated.value ? '/keys' : '/login')
 const currentYear = computed(() => new Date().getFullYear())
+const avatarUrl = computed(() => sanitizeUrl(authStore.user?.avatar_url || '', { allowRelative: true, allowDataUrl: true }))
+const accountLabel = computed(() => authStore.user?.username?.trim() || authStore.user?.email?.trim() || 'Smirel Account')
+const accountEmail = computed(() => authStore.user?.email?.trim() || '')
+const accountInitial = computed(() => accountLabel.value.charAt(0).toUpperCase() || 'S')
 
 async function copyBaseUrl() {
   try {
@@ -204,9 +270,32 @@ async function copyBaseUrl() {
   }
 }
 
+async function handleLogout() {
+  accountMenuOpen.value = false
+  await authStore.logout()
+}
+
+function handleDocumentPointer(event: MouseEvent) {
+  if (!accountMenuOpen.value) return
+  const target = event.target
+  if (target instanceof Node && accountMenuRoot.value?.contains(target)) return
+  accountMenuOpen.value = false
+}
+
+function handleDocumentKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') accountMenuOpen.value = false
+}
+
 onMounted(() => {
   authStore.checkAuth()
   if (!appStore.publicSettingsLoaded) void appStore.fetchPublicSettings()
+  document.addEventListener('click', handleDocumentPointer)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentPointer)
+  document.removeEventListener('keydown', handleDocumentKeydown)
 })
 </script>
 
@@ -233,51 +322,72 @@ onMounted(() => {
   width: min(1480px, calc(100vw - 72px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 24px 0 34px;
+  padding: 18px 0 34px;
 }
 
 .smh-header {
-  min-height: 58px;
+  position: sticky;
+  z-index: 30;
+  top: 16px;
+  min-height: 66px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
+  gap: 26px;
+  padding: 7px 9px 7px 16px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 18px;
+  background: rgba(5, 15, 24, .40);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .06),
+    0 14px 38px rgba(2, 8, 14, .10);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
+  backdrop-filter: blur(24px) saturate(125%);
 }
 
 .smh-header-right,
 .smh-nav,
-.smh-status {
+.smh-status,
+.smh-auth-actions,
+.smh-account-area {
   display: flex;
   align-items: center;
 }
 
 .smh-header-right {
-  gap: 18px;
+  min-width: 0;
+  flex: 1;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .smh-nav {
-  gap: 22px;
+  gap: 24px;
+  margin-right: 6px;
 }
 
 .smh-nav a,
 .smh-status,
-.smh-login-link {
-  color: rgba(255, 255, 255, .70);
+.smh-login-link,
+.smh-register-link,
+.smh-console-link,
+.smh-account-trigger {
   font-size: .78rem;
 }
 
-.smh-nav a,
-.smh-login-link {
-  transition: color .18s ease, background-color .18s ease;
+.smh-nav a {
+  color: rgba(255, 255, 255, .68);
+  transition: color .18s ease;
 }
 
-.smh-nav a:hover,
-.smh-login-link:hover {
+.smh-nav a:hover {
   color: rgba(255, 255, 255, .98);
 }
 
 .smh-status {
   gap: 7px;
+  padding: 0 4px;
+  color: rgba(255, 255, 255, .58);
   white-space: nowrap;
 }
 
@@ -289,17 +399,227 @@ onMounted(() => {
   box-shadow: 0 0 12px rgba(131, 239, 199, .42);
 }
 
-.smh-login-link {
-  min-height: 38px;
+.smh-auth-actions,
+.smh-account-area {
+  position: relative;
+  gap: 8px;
+}
+
+.smh-login-link,
+.smh-register-link,
+.smh-console-link,
+.smh-account-trigger {
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 15px;
   border: 1px solid rgba(255, 255, 255, .10);
-  border-radius: 999px;
-  background: rgba(6, 16, 25, .16);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  transition:
+    color .18s ease,
+    background-color .18s ease,
+    border-color .18s ease,
+    transform .18s ease;
+}
+
+.smh-login-link {
+  padding: 0 15px;
+  border-color: transparent;
+  color: rgba(255, 255, 255, .72);
+  background: transparent;
+}
+
+.smh-login-link:hover {
+  color: rgba(255, 255, 255, .98);
+  background: rgba(255, 255, 255, .05);
+}
+
+.smh-register-link,
+.smh-console-link {
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, .94);
+  background: rgba(255, 255, 255, .12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+.smh-register-link:hover,
+.smh-console-link:hover {
+  border-color: rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .18);
+  transform: translateY(-1px);
+}
+
+.smh-console-link svg {
+  width: 16px;
+  height: 16px;
+  opacity: .82;
+}
+
+.smh-account-trigger {
+  min-width: 54px;
+  gap: 4px;
+  padding: 4px 8px 4px 5px;
+  border-radius: 13px;
+  color: rgba(255, 255, 255, .86);
+  background: rgba(255, 255, 255, .08);
+  cursor: pointer;
+}
+
+.smh-account-trigger:hover,
+.smh-account-trigger[aria-expanded='true'] {
+  border-color: rgba(255, 255, 255, .17);
+  background: rgba(255, 255, 255, .14);
+}
+
+.smh-account-trigger > img,
+.smh-account-trigger > span,
+.smh-account-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(117, 178, 255, .20);
+  color: rgba(255, 255, 255, .98);
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.smh-account-trigger > img,
+.smh-account-avatar img {
+  object-fit: cover;
+}
+
+.smh-account-chevron {
+  width: 14px;
+  height: 14px;
+  opacity: .58;
+}
+
+.smh-account-menu {
+  position: absolute;
+  top: calc(100% + 11px);
+  right: 0;
+  width: 286px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 15px;
+  background: rgba(5, 15, 24, .78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .06),
+    0 22px 54px rgba(2, 8, 14, .26);
+  -webkit-backdrop-filter: blur(28px) saturate(128%);
+  backdrop-filter: blur(28px) saturate(128%);
+}
+
+.smh-account-summary {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+}
+
+.smh-account-avatar--large {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border-radius: 12px;
+  font-size: .92rem;
+}
+
+.smh-account-summary-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.smh-account-summary-copy strong,
+.smh-account-summary-copy span,
+.smh-account-summary-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smh-account-summary-copy strong {
+  color: rgba(255, 255, 255, .94);
+  font-size: .90rem;
+  font-weight: 650;
+}
+
+.smh-account-summary-copy span {
+  color: rgba(255, 255, 255, .52);
+  font-size: .72rem;
+}
+
+.smh-account-summary-copy small {
+  color: rgba(131, 239, 199, .72);
+  font-size: .65rem;
+  letter-spacing: .06em;
+}
+
+.smh-account-menu-group {
+  padding: 6px;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.smh-account-menu-group a {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 11px;
+  border-radius: 9px;
+  color: rgba(255, 255, 255, .76);
+  font-size: .80rem;
+  transition: background-color .16s ease, color .16s ease;
+}
+
+.smh-account-menu-group a:hover {
+  color: rgba(255, 255, 255, .98);
+  background: rgba(255, 255, 255, .07);
+}
+
+.smh-account-menu-group b {
+  color: rgba(255, 255, 255, .34);
+  font-weight: 500;
+}
+
+.smh-account-logout {
+  width: calc(100% - 12px);
+  min-height: 40px;
+  margin: 6px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255, 255, 255, .56);
+  font: inherit;
+  font-size: .78rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
+}
+
+.smh-account-logout:hover {
+  color: rgba(255, 255, 255, .92);
+  background: rgba(255, 255, 255, .06);
+}
+
+.smh-account-trigger:focus-visible,
+.smh-account-logout:focus-visible,
+.smh-register-link:focus-visible,
+.smh-console-link:focus-visible,
+.smh-login-link:focus-visible {
+  outline: 2px solid rgba(171, 215, 255, .72);
+  outline-offset: 2px;
 }
 
 .smh-hero {
@@ -704,6 +1024,10 @@ onMounted(() => {
     width: calc(100vw - 48px);
   }
 
+  .smh-nav {
+    gap: 17px;
+  }
+
   .smh-process-card {
     grid-template-columns: minmax(310px, .78fr) minmax(0, 1.22fr);
   }
@@ -755,11 +1079,50 @@ onMounted(() => {
 @media (max-width: 720px) {
   .smh-shell {
     width: calc(100vw - 28px);
-    padding-top: 16px;
+    padding-top: 12px;
+  }
+
+  .smh-header {
+    top: 10px;
+    min-height: 60px;
+    padding: 6px 7px 6px 12px;
+    border-radius: 16px;
+    gap: 12px;
   }
 
   .smh-status {
     display: none;
+  }
+
+  .smh-console-link {
+    width: 42px;
+    padding: 0;
+  }
+
+  .smh-console-link span {
+    display: none;
+  }
+
+  .smh-account-trigger {
+    min-width: 46px;
+    padding-right: 5px;
+  }
+
+  .smh-account-chevron {
+    display: none;
+  }
+
+  .smh-register-link {
+    padding: 0 12px;
+  }
+
+  .smh-login-link {
+    padding: 0 10px;
+  }
+
+  .smh-account-menu {
+    right: -1px;
+    width: min(286px, calc(100vw - 34px));
   }
 
   .smh-hero {
@@ -916,9 +1279,28 @@ onMounted(() => {
   }
 }
 
+@media (max-width: 520px) {
+  .spg-brand-copy {
+    display: none;
+  }
+
+  .smh-header-right {
+    gap: 5px;
+  }
+
+  .smh-login-link {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .smh-nav a,
   .smh-login-link,
+  .smh-register-link,
+  .smh-console-link,
+  .smh-account-trigger,
+  .smh-account-menu-group a,
+  .smh-account-logout,
   .smh-button,
   .smh-copy-button,
   .smh-quick-card {
