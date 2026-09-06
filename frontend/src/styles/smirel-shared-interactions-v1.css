@@ -117,6 +117,7 @@ html.relay-standalone.smirel-download-interactions :is(
 ) {
   opacity: var(--smirel-motion-disabled-opacity);
   cursor: not-allowed;
+  pointer-events: none;
   transform: none !important;
 }
 
