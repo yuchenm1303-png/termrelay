@@ -6,6 +6,7 @@ import NavigationProgress from '@/components/common/NavigationProgress.vue'
 import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import SmirelUtilityShell from '@/components/layout/SmirelUtilityShell.vue'
 import SmirelGlassHomeV1 from '@/views/SmirelGlassHomeV1.vue'
+import SmirelWorkspaceV2 from '@/views/SmirelWorkspaceV2.vue'
 import { resolveRouteDocumentTitle } from '@/router/title'
 import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
@@ -21,9 +22,9 @@ const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-// Secondary UI reset: keep legacy business code in the repository, but do not
-// render any secondary interface on the standalone Smirel frontend while the
-// new workspace is redesigned from a clean information architecture.
+// Secondary UI reset: legacy business pages stay in the repository, but the
+// standalone frontend only exposes secondary surfaces that are rebuilt from
+// the clean V2 information architecture. Everything else remains background-only.
 const interfaceResetMode = document.documentElement.classList.contains('relay-standalone')
 
 const UTILITY_PATHS = [
@@ -143,6 +144,7 @@ onMounted(async () => {
 <template>
   <template v-if="interfaceResetMode">
     <SmirelGlassHomeV1 v-if="route.path === '/home'" />
+    <SmirelWorkspaceV2 v-else-if="route.path === '/dashboard'" />
 
     <div v-else class="smg-shell" aria-hidden="true">
       <div class="smg-environment" style="z-index: 0"></div>
