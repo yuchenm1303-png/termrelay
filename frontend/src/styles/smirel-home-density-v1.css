@@ -4,44 +4,44 @@
  * Root cause: the homepage used touch-first dimensions for every hierarchy
  * level at the same time. Hero, controls, information cards and navigation all
  * read as primary content, which made the desktop UI feel uniformly enlarged.
- * This layer restores a compact SaaS / developer-platform rhythm without using
- * transform: scale() and without changing the underlying page architecture.
+ * This layer keeps desktop density close to mature SaaS / developer platforms
+ * without using transform: scale() and without shrinking mobile touch targets.
  */
 
 .smh-home .smh-shell {
-  width: min(1280px, calc(100vw - 88px));
-  padding-bottom: 22px;
+  width: min(1200px, calc(100vw - 96px));
+  padding-bottom: 18px;
 }
 
 /* Full-bleed chrome stays full width; only its internal density is reduced. */
 .smh-home .smh-header {
-  min-height: 68px;
+  min-height: 60px;
   padding:
-    7px
-    max(22px, calc((100vw - 1280px) / 2)) !important;
+    5px
+    max(20px, calc((100vw - 1200px) / 2)) !important;
 }
 
 .smh-home .smh-header .spg-brand-logo {
   width: auto;
-  max-width: 146px;
-  max-height: 38px;
+  max-width: 126px;
+  max-height: 32px;
 }
 
 .smh-home .smh-header .spg-brand-copy strong {
-  font-size: .82rem;
+  font-size: .76rem;
 }
 
 .smh-home .smh-header .spg-brand-copy small {
-  font-size: .56rem;
+  font-size: .52rem;
 }
 
 .smh-home .smh-header-right {
-  gap: 8px;
+  gap: 7px;
 }
 
 .smh-home .smh-nav {
-  gap: 18px;
-  margin-right: 2px;
+  gap: 15px;
+  margin-right: 0;
 }
 
 .smh-home .smh-nav a,
@@ -50,64 +50,64 @@
 .smh-home .smh-register-link,
 .smh-home .smh-console-link,
 .smh-home .smh-account-trigger {
-  font-size: .69rem;
+  font-size: .64rem;
 }
 
 .smh-home .smh-status {
-  gap: 5px;
+  gap: 4px;
 }
 
 .smh-home .smh-status i {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 .smh-home .smh-console-link,
 .smh-home .smh-account-trigger,
 .smh-home .smh-register-link,
 .smh-home .smh-login-link {
-  min-height: 36px;
+  min-height: 32px;
 }
 
 .smh-home .smh-console-link,
 .smh-home .smh-register-link {
-  padding-inline: 13px;
-  border-radius: 10px;
+  padding-inline: 11px;
+  border-radius: 9px;
 }
 
 .smh-home .smh-console-link svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .smh-home .smh-account-trigger {
-  min-width: 47px;
-  padding: 3px 6px 3px 4px;
-  border-radius: 11px;
+  min-width: 42px;
+  padding: 2px 5px 2px 3px;
+  border-radius: 10px;
 }
 
 .smh-home .smh-account-trigger > img,
 .smh-home .smh-account-trigger > span {
-  width: 28px;
-  height: 28px;
-  flex-basis: 28px;
-  border-radius: 8px;
-  font-size: .68rem;
+  width: 25px;
+  height: 25px;
+  flex-basis: 25px;
+  border-radius: 7px;
+  font-size: .62rem;
 }
 
 .smh-home .smh-account-chevron {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
-/* Hero is the only intentionally dominant region, but it no longer fills half a viewport. */
+/* Hero remains dominant, but no longer consumes a large desktop viewport. */
 .smh-home .smh-hero {
-  min-height: 258px;
-  padding: 22px 0 24px;
+  min-height: 220px;
+  padding: 18px 0 19px;
 }
 
 .smh-home .smh-hero-copy {
-  width: min(620px, 52vw);
+  width: min(560px, 49vw);
 }
 
 .smh-home .smh-kicker,
@@ -115,250 +115,250 @@
 .smh-home .smh-quick-label,
 .smh-home .smh-access-main > span,
 .smh-home .smh-access-item > span {
-  font-size: .60rem;
-  letter-spacing: .10em;
+  font-size: .56rem;
+  letter-spacing: .09em;
 }
 
 .smh-home .smh-hero h1 {
-  max-width: 620px;
-  margin-top: 8px;
-  font-size: clamp(2.25rem, 3.35vw, 3.05rem);
+  max-width: 560px;
+  margin-top: 6px;
+  font-size: clamp(2rem, 2.95vw, 2.70rem);
   line-height: 1.025;
-  letter-spacing: -.043em;
+  letter-spacing: -.040em;
 }
 
 .smh-home .smh-hero-description {
-  max-width: 540px;
-  margin-top: 12px;
-  font-size: .82rem;
-  line-height: 1.58;
+  max-width: 500px;
+  margin-top: 10px;
+  font-size: .76rem;
+  line-height: 1.52;
 }
 
 .smh-home .smh-hero-actions {
-  gap: 8px;
-  margin-top: 18px;
+  gap: 7px;
+  margin-top: 14px;
 }
 
 .smh-home .smh-button {
-  min-width: 124px;
-  min-height: 42px;
-  padding: 0 16px;
+  min-width: 112px;
+  min-height: 38px;
+  padding: 0 14px;
   border-radius: 7px;
-  font-size: .78rem;
+  font-size: .72rem;
 }
 
 .smh-home .smh-button--primary {
-  min-width: 136px;
+  min-width: 122px;
 }
 
-/* Endpoint information becomes a concise product strip instead of a hero card. */
+/* Endpoint information is a compact product strip, not another hero block. */
 .smh-home .smh-access-top {
-  min-height: 70px;
-  gap: 16px;
-  padding: 14px 20px;
+  min-height: 60px;
+  gap: 14px;
+  padding: 11px 17px;
 }
 
 .smh-home .smh-access-main code {
-  margin-top: 5px;
-  font-size: clamp(.90rem, 1vw, 1.02rem);
+  margin-top: 4px;
+  font-size: clamp(.84rem, .92vw, .94rem);
 }
 
 .smh-home .smh-copy-button {
-  min-width: 78px;
-  min-height: 32px;
-  padding-inline: 11px;
+  min-width: 70px;
+  min-height: 29px;
+  padding-inline: 9px;
   border-radius: 6px;
-  font-size: .66rem;
+  font-size: .61rem;
 }
 
 .smh-home .smh-access-item {
-  min-height: 54px;
-  padding: 10px 20px;
+  min-height: 46px;
+  padding: 8px 17px;
 }
 
 .smh-home .smh-access-item strong {
-  margin-top: 4px;
-  font-size: .76rem;
+  margin-top: 3px;
+  font-size: .70rem;
 }
 
-/* All secondary sections share one compact vertical rhythm. */
+/* All secondary sections share one restrained desktop rhythm. */
 .smh-home .smh-process-card,
 .smh-home .smh-routing-card,
 .smh-home .smh-quick-grid {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .smh-home .smh-process-card {
-  grid-template-columns: minmax(280px, .70fr) minmax(0, 1.30fr);
+  grid-template-columns: minmax(250px, .68fr) minmax(0, 1.32fr);
 }
 
 .smh-home .smh-process-copy,
 .smh-home .smh-routing-copy {
-  padding: 24px 28px 22px;
+  padding: 20px 23px 18px;
 }
 
 .smh-home .smh-process-copy {
-  min-height: 218px;
+  min-height: 188px;
 }
 
 .smh-home .smh-process-copy h2,
 .smh-home .smh-routing-copy h2 {
-  margin-top: 6px;
-  font-size: clamp(1.55rem, 2.15vw, 1.95rem);
+  margin-top: 5px;
+  font-size: clamp(1.40rem, 1.90vw, 1.72rem);
   line-height: 1.08;
-  letter-spacing: -.034em;
+  letter-spacing: -.030em;
 }
 
 .smh-home .smh-process-copy > p:last-of-type,
 .smh-home .smh-routing-copy > p:last-of-type {
-  margin-top: 10px;
-  font-size: .78rem;
-  line-height: 1.56;
+  margin-top: 8px;
+  font-size: .72rem;
+  line-height: 1.50;
 }
 
 .smh-home .smh-text-link {
-  margin-top: 16px;
-  font-size: .70rem;
+  margin-top: 13px;
+  font-size: .65rem;
 }
 
 .smh-home .smh-steps {
-  padding: 8px 20px;
+  padding: 6px 17px;
 }
 
 .smh-home .smh-step {
-  min-height: 66px;
-  grid-template-columns: 38px minmax(126px, .64fr) minmax(0, 1fr);
-  gap: 14px;
-  padding: 11px 6px;
+  min-height: 56px;
+  grid-template-columns: 34px minmax(112px, .62fr) minmax(0, 1fr);
+  gap: 11px;
+  padding: 9px 5px;
 }
 
 .smh-home .smh-step > span {
-  font-size: .61rem;
+  font-size: .57rem;
 }
 
 .smh-home .smh-step h3 {
-  font-size: .92rem;
+  font-size: .84rem;
 }
 
 .smh-home .smh-step p {
-  font-size: .74rem;
-  line-height: 1.44;
+  font-size: .68rem;
+  line-height: 1.38;
 }
 
 .smh-home .smh-routing-card {
-  grid-template-columns: minmax(0, .82fr) minmax(360px, 1.18fr);
+  grid-template-columns: minmax(0, .80fr) minmax(330px, 1.20fr);
 }
 
 .smh-home .smh-routing-copy {
-  min-height: 232px;
+  min-height: 200px;
 }
 
 .smh-home .smh-provider-line {
-  gap: 14px;
-  margin-top: 16px;
-  font-size: .74rem;
+  gap: 12px;
+  margin-top: 13px;
+  font-size: .68rem;
 }
 
 .smh-home .smh-provider-line span + span::before {
-  margin-right: 14px;
+  margin-right: 12px;
 }
 
 .smh-home .smh-client-example {
-  margin: 13px;
+  margin: 10px;
 }
 
 .smh-home .smh-client-example-head {
-  min-height: 36px;
-  padding-inline: 14px;
-  font-size: .61rem;
+  min-height: 32px;
+  padding-inline: 12px;
+  font-size: .57rem;
 }
 
 .smh-home .smh-client-example pre {
-  padding: 18px 20px 20px;
+  padding: 15px 17px 17px;
 }
 
 .smh-home .smh-client-example code {
-  font-size: .72rem;
-  line-height: 1.62;
+  font-size: .66rem;
+  line-height: 1.54;
 }
 
-/* Quick cards are compact utilities, not equal peers of the main product story. */
+/* Quick cards are compact utilities, not equal peers of the product story. */
 .smh-home .smh-quick-grid {
-  gap: 8px;
+  gap: 7px;
 }
 
 .smh-home .smh-quick-card {
-  min-height: 116px;
-  padding: 17px 18px 15px;
+  min-height: 96px;
+  padding: 14px 15px 13px;
 }
 
 .smh-home .smh-quick-card h3 {
-  margin-top: 11px;
-  font-size: 1rem;
+  margin-top: 9px;
+  font-size: .90rem;
 }
 
 .smh-home .smh-quick-card p {
-  max-width: 84%;
-  margin-top: 5px;
-  font-size: .72rem;
-  line-height: 1.42;
+  max-width: 82%;
+  margin-top: 4px;
+  font-size: .66rem;
+  line-height: 1.36;
 }
 
 .smh-home .smh-quick-card b {
-  right: 17px;
-  bottom: 14px;
-  font-size: .66rem;
+  right: 14px;
+  bottom: 12px;
+  font-size: .61rem;
 }
 
 .smh-home .smh-footer {
-  min-height: 48px;
-  font-size: .60rem;
+  min-height: 42px;
+  font-size: .56rem;
 }
 
 .smh-home .smh-footer > div {
-  gap: 16px;
+  gap: 13px;
 }
 
-/* Tablet keeps the compact character without reducing touch targets too far. */
+/* Tablet keeps the compact character without collapsing usable controls. */
 @media (max-width: 1180px) {
   .smh-home .smh-shell {
-    width: calc(100vw - 52px);
+    width: calc(100vw - 48px);
   }
 
   .smh-home .smh-header {
-    padding-inline: 26px !important;
+    padding-inline: 24px !important;
   }
 
   .smh-home .smh-hero-copy {
-    width: min(610px, 64vw);
+    width: min(560px, 62vw);
   }
 
   .smh-home .smh-process-card {
-    grid-template-columns: minmax(260px, .70fr) minmax(0, 1.30fr);
+    grid-template-columns: minmax(240px, .68fr) minmax(0, 1.32fr);
   }
 }
 
 @media (max-width: 980px) {
   .smh-home .smh-shell {
-    width: calc(100vw - 38px);
+    width: calc(100vw - 36px);
   }
 
   .smh-home .smh-header {
-    min-height: 64px;
-    padding-inline: 19px !important;
+    min-height: 62px;
+    padding-inline: 18px !important;
   }
 
   .smh-home .smh-header .spg-brand-logo {
-    max-height: 34px;
-    max-width: 132px;
+    max-height: 32px;
+    max-width: 124px;
   }
 
   .smh-home .smh-hero {
-    min-height: 286px;
+    min-height: 270px;
   }
 
   .smh-home .smh-hero-copy {
-    width: min(600px, 86vw);
+    width: min(580px, 86vw);
   }
 
   .smh-home .smh-process-card,
