@@ -448,6 +448,7 @@ function installFireworks(reducedMotion: boolean) {
     canvas.remove()
     return () => {}
   }
+  const ctx = context
 
   let bursts: FireworkBurst[] = []
   let raf = 0
@@ -458,7 +459,7 @@ function installFireworks(reducedMotion: boolean) {
     canvas.height = Math.round(window.innerHeight * ratio)
     canvas.style.width = `${window.innerWidth}px`
     canvas.style.height = `${window.innerHeight}px`
-    context.setTransform(ratio, 0, 0, ratio, 0, 0)
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
   }
 
   const createBurst = (x: number, y: number) => {
@@ -498,22 +499,22 @@ function installFireworks(reducedMotion: boolean) {
   }
 
   const drawTriangle = (particle: FireworkParticle) => {
-    context.save()
-    context.translate(particle.x, particle.y)
-    context.rotate(particle.angle * Math.PI / 180)
-    context.beginPath()
-    context.moveTo(0, -particle.radius)
-    context.lineTo(particle.radius * Math.sin(Math.PI / 3), particle.radius * Math.cos(Math.PI / 3))
-    context.lineTo(-particle.radius * Math.sin(Math.PI / 3), particle.radius * Math.cos(Math.PI / 3))
-    context.closePath()
-    context.fillStyle = particle.color
-    context.fill()
-    context.restore()
+    ctx.save()
+    ctx.translate(particle.x, particle.y)
+    ctx.rotate(particle.angle * Math.PI / 180)
+    ctx.beginPath()
+    ctx.moveTo(0, -particle.radius)
+    ctx.lineTo(particle.radius * Math.sin(Math.PI / 3), particle.radius * Math.cos(Math.PI / 3))
+    ctx.lineTo(-particle.radius * Math.sin(Math.PI / 3), particle.radius * Math.cos(Math.PI / 3))
+    ctx.closePath()
+    ctx.fillStyle = particle.color
+    ctx.fill()
+    ctx.restore()
   }
 
   function draw(now: number) {
     raf = 0
-    context.clearRect(0, 0, window.innerWidth, window.innerHeight)
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
 
     bursts = bursts.filter((burst) => {
       const elapsed = now - burst.startedAt
@@ -536,20 +537,20 @@ function installFireworks(reducedMotion: boolean) {
         alive = true
         const eased = easeOutExpo(circleProgress)
         const alphaProgress = Math.min(1, elapsed / burst.circle.alphaDuration)
-        context.save()
-        context.globalAlpha = 0.5 * (1 - alphaProgress)
-        context.beginPath()
-        context.arc(
+        ctx.save()
+        ctx.globalAlpha = 0.5 * (1 - alphaProgress)
+        ctx.beginPath()
+        ctx.arc(
           burst.circle.x,
           burst.circle.y,
           burst.circle.targetRadius * eased,
           0,
           Math.PI * 2,
         )
-        context.lineWidth = 6 * (1 - eased)
-        context.strokeStyle = 'rgb(233, 179, 237)'
-        context.stroke()
-        context.restore()
+        ctx.lineWidth = 6 * (1 - eased)
+        ctx.strokeStyle = 'rgb(233, 179, 237)'
+        ctx.stroke()
+        ctx.restore()
       }
 
       return alive
