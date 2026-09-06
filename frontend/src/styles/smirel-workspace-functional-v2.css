@@ -255,3 +255,66 @@
     display: none;
   }
 }
+
+/*
+ * Shell-wide separation policy.
+ *
+ * Structural hierarchy is carried by spacing, surface tone and glass depth —
+ * not by 1px frames. Borders remain available to real controls, status pills,
+ * icon affordances and focus states where an explicit boundary has meaning.
+ */
+.sw2-page {
+  --sw2-line: transparent;
+}
+
+.sw2-page .sw2-admin-overview {
+  --sao-line: transparent;
+  --sao-line-soft: transparent;
+}
+
+.sw2-page .sw2-route-content.smg-shell {
+  --smg-line: transparent;
+  --smg-line-strong: transparent;
+}
+
+.sw2-page .sw2-sidebar,
+.sw2-page .sw2-sidebar-brand-row,
+.sw2-page .sw2-sidebar-context,
+.sw2-page .sw2-side-item,
+.sw2-page .sw2-sidebar-foot,
+.sw2-page .sw2-account-card,
+.sw2-page .sw2-home-link,
+.sw2-page .sw2-topbar,
+.sw2-page .sw2-panel,
+.sw2-page .sw2-admin-module,
+.sw2-page .sw2-admin-loading,
+.sw2-page .sw2-admin-error,
+.sw2-page .sw2-module-head,
+.sw2-page .sw2-admin-health-grid,
+.sw2-page .sw2-admin-health-metric,
+.sw2-page .sw2-admin-health-foot,
+.sw2-page .sw2-admin-today-foot,
+.sw2-page .sw2-admin-health-foot > div,
+.sw2-page .sw2-admin-today-foot > div,
+.sw2-page .sw2-admin-metric,
+.sw2-page .sw2-admin-monitor-canvas,
+.sw2-page .sw2-admin-monitor-insight ul,
+.sw2-page .sw2-admin-trend,
+.sw2-page .sw2-admin-trend-copy,
+.sw2-page .sw2-admin-diagnostic,
+.sw2-page .sw2-route-content .smg-surface,
+.sw2-page .sw2-route-content .smg-data-panel,
+.sw2-page .sw2-route-content .smg-page-toolbar,
+.sw2-page .sw2-route-content .smg-sidebar-context,
+.sw2-page .sw2-route-content .smg-sidebar-head,
+.sw2-page .sw2-route-content .smg-sidebar-foot,
+.sw2-page .sw2-route-content .smg-nav-item,
+.sw2-page .sw2-route-content .card,
+.sw2-page .sw2-route-content th,
+.sw2-page .sw2-route-content td {
+  border-color: transparent !important;
+}
+
+.sw2-page .sw2-admin-metric-rule {
+  display: none;
+}
