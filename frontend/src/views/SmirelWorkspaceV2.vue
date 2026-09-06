@@ -117,6 +117,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore, useAuthStore } from '@/stores'
 import { sanitizeUrl } from '@/utils/url'
+import { isSmirelUiPreview } from '@/utils/smirelUiPreview'
 import { buildWorkspaceNavigation } from '@/components/layout/smirelWorkspaceNavigation'
 import SmirelAdminOverviewV2 from '@/views/admin/SmirelAdminOverviewV2.vue'
 import '@/styles/smirel-secondary-v2.css'
@@ -142,6 +143,8 @@ const siteLogo = computed(() => sanitizeUrl(
 ))
 const avatarUrl = computed(() => sanitizeUrl(user.value?.avatar_url || '', { allowRelative: true, allowDataUrl: true }))
 const displayName = computed(() => {
+  if (isSmirelUiPreview) return '预览管理员'
+
   const username = user.value?.username?.trim()
   if (username) return username
 
@@ -150,7 +153,10 @@ const displayName = computed(() => {
 
   return authStore.isAdmin ? 'Administrator' : 'Account'
 })
-const accountLabel = computed(() => user.value?.email || (authStore.isAdmin ? '平台管理员' : '用户账户'))
+const accountLabel = computed(() => {
+  if (isSmirelUiPreview) return '界面预览 · 非真实账号'
+  return user.value?.email || (authStore.isAdmin ? '平台管理员' : '用户账户')
+})
 const initials = computed(() => (displayName.value || 'S').trim().slice(0, 1).toUpperCase())
 const isAdminWorkspace = computed(() => authStore.isAdmin || route.path.startsWith('/admin'))
 const showAdminOverview = computed(() => isAdminWorkspace.value && route.path === '/admin/dashboard')
