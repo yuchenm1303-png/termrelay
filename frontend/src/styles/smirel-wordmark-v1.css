@@ -1,17 +1,17 @@
 /*
  * First-party Smirel wordmark sizing.
  *
- * The supplied mark is a horizontal 3:1 wordmark, while the inherited
- * branding slots are square icon containers. Keep these overrides scoped to
- * the first-party Smirel asset so custom branding keeps the original layout.
+ * The standalone relay always pins its own Smirel brand asset, so these rules
+ * can target the standalone brand chrome directly instead of coupling layout
+ * to a particular filename or relying on :has() support.
  */
 
-html.relay-standalone .smg-sidebar .smg-brand:has(.smg-brand-mark img[src*="smirel-logo.svg"]) {
+html.relay-standalone .smg-sidebar .smg-brand {
   flex: 1 1 auto;
   gap: 0;
 }
 
-html.relay-standalone .smg-sidebar .smg-brand:has(.smg-brand-mark img[src*="smirel-logo.svg"]) .smg-brand-mark {
+html.relay-standalone .smg-sidebar .smg-brand-mark {
   width: 126px;
   height: 42px;
   flex: 0 0 126px;
@@ -21,21 +21,21 @@ html.relay-standalone .smg-sidebar .smg-brand:has(.smg-brand-mark img[src*="smir
   background: transparent;
 }
 
-html.relay-standalone .smg-sidebar .smg-brand:has(.smg-brand-mark img[src*="smirel-logo.svg"]) .smg-brand-mark img {
+html.relay-standalone .smg-sidebar .smg-brand-mark img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-html.relay-standalone .smg-sidebar .smg-brand:has(.smg-brand-mark img[src*="smirel-logo.svg"]) .smg-brand-copy {
+html.relay-standalone .smg-sidebar .smg-brand-copy {
   display: none;
 }
 
-html.relay-standalone .spg-brand:has(.spg-brand-logo[src*="smirel-logo.svg"]) {
+html.relay-standalone .spg-brand {
   gap: 0;
 }
 
-html.relay-standalone .spg-brand:has(.spg-brand-logo[src*="smirel-logo.svg"]) .spg-brand-logo {
+html.relay-standalone .spg-brand .spg-brand-logo {
   width: 132px;
   height: 44px;
   flex: 0 0 132px;
@@ -43,12 +43,12 @@ html.relay-standalone .spg-brand:has(.spg-brand-logo[src*="smirel-logo.svg"]) .s
   object-fit: contain;
 }
 
-html.relay-standalone .spg-brand:has(.spg-brand-logo[src*="smirel-logo.svg"]) .spg-brand-copy {
+html.relay-standalone .spg-brand .spg-brand-copy {
   display: none;
 }
 
 @media (max-width: 720px) {
-  html.relay-standalone .spg-brand:has(.spg-brand-logo[src*="smirel-logo.svg"]) .spg-brand-logo {
+  html.relay-standalone .spg-brand .spg-brand-logo {
     width: 118px;
     height: 39px;
     flex-basis: 118px;

@@ -1,7 +1,7 @@
 import type { PublicSettings } from '@/types'
 
 export const SMIREL_SITE_NAME = 'Smirel API'
-export const SMIREL_SITE_LOGO = '/smirel-logo.svg'
+export const SMIREL_SITE_LOGO = '/smirel-logo.png'
 export const SMIREL_SITE_SUBTITLE = 'Unified AI API Gateway'
 export const SMIREL_API_BASE_URL = 'https://api.smirel.com/v1'
 
