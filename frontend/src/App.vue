@@ -29,7 +29,11 @@ const showRebuiltSecondary = computed(() =>
   interfaceResetMode
   && (
     rebuiltSecondaryPaths.has(route.path)
-    || (route.path === '/model-plaza' && route.query.embedded === '1')
+    || (
+      route.path === '/model-plaza'
+      && route.query.embedded === '1'
+      && authStore.isAuthenticated
+    )
   ),
 )
 
