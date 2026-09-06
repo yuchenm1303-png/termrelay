@@ -14,6 +14,7 @@ import './styles/smirel-glass-pages-v5.css'
 import './styles/smirel-glass-controls-v5.css'
 import './styles/smirel-glass-dashboard-v5.css'
 import './styles/smirel-glass-auth-v5.css'
+import './styles/smirel-wordmark-v1.css'
 
 function applyStandaloneRelayShell(){if(!isStandaloneSmirelFrontend())return;document.documentElement.classList.add('relay-standalone');applyStandaloneSmirelPreferences()}
 async function applyStandaloneRelayBrand(appStore:ReturnType<typeof useAppStore>){if(!isStandaloneSmirelFrontend())return;const loadedSettings=await appStore.fetchPublicSettings();const sourceSettings=loadedSettings||appStore.cachedPublicSettings;if(sourceSettings){const brandedSettings=applyStandaloneSmirelPublicSettings(sourceSettings);appStore.cachedPublicSettings=brandedSettings;window.__APP_CONFIG__={...brandedSettings}}appStore.siteName=SMIREL_SITE_NAME;appStore.siteLogo=SMIREL_SITE_LOGO;appStore.apiBaseUrl=SMIREL_API_BASE_URL;appStore.publicSettingsLoaded=true}
