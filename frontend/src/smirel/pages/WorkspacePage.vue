@@ -23,6 +23,17 @@ const isDashboard = computed(() => feature.value === 'dashboard')
 const isKeys = computed(() => feature.value === 'keys')
 const isUsage = computed(() => feature.value === 'usage')
 const isProfile = computed(() => feature.value === 'profile')
+const accountBalance = computed(() => Number(state.user?.balance || 0))
+const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
+const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
+
+const pageDescription = computed(() => {
+  if (isDashboard.value) return '账户资产、访问凭证与今日 API 运行情况。'
+  if (isKeys.value) return '按项目创建和管理访问 Smirel API 的独立凭证。'
+  if (isUsage.value) return '查看最近请求的模型、Endpoint、Token 与实际费用。'
+  if (isProfile.value) return '查看当前账户身份、权限、状态与余额信息。'
+  return '在统一工作台中管理这一项 Smirel 服务。'
+})
 
 async function load() {
   error.value = ''
@@ -74,34 +85,117 @@ onMounted(() => void load())
 
 <template>
   <section class="workspace-page">
-    <header class="page-heading"><div><span class="eyebrow">{{ feature.toUpperCase() }}</span><h1>{{ title }}</h1><p v-if="isDashboard">账户概览、请求量、Token 与成本。</p><p v-else-if="isKeys">管理调用 Smirel API 的项目凭证。</p><p v-else-if="isUsage">查看最近请求、模型、Token 和费用。</p><p v-else-if="isProfile">管理当前账户信息。</p><p v-else>Smirel 独立前端功能模块。</p></div><button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? '刷新中…' : '刷新' }}</button></header>
+    <header class="page-heading">
+      <div>
+        <span class="eyebrow">{{ feature.toUpperCase() }}</span>
+        <h1>{{ title }}</h1>
+        <p>{{ pageDescription }}</p>
+      </div>
+      <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? '刷新中…' : '刷新数据' }}</button>
+    </header>
+
     <p v-if="error" class="inline-error">{{ error }}</p>
 
     <template v-if="isDashboard">
+      <section class="glass account-summary">
+        <div class="summary-balance">
+          <span>AVAILABLE BALANCE</span>
+          <strong>${{ accountBalance.toFixed(2) }}</strong>
+          <small>当前账户可用余额</small>
+        </div>
+        <div class="summary-meta">
+          <span>PRODUCTION ENDPOINT</span>
+          <strong>https://api.smirel.com/v1</strong>
+          <small>OpenAI compatible · Bearer API Key</small>
+        </div>
+        <RouterLink to="/purchase" class="primary-button">购买服务</RouterLink>
+      </section>
+
       <div class="metric-grid">
-        <article class="glass metric-card"><span>今日请求</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong><small>requests</small></article>
-        <article class="glass metric-card"><span>今日 Token</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong><small>tokens</small></article>
-        <article class="glass metric-card"><span>今日费用</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong><small>actual cost</small></article>
-        <article class="glass metric-card"><span>有效密钥</span><strong>{{ stats?.active_api_keys || 0 }} / {{ stats?.total_api_keys || 0 }}</strong><small>API keys</small></article>
+        <article class="glass metric-card tone-blue"><span>今日请求</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong><small>REQUESTS TODAY</small></article>
+        <article class="glass metric-card tone-violet"><span>今日 Token</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong><small>TOKENS TODAY</small></article>
+        <article class="glass metric-card tone-amber"><span>今日费用</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong><small>ACTUAL COST</small></article>
+        <article class="glass metric-card tone-green"><span>有效密钥</span><strong>{{ stats?.active_api_keys || 0 }} / {{ stats?.total_api_keys || 0 }}</strong><small>ACTIVE API KEYS</small></article>
       </div>
-      <div class="glass information-panel"><span class="eyebrow">WORKSPACE</span><h2>统一入口，独立管理。</h2><p>Base URL 固定为 <code>https://api.smirel.com/v1</code>。每个项目使用独立 API Key，方便停用、追踪和分账。</p></div>
+
+      <div class="dashboard-grid">
+        <section class="glass information-panel">
+          <span class="panel-kicker">GET STARTED</span>
+          <h2>一个 Base URL，管理全部模型调用。</h2>
+          <p>在客户端中将 Base URL 设置为 <code>https://api.smirel.com/v1</code>，再使用独立 API Key 完成鉴权。项目之间分开建 Key，后续停用、追踪和分账都会更清楚。</p>
+        </section>
+        <section class="glass quick-links-panel">
+          <span class="panel-kicker">QUICK ACCESS</span>
+          <h2>常用入口</h2>
+          <p>直接进入最常用的控制台模块。</p>
+          <div class="quick-link-list">
+            <RouterLink to="/keys">API Keys<span>管理凭证</span></RouterLink>
+            <RouterLink to="/usage">Usage<span>请求与费用</span></RouterLink>
+            <RouterLink to="/model-plaza">Models<span>模型与价格</span></RouterLink>
+          </div>
+        </section>
+      </div>
     </template>
 
     <template v-else-if="isKeys">
-      <div class="glass action-strip"><input v-model="newKeyName" placeholder="新密钥名称，例如 Production" @keydown.enter="createKey" /><button class="primary-button" type="button" :disabled="loading" @click="createKey">创建 API Key</button></div>
-      <div class="glass data-table"><div class="table-head"><span>名称</span><span>密钥</span><span>状态</span><span>创建时间</span><span></span></div><div v-for="item in keys" :key="item.id" class="table-row"><strong>{{ item.name || `Key #${item.id}` }}</strong><code>{{ item.key || '••••••••' }}</code><span><i class="status-dot"></i>{{ item.status || 'active' }}</span><span>{{ item.created_at || '—' }}</span><button type="button" @click="removeKey(item.id)">删除</button></div><p v-if="!keys.length && !loading" class="empty-state">还没有 API Key。</p></div>
+      <section class="glass action-strip">
+        <input v-model="newKeyName" aria-label="API Key 名称" placeholder="新密钥名称，例如 Production" @keydown.enter="createKey" />
+        <button class="primary-button" type="button" :disabled="loading" @click="createKey">创建 API Key</button>
+      </section>
+      <div class="glass data-table">
+        <div class="table-toolbar">
+          <div><strong>API Keys</strong><span class="table-count">{{ keys.length }}</span></div>
+          <span>PROJECT CREDENTIALS</span>
+        </div>
+        <div class="table-head"><span>名称</span><span>密钥</span><span>状态</span><span>创建时间</span><span></span></div>
+        <div v-for="item in keys" :key="item.id" class="table-row">
+          <strong>{{ item.name || `Key #${item.id}` }}</strong>
+          <code>{{ item.key || '••••••••' }}</code>
+          <span><i class="status-dot"></i>{{ item.status || 'active' }}</span>
+          <span>{{ item.created_at || '—' }}</span>
+          <button type="button" @click="removeKey(item.id)">删除</button>
+        </div>
+        <p v-if="!keys.length && !loading" class="empty-state">还没有 API Key。创建第一把项目密钥后即可开始调用。</p>
+      </div>
     </template>
 
     <template v-else-if="isUsage">
-      <div class="glass data-table usage-table"><div class="table-head"><span>时间</span><span>模型</span><span>Endpoint</span><span>Token</span><span>费用</span></div><div v-for="(item, index) in usage" :key="item.id || index" class="table-row"><span>{{ item.created_at || '—' }}</span><strong>{{ item.model || '—' }}</strong><code>{{ item.endpoint || '—' }}</code><span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span><span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span></div><p v-if="!usage.length && !loading" class="empty-state">暂无用量记录。</p></div>
+      <section class="glass table-toolbar">
+        <div><strong>最近请求</strong><span class="table-count">{{ usage.length }}</span></div>
+        <div><span>{{ visibleUsageTokens.toLocaleString() }} TOKENS</span><span>${{ visibleUsageCost.toFixed(4) }} COST</span></div>
+      </section>
+      <div class="glass data-table usage-table">
+        <div class="table-head"><span>时间</span><span>模型</span><span>Endpoint</span><span>Token</span><span>费用</span></div>
+        <div v-for="(item, index) in usage" :key="item.id || index" class="table-row">
+          <span>{{ item.created_at || '—' }}</span>
+          <strong>{{ item.model || '—' }}</strong>
+          <code>{{ item.endpoint || '—' }}</code>
+          <span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
+          <span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span>
+        </div>
+        <p v-if="!usage.length && !loading" class="empty-state">暂无用量记录。成功发送请求后，调用明细会显示在这里。</p>
+      </div>
     </template>
 
     <template v-else-if="isProfile">
-      <div class="glass profile-panel"><div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div><div><span>ACCOUNT</span><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div><dl><div><dt>角色</dt><dd>{{ state.user?.role === 'admin' ? '管理员' : '用户' }}</dd></div><div><dt>状态</dt><dd>{{ state.user?.status || 'active' }}</dd></div><div><dt>余额</dt><dd>${{ Number(state.user?.balance || 0).toFixed(2) }}</dd></div></dl></div>
+      <section class="glass profile-panel">
+        <div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div>
+        <div><span>ACCOUNT</span><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div>
+        <dl>
+          <div><dt>角色</dt><dd>{{ state.user?.role === 'admin' ? '管理员' : '用户' }}</dd></div>
+          <div><dt>状态</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
+          <div><dt>可用余额</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
+        </dl>
+      </section>
     </template>
 
     <template v-else>
-      <div class="glass information-panel module-panel"><span class="eyebrow">SMIREL MODULE</span><h2>{{ title }}</h2><p>这个入口已经完全脱离旧前端，当前只连接 Smirel 自己的页面层。后端业务能力保持原样，具体操作面板会继续在这里补齐，而不会重新接回任何 legacy UI。</p><div class="module-contract"><span>UI</span><strong>Smirel Native</strong><span>Backend</span><strong>TermRelay API</strong></div></div>
+      <section class="glass information-panel module-panel">
+        <span class="eyebrow">SMIREL SERVICE</span>
+        <h2>{{ title }}</h2>
+        <p>这个模块已经进入新的商业黑色工作台结构。页面会保持统一的导航、信息层级、表格、表单和状态语言，具体业务操作继续复用 TermRelay 后端能力，不重新复制业务逻辑。</p>
+        <div class="module-contract"><span>Interface</span><strong>Smirel Commercial</strong><span>Service</span><strong>TermRelay API</strong></div>
+      </section>
     </template>
   </section>
 </template>
