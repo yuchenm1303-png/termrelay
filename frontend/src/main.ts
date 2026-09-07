@@ -15,6 +15,7 @@ import './smirel/styles/models-commercial.css'
 import './smirel/styles/model-catalog-workspace.css'
 import './smirel/styles/user-usage-polish.css'
 import './smirel/styles/provider-logos.css'
+import './smirel/styles/model-capability-filter.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
