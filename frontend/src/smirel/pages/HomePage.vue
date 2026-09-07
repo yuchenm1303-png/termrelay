@@ -6,7 +6,7 @@ import '../styles/home-layout.css'
 const { state, isAuthenticated, isAdmin, logout } = useSession()
 const copied = ref(false)
 const menuOpen = ref(false)
-const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
+const logoUrl = `${import.meta.env.BASE_URL}smirel-mark.svg`
 const apiBase = 'https://api.smirel.com/v1'
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
