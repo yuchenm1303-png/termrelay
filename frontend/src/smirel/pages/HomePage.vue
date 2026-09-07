@@ -241,6 +241,128 @@ async function signOut() {
   font-size: .75rem;
 }
 
+/*
+ * The workspace used to be a split editorial/table layout. That forced the
+ * headline into a narrow sticky column and made the three destinations read
+ * like rows in a settings table. Keep one reading axis instead: copy first,
+ * then a single three-column navigation surface underneath it.
+ */
+.workspace-section {
+  display: block !important;
+  padding: 112px 0 118px !important;
+}
+
+.workspace-copy {
+  position: static !important;
+  max-width: 860px;
+}
+
+.workspace-copy h2 {
+  max-width: 860px;
+  font-size: clamp(2.65rem, 4.25vw, 4rem) !important;
+  line-height: 1.06 !important;
+}
+
+.workspace-copy h2 br {
+  display: none;
+}
+
+.workspace-copy p {
+  max-width: 640px !important;
+  margin-top: 21px !important;
+  font-size: .95rem !important;
+}
+
+.workspace-links {
+  margin-top: 52px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #272c34 !important;
+  border-radius: 14px;
+  background: #0c0e12;
+}
+
+.workspace-links a {
+  position: relative;
+  min-height: 224px !important;
+  padding: 28px 30px 26px !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  border: 0 !important;
+  border-right: 1px solid #272c34 !important;
+  background: transparent;
+  transition: background-color .18s ease, color .18s ease !important;
+}
+
+.workspace-links a:last-child {
+  border-right: 0 !important;
+}
+
+.workspace-links a::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: transparent;
+  transition: background-color .18s ease;
+}
+
+.workspace-links a:hover {
+  background: #11141a !important;
+}
+
+.workspace-links a:hover::before {
+  background: #2499e6;
+}
+
+.workspace-links span {
+  padding-left: 0 !important;
+  color: #5c6673 !important;
+  font-size: .68rem !important;
+  letter-spacing: .1em !important;
+}
+
+.workspace-links strong {
+  margin-top: 30px;
+  color: #f0f2f5 !important;
+  font-size: 1.18rem !important;
+  font-weight: 640 !important;
+  letter-spacing: -.018em;
+}
+
+.workspace-links p {
+  max-width: 280px;
+  margin: 12px 0 0 !important;
+  color: #777f8a !important;
+  font-size: .83rem !important;
+  line-height: 1.65 !important;
+}
+
+.workspace-links b {
+  width: 34px;
+  height: 34px;
+  margin-top: auto;
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #2c323b;
+  border-radius: 50%;
+  color: #8695a3 !important;
+  font-size: .95rem !important;
+  font-weight: 500 !important;
+  transition: border-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.workspace-links a:hover b {
+  border-color: #3b4652;
+  color: #d7e7f2 !important;
+  transform: translateX(2px);
+}
+
 .closing-cta {
   position: relative;
   min-height: 280px;
@@ -372,6 +494,35 @@ async function signOut() {
 }
 
 @media (max-width: 820px) {
+  .workspace-section {
+    padding: 84px 0 92px !important;
+  }
+
+  .workspace-links {
+    margin-top: 40px;
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-links a {
+    min-height: 168px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #272c34 !important;
+  }
+
+  .workspace-links a:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .workspace-links strong {
+    margin-top: 22px;
+  }
+
+  .workspace-links b {
+    position: absolute;
+    right: 26px;
+    bottom: 24px;
+  }
+
   .closing-cta {
     min-height: 0;
     padding: 38px 32px;
@@ -391,6 +542,29 @@ async function signOut() {
 }
 
 @media (max-width: 560px) {
+  .workspace-section {
+    padding: 72px 0 80px !important;
+  }
+
+  .workspace-copy h2 {
+    font-size: 2.35rem !important;
+  }
+
+  .workspace-links {
+    margin-top: 34px;
+    border-radius: 12px;
+  }
+
+  .workspace-links a {
+    min-height: 158px !important;
+    padding: 24px 22px !important;
+  }
+
+  .workspace-links b {
+    right: 20px;
+    bottom: 20px;
+  }
+
   .closing-cta {
     padding: 32px 24px;
     border-radius: 12px;
