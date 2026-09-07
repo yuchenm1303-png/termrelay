@@ -16,8 +16,8 @@ export const userNavigation: NavItem[] = [
   { path: '/monitor', name: 'Monitor', label: '服务状态', feature: 'monitor', short: 'ST' },
 
   { path: '/wallet', name: 'Wallet', label: '我的钱包', feature: 'wallet', short: 'WL' },
-  { path: '/subscriptions', name: 'Subscriptions', label: '我的订阅', feature: 'subscriptions', short: 'SB' },
-  { path: '/purchase', name: 'Purchase', label: '充值 / 购买', feature: 'purchase', short: 'BY' },
+  { path: '/subscriptions', name: 'Subscriptions', label: '充值/订阅', feature: 'subscriptions', short: 'SB' },
+  { path: '/purchase', name: 'Purchase', label: '购买服务', feature: 'purchase', short: 'BY' },
   { path: '/orders', name: 'Orders', label: '我的订单', feature: 'orders', short: 'OR' },
   { path: '/redeem', name: 'Redeem', label: '兑换码', feature: 'redeem', short: 'RD' },
 
