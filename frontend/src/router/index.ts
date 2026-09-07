@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomePage from '../smirel/pages/HomePage.vue'
 import AuthPage from '../smirel/pages/AuthPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
+import ApiKeysPage from '../smirel/pages/ApiKeysPage.vue'
 import UserUsagePage from '../smirel/pages/UserUsagePage.vue'
 import UserBillingRoutePage from '../smirel/pages/UserBillingRoutePage.vue'
 import UserOrdersPage from '../smirel/components/UserOrdersPage.vue'
@@ -20,13 +21,15 @@ const workspaceRoutes: RouteRecordRaw[] = [
   ...[...userNavigation, ...userSecondaryRoutes].map((item) => ({
     path: item.path,
     name: item.name,
-    component: item.path === '/usage'
-      ? UserUsagePage
-      : item.path === '/subscriptions'
-        ? UserBillingRoutePage
-        : item.path === '/orders'
-          ? UserOrdersPage
-          : WorkspacePage,
+    component: item.path === '/keys'
+      ? ApiKeysPage
+      : item.path === '/usage'
+        ? UserUsagePage
+        : item.path === '/subscriptions'
+          ? UserBillingRoutePage
+          : item.path === '/orders'
+            ? UserOrdersPage
+            : WorkspacePage,
     meta: { shell: 'workspace', requiresAuth: true, title: item.label, feature: item.feature },
   })),
   ...adminNavigation.map((item) => ({
