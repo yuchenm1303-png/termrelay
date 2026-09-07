@@ -78,42 +78,58 @@ onMounted(() => void load())
 
 <template>
   <section class="workspace-page admin-overview">
-    <header class="page-heading">
-      <div><h1>控制台</h1><p>查看平台最重要的运行数据。</p></div>
-      <button class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? '刷新中…' : '刷新' }}</button>
+    <header class="page-heading admin-page-heading">
+      <div>
+        <h1>控制台</h1>
+        <p>平台核心数据与服务状态。</p>
+      </div>
+      <button class="ghost-button admin-refresh" type="button" :disabled="loading" @click="load">
+        {{ loading ? '刷新中…' : '刷新数据' }}
+      </button>
     </header>
 
     <p v-if="error" class="inline-error">{{ error }}</p>
 
     <div class="admin-summary-grid">
-      <article class="glass metric-card">
+      <article class="glass metric-card admin-metric-card">
         <span>活跃用户</span>
         <strong>{{ compact(stats.active_users) }}</strong>
-        <small>共 {{ compact(stats.total_users) }} 位用户</small>
+        <small>总用户 {{ compact(stats.total_users) }}</small>
       </article>
-      <article class="glass metric-card">
+      <article class="glass metric-card admin-metric-card">
         <span>上游账户</span>
         <strong>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }}</strong>
-        <small>当前可用账户</small>
+        <small>{{ stats.active_accounts || 0 }} 个账户可用</small>
       </article>
-      <article class="glass metric-card">
+      <article class="glass metric-card admin-metric-card">
         <span>今日请求</span>
         <strong>{{ compact(stats.today_requests) }}</strong>
-        <small>RPM {{ compact(stats.rpm) }}</small>
+        <small>当前 RPM {{ compact(stats.rpm) }}</small>
       </article>
     </div>
 
-    <section class="glass admin-status-panel">
-      <header>
-        <div><h2>运行状态</h2><p>核心服务当前正常。</p></div>
-        <span class="service-ok"><i></i>正常</span>
-      </header>
-      <div class="admin-status-grid">
-        <div><span>今日 Token</span><strong>{{ compact(stats.today_tokens) }}</strong></div>
-        <div><span>今日成本</span><strong>{{ money(stats.today_actual_cost) }}</strong></div>
-        <div><span>平均响应</span><strong>{{ duration(stats.average_duration_ms) }}</strong></div>
+    <section class="glass admin-health-strip">
+      <div class="admin-health-summary">
+        <span>服务状态</span>
+        <strong><i></i>运行正常</strong>
+        <small>核心服务可用</small>
       </div>
-      <footer>API Keys {{ compact(stats.total_api_keys) }} · 数据实时更新</footer>
+      <div class="admin-health-stat">
+        <span>今日 Token</span>
+        <strong>{{ compact(stats.today_tokens) }}</strong>
+      </div>
+      <div class="admin-health-stat">
+        <span>今日成本</span>
+        <strong>{{ money(stats.today_actual_cost) }}</strong>
+      </div>
+      <div class="admin-health-stat">
+        <span>平均响应</span>
+        <strong>{{ duration(stats.average_duration_ms) }}</strong>
+      </div>
+      <div class="admin-health-stat">
+        <span>API Keys</span>
+        <strong>{{ compact(stats.total_api_keys) }}</strong>
+      </div>
     </section>
   </section>
 </template>
