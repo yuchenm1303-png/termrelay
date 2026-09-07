@@ -129,7 +129,7 @@ onMounted(() => void load())
           <span>活跃用户</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="users" /></span>
-            <b class="admin-metric-arrow">↗</b>
+            <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
           </span>
         </div>
         <strong>{{ compact(stats.active_users) }}</strong>
@@ -145,7 +145,7 @@ onMounted(() => void load())
           <span>上游账户</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="server" /></span>
-            <b class="admin-metric-arrow">↗</b>
+            <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
           </span>
         </div>
         <strong>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }}</strong>
@@ -161,7 +161,7 @@ onMounted(() => void load())
           <span class="admin-live-label"><i></i>今日请求</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="activity" /></span>
-            <b class="admin-metric-arrow">↗</b>
+            <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
           </span>
         </div>
         <strong>{{ compact(stats.today_requests) }}</strong>
@@ -383,11 +383,32 @@ onMounted(() => void load())
 .admin-metric-head > span:first-child { color: #8b939e; font-size: .8rem; font-weight: 590; }
 .admin-live-label { display: inline-flex; align-items: center; gap: 8px; }
 .admin-live-label i { width: 5px; height: 5px; box-shadow: none; }
-.admin-metric-actions { display: inline-flex; align-items: center; gap: 9px; }
+.admin-metric-actions { display: inline-flex; align-items: center; gap: 8px; }
 .admin-metric-icon { width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid color-mix(in srgb, var(--metric-accent) 28%, #252a31); border-radius: 9px; display: grid; place-items: center; color: var(--metric-accent); background: color-mix(in srgb, var(--metric-accent) 7%, #111318); }
 .admin-metric-icon :deep(.workspace-nav-icon) { width: 17px; height: 17px; }
-.admin-metric-arrow { color: #4f5965; font-size: .86rem; font-weight: 500; transition: color .15s ease, transform .15s ease; }
-.admin-metric-card:hover .admin-metric-arrow { color: #9fb4c7; transform: translate(1px, -1px); }
+.admin-metric-arrow {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #67727e;
+  background: transparent;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+.admin-metric-arrow :deep(.workspace-nav-icon) {
+  width: 14px;
+  height: 14px;
+  transition: transform .15s ease;
+}
+.admin-metric-card:hover .admin-metric-arrow {
+  border-color: #2c3540;
+  color: #c2d4e2;
+  background: #171c23;
+}
+.admin-metric-card:hover .admin-metric-arrow :deep(.workspace-nav-icon) { transform: translate(1px, -1px); }
 
 .admin-metric-card > strong { margin-top: 17px; color: #f6f7f9; font-size: 2.02rem; font-weight: 690; line-height: 1; letter-spacing: -.04em; }
 .admin-metric-requests > strong { font-size: 2.28rem; }
@@ -489,6 +510,6 @@ onMounted(() => void load())
 
 @media (prefers-reduced-motion: reduce) {
   .admin-refresh:disabled svg { animation: none; }
-  .admin-metric-progress i, .admin-metric-arrow, .admin-management-links > a > i { transition: none; }
+  .admin-metric-progress i, .admin-metric-arrow, .admin-metric-arrow :deep(.workspace-nav-icon), .admin-management-links > a > i { transition: none; }
 }
 </style>
