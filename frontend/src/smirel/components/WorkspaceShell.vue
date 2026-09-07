@@ -76,7 +76,7 @@ const workspaceModeLabels = computed(() => interfacePreferences.locale === 'zh-C
 const modelCatalogNavItem = computed<NavItem>(() => ({
   path: '/model-plaza',
   name: 'ModelPlaza',
-  label: interfacePreferences.locale === 'zh-CN' ? '模型与价格' : 'Models & Pricing',
+  label: interfacePreferences.locale === 'zh-CN' ? '模型广场' : 'Model Marketplace',
   feature: 'model-catalog',
   short: 'MD',
 }))
@@ -95,10 +95,19 @@ const navIconByFeature: Record<string, string> = {
   dashboard: 'dashboard',
   keys: 'key',
   usage: 'chart',
+  'usage-records': 'receipt',
+  experience: 'activity',
+  monitor: 'activity',
+  wallet: 'wallet',
   subscriptions: 'credit-card',
   purchase: 'wallet',
   orders: 'receipt',
+  redeem: 'receipt',
+  affiliate: 'users',
   profile: 'user',
+  announcements: 'activity',
+  support: 'user',
+  tickets: 'receipt',
   'model-catalog': 'layers',
   'admin-dashboard': 'dashboard',
   'admin-users': 'users',
@@ -116,10 +125,19 @@ const navLabelKeyByFeature: Record<string, string> = {
   dashboard: 'nav.dashboard',
   keys: 'nav.keys',
   usage: 'nav.usage',
+  'usage-records': 'nav.usageRecords',
+  experience: 'nav.experience',
+  monitor: 'nav.monitor',
+  wallet: 'nav.wallet',
   subscriptions: 'nav.subscriptions',
   purchase: 'nav.purchase',
   orders: 'nav.orders',
+  redeem: 'nav.redeem',
+  affiliate: 'nav.affiliate',
   profile: 'nav.profile',
+  announcements: 'nav.announcements',
+  support: 'nav.support',
+  tickets: 'nav.tickets',
   'admin-dashboard': 'nav.adminDashboard',
   'admin-users': 'nav.adminUsers',
   'admin-accounts': 'nav.adminAccounts',
@@ -138,7 +156,7 @@ function navLabel(item: NavItem) {
 }
 
 function take(items: NavItem[], features: string[]) {
-  return items.filter((item) => features.includes(item.feature))
+  return features.flatMap((feature) => items.filter((item) => item.feature === feature))
 }
 
 const navigationGroups = computed<NavGroup[]>(() => {
@@ -146,10 +164,11 @@ const navigationGroups = computed<NavGroup[]>(() => {
 
   if (!isAdminWorkspace.value) {
     return [
-      { label: t('groups.console'), items: take(items, ['dashboard', 'keys', 'usage']) },
-      { label: t('groups.resources'), items: take(items, ['model-catalog']) },
-      { label: t('groups.billing'), items: take(items, ['subscriptions', 'purchase', 'orders']) },
-      { label: t('groups.account'), items: take(items, ['profile']) },
+      { label: t('groups.console'), items: take(items, ['dashboard', 'keys', 'usage', 'usage-records']) },
+      { label: t('groups.resources'), items: take(items, ['model-catalog', 'experience', 'monitor']) },
+      { label: t('groups.billing'), items: take(items, ['wallet', 'subscriptions', 'purchase', 'orders', 'redeem']) },
+      { label: t('groups.account'), items: take(items, ['affiliate', 'profile']) },
+      { label: t('groups.support'), items: take(items, ['announcements', 'support', 'tickets']) },
     ].filter((group) => group.items.length)
   }
 
