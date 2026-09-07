@@ -79,7 +79,7 @@ onMounted(() => void load())
 <template>
   <section class="workspace-page admin-overview">
     <header class="page-heading">
-      <div><h1>Overview</h1><p>查看平台最重要的运行数据。</p></div>
+      <div><h1>控制台</h1><p>查看平台最重要的运行数据。</p></div>
       <button class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? '刷新中…' : '刷新' }}</button>
     </header>
 
