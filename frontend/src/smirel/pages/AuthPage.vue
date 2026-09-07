@@ -161,11 +161,22 @@ async function submit() {
         <div v-if="showOAuth" class="oauth-login">
           <div class="oauth-actions">
             <button type="button" class="oauth-button" @click="startOAuth('google')">
-              <span class="oauth-provider-mark" aria-hidden="true">G</span>
+              <span class="oauth-provider-mark" aria-hidden="true">
+                <svg viewBox="0 0 18 18" role="presentation">
+                  <path fill="#4285F4" d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.797 2.716v2.26h2.909c1.702-1.567 2.684-3.874 2.684-6.616Z" />
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.179l-2.909-2.26c-.806.54-1.835.859-3.047.859-2.344 0-4.328-1.585-5.037-3.714H.957v2.332A9 9 0 0 0 9 18Z" />
+                  <path fill="#FBBC05" d="M3.963 10.706A5.41 5.41 0 0 1 3.682 9c0-.592.102-1.168.281-1.706V4.962H.957A9 9 0 0 0 0 9c0 1.452.347 2.827.957 4.038l3.006-2.332Z" />
+                  <path fill="#EA4335" d="M9 3.58c1.322 0 2.508.455 3.441 1.346l2.582-2.582C13.463.892 11.426 0 9 0A9 9 0 0 0 .957 4.962l3.006 2.332C4.672 5.165 6.656 3.58 9 3.58Z" />
+                </svg>
+              </span>
               <span>使用 Google 继续</span>
             </button>
             <button type="button" class="oauth-button" @click="startOAuth('github')">
-              <span class="oauth-provider-mark github" aria-hidden="true">GH</span>
+              <span class="oauth-provider-mark github" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="presentation">
+                  <path fill="currentColor" d="M12 .5C5.648.5.5 5.648.5 12c0 5.08 3.292 9.387 7.86 10.907.575.105.785-.25.785-.555 0-.274-.01-1-.016-1.962-3.197.695-3.872-1.54-3.872-1.54-.523-1.33-1.278-1.684-1.278-1.684-1.045-.714.079-.7.079-.7 1.155.081 1.762 1.186 1.762 1.186 1.027 1.76 2.695 1.252 3.352.957.104-.744.402-1.252.732-1.54-2.552-.291-5.236-1.276-5.236-5.68 0-1.255.449-2.281 1.184-3.085-.118-.291-.513-1.462.113-3.048 0 0 .966-.309 3.165 1.178A10.98 10.98 0 0 1 12 6.096c.977.004 1.96.132 2.88.387 2.198-1.487 3.162-1.178 3.162-1.178.627 1.586.232 2.757.114 3.048.737.804 1.183 1.83 1.183 3.085 0 4.415-2.688 5.386-5.248 5.67.413.355.781 1.057.781 2.13 0 1.538-.014 2.779-.014 3.157 0 .308.207.666.79.553C20.21 21.383 23.5 17.078 23.5 12 23.5 5.648 18.352.5 12 .5Z" />
+                </svg>
+              </span>
               <span>使用 GitHub 继续</span>
             </button>
           </div>
@@ -487,12 +498,17 @@ async function submit() {
   border: 1px solid #303b45;
   border-radius: 50%;
   color: #eef2f5;
-  font: 750 .72rem/1 ui-sans-serif, system-ui, sans-serif;
 }
 
-.oauth-provider-mark.github {
-  font-size: .55rem;
-  letter-spacing: -.04em;
+.oauth-provider-mark svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.oauth-provider-mark.github svg {
+  width: 16px;
+  height: 16px;
 }
 
 .oauth-divider {
