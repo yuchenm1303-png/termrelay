@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useSession } from '../core/session'
 import '../styles/home-layout.css'
+import '../styles/home-gateway.css'
 
 const { state, isAuthenticated, isAdmin, logout } = useSession()
 const copied = ref(false)
@@ -81,31 +82,46 @@ async function signOut() {
           </div>
         </div>
 
-        <div class="route-board" aria-label="Smirel unified model route">
-          <div class="route-board-head">
-            <span>ROUTING / LIVE</span>
-            <small><i></i>在线</small>
-          </div>
-
-          <div class="route-base">
+        <div class="gateway-preview" aria-label="Smirel API 接入信息">
+          <div class="gateway-preview-head">
             <div>
-              <small>BASE URL</small>
-              <code>{{ apiBase }}</code>
+              <strong>API 接入</strong>
+              <span>一个地址，调用不同模型</span>
             </div>
-            <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
+            <small class="gateway-health"><i></i>正常</small>
           </div>
 
-          <div class="route-lanes">
-            <div class="route-lane"><span>OpenAI</span><i></i><b>统一入口</b></div>
-            <div class="route-lane"><span>Claude</span><i></i><b>统一入口</b></div>
-            <div class="route-lane"><span>Gemini</span><i></i><b>统一入口</b></div>
-            <div class="route-lane"><span>Grok</span><i></i><b>统一入口</b></div>
+          <div class="gateway-endpoint">
+            <span>BASE URL</span>
+            <div class="gateway-endpoint-row">
+              <code>{{ apiBase }}</code>
+              <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
+            </div>
           </div>
 
-          <div class="route-board-foot">
-            <span>Bearer API Key</span>
-            <span>OpenAI SDK</span>
-            <RouterLink to="/model-plaza">更多模型 →</RouterLink>
+          <div class="gateway-details">
+            <div class="gateway-detail">
+              <span>协议</span>
+              <strong>OpenAI Compatible</strong>
+            </div>
+            <div class="gateway-detail">
+              <span>认证</span>
+              <strong>Bearer API Key</strong>
+            </div>
+            <div class="gateway-detail">
+              <span>模型</span>
+              <div class="gateway-models">
+                <b>OpenAI</b>
+                <b>Claude</b>
+                <b>Gemini</b>
+                <b>Grok</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="gateway-preview-foot">
+            <span>只需替换 Base URL</span>
+            <RouterLink to="/model-plaza">查看全部模型 →</RouterLink>
           </div>
         </div>
       </section>
