@@ -288,9 +288,18 @@ const transactions = [
 .status-track { margin-top: 10px; height: 4px; border-radius: 99px; overflow: hidden; background: #1d2127; }
 .status-track i { display: block; height: 100%; border-radius: inherit; }
 .payment-status-row > small { margin-top: 6px; display: block; color: #616a74; font-size: .6rem; text-align: right; }
-.tone-success { background-color: #4bc494 !important; }
-.tone-warning { background-color: #d6a04d !important; }
-.tone-danger { background-color: #d56565 !important; }
+.status-row-head i.tone-success,
+.status-track i.tone-success,
+.attention-dot.tone-success,
+.status-pill.tone-success { background-color: #4bc494; }
+.status-row-head i.tone-warning,
+.status-track i.tone-warning,
+.attention-dot.tone-warning,
+.status-pill.tone-warning { background-color: #d6a04d; }
+.status-row-head i.tone-danger,
+.status-track i.tone-danger,
+.attention-dot.tone-danger,
+.status-pill.tone-danger { background-color: #d56565; }
 
 .channel-list { padding: 7px 21px 14px; }
 .channel-row { min-height: 62px; display: grid; grid-template-columns: 118px 1fr 42px; align-items: center; gap: 15px; border-bottom: 1px solid #1d2025; }
