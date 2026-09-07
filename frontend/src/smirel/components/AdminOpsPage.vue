@@ -121,7 +121,7 @@ onMounted(() => void load())
 
     <section class="ops-metric-strip" aria-label="Operations snapshot">
       <article>
-        <span class="ops-metric-label"><i></i>REQUEST RATE</span>
+        <span class="ops-metric-label">REQUEST RATE</span>
         <div><strong>{{ compact(stats.rpm) }}</strong><small>RPM</small></div>
         <p>{{ t('admin.realtimeLoad') }}</p>
       </article>
@@ -133,7 +133,7 @@ onMounted(() => void load())
       <article>
         <span class="ops-metric-label">UPSTREAM</span>
         <div><strong>{{ accountAvailability }}%</strong></div>
-        <p>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }} {{ t('admin.accountsAvailable', { value: '' }).replace(' 个账户可用', '').trim() || '' }}</p>
+        <p>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }} · {{ t('admin.upstreamAccounts') }}</p>
       </article>
       <article>
         <span class="ops-metric-label">REQUESTS</span>
@@ -182,7 +182,7 @@ onMounted(() => void load())
             <span class="ops-resource-icon"><WorkspaceNavIcon name="key" /></span>
             <div class="ops-resource-copy">
               <strong>API Keys</strong>
-              <small>ACTIVE CREDENTIALS</small>
+              <small>ISSUED CREDENTIALS</small>
             </div>
             <div class="ops-resource-value">
               <strong>{{ compact(stats.total_api_keys) }}</strong>
