@@ -27,7 +27,7 @@ async function signOut() {
   <div class="home-page">
     <div class="site-environment" aria-hidden="true"></div>
 
-    <header class="home-topbar glass">
+    <header class="home-topbar">
       <RouterLink to="/home" class="brand-link">
         <img :src="logoUrl" alt="Smirel" />
         <span><strong>Smirel</strong><small>API SERVICE</small></span>
@@ -45,7 +45,7 @@ async function signOut() {
           <RouterLink :to="consolePath" class="top-console">{{ isAdmin ? '管理控制台' : '控制台' }}</RouterLink>
           <div class="account-menu-wrap">
             <button class="account-trigger" type="button" @click="menuOpen = !menuOpen">{{ initials }}</button>
-            <div v-if="menuOpen" class="account-menu glass">
+            <div v-if="menuOpen" class="account-menu">
               <strong>{{ state.user?.username || 'Smirel Account' }}</strong>
               <small>{{ state.user?.email }}</small>
               <RouterLink to="/profile" @click="menuOpen = false">账户设置</RouterLink>
@@ -57,143 +57,75 @@ async function signOut() {
         </template>
         <template v-else>
           <RouterLink to="/login" class="quiet-link">登录</RouterLink>
-          <RouterLink to="/register" class="top-console">注册账户</RouterLink>
+          <RouterLink to="/register" class="top-console">注册</RouterLink>
         </template>
       </div>
     </header>
 
     <main class="home-content">
-      <section class="hero-shell">
-        <div class="hero-section">
-          <div class="hero-kicker"><span></span>UNIFIED AI GATEWAY</div>
-          <h1>统一的大模型接口，<br><em>让接入保持简单。</em></h1>
-          <p class="hero-copy">用一个稳定的 API 地址接入 OpenAI、Claude 和 Gemini。统一管理密钥、模型与用量，让应用侧不再重复维护多套接入逻辑。</p>
-          <div class="hero-actions">
-            <RouterLink :to="isAuthenticated ? consolePath : '/register'" class="primary-button">{{ isAuthenticated ? '进入控制台' : '开始使用' }} <span>→</span></RouterLink>
-            <RouterLink to="/model-plaza" class="secondary-button">查看模型价格</RouterLink>
-          </div>
-          <div class="hero-assurance">
-            <span><i></i> OpenAI Compatible</span>
-            <span>按实际用量计费</span>
-            <span>多模型统一入口</span>
-          </div>
+      <section class="hero-section">
+        <h1>一个 API，接入主流模型。</h1>
+        <p class="hero-copy">OpenAI、Claude、Gemini 等模型共用一套地址和密钥，调用方式保持一致。</p>
+
+        <div class="hero-actions">
+          <RouterLink :to="isAuthenticated ? consolePath : '/register'" class="primary-button">
+            {{ isAuthenticated ? '进入控制台' : '开始使用' }}
+          </RouterLink>
+          <RouterLink to="/model-plaza" class="secondary-button">查看模型</RouterLink>
         </div>
 
-        <section class="gateway-card glass" aria-label="Smirel API endpoint">
-          <header class="gateway-card-head">
-            <div>
-              <span class="gateway-mark">S</span>
-              <p><strong>Smirel Gateway</strong><small>Production endpoint</small></p>
-            </div>
-            <span class="gateway-live"><i></i>Operational</span>
-          </header>
-
-          <div class="gateway-endpoint">
-            <span>BASE URL</span>
-            <div class="endpoint-input">
-              <code>{{ apiBase }}</code>
-              <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
-            </div>
-          </div>
-
-          <div class="gateway-capabilities">
-            <div><span>01</span><p><strong>统一模型入口</strong><small>OpenAI · Anthropic · Google</small></p><b>→</b></div>
-            <div><span>02</span><p><strong>独立 API Key</strong><small>按项目管理访问凭证</small></p><b>→</b></div>
-            <div><span>03</span><p><strong>请求与用量</strong><small>调用、Token 与费用记录</small></p><b>→</b></div>
-          </div>
-
-          <footer class="gateway-meta">
-            <span>AUTH<strong>Bearer API Key</strong></span>
-            <span>PROTOCOL<strong>OpenAI Compatible</strong></span>
-            <span>BILLING<strong>Pay as you go</strong></span>
-          </footer>
-        </section>
-      </section>
-
-      <section class="provider-strip" aria-label="Supported model ecosystems">
-        <span class="provider-strip-label">MODEL ECOSYSTEM</span>
-        <div class="provider-list">
-          <span><b>O</b>OpenAI</span>
-          <span><b>A</b>Anthropic</span>
-          <span><b>G</b>Google Gemini</span>
-          <span><b>X</b>Grok</span>
-        </div>
-        <RouterLink to="/model-plaza">查看全部模型 →</RouterLink>
-      </section>
-
-      <section class="feature-section">
-        <div class="section-heading">
-          <p class="eyebrow">CORE FEATURES</p>
-          <h2>把模型接入需要的东西，收进一个入口。</h2>
-          <p>不增加复杂概念，只保留真正影响开发和使用体验的基础能力。</p>
+        <div class="endpoint-bar" aria-label="Smirel API endpoint">
+          <span>Base URL</span>
+          <code>{{ apiBase }}</code>
+          <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
         </div>
 
-        <div class="feature-grid">
-          <article class="feature-card glass">
-            <div class="feature-icon">01</div>
-            <h3>一键接入</h3>
-            <p>创建 Key、替换 Base URL，即可沿用熟悉的 OpenAI SDK 调用方式。</p>
-            <RouterLink :to="isAuthenticated ? '/keys' : '/register'">开始接入 →</RouterLink>
-          </article>
-          <article class="feature-card glass">
-            <div class="feature-icon">02</div>
-            <h3>统一模型路由</h3>
-            <p>模型可以切换，应用里的接入地址不用跟着变化。</p>
-            <RouterLink to="/model-plaza">浏览模型 →</RouterLink>
-          </article>
-          <article class="feature-card glass">
-            <div class="feature-icon">03</div>
-            <h3>用量清晰</h3>
-            <p>请求、Token 与费用集中记录，知道每一次调用花在了哪里。</p>
-            <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'">查看用量 →</RouterLink>
-          </article>
-          <article class="feature-card glass">
-            <div class="feature-icon">04</div>
-            <h3>密钥独立管理</h3>
-            <p>按项目创建和停用 API Key，让不同应用的访问边界更清楚。</p>
-            <RouterLink :to="isAuthenticated ? '/keys' : '/login'">管理密钥 →</RouterLink>
-          </article>
+        <div class="hero-meta">
+          <span><i></i>服务正常</span>
+          <span>OpenAI Compatible</span>
+          <span>按实际用量计费</span>
         </div>
       </section>
 
-      <section class="integration-section glass">
-        <div class="integration-copy">
-          <p class="eyebrow">QUICK START</p>
-          <h2>改一个 Base URL，<br>就可以开始调用。</h2>
-          <p>保持原来的 SDK 和调用习惯，只把客户端指向 Smirel。</p>
-          <div class="integration-steps">
-            <span><b>01</b> 创建 API Key</span>
-            <span><b>02</b> 设置 Base URL</span>
-            <span><b>03</b> 选择模型并发送请求</span>
-          </div>
-        </div>
-
-        <div class="code-panel">
-          <header><span><i></i><i></i><i></i></span><b>quickstart.py</b><small>Python</small></header>
-          <pre><code><span class="code-muted">from</span> openai <span class="code-muted">import</span> OpenAI
-
-client = OpenAI(
-    base_url=<span class="code-accent">"https://api.smirel.com/v1"</span>,
-    api_key=<span class="code-accent">"sk-..."</span>
-)
-
-response = client.responses.create(
-    model=<span class="code-accent">"gpt-5"</span>,
-    input=<span class="code-accent">"Hello"</span>
-)</code></pre>
-        </div>
+      <section class="provider-line" aria-label="Supported model providers">
+        <span>OpenAI</span>
+        <b>·</b>
+        <span>Claude</span>
+        <b>·</b>
+        <span>Gemini</span>
+        <b>·</b>
+        <span>Grok</span>
+        <b>·</b>
+        <RouterLink to="/model-plaza">更多模型</RouterLink>
       </section>
 
-      <section class="quick-grid">
-        <RouterLink to="/model-plaza" class="glass quick-card"><span>MODELS</span><strong>模型与价格</strong><small>查看当前模型、价格与服务信息。</small><b>查看 →</b></RouterLink>
-        <RouterLink :to="isAuthenticated ? '/keys' : '/login'" class="glass quick-card"><span>API KEY</span><strong>密钥管理</strong><small>创建、停用和管理项目密钥。</small><b>管理 →</b></RouterLink>
-        <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'" class="glass quick-card"><span>USAGE</span><strong>用量查询</strong><small>查询请求、Token 与费用记录。</small><b>查询 →</b></RouterLink>
+      <section class="benefit-grid">
+        <RouterLink :to="isAuthenticated ? '/keys' : '/register'" class="benefit-card">
+          <span>接入</span>
+          <h2>改地址就能用</h2>
+          <p>沿用 OpenAI SDK，把 Base URL 换成 Smirel。</p>
+          <b>开始接入 →</b>
+        </RouterLink>
+
+        <RouterLink to="/model-plaza" class="benefit-card">
+          <span>模型</span>
+          <h2>模型随时换</h2>
+          <p>接入地址不变，按需要选择不同模型。</p>
+          <b>查看模型 →</b>
+        </RouterLink>
+
+        <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'" class="benefit-card">
+          <span>用量</span>
+          <h2>账单看得清</h2>
+          <p>请求、Token 和费用集中查看。</p>
+          <b>查看用量 →</b>
+        </RouterLink>
       </section>
     </main>
 
     <footer class="home-footer">
       <span>© {{ new Date().getFullYear() }} Smirel</span>
-      <span>Unified AI API Gateway · api.smirel.com/v1</span>
+      <span>api.smirel.com/v1</span>
     </footer>
   </div>
 </template>
