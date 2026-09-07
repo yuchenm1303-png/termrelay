@@ -147,3 +147,9 @@ defineProps<{ name: string }>()
     <circle v-else cx="12" cy="12" r="4" />
   </svg>
 </template>
+
+<style>
+.workspace-sidebar .workspace-nav .workspace-nav-icon {
+  display: none;
+}
+</style>
