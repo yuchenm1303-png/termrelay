@@ -16,19 +16,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ExternalFrontendServer serves a complete frontend bundle from data/public.
-// When data/public/index.html is absent, requests fall through to the embedded
-// frontend. This lets operators update the UI without rebuilding or restarting
-// the backend container while preserving the embedded bundle as a safe fallback.
+// ExternalFrontendServer serves a complete frontend bundle from data/frontend.
+// When data/frontend/index.html is absent, requests fall through to the embedded
+// frontend. The external root is deliberately separate from data/public, which
+// remains the legacy per-file override directory.
 type ExternalFrontendServer struct {
 	root     string
 	cache    *HTMLCache
 	settings PublicSettingsProvider
 }
 
-// NewExternalFrontendServer creates the runtime frontend override server.
+// NewExternalFrontendServer creates the runtime frontend bundle server.
 func NewExternalFrontendServer(settingsProvider PublicSettingsProvider) *ExternalFrontendServer {
-	return newExternalFrontendServer(settingsProvider, filepath.Join("data", "public"))
+	return newExternalFrontendServer(settingsProvider, filepath.Join("data", "frontend"))
 }
 
 func newExternalFrontendServer(settingsProvider PublicSettingsProvider, root string) *ExternalFrontendServer {
@@ -106,8 +106,8 @@ func (s *ExternalFrontendServer) serveIndexHTML(c *gin.Context) bool {
 		return false
 	}
 
-	// SetBaseHTML also invalidates a cached render when the deployed index
-	// changes, so a hot swap becomes visible immediately without a process restart.
+	// SetBaseHTML invalidates a cached render only when the deployed index hash
+	// changes, so a symlink release switch becomes visible without a process restart.
 	s.cache.SetBaseHTML(baseHTML)
 	nonce := middleware.GetNonceFromContext(c)
 
