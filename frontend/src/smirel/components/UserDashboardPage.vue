@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import '../styles/user-dashboard.css'
+import '../styles/user-dashboard-lower.css'
 
 interface DashboardStats {
   total_api_keys?: number
