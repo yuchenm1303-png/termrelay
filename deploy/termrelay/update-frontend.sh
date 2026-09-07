@@ -11,8 +11,9 @@ REPO_ROOT="$(git -C "$SCRIPT_DIR/../.." rev-parse --show-toplevel 2>/dev/null ||
 DATA_DIR="${TERMRELAY_DATA_DIR:-$SCRIPT_DIR/data/app}"
 RELEASES_DIR=""
 ACTIVE_LINK=""
-PREVIOUS_LINK=""
+PREVIOUS_STATE=""
 TMP_ROOT=""
+STAGE_DIR=""
 
 log() {
   printf '[frontend] %s\n' "$*"
@@ -32,7 +33,7 @@ Usage:
 Options:
   --branch <branch>   UI source branch (default: release/smirel-commercial-dark)
   --dry-run           Resolve and print the action without building or switching UI
-  --rollback          Atomically switch back to the previous frontend release
+  --rollback          Atomically switch back to the previous frontend state
   -h, --help          Show this help
 
 Environment:
@@ -67,7 +68,7 @@ while (($#)); do
 done
 
 [[ -n "$REPO_ROOT" && -d "$REPO_ROOT/.git" ]] || die "TermRelay git repository not found from $SCRIPT_DIR"
-for cmd in git docker tar mktemp readlink ln mv cp grep; do
+for cmd in git docker tar mktemp readlink ln mv cp grep head rm chmod cat; do
   command -v "$cmd" >/dev/null 2>&1 || die "required command not found: $cmd"
 done
 
@@ -77,7 +78,17 @@ mkdir -p "$DATA_DIR"
 [[ -w "$DATA_DIR" ]] || die "data directory is not writable: $DATA_DIR"
 RELEASES_DIR="$DATA_DIR/frontend-releases"
 ACTIVE_LINK="$DATA_DIR/frontend"
-PREVIOUS_LINK="$DATA_DIR/frontend.previous"
+PREVIOUS_STATE="$DATA_DIR/frontend.previous"
+
+cleanup() {
+  if [[ -n "${STAGE_DIR:-}" && -d "$STAGE_DIR" ]]; then
+    rm -rf "$STAGE_DIR"
+  fi
+  if [[ -n "${TMP_ROOT:-}" && -d "$TMP_ROOT" ]]; then
+    rm -rf "$TMP_ROOT"
+  fi
+}
+trap cleanup EXIT
 
 validate_release_dir() {
   local release_dir="$1"
@@ -86,13 +97,27 @@ validate_release_dir() {
   return 0
 }
 
-link_target_path() {
-  local target="$1"
-  if [[ "$target" = /* ]]; then
+validate_state() {
+  local state="$1"
+  [[ "$state" == "embedded" || "$state" =~ ^frontend-releases/[0-9a-f]{40}$ ]]
+}
+
+state_path() {
+  local state="$1"
+  [[ "$state" != "embedded" ]] || return 1
+  printf '%s/%s\n' "$DATA_DIR" "$state"
+}
+
+current_frontend_state() {
+  if [[ -L "$ACTIVE_LINK" ]]; then
+    local target
+    target="$(readlink "$ACTIVE_LINK")"
+    validate_state "$target" || die "unsafe or unknown frontend symlink target: $target"
     printf '%s\n' "$target"
-  else
-    printf '%s/%s\n' "$DATA_DIR" "$target"
+    return 0
   fi
+  [[ ! -e "$ACTIVE_LINK" ]] || die "$ACTIVE_LINK exists but is not a symlink; refusing to overwrite it"
+  printf 'embedded\n'
 }
 
 atomic_set_link() {
@@ -104,15 +129,40 @@ atomic_set_link() {
   mv -Tf "$tmp_link" "$link_path"
 }
 
-remove_active_link() {
-  if [[ -L "$ACTIVE_LINK" ]]; then
-    rm -f "$ACTIVE_LINK"
+atomic_write_state() {
+  local state="$1"
+  local tmp_state="${PREVIOUS_STATE}.next.$$"
+  validate_state "$state" || die "refusing to record invalid frontend state: $state"
+  printf '%s\n' "$state" > "$tmp_state"
+  mv -Tf "$tmp_state" "$PREVIOUS_STATE"
+}
+
+apply_state() {
+  local state="$1"
+  validate_state "$state" || die "refusing to apply invalid frontend state: $state"
+  if [[ "$state" == "embedded" ]]; then
+    [[ ! -L "$ACTIVE_LINK" ]] || rm -f "$ACTIVE_LINK"
+    return 0
   fi
+  atomic_set_link "$ACTIVE_LINK" "$state"
 }
 
 extract_asset_ref() {
   local release_dir="$1"
   grep -oE 'assets/[A-Za-z0-9._/-]+' "$release_dir/index.html" | head -n 1 || true
+}
+
+container_running() {
+  docker inspect "$CONTAINER_NAME" >/dev/null 2>&1 || return 1
+  [[ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)" == "true" ]]
+}
+
+verify_embedded_runtime() {
+  container_running || return 1
+  [[ ! -L "$ACTIVE_LINK" ]] || return 1
+  docker exec "$CONTAINER_NAME" wget -q -T 5 -O /dev/null http://127.0.0.1:8080/health >/dev/null 2>&1 || return 1
+  docker exec "$CONTAINER_NAME" wget -q -T 5 -O /dev/null http://127.0.0.1:8080/ >/dev/null 2>&1 || return 1
+  return 0
 }
 
 verify_runtime_release() {
@@ -121,8 +171,7 @@ verify_runtime_release() {
   local body
 
   validate_release_dir "$release_dir" || return 1
-  docker inspect "$CONTAINER_NAME" >/dev/null 2>&1 || return 1
-  [[ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)" == "true" ]] || return 1
+  container_running || return 1
 
   docker exec "$CONTAINER_NAME" sh -c 'test -s /app/data/frontend/index.html' >/dev/null 2>&1 || return 1
   docker exec "$CONTAINER_NAME" wget -q -T 5 -O /dev/null http://127.0.0.1:8080/health >/dev/null 2>&1 || return 1
@@ -134,33 +183,46 @@ verify_runtime_release() {
   return 0
 }
 
+verify_state() {
+  local state="$1"
+  if [[ "$state" == "embedded" ]]; then
+    verify_embedded_runtime
+    return
+  fi
+  local release_dir
+  release_dir="$(state_path "$state")"
+  verify_runtime_release "$release_dir"
+}
+
 rollback_frontend() {
-  [[ -L "$ACTIVE_LINK" ]] || die "no active external frontend symlink: $ACTIVE_LINK"
-  [[ -L "$PREVIOUS_LINK" ]] || die "no previous frontend release is recorded"
+  local current_state previous_state previous_dir
+  current_state="$(current_frontend_state)"
+  [[ -f "$PREVIOUS_STATE" && ! -L "$PREVIOUS_STATE" ]] || die "no previous frontend state is recorded"
+  previous_state="$(cat "$PREVIOUS_STATE")"
+  validate_state "$previous_state" || die "recorded previous frontend state is invalid: $previous_state"
+  [[ "$previous_state" != "$current_state" ]] || die "previous frontend state is the same as current state"
 
-  local current_target previous_target current_dir previous_dir
-  current_target="$(readlink "$ACTIVE_LINK")"
-  previous_target="$(readlink "$PREVIOUS_LINK")"
-  current_dir="$(link_target_path "$current_target")"
-  previous_dir="$(link_target_path "$previous_target")"
+  if [[ "$previous_state" != "embedded" ]]; then
+    previous_dir="$(state_path "$previous_state")"
+    validate_release_dir "$previous_dir" || die "previous frontend release is invalid: $previous_dir"
+  fi
 
-  validate_release_dir "$previous_dir" || die "previous release is invalid: $previous_dir"
-
-  log "rollback current:  $current_target"
-  log "rollback target:   $previous_target"
+  log "rollback current:  $current_state"
+  log "rollback target:   $previous_state"
   log "container:         $CONTAINER_NAME"
   if $DRY_RUN; then
-    log "dry-run: no symlink will be changed"
+    log "dry-run: no frontend state will be changed"
     return 0
   fi
 
-  atomic_set_link "$ACTIVE_LINK" "$previous_target"
-  if ! verify_runtime_release "$previous_dir"; then
-    atomic_set_link "$ACTIVE_LINK" "$current_target"
-    die "rollback target failed runtime verification; restored current frontend"
+  apply_state "$previous_state"
+  if ! verify_state "$previous_state"; then
+    apply_state "$current_state"
+    verify_state "$current_state" >/dev/null 2>&1 || true
+    die "rollback target failed runtime verification; restored current frontend state"
   fi
 
-  atomic_set_link "$PREVIOUS_LINK" "$current_target"
+  atomic_write_state "$current_state"
   log "rollback complete"
 }
 
@@ -170,56 +232,44 @@ if $ROLLBACK; then
 fi
 
 [[ -n "$BRANCH" ]] || die "branch must not be empty"
+[[ "$BRANCH" != -* ]] || die "branch must not start with '-'"
 log "fetching UI branch: $BRANCH"
 git -C "$REPO_ROOT" fetch --prune origin "$BRANCH"
 UI_SHA="$(git -C "$REPO_ROOT" rev-parse "origin/$BRANCH^{commit}")"
 UI_SHORT="${UI_SHA:0:12}"
 RELEASE_DIR="$RELEASES_DIR/$UI_SHA"
 RELATIVE_RELEASE_TARGET="frontend-releases/$UI_SHA"
-
-CURRENT_TARGET=""
-if [[ -L "$ACTIVE_LINK" ]]; then
-  CURRENT_TARGET="$(readlink "$ACTIVE_LINK")"
-elif [[ -e "$ACTIVE_LINK" ]]; then
-  die "$ACTIVE_LINK exists but is not a symlink; refusing to overwrite it"
-fi
+CURRENT_STATE="$(current_frontend_state)"
 
 log "branch:            $BRANCH"
 log "UI commit:         $UI_SHA"
 log "release directory: $RELEASE_DIR"
 log "active link:       $ACTIVE_LINK"
-log "current target:    ${CURRENT_TARGET:-embedded frontend}"
+log "current state:     $CURRENT_STATE"
 log "container:         $CONTAINER_NAME"
 
 if $DRY_RUN; then
   if validate_release_dir "$RELEASE_DIR"; then
-    log "dry-run: release already built; would atomically switch symlink"
+    log "dry-run: release already built; would atomically switch frontend symlink"
   else
     log "dry-run: would build frontend only from origin/$BRANCH"
-    log "dry-run: backend image/container, PostgreSQL, Redis and Caddy would not be changed"
   fi
+  log "dry-run: backend image/container, PostgreSQL, Redis and Caddy would not be changed"
   exit 0
 fi
 
-if [[ "$CURRENT_TARGET" == "$RELATIVE_RELEASE_TARGET" ]] && validate_release_dir "$RELEASE_DIR"; then
+if [[ "$CURRENT_STATE" == "$RELATIVE_RELEASE_TARGET" ]] && validate_release_dir "$RELEASE_DIR"; then
   if verify_runtime_release "$RELEASE_DIR"; then
     log "already running UI $UI_SHORT"
     exit 0
   fi
-  die "active symlink points to $UI_SHORT but runtime verification failed"
+  die "active frontend points to $UI_SHORT but runtime verification failed"
 fi
 
 mkdir -p "$RELEASES_DIR"
 
 if ! validate_release_dir "$RELEASE_DIR"; then
   TMP_ROOT="$(mktemp -d -t termrelay-frontend.XXXXXXXX)"
-  cleanup() {
-    if [[ -n "${TMP_ROOT:-}" && -d "$TMP_ROOT" ]]; then
-      rm -rf "$TMP_ROOT"
-    fi
-  }
-  trap cleanup EXIT
-
   SRC_DIR="$TMP_ROOT/src"
   mkdir -p "$SRC_DIR"
   log "exporting source at $UI_SHORT"
@@ -241,7 +291,7 @@ if ! validate_release_dir "$RELEASE_DIR"; then
       corepack prepare pnpm@9 --activate
       pnpm install --frozen-lockfile --prefer-offline
       VITE_STANDALONE=true VITE_API_BASE_URL=/api/v1 pnpm run build
-      chown -R "$HOST_UID:$HOST_GID" dist
+      chown -R "$HOST_UID:$HOST_GID" /repo/frontend
     '
 
   DIST_DIR="$SRC_DIR/frontend/dist"
@@ -257,32 +307,29 @@ if ! validate_release_dir "$RELEASE_DIR"; then
   chmod -R a+rX "$STAGE_DIR"
   validate_release_dir "$STAGE_DIR" || die "staged frontend release is invalid"
   mv "$STAGE_DIR" "$RELEASE_DIR"
+  STAGE_DIR=""
   log "built release: $UI_SHORT"
 else
   log "reusing existing release: $UI_SHORT"
 fi
 
-OLD_TARGET="$CURRENT_TARGET"
-atomic_set_link "$ACTIVE_LINK" "$RELATIVE_RELEASE_TARGET"
+OLD_STATE="$CURRENT_STATE"
+apply_state "$RELATIVE_RELEASE_TARGET"
 
 if ! verify_runtime_release "$RELEASE_DIR"; then
   log "new frontend failed runtime verification; rolling back" >&2
-  if [[ -n "$OLD_TARGET" ]]; then
-    atomic_set_link "$ACTIVE_LINK" "$OLD_TARGET"
-  else
-    remove_active_link
-  fi
+  apply_state "$OLD_STATE"
+  verify_state "$OLD_STATE" >/dev/null 2>&1 || true
   die "frontend switch failed. The previous UI has been restored. If this is the first rollout, ensure the backend includes frontend hot-swap support."
 fi
 
-if [[ -n "$OLD_TARGET" ]]; then
-  atomic_set_link "$PREVIOUS_LINK" "$OLD_TARGET"
-fi
+atomic_write_state "$OLD_STATE"
 
 log "frontend update complete"
 log "branch:    $BRANCH"
 log "UI commit: $UI_SHA"
 log "active:    $RELATIVE_RELEASE_TARGET"
+log "previous:  $OLD_STATE"
 log "backend:   unchanged"
 log "database:  unchanged"
 log "redis:     unchanged"
