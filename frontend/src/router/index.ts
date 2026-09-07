@@ -9,6 +9,7 @@ import UserBillingRoutePage from '../smirel/pages/UserBillingRoutePage.vue'
 import UserOrdersPage from '../smirel/components/UserOrdersPage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
 import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
+import AdminGroupsPage from '../smirel/pages/AdminGroupsPage.vue'
 import AdminChannelsPage from '../smirel/pages/AdminChannelsPage.vue'
 import AdminPaymentDashboardPage from '../smirel/pages/AdminPaymentDashboardPage.vue'
 import AdminOrdersPage from '../smirel/pages/AdminOrdersPage.vue'
@@ -40,7 +41,9 @@ const workspaceRoutes: RouteRecordRaw[] = [
       ? AdminOverviewPage
       : item.path === '/admin/accounts'
         ? AdminAccountsPage
-        : item.path === '/admin/channels/pricing'
+        : item.path === '/admin/groups'
+          ? AdminGroupsPage
+          : item.path === '/admin/channels/pricing'
           ? AdminChannelsPage
           : item.path === '/admin/orders/dashboard'
             ? AdminPaymentDashboardPage
@@ -77,7 +80,6 @@ const routes: RouteRecordRaw[] = [
   { path: '/custom/:id', name: 'CustomPage', component: WorkspacePage, meta: { shell: 'workspace', requiresAuth: true, title: '自定义页面', feature: 'custom' } },
   ...workspaceRoutes,
   { path: '/admin', redirect: '/admin/dashboard' },
-  { path: '/admin/groups', redirect: '/model-plaza' },
   { path: '/admin/channels', redirect: '/admin/channels/pricing' },
   { path: '/admin/affiliates', redirect: '/admin/affiliates/invites' },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundPage, meta: { title: '页面不存在' } },
