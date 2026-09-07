@@ -54,7 +54,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/payment/result', name: 'PaymentResult', component: PublicPage, meta: { title: '支付结果', publicKind: 'payment' } },
   { path: '/payment/qrcode', name: 'PaymentQRCode', component: PublicPage, meta: { title: '支付', publicKind: 'payment', requiresAuth: true } },
   { path: '/payment/stripe', name: 'StripePayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
-  { path: '/payment/stripe-popup', name: 'StripePaymentPopup', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
+  { path: '/payment/stripe-popup', name: 'StripePayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
   { path: '/payment/airwallex', name: 'AirwallexPayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
   { path: '/auth/wechat/payment/callback', name: 'WeChatPaymentCallback', component: PublicPage, meta: { title: '支付回调', publicKind: 'callback' } },
   { path: '/auth/:provider/callback', name: 'OAuthProviderCallback', component: PublicPage, meta: { title: '登录回调', publicKind: 'callback' } },
