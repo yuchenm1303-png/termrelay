@@ -37,12 +37,12 @@
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  gap: 9px;
+  gap: 10px;
 }
 
 .home-page .brand-link img {
-  width: 29px;
-  height: 29px;
+  width: 38px;
+  height: 38px;
 }
 
 .home-page .brand-link > span {
@@ -53,14 +53,14 @@
 
 .home-page .brand-link strong {
   color: var(--text);
-  font-size: .92rem;
+  font-size: 1.02rem;
   font-weight: 680;
 }
 
 .home-page .brand-link small {
   margin-top: 4px;
   color: #5f646d;
-  font-size: .68rem;
+  font-size: .72rem;
   letter-spacing: .13em;
 }
 
