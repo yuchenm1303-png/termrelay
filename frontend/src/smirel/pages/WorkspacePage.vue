@@ -7,6 +7,7 @@ import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 import { useSession } from '../core/session'
 import '../styles/api-keys.css'
+import '../styles/admin-users-commercial.css'
 
 interface ApiKeyRow { id: number; name?: string; key?: string; status?: string; created_at?: string; [key: string]: unknown }
 interface UsageRow { id?: number; model?: string; endpoint?: string; total_tokens?: number; actual_cost?: number; created_at?: string; [key: string]: unknown }
