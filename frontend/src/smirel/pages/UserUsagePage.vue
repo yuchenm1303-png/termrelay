@@ -13,7 +13,7 @@ interface UsageRow {
   [key: string]: unknown
 }
 
-type Period = 'today' | '7d' | '30d' | 'all'
+type Period = 'today' | '7d' | '30d' | '90d' | 'custom' | 'all'
 type Metric = 'tokens' | 'cost'
 
 const loading = ref(false)
@@ -23,6 +23,8 @@ const search = ref('')
 const modelFilter = ref('all')
 const period = ref<Period>('7d')
 const metric = ref<Metric>('tokens')
+const customStart = ref('')
+const customEnd = ref('')
 
 const previewRows: UsageRow[] = [
   { id: 1, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 18420, actual_cost: 0.0820, created_at: '2026-09-07 10:18' },
@@ -44,16 +46,81 @@ function parseTime(value?: string) {
   return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
+function startOfDay(value: number) {
+  const date = new Date(value)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime()
+}
+
+function endOfDay(value: number) {
+  const date = new Date(value)
+  date.setHours(23, 59, 59, 999)
+  return date.getTime()
+}
+
+function inputDate(value: number) {
+  const date = new Date(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const referenceTime = computed(() => {
   const timestamps = usage.value.map((item) => parseTime(item.created_at)).filter(Boolean)
   return timestamps.length ? Math.max(...timestamps) : Date.now()
 })
 
+function selectPeriod(next: Period) {
+  period.value = next
+  if (next !== 'custom') return
+
+  if (!customEnd.value) customEnd.value = inputDate(referenceTime.value)
+  if (!customStart.value) {
+    const start = new Date(referenceTime.value)
+    start.setDate(start.getDate() - 6)
+    customStart.value = inputDate(start.getTime())
+  }
+}
+
+const selectedBounds = computed(() => {
+  const referenceEnd = endOfDay(referenceTime.value)
+
+  if (period.value === 'all') {
+    const timestamps = usage.value.map((item) => parseTime(item.created_at)).filter(Boolean)
+    if (!timestamps.length) return { start: startOfDay(referenceTime.value), end: referenceEnd }
+    return { start: startOfDay(Math.min(...timestamps)), end: endOfDay(Math.max(...timestamps)) }
+  }
+
+  if (period.value === 'custom') {
+    const startCandidate = customStart.value ? new Date(`${customStart.value}T00:00:00`).getTime() : startOfDay(referenceTime.value)
+    const endCandidate = customEnd.value ? new Date(`${customEnd.value}T23:59:59.999`).getTime() : referenceEnd
+    const low = Math.min(startCandidate, endCandidate)
+    const high = Math.max(startCandidate, endCandidate)
+    return { start: startOfDay(low), end: endOfDay(high) }
+  }
+
+  const days = period.value === 'today' ? 1 : period.value === '7d' ? 7 : period.value === '30d' ? 30 : 90
+  const start = new Date(referenceTime.value)
+  start.setDate(start.getDate() - (days - 1))
+  return { start: startOfDay(start.getTime()), end: referenceEnd }
+})
+
 const periodUsage = computed(() => {
-  if (period.value === 'all') return usage.value
-  const days = period.value === 'today' ? 1 : period.value === '7d' ? 7 : 30
-  const cutoff = referenceTime.value - days * 24 * 60 * 60 * 1000
-  return usage.value.filter((item) => parseTime(item.created_at) >= cutoff)
+  const { start, end } = selectedBounds.value
+  return usage.value.filter((item) => {
+    const timestamp = parseTime(item.created_at)
+    return timestamp >= start && timestamp <= end
+  })
+})
+
+const periodLabel = computed(() => {
+  if (period.value === 'today') return '今日'
+  if (period.value === '7d') return '近 7 天'
+  if (period.value === '30d') return '近 30 天'
+  if (period.value === '90d') return '近 90 天'
+  if (period.value === 'all') return '全部'
+  return `${customStart.value || '起始'} — ${customEnd.value || '结束'}`
 })
 
 const modelOptions = computed(() => Array.from(new Set(periodUsage.value.map((item) => item.model).filter(Boolean) as string[])))
@@ -97,34 +164,114 @@ function distributionBy(key: 'model' | 'endpoint') {
 const modelBreakdown = computed(() => distributionBy('model').slice(0, 5))
 const endpointBreakdown = computed(() => distributionBy('endpoint').slice(0, 5))
 
-const trendData = computed(() => {
-  const end = new Date(referenceTime.value)
-  end.setHours(0, 0, 0, 0)
-  const span = period.value === 'today' ? 1 : period.value === '30d' ? 10 : 7
-  const stepDays = period.value === '30d' ? 3 : 1
-  const rows = Array.from({ length: span }, (_, index) => {
-    const bucketEnd = new Date(end)
-    bucketEnd.setDate(end.getDate() - (span - 1 - index) * stepDays)
-    const bucketStart = new Date(bucketEnd)
-    bucketStart.setDate(bucketEnd.getDate() - stepDays + 1)
-    bucketStart.setHours(0, 0, 0, 0)
+interface TrendBucket {
+  label: string
+  fullLabel: string
+  tokens: number
+  cost: number
+  requests: number
+  value: number
+  showLabel: boolean
+}
+
+const trendData = computed<TrendBucket[]>(() => {
+  const { start, end } = selectedBounds.value
+
+  if (period.value === 'today') {
+    const dayStart = startOfDay(end)
+    return Array.from({ length: 6 }, (_, index) => {
+      const bucketStart = dayStart + index * 4 * 60 * 60 * 1000
+      const bucketEnd = Math.min(bucketStart + 4 * 60 * 60 * 1000 - 1, end)
+      const items = periodUsage.value.filter((item) => {
+        const timestamp = parseTime(item.created_at)
+        return timestamp >= bucketStart && timestamp <= bucketEnd
+      })
+      const tokens = items.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0)
+      const cost = items.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
+      return {
+        label: `${String(index * 4).padStart(2, '0')}:00`,
+        fullLabel: `${inputDate(bucketStart)} ${String(index * 4).padStart(2, '0')}:00`,
+        tokens,
+        cost,
+        requests: items.length,
+        value: metric.value === 'tokens' ? tokens : cost,
+        showLabel: true,
+      }
+    })
+  }
+
+  const totalDays = Math.max(1, Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1)
+  const stepDays = Math.max(1, Math.ceil(totalDays / 30))
+  const bucketCount = Math.ceil(totalDays / stepDays)
+  const labelEvery = Math.max(1, Math.ceil(bucketCount / 7))
+
+  return Array.from({ length: bucketCount }, (_, index) => {
+    const bucketStart = new Date(start)
+    bucketStart.setDate(bucketStart.getDate() + index * stepDays)
+    const bucketEnd = new Date(bucketStart)
+    bucketEnd.setDate(bucketEnd.getDate() + stepDays - 1)
     bucketEnd.setHours(23, 59, 59, 999)
+    if (bucketEnd.getTime() > end) bucketEnd.setTime(end)
+
     const items = periodUsage.value.filter((item) => {
       const timestamp = parseTime(item.created_at)
       return timestamp >= bucketStart.getTime() && timestamp <= bucketEnd.getTime()
     })
     const tokens = items.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0)
     const cost = items.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
+    const label = `${bucketStart.getMonth() + 1}/${bucketStart.getDate()}`
+
     return {
-      label: stepDays === 1 ? `${bucketEnd.getMonth() + 1}/${bucketEnd.getDate()}` : `${bucketStart.getMonth() + 1}/${bucketStart.getDate()}`,
+      label,
+      fullLabel: stepDays === 1
+        ? inputDate(bucketStart.getTime())
+        : `${inputDate(bucketStart.getTime())} — ${inputDate(bucketEnd.getTime())}`,
       tokens,
       cost,
       requests: items.length,
       value: metric.value === 'tokens' ? tokens : cost,
+      showLabel: index % labelEvery === 0 || index === bucketCount - 1,
     }
   })
+})
+
+const chartWidth = 1000
+const chartTop = 16
+const chartBottom = 166
+const chartLeft = 20
+const chartRight = 980
+
+const trendPoints = computed(() => {
+  const rows = trendData.value
   const max = Math.max(...rows.map((item) => item.value), 1)
-  return rows.map((item) => ({ ...item, height: Math.max(item.value ? 10 : 2, (item.value / max) * 100) }))
+  return rows.map((item, index) => {
+    const x = rows.length === 1
+      ? chartWidth / 2
+      : chartLeft + (index / (rows.length - 1)) * (chartRight - chartLeft)
+    const y = chartBottom - (item.value / max) * (chartBottom - chartTop)
+    return { ...item, x, y }
+  })
+})
+
+const trendLinePath = computed(() => {
+  const points = trendPoints.value
+  if (!points.length) return ''
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`
+
+  let path = `M ${points[0].x} ${points[0].y}`
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1]
+    const current = points[index]
+    const middleX = (previous.x + current.x) / 2
+    path += ` C ${middleX} ${previous.y}, ${middleX} ${current.y}, ${current.x} ${current.y}`
+  }
+  return path
+})
+
+const trendAreaPath = computed(() => {
+  const points = trendPoints.value
+  if (points.length < 2) return ''
+  return `${trendLinePath.value} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`
 })
 
 const topModel = computed(() => modelBreakdown.value[0]?.label || '—')
@@ -146,6 +293,10 @@ function formatTime(value?: string) {
   const date = new Date(normalized)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+function trendValue(item: TrendBucket) {
+  return metric.value === 'tokens' ? `${compact(item.tokens)} Tokens` : money(item.cost)
 }
 
 async function load() {
@@ -178,16 +329,31 @@ onMounted(() => void load())
       </div>
       <div class="usage-heading-actions">
         <div class="period-switch" aria-label="统计范围">
-          <button :class="{ active: period === 'today' }" type="button" @click="period = 'today'">今日</button>
-          <button :class="{ active: period === '7d' }" type="button" @click="period = '7d'">7 天</button>
-          <button :class="{ active: period === '30d' }" type="button" @click="period = '30d'">30 天</button>
-          <button :class="{ active: period === 'all' }" type="button" @click="period = 'all'">全部</button>
+          <button :class="{ active: period === 'today' }" type="button" @click="selectPeriod('today')">今日</button>
+          <button :class="{ active: period === '7d' }" type="button" @click="selectPeriod('7d')">7 天</button>
+          <button :class="{ active: period === '30d' }" type="button" @click="selectPeriod('30d')">30 天</button>
+          <button :class="{ active: period === '90d' }" type="button" @click="selectPeriod('90d')">90 天</button>
+          <button :class="{ active: period === 'custom' }" type="button" @click="selectPeriod('custom')">自定义</button>
+          <button :class="{ active: period === 'all' }" type="button" @click="selectPeriod('all')">全部</button>
         </div>
         <button class="usage-refresh" type="button" :disabled="loading" aria-label="刷新数据" @click="load">
           <WorkspaceNavIcon name="refresh" />
         </button>
       </div>
     </header>
+
+    <div v-if="period === 'custom'" class="custom-range-row">
+      <span>自定义时间</span>
+      <label>
+        <small>开始</small>
+        <input v-model="customStart" type="date" :max="customEnd || undefined" />
+      </label>
+      <i>—</i>
+      <label>
+        <small>结束</small>
+        <input v-model="customEnd" type="date" :min="customStart || undefined" />
+      </label>
+    </div>
 
     <p v-if="error" class="inline-error">{{ error }}</p>
 
@@ -240,32 +406,47 @@ onMounted(() => void load())
 
     <div class="analytics-grid">
       <article class="analytics-panel trend-panel">
-        <header class="panel-heading">
+        <header class="panel-heading trend-heading">
           <div>
             <small>TREND</small>
             <h2>{{ metric === 'tokens' ? 'Token 使用趋势' : '费用趋势' }}</h2>
           </div>
           <div class="panel-total">
-            <span>{{ metric === 'tokens' ? '当前总量' : '当前费用' }}</span>
+            <span>{{ periodLabel }}</span>
             <strong>{{ metric === 'tokens' ? compact(totalTokens) : money(totalCost) }}</strong>
           </div>
         </header>
-        <div v-if="totalRequests" class="trend-chart">
+
+        <div class="trend-chart">
           <div class="trend-grid-lines"><i></i><i></i><i></i><i></i></div>
-          <div class="trend-bars">
-            <div v-for="item in trendData" :key="item.label" class="trend-column">
-              <div class="trend-value-wrap">
-                <span class="trend-tooltip">{{ metric === 'tokens' ? compact(item.tokens) : money(item.cost) }}</span>
-                <i class="trend-value" :style="{ height: `${item.height}%` }"></i>
-              </div>
-              <small>{{ item.label }}</small>
-            </div>
+          <svg
+            class="trend-line-svg"
+            :viewBox="`0 0 ${chartWidth} 190`"
+            preserveAspectRatio="none"
+            role="img"
+            :aria-label="metric === 'tokens' ? 'Token 使用趋势曲线图' : '费用趋势曲线图'"
+          >
+            <defs>
+              <linearGradient id="usageTrendArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="currentColor" stop-opacity=".16" />
+                <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <path v-if="trendAreaPath" class="trend-area" :d="trendAreaPath" />
+            <path v-if="trendLinePath" class="trend-line" :d="trendLinePath" />
+            <g v-for="point in trendPoints" :key="point.fullLabel" class="trend-point">
+              <circle :cx="point.x" :cy="point.y" r="6">
+                <title>{{ point.fullLabel }} · {{ trendValue(point) }} · {{ point.requests }} 次请求</title>
+              </circle>
+            </g>
+          </svg>
+          <div class="trend-axis" :style="{ gridTemplateColumns: `repeat(${Math.max(trendData.length, 1)}, minmax(0, 1fr))` }">
+            <small
+              v-for="item in trendData"
+              :key="`axis-${item.fullLabel}`"
+              :class="{ muted: !item.showLabel }"
+            >{{ item.label }}</small>
           </div>
-        </div>
-        <div v-else class="panel-empty">
-          <WorkspaceNavIcon name="chart" />
-          <strong>暂无用量数据</strong>
-          <span>开始调用 API 后，这里会显示趋势。</span>
         </div>
       </article>
 
@@ -287,9 +468,7 @@ onMounted(() => void load())
             <small>{{ metric === 'tokens' ? `${compact(item.tokens)} Tokens` : money(item.cost) }} · {{ item.requests }} 次</small>
           </div>
         </div>
-        <div v-else class="panel-empty compact">
-          <strong>暂无模型数据</strong>
-        </div>
+        <div v-else class="panel-empty compact"><strong>暂无模型数据</strong></div>
       </article>
 
       <article class="analytics-panel distribution-panel endpoint-panel">
@@ -413,6 +592,7 @@ onMounted(() => void load())
   align-items: center;
   background: #0f1114;
 }
+.period-switch { flex-wrap: wrap; justify-content: flex-end; }
 .period-switch button,
 .metric-switch button {
   min-height: 33px;
@@ -427,7 +607,36 @@ onMounted(() => void load())
 }
 .period-switch button.active,
 .metric-switch button.active { color: #eef0f2; background: #202329; box-shadow: inset 0 1px rgba(255,255,255,.04); }
-.usage-refresh { width: 41px; height: 41px; border: 1px solid #272b31; border-radius: 9px; display: grid; place-items: center; color: #8c949e; background: #0f1114; cursor: pointer; }
+
+.custom-range-row {
+  min-height: 54px;
+  margin: -14px 0 18px;
+  padding: 9px 12px 9px 16px;
+  border: 1px solid #23272d;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #0d0f12;
+}
+.custom-range-row > span { margin-right: auto; color: #7b838d; font-size: .7rem; font-weight: 600; }
+.custom-range-row > i { color: #4f5862; font-style: normal; }
+.custom-range-row label { display: flex; align-items: center; gap: 8px; }
+.custom-range-row label small { color: #626b75; font-size: .61rem; }
+.custom-range-row input {
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid #292e35;
+  border-radius: 7px;
+  color: #b9c0c8;
+  color-scheme: dark;
+  background: #111317;
+  font: inherit;
+  font-size: .68rem;
+}
+
+.usage-refresh { width: 41px; height: 41px; flex: 0 0 41px; border: 1px solid #272b31; border-radius: 9px; display: grid; place-items: center; color: #8c949e; background: #0f1114; cursor: pointer; }
 .usage-refresh:hover:not(:disabled) { color: #f0f2f4; border-color: #363b43; }
 .usage-refresh:disabled { opacity: .5; cursor: wait; }
 .usage-refresh :deep(.workspace-nav-icon) { width: 15px; height: 15px; }
@@ -468,17 +677,33 @@ onMounted(() => void load())
 .panel-total strong { color: #e5e8eb; font-size: .94rem; }
 
 .trend-panel { min-height: 330px; }
-.trend-chart { position: relative; height: 255px; padding: 24px 22px 18px; }
-.trend-grid-lines { position: absolute; inset: 24px 22px 45px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
-.trend-grid-lines i { height: 1px; background: #1d2025; }
-.trend-bars { position: relative; height: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 14px; }
-.trend-column { height: 100%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 10px; }
-.trend-value-wrap { position: relative; width: min(42px, 72%); height: calc(100% - 24px); display: flex; align-items: flex-end; }
-.trend-value { width: 100%; min-height: 2px; border-radius: 5px 5px 2px 2px; display: block; background: linear-gradient(180deg, #747d87, #343a42); opacity: .78; transition: opacity .15s ease, background-color .15s ease; }
-.trend-column:hover .trend-value { opacity: 1; background: #727c87; }
-.trend-tooltip { position: absolute; z-index: 2; left: 50%; bottom: calc(100% + 7px); transform: translateX(-50%); padding: 5px 7px; border: 1px solid #2c3239; border-radius: 6px; opacity: 0; pointer-events: none; white-space: nowrap; color: #dfe2e5; background: #15181c; font-size: .58rem; transition: opacity .12s ease; }
-.trend-column:hover .trend-tooltip { opacity: 1; }
-.trend-column > small { color: #606975; font-size: .61rem; }
+.trend-chart { position: relative; height: 255px; padding: 24px 22px 18px; color: #8e98a3; }
+.trend-grid-lines { position: absolute; inset: 24px 22px 53px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.trend-grid-lines i { height: 1px; border-top: 1px dashed #242931; opacity: .92; }
+.trend-line-svg { position: absolute; inset: 18px 22px 39px; width: calc(100% - 44px); height: calc(100% - 57px); overflow: visible; }
+.trend-area { fill: url(#usageTrendArea); color: #818b96; }
+.trend-line {
+  fill: none;
+  stroke: #949eaa;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 5px rgba(148,158,170,.1));
+}
+.trend-point circle {
+  fill: #111419;
+  stroke: #a2acb7;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  opacity: .92;
+  cursor: crosshair;
+  transition: r .12s ease, opacity .12s ease;
+}
+.trend-point:hover circle { r: 8; opacity: 1; }
+.trend-axis { position: absolute; left: 22px; right: 22px; bottom: 15px; display: grid; align-items: center; }
+.trend-axis small { min-width: 0; color: #68717b; font-size: .61rem; text-align: center; white-space: nowrap; }
+.trend-axis small.muted { visibility: hidden; }
 
 .distribution-panel { min-height: 330px; }
 .distribution-list { padding: 8px 20px 16px; }
@@ -543,16 +768,30 @@ onMounted(() => void load())
   .trend-panel, .distribution-panel, .endpoint-panel, .overview-panel { min-height: auto; }
 }
 
+@media (max-width: 860px) {
+  .usage-heading { align-items: flex-start; flex-direction: column; }
+  .usage-heading-actions { width: 100%; }
+  .period-switch { flex: 1; justify-content: flex-start; }
+}
+
 @media (max-width: 760px) {
-  .usage-heading { min-height: auto; padding-top: 16px; align-items: flex-start; flex-direction: column; }
-  .usage-heading-actions { width: 100%; justify-content: space-between; }
-  .period-switch { flex: 1; }
-  .period-switch button { flex: 1; padding: 0 8px; }
+  .usage-heading { min-height: auto; padding-top: 16px; }
+  .usage-heading-actions { align-items: stretch; }
+  .period-switch { overflow-x: auto; flex-wrap: nowrap; }
+  .period-switch button { flex: 0 0 auto; padding: 0 10px; }
   .usage-heading h1 { font-size: 1.9rem; }
+  .custom-range-row { margin-top: -8px; align-items: stretch; flex-wrap: wrap; justify-content: flex-start; }
+  .custom-range-row > span { width: 100%; margin: 0; }
+  .custom-range-row label { flex: 1; min-width: 130px; }
+  .custom-range-row input { width: 100%; }
   .usage-summary-grid { grid-template-columns: 1fr; }
   .analytics-toolbar { align-items: flex-start; flex-direction: column; padding: 12px; }
   .metric-switch { width: 100%; }
   .metric-switch button { flex: 1; }
+  .trend-chart { height: 230px; padding-inline: 14px; }
+  .trend-grid-lines { left: 14px; right: 14px; }
+  .trend-line-svg { left: 14px; right: 14px; width: calc(100% - 28px); }
+  .trend-axis { left: 14px; right: 14px; }
   .usage-log-heading { align-items: flex-start; flex-direction: column; }
   .log-filters { width: 100%; }
   .usage-search { width: auto; flex: 1; }
