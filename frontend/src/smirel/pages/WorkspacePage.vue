@@ -37,6 +37,32 @@ const featureTitleKeys: Record<string, string> = {
   purchase: 'nav.purchase',
   orders: 'nav.orders',
   profile: 'nav.profile',
+  'admin-dashboard': 'nav.adminDashboard',
+  'admin-users': 'nav.adminUsers',
+  'admin-accounts': 'nav.adminAccounts',
+  'admin-groups': 'nav.adminGroups',
+  'admin-channels': 'nav.adminChannels',
+  'admin-usage': 'nav.adminUsage',
+  'admin-ops': 'nav.adminOps',
+  'admin-payment-dashboard': 'nav.adminPayment',
+  'admin-orders': 'nav.adminOrders',
+  'admin-settings': 'nav.adminSettings',
+}
+
+const featureDescriptionKeys: Record<string, string> = {
+  dashboard: 'workspace.descriptions.dashboard',
+  keys: 'workspace.descriptions.keys',
+  usage: 'workspace.descriptions.usage',
+  profile: 'workspace.descriptions.profile',
+  'admin-users': 'workspace.descriptions.adminUsers',
+  'admin-accounts': 'workspace.descriptions.adminAccounts',
+  'admin-groups': 'workspace.descriptions.adminGroups',
+  'admin-channels': 'workspace.descriptions.adminChannels',
+  'admin-usage': 'workspace.descriptions.adminUsage',
+  'admin-ops': 'workspace.descriptions.adminOps',
+  'admin-payment-dashboard': 'workspace.descriptions.adminPayment',
+  'admin-orders': 'workspace.descriptions.adminOrders',
+  'admin-settings': 'workspace.descriptions.adminSettings',
 }
 
 const title = computed(() => {
@@ -45,11 +71,8 @@ const title = computed(() => {
 })
 
 const pageDescription = computed(() => {
-  if (isDashboard.value) return t('workspace.descriptions.dashboard')
-  if (isKeys.value) return t('workspace.descriptions.keys')
-  if (isUsage.value) return t('workspace.descriptions.usage')
-  if (isProfile.value) return t('workspace.descriptions.profile')
-  return t('workspace.descriptions.generic')
+  const key = featureDescriptionKeys[feature.value]
+  return key ? t(key) : t('workspace.descriptions.generic')
 })
 
 async function load() {
