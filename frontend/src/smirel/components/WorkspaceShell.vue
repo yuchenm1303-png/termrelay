@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { adminNavigation, userNavigation, type NavItem } from '../core/navigation'
 import { useSession } from '../core/session'
 import '../styles/workspace-layout.css'
@@ -11,14 +11,11 @@ interface NavGroup {
 }
 
 const route = useRoute()
-const router = useRouter()
 const mobileOpen = ref(false)
-const loggingOut = ref(false)
-const { state, isAdmin, logout } = useSession()
+const { state, isAdmin } = useSession()
 const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
 const navigation = computed(() => isAdmin.value ? adminNavigation : userNavigation)
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
-const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel Account')
 
 function take(items: NavItem[], features: string[]) {
   return items.filter((item) => features.includes(item.feature))
@@ -43,16 +40,6 @@ const navigationGroups = computed<NavGroup[]>(() => {
     { label: '系统', items: take(items, ['admin-settings']) },
   ].filter((group) => group.items.length)
 })
-
-async function signOut() {
-  loggingOut.value = true
-  try {
-    await logout()
-    if (!import.meta.env.VITE_UI_PREVIEW) await router.replace('/login')
-  } finally {
-    loggingOut.value = false
-  }
-}
 </script>
 
 <template>
@@ -81,17 +68,6 @@ async function signOut() {
           </RouterLink>
         </section>
       </nav>
-
-      <div class="workspace-account">
-        <RouterLink to="/profile" class="account-row" @click="mobileOpen = false">
-          <b>{{ initials }}</b>
-          <span><strong>{{ accountName }}</strong><small>{{ isAdmin ? '管理员' : state.user?.email }}</small></span>
-        </RouterLink>
-        <div class="account-actions">
-          <RouterLink to="/home">首页</RouterLink>
-          <button type="button" :disabled="loggingOut" @click="signOut">{{ loggingOut ? '退出中…' : '退出' }}</button>
-        </div>
-      </div>
     </aside>
 
     <button v-if="mobileOpen" class="workspace-scrim" type="button" @click="mobileOpen = false"></button>
