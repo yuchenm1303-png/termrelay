@@ -138,6 +138,122 @@
   background: #272b32;
 }
 
+/* Theme picker: keep the control minimal, but give the state hierarchy and
+ * option affordance enough structure to read as a finished product surface. */
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel {
+  top: 48px;
+  width: 288px;
+  padding: 10px;
+  border-color: var(--ws-border-strong);
+  border-radius: 14px;
+  background: var(--ws-surface);
+  box-shadow: 0 22px 58px rgba(0, 0, 0, .28), 0 1px 0 rgba(255, 255, 255, .025) inset;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-head {
+  margin: 0 2px 5px;
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--ws-border);
+  gap: 0;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-head strong {
+  color: var(--ws-text);
+  font-size: .85rem;
+  line-height: 1.2;
+  font-weight: 680;
+  letter-spacing: -.012em;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-head small {
+  display: none;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 12px 0 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 11px;
+  color: var(--ws-muted);
+  background: transparent;
+  font-size: .79rem;
+  line-height: 1;
+  font-weight: 580;
+  letter-spacing: -.006em;
+  transition: color .14s ease, background-color .14s ease, border-color .14s ease;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row + .workspace-choice-row {
+  margin-top: 3px;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 1px solid #404750;
+  border-radius: 50%;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 2px transparent;
+  transition: border-color .14s ease, box-shadow .14s ease;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row:nth-of-type(1)::before {
+  background: #0a0c0f;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row:nth-of-type(2)::before {
+  border-color: #8a929c;
+  background: #f2f4f6;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row:nth-of-type(3)::before {
+  border-color: #69717a;
+  background: linear-gradient(135deg, #eff2f5 0 49%, #171a1f 50% 100%);
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row:hover {
+  border-color: var(--ws-border);
+  color: var(--ws-text-soft);
+  background: var(--ws-surface-soft);
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row.selected {
+  border-color: var(--ws-border-strong);
+  color: var(--ws-text);
+  background: var(--ws-surface-soft);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .015) inset;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row.selected::before {
+  border-color: #5ca9dd;
+  box-shadow: 0 0 0 3px rgba(47, 150, 232, .11);
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row > span {
+  min-width: 0;
+  color: inherit;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row > svg {
+  width: 16px;
+  height: 16px;
+  justify-self: end;
+  stroke: #62b2eb;
+  stroke-width: 2;
+}
+
+.workspace-root .workspace-main .workspace-utility-control > .workspace-utility-button:not(.workspace-language-button) + .workspace-choice-panel .workspace-choice-row:focus-visible {
+  outline: none;
+  border-color: #35536b;
+  box-shadow: 0 0 0 3px rgba(47, 150, 232, .08);
+}
+
 .workspace-root .workspace-main .workspace-profile-link {
   min-height: 38px;
   padding: 3px 9px 3px 4px;
