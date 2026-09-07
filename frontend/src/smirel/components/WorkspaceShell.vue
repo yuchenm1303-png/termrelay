@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
 import { adminNavigation, userNavigation, type NavItem } from '../core/navigation'
 import { useSession } from '../core/session'
 import '../styles/workspace-layout.css'
@@ -18,6 +19,26 @@ const navigation = computed(() => isAdmin.value ? adminNavigation : userNavigati
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel')
 const accountRole = computed(() => isAdmin.value ? '管理员' : '个人账户')
+
+const navIconByFeature: Record<string, string> = {
+  dashboard: 'dashboard',
+  keys: 'key',
+  usage: 'chart',
+  subscriptions: 'credit-card',
+  purchase: 'wallet',
+  orders: 'receipt',
+  profile: 'user',
+  'admin-dashboard': 'dashboard',
+  'admin-users': 'users',
+  'admin-accounts': 'server',
+  'admin-groups': 'layers',
+  'admin-channels': 'network',
+  'admin-usage': 'chart',
+  'admin-ops': 'activity',
+  'admin-payment-dashboard': 'credit-card',
+  'admin-orders': 'receipt',
+  'admin-settings': 'settings',
+}
 
 function take(items: NavItem[], features: string[]) {
   return items.filter((item) => features.includes(item.feature))
@@ -80,6 +101,7 @@ const breadcrumbGroupLabel = computed(() => (
             :class="{ active: route.path === item.path }"
             @click="mobileOpen = false"
           >
+            <WorkspaceNavIcon :name="navIconByFeature[item.feature] || 'circle'" />
             <span>{{ item.label }}</span>
           </RouterLink>
         </section>
@@ -124,6 +146,30 @@ const breadcrumbGroupLabel = computed(() => (
   width: 76px;
   height: auto;
   object-fit: contain;
+}
+
+.workspace-nav a {
+  gap: 10px;
+}
+
+.workspace-nav-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: #68717d;
+  transition: color .15s ease;
+}
+
+.workspace-nav a:hover .workspace-nav-icon {
+  color: #aeb6c1;
+}
+
+.workspace-nav a.active .workspace-nav-icon {
+  color: #73bdf2;
+}
+
+.workspace-nav a > span {
+  min-width: 0;
 }
 
 /*
