@@ -41,10 +41,17 @@ const openUtility = ref<UtilityPanel | null>(null)
 const { state, isAdmin } = useSession()
 const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
 const sharedKeysNavigation = userNavigation.find((item) => item.feature === 'keys')
+const modelCatalogNavItem = computed<NavItem>(() => ({
+  path: '/model-plaza',
+  name: 'ModelPlaza',
+  label: interfacePreferences.locale === 'zh-CN' ? '模型与价格' : 'Models & Pricing',
+  feature: 'model-catalog',
+  short: 'MD',
+}))
 const navigation = computed<NavItem[]>(() => {
-  if (!isAdmin.value) return userNavigation
-  if (!sharedKeysNavigation) return adminNavigation
-  return [adminNavigation[0], sharedKeysNavigation, ...adminNavigation.slice(1)]
+  if (!isAdmin.value) return [...userNavigation, modelCatalogNavItem.value]
+  if (!sharedKeysNavigation) return [...adminNavigation, modelCatalogNavItem.value]
+  return [adminNavigation[0], sharedKeysNavigation, ...adminNavigation.slice(1), modelCatalogNavItem.value]
 })
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel')
@@ -60,6 +67,7 @@ const navIconByFeature: Record<string, string> = {
   purchase: 'wallet',
   orders: 'receipt',
   profile: 'user',
+  'model-catalog': 'layers',
   'admin-dashboard': 'dashboard',
   'admin-users': 'users',
   'admin-accounts': 'server',
@@ -107,6 +115,7 @@ const navigationGroups = computed<NavGroup[]>(() => {
   if (!isAdmin.value) {
     return [
       { label: t('groups.console'), items: take(items, ['dashboard', 'keys', 'usage']) },
+      { label: t('groups.resources'), items: take(items, ['model-catalog']) },
       { label: t('groups.billing'), items: take(items, ['subscriptions', 'purchase', 'orders']) },
       { label: t('groups.account'), items: take(items, ['profile']) },
     ].filter((group) => group.items.length)
@@ -114,7 +123,7 @@ const navigationGroups = computed<NavGroup[]>(() => {
 
   return [
     { label: t('groups.console'), items: take(items, ['admin-dashboard', 'keys', 'admin-users']) },
-    { label: t('groups.resources'), items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels']) },
+    { label: t('groups.resources'), items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog']) },
     { label: t('groups.operations'), items: take(items, ['admin-usage', 'admin-ops']) },
     { label: t('groups.transactions'), items: take(items, ['admin-payment-dashboard', 'admin-orders']) },
     { label: t('groups.system'), items: take(items, ['admin-settings']) },

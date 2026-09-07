@@ -4,6 +4,7 @@ import AuthPage from '../smirel/pages/AuthPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
 import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
+import ModelCatalogPage from '../smirel/pages/ModelCatalogPage.vue'
 import PublicPage from '../smirel/pages/PublicPage.vue'
 import NotFoundPage from '../smirel/pages/NotFoundPage.vue'
 import { isAuthenticated, isAdmin } from '../smirel/core/session'
@@ -36,7 +37,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/forgot-password', name: 'ForgotPassword', component: AuthPage, meta: { title: '找回密码', authKind: 'forgot' } },
   { path: '/reset-password', name: 'ResetPassword', component: AuthPage, meta: { title: '重置密码', authKind: 'reset' } },
   { path: '/email-verify', name: 'EmailVerify', component: PublicPage, meta: { title: '邮箱验证', publicKind: 'callback' } },
-  { path: '/model-plaza', name: 'ModelPlaza', component: PublicPage, meta: { title: '模型与价格', publicKind: 'models' } },
+  { path: '/model-plaza', name: 'ModelPlaza', component: ModelCatalogPage, meta: { shell: 'workspace', requiresAuth: true, title: '模型与价格', feature: 'model-catalog' } },
   { path: '/key-usage', name: 'KeyUsage', component: PublicPage, meta: { title: '用量查询', publicKind: 'key-usage' } },
   { path: '/legal/:documentId', name: 'LegalDocument', component: PublicPage, meta: { title: '法律文档', publicKind: 'legal' } },
   { path: '/setup', name: 'Setup', component: PublicPage, meta: { title: '初始化', publicKind: 'setup' } },

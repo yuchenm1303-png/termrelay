@@ -10,6 +10,7 @@ import './smirel/styles/button-interactions.css'
 import './smirel/styles/workspace-topbar.css'
 import './smirel/styles/interface-preferences.css'
 import './smirel/styles/models-commercial.css'
+import './smirel/styles/model-catalog-workspace.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
