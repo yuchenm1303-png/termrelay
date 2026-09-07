@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { adminNavigation, userNavigation } from '../core/navigation'
+import { adminNavigation, userNavigation, type NavItem } from '../core/navigation'
 import { useSession } from '../core/session'
+import '../styles/workspace-layout.css'
+
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +19,31 @@ const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
 const navigation = computed(() => isAdmin.value ? adminNavigation : userNavigation)
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel Account')
+
+function take(items: NavItem[], features: string[]) {
+  return items.filter((item) => features.includes(item.feature))
+}
+
+const navigationGroups = computed<NavGroup[]>(() => {
+  const items = navigation.value
+
+  if (!isAdmin.value) {
+    return [
+      { label: 'WORKSPACE', items: take(items, ['dashboard', 'keys', 'usage']) },
+      { label: 'BILLING', items: take(items, ['subscriptions', 'purchase', 'orders', 'redeem', 'affiliate']) },
+      { label: 'SERVICES', items: take(items, ['channels', 'monitor', 'batch-image']) },
+      { label: 'ACCOUNT', items: take(items, ['profile']) },
+    ].filter((group) => group.items.length)
+  }
+
+  return [
+    { label: 'PLATFORM', items: take(items, ['admin-dashboard', 'admin-users']) },
+    { label: 'RESOURCES', items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels', 'admin-monitor']) },
+    { label: 'OPERATIONS', items: take(items, ['admin-usage', 'admin-ops', 'admin-audit', 'admin-prompt-audit']) },
+    { label: 'COMMERCE', items: take(items, ['admin-subscriptions', 'admin-payment-dashboard', 'admin-orders', 'admin-plans', 'admin-redeem', 'admin-promo', 'admin-affiliate-invites', 'admin-affiliate-rebates', 'admin-affiliate-transfers']) },
+    { label: 'SYSTEM', items: take(items, ['admin-proxies', 'admin-announcements', 'admin-risk', 'admin-backup', 'admin-settings']) },
+  ].filter((group) => group.items.length)
+})
 
 async function signOut() {
   loggingOut.value = true
@@ -44,15 +75,18 @@ async function signOut() {
       </div>
 
       <nav class="workspace-nav">
-        <RouterLink
-          v-for="item in navigation"
-          :key="item.path"
-          :to="item.path"
-          :class="{ active: route.path === item.path }"
-          @click="mobileOpen = false"
-        >
-          <i>{{ item.short }}</i><span>{{ item.label }}</span>
-        </RouterLink>
+        <section v-for="group in navigationGroups" :key="group.label" class="workspace-nav-group">
+          <div class="workspace-nav-label">{{ group.label }}</div>
+          <RouterLink
+            v-for="item in group.items"
+            :key="item.path"
+            :to="item.path"
+            :class="{ active: route.path === item.path }"
+            @click="mobileOpen = false"
+          >
+            <i>{{ item.short }}</i><span>{{ item.label }}</span>
+          </RouterLink>
+        </section>
       </nav>
 
       <div class="workspace-account">
