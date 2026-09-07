@@ -1,7 +1,6 @@
 /* Smirel commercial dark homepage.
-   Root fix: reduce information density and remove decorative structure that competes
-   with the product promise. The page now has one hero, one endpoint, one provider row,
-   and three concrete reasons to use the service. */
+   Root fix: keep the simplified commercial layout, but use a readable public-site type scale.
+   Supporting copy and controls must not fall into dense-console 9–11px typography. */
 
 .home-page {
   --bg: #0a0b0d;
@@ -15,6 +14,10 @@
   --accent: #1f9cf0;
   --accent-hover: #2aa8fa;
   --success: #39d39f;
+  --font-micro: .70rem;
+  --font-small: .78rem;
+  --font-ui: .84rem;
+  --font-body-small: .88rem;
   min-height: 100vh;
   color: var(--text);
   background: var(--bg);
@@ -57,15 +60,15 @@
 
 .home-page .brand-link strong {
   color: var(--text);
-  font-size: .86rem;
+  font-size: .92rem;
   font-weight: 680;
 }
 
 .home-page .brand-link small {
   margin-top: 4px;
   color: #5f646d;
-  font-size: .44rem;
-  letter-spacing: .15em;
+  font-size: var(--font-micro);
+  letter-spacing: .13em;
 }
 
 .home-page .home-nav {
@@ -73,7 +76,7 @@
   align-items: center;
   gap: 25px;
   color: #8d929c;
-  font-size: .69rem;
+  font-size: var(--font-ui);
 }
 
 .home-page .home-nav a,
@@ -96,7 +99,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: .67rem;
+  font-size: var(--font-small);
 }
 
 .home-page .service-state,
@@ -176,14 +179,14 @@
 
 .home-page .account-menu > strong {
   color: #eef0f3;
-  font-size: .72rem;
+  font-size: var(--font-ui);
 }
 
 .home-page .account-menu > small {
   margin: 4px 0 10px;
   overflow: hidden;
   color: #6f747e;
-  font-size: .58rem;
+  font-size: var(--font-micro);
   text-overflow: ellipsis;
 }
 
@@ -199,7 +202,7 @@
   color: #a9aeb7;
   cursor: pointer;
   font: inherit;
-  font-size: .65rem;
+  font-size: var(--font-small);
   text-align: left;
 }
 
@@ -259,7 +262,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  font-size: .75rem;
+  font-size: var(--font-ui);
   font-weight: 620;
 }
 
@@ -303,9 +306,9 @@
 
 .endpoint-bar > span {
   color: #626872;
-  font-size: .57rem;
+  font-size: var(--font-micro);
   font-weight: 650;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -313,7 +316,7 @@
   min-width: 0;
   overflow: hidden;
   color: #d8dce2;
-  font: .74rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: var(--font-ui)/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -326,7 +329,7 @@
   background: #181a1f;
   color: #aeb3bc;
   cursor: pointer;
-  font-size: .62rem;
+  font-size: var(--font-small);
 }
 
 .endpoint-bar button:hover {
@@ -341,7 +344,7 @@
   justify-content: center;
   gap: 22px;
   color: #6e737c;
-  font-size: .62rem;
+  font-size: var(--font-small);
 }
 
 .provider-line {
@@ -353,7 +356,7 @@
   border-top: 1px solid #1d1f24;
   border-bottom: 1px solid #1d1f24;
   color: #737982;
-  font-size: .69rem;
+  font-size: var(--font-ui);
 }
 
 .provider-line b {
@@ -393,8 +396,8 @@
 
 .benefit-card > span {
   color: #6b7079;
-  font-size: .58rem;
-  letter-spacing: .08em;
+  font-size: var(--font-micro);
+  letter-spacing: .06em;
 }
 
 .benefit-card h2 {
@@ -408,7 +411,7 @@
 .benefit-card p {
   margin: 10px 0 0;
   color: #858a94;
-  font-size: .72rem;
+  font-size: var(--font-body-small);
   line-height: 1.65;
 }
 
@@ -416,7 +419,7 @@
   margin-top: auto;
   padding-top: 24px;
   color: #8dbde0;
-  font-size: .66rem;
+  font-size: var(--font-small);
   font-weight: 560;
 }
 
@@ -429,7 +432,7 @@
   justify-content: space-between;
   border-top: 1px solid #1d1f24;
   color: #565b64;
-  font-size: .59rem;
+  font-size: var(--font-micro);
 }
 
 @media (max-width: 900px) {
@@ -478,7 +481,7 @@
   }
 
   .home-page .hero-copy {
-    font-size: .88rem;
+    font-size: .94rem;
   }
 
   .home-page .hero-actions {
