@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
+import CreateUpstreamAccountModal from '../components/CreateUpstreamAccountModal.vue'
 
 interface UpstreamAccount {
   id: number
@@ -41,6 +42,7 @@ const platform = ref('')
 const status = ref('')
 const accountType = ref('')
 const expandedAccountId = ref<number | null>(null)
+const showCreate = ref(false)
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
 const previewAccounts: UpstreamAccount[] = [
@@ -159,6 +161,12 @@ function toggleExpanded(id: number) {
   expandedAccountId.value = expandedAccountId.value === id ? null : id
 }
 
+function handleCreated() {
+  showCreate.value = false
+  page.value = 1
+  void loadAccounts()
+}
+
 function resetFilters() {
   search.value = ''
   platform.value = ''
@@ -241,13 +249,19 @@ onMounted(() => void loadAccounts())
         </div>
         <p>管理接入账号、调度状态与实时负载。</p>
       </div>
-      <button class="refresh-button" type="button" :disabled="loading" @click="loadAccounts">
-        <svg :class="{ spinning: loading }" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M16.2 6.1A7 7 0 1 0 17 12" />
-          <path d="M16.3 2.9v3.6h-3.6" />
-        </svg>
-        {{ loading ? '刷新中' : '刷新数据' }}
-      </button>
+      <div class="accounts-heading-actions">
+        <button class="create-account-button" type="button" @click="showCreate = true">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+          新增上游
+        </button>
+        <button class="refresh-button" type="button" :disabled="loading" @click="loadAccounts">
+          <svg :class="{ spinning: loading }" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M16.2 6.1A7 7 0 1 0 17 12" />
+            <path d="M16.3 2.9v3.6h-3.6" />
+          </svg>
+          {{ loading ? '刷新中' : '刷新数据' }}
+        </button>
+      </div>
     </header>
 
     <section class="fleet-overview" aria-label="账户概览">
@@ -444,6 +458,7 @@ onMounted(() => void loadAccounts())
         </div>
       </footer>
     </section>
+    <CreateUpstreamAccountModal :show="showCreate" @close="showCreate = false" @created="handleCreated" />
   </section>
 </template>
 
@@ -510,6 +525,44 @@ onMounted(() => void loadAccounts())
   color: var(--aa-muted);
   font-size: .86rem;
   line-height: 1.5;
+}
+
+.accounts-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-account-button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid #d9dde2;
+  border-radius: 8px;
+  background: #f2f4f6;
+  color: #111318;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .76rem;
+  font-weight: 670;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .08), 0 8px 24px rgba(0, 0, 0, .15);
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.create-account-button:hover {
+  border-color: #fff;
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.create-account-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
 }
 
 .fleet-state {
@@ -1382,6 +1435,20 @@ onMounted(() => void loadAccounts())
 
   .accounts-heading h1 {
     font-size: 1.75rem;
+  }
+
+  .accounts-heading {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .accounts-heading-actions {
+    width: 100%;
+  }
+
+  .create-account-button {
+    flex: 1;
+    justify-content: center;
   }
 
   .refresh-button {
