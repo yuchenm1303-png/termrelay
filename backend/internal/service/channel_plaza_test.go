@@ -58,6 +58,34 @@ func TestListPlazaGroups_GroupCentricAggregation(t *testing.T) {
 	require.Equal(t, "claude-sonnet", out[0].Models[1].Name)
 }
 
+func TestListPlazaGroups_ExposesMappedModel(t *testing.T) {
+	ch := Channel{
+		ID: 1, Name: "mapped", Status: StatusActive, GroupIDs: []int64{10},
+		ModelMapping: map[string]map[string]string{
+			"openai": {"gpt-5.6": "gpt-5.6-codex"},
+		},
+		ModelPricing: []ChannelModelPricing{{
+			Platform:    "openai",
+			Models:      []string{"gpt-5.6-codex"},
+			BillingMode: BillingModeToken,
+			InputPrice:  testPtrFloat64(1e-6),
+		}},
+	}
+	groups := []Group{{ID: 10, Name: "g", Platform: "openai", RateMultiplier: 1}}
+	svc := newPlazaChannelService([]Channel{ch}, groups, nil)
+	out, err := svc.ListPlazaGroups(context.Background())
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Len(t, out[0].Models, 2)
+
+	byName := map[string]PlazaModel{}
+	for _, m := range out[0].Models {
+		byName[m.Name] = m
+	}
+	require.Equal(t, "gpt-5.6-codex", byName["gpt-5.6"].MappedModel)
+	require.Empty(t, byName["gpt-5.6-codex"].MappedModel)
+}
+
 func TestListPlazaGroups_DedupFirstWinsWithPricingUpgrade(t *testing.T) {
 	// 同名模型:先见者胜;仅当已存条目无定价而新条目有定价时升级替换。
 	unpriced := Channel{
