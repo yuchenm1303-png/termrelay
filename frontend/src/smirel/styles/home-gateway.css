@@ -1,14 +1,14 @@
 .home-page .gateway-preview {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #272c34;
-  border-radius: 14px;
-  background: #0d0f13;
+  border: 1px solid #252a31;
+  border-radius: 10px;
+  background: #0b0d10;
 }
 
 .home-page .gateway-preview-head {
-  min-height: 76px;
-  padding: 0 20px;
+  min-height: 66px;
+  padding: 0 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,99 +20,99 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-
-.home-page .gateway-preview-head strong {
-  color: #eef1f4;
-  font-size: .94rem;
-  font-weight: 640;
-  letter-spacing: -.01em;
+  gap: 3px;
 }
 
 .home-page .gateway-preview-head span {
-  color: #727a85;
-  font-size: .76rem;
+  color: #606873;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
 }
 
-.home-page .gateway-health {
+.home-page .gateway-preview-head strong {
+  color: #edf0f3;
+  font-size: .9rem;
+  font-weight: 610;
+  letter-spacing: -.01em;
+}
+
+.home-page .gateway-key-link {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #7f8791;
-  font-size: .74rem;
+  color: #a9b0b9;
+  font-size: .75rem;
+  font-weight: 550;
+  transition: color .15s ease;
 }
 
-.home-page .gateway-health i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
+.home-page .gateway-key-link b {
+  margin-left: 4px;
+  color: #666f7a;
+  font-weight: 500;
+}
+
+.home-page .gateway-key-link:hover,
+.home-page .gateway-key-link:hover b {
+  color: #fff;
 }
 
 .home-page .gateway-endpoint {
-  padding: 22px 20px 20px;
+  padding: 25px 22px 27px;
   border-bottom: 1px solid #20242a;
+  background: #0d0f12;
 }
 
-.home-page .gateway-endpoint > span,
-.home-page .gateway-detail > span {
-  color: #626a75;
-  font-size: .68rem;
-  font-weight: 680;
-  letter-spacing: .08em;
-}
-
-.home-page .gateway-endpoint-row {
-  min-height: 48px;
-  margin-top: 10px;
-  padding: 0 8px 0 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+.home-page .gateway-endpoint-label {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  border: 1px solid #2b3038;
-  border-radius: 9px;
-  background: #111318;
+  justify-content: space-between;
+  gap: 18px;
 }
 
-.home-page .gateway-endpoint-row code {
+.home-page .gateway-endpoint-label span {
+  color: #626a75;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+.home-page .gateway-endpoint-label button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7f8994;
+  cursor: pointer;
+  font-size: .7rem;
+  font-weight: 550;
+  transition: color .15s ease;
+}
+
+.home-page .gateway-endpoint-label button:hover {
+  color: #dce2e8;
+}
+
+.home-page .gateway-endpoint code {
+  display: block;
   min-width: 0;
+  margin-top: 13px;
   overflow: hidden;
-  color: #e8ebef;
-  font: .84rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #f1f3f5;
+  font: .98rem/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: -.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.home-page .gateway-endpoint-row button {
-  height: 34px;
-  padding: 0 11px;
-  border: 0;
-  border-radius: 7px;
-  background: #1a1d23;
-  color: #aeb5bf;
-  cursor: pointer;
-  font-size: .75rem;
-  transition: background-color .15s ease, color .15s ease;
-}
-
-.home-page .gateway-endpoint-row button:hover {
-  background: #22262e;
-  color: #fff;
-}
-
 .home-page .gateway-details {
-  padding: 4px 20px;
+  padding: 0 22px;
 }
 
 .home-page .gateway-detail {
-  min-height: 61px;
+  min-height: 54px;
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   border-bottom: 1px solid #1d2127;
 }
 
@@ -120,11 +120,17 @@
   border-bottom: 0;
 }
 
+.home-page .gateway-detail > span {
+  color: #69717c;
+  font-size: .72rem;
+  font-weight: 500;
+}
+
 .home-page .gateway-detail strong {
   min-width: 0;
-  color: #cfd4da;
-  font-size: .79rem;
-  font-weight: 560;
+  color: #c9ced4;
+  font-size: .78rem;
+  font-weight: 540;
   line-height: 1.5;
 }
 
@@ -137,36 +143,45 @@
 
 .home-page .gateway-models b {
   position: relative;
-  color: #cfd4da;
-  font-size: .79rem;
-  font-weight: 560;
+  color: #c9ced4;
+  font-size: .78rem;
+  font-weight: 540;
 }
 
 .home-page .gateway-models b + b::before {
   content: "·";
   position: absolute;
   left: -9px;
-  color: #4c535e;
+  color: #414852;
 }
 
 .home-page .gateway-preview-foot {
-  min-height: 52px;
-  padding: 0 20px;
+  min-height: 50px;
+  padding: 0 22px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  gap: 28px;
   border-top: 1px solid #20242a;
-  color: #717985;
-  font-size: .72rem;
 }
 
 .home-page .gateway-preview-foot a {
-  color: #8ab8d6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #848d98;
+  font-size: .72rem;
+  font-weight: 520;
   transition: color .15s ease;
 }
 
-.home-page .gateway-preview-foot a:hover {
+.home-page .gateway-preview-foot a b {
+  color: #59626d;
+  font-size: .78rem;
+  font-weight: 500;
+}
+
+.home-page .gateway-preview-foot a:hover,
+.home-page .gateway-preview-foot a:hover b {
   color: #fff;
 }
 
@@ -177,23 +192,38 @@
 }
 
 @media (max-width: 720px) {
-  .home-page .gateway-preview-head {
-    min-height: 70px;
-    padding: 0 16px;
+  .home-page .gateway-preview-head,
+  .home-page .gateway-preview-foot {
+    padding-left: 17px;
+    padding-right: 17px;
   }
 
   .home-page .gateway-endpoint,
   .home-page .gateway-details {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 17px;
+    padding-right: 17px;
   }
 
   .home-page .gateway-detail {
-    grid-template-columns: 66px minmax(0, 1fr);
+    grid-template-columns: 82px minmax(0, 1fr);
     gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page .gateway-preview-head {
+    min-height: 62px;
+  }
+
+  .home-page .gateway-key-link {
+    font-size: .7rem;
+  }
+
+  .home-page .gateway-endpoint code {
+    font-size: .84rem;
   }
 
   .home-page .gateway-preview-foot {
-    padding: 0 16px;
+    gap: 20px;
   }
 }
