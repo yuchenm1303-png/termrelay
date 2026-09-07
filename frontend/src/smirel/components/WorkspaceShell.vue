@@ -84,3 +84,11 @@ const navigationGroups = computed<NavGroup[]>(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.workspace-brand-row .brand-link img {
+  width: 76px;
+  height: auto;
+  object-fit: contain;
+}
+</style>
