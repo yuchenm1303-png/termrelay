@@ -3,14 +3,66 @@ import { computed, onMounted, ref } from 'vue'
 import { api, getErrorMessage } from '../core/api'
 import { interfacePreferences } from '../core/preferences'
 
-type Pricing = { billing_mode?: string; input_price?: number | null; output_price?: number | null; cache_write_price?: number | null; cache_read_price?: number | null; per_request_price?: number | null }
-type OfficialPricing = { input_price?: number | null; output_price?: number | null; cache_write_price?: number | null; cache_read_price?: number | null }
-type PlazaModel = { name: string; platform: string; pricing?: Pricing | null; official_pricing?: OfficialPricing | null }
-type PlazaGroup = { id:number; name:string; description?:string; platform:string; subscription_type?:string; rate_multiplier:number; user_rate_multiplier?:number; is_exclusive?:boolean; models:PlazaModel[] }
+type Pricing = {
+  billing_mode?: string
+  input_price?: number | null
+  output_price?: number | null
+  cache_write_price?: number | null
+  cache_read_price?: number | null
+  per_request_price?: number | null
+}
+
+type OfficialPricing = {
+  input_price?: number | null
+  output_price?: number | null
+  cache_write_price?: number | null
+  cache_read_price?: number | null
+}
+
+type PlazaModel = {
+  name: string
+  platform: string
+  mapped_model?: string | null
+  pricing?: Pricing | null
+  official_pricing?: OfficialPricing | null
+}
+
+type PlazaGroup = {
+  id: number
+  name: string
+  description?: string
+  platform: string
+  subscription_type?: string
+  rate_multiplier: number
+  user_rate_multiplier?: number | null
+  is_exclusive?: boolean
+  models: PlazaModel[]
+}
+
 type PlazaResponse = { description?: string; groups?: PlazaGroup[] }
 type Offer = { group: PlazaGroup; model: PlazaModel }
-type CatalogModel = { id:string; provider:string; providerKey:string; mark:string; offers:Offer[]; bestRate:number; inputPerM:number|null; outputPerM:number|null; cacheReadPerM:number|null; cacheWritePerM:number|null; priceSource:'channel'|'official'|'none' }
-type SortKey = 'recommended'|'name'|'price'|'routes'
+type PriceSource = 'channel' | 'official' | 'none'
+type SortKey = 'recommended' | 'name' | 'price' | 'routes'
+
+type ProviderInfo = {
+  key: string
+  name: string
+  mark: string
+}
+
+type CatalogModel = {
+  id: string
+  provider: string
+  providerKey: string
+  mark: string
+  offers: Offer[]
+  bestRate: number
+  inputPerM: number | null
+  outputPerM: number | null
+  cacheReadPerM: number | null
+  cacheWritePerM: number | null
+  priceSource: PriceSource
+}
 
 const isZh = computed(() => interfacePreferences.locale === 'zh-CN')
 const loading = ref(false)
@@ -19,110 +71,644 @@ const description = ref('')
 const groups = ref<PlazaGroup[]>([])
 const search = ref('')
 const provider = ref('all')
+const groupId = ref<number | 'all'>('all')
 const sortBy = ref<SortKey>('recommended')
 const copied = ref('')
 
-function family(model: string) {
+function rate(group: PlazaGroup) {
+  return Number(group.user_rate_multiplier ?? group.rate_multiplier ?? 1)
+}
+
+function providerFromPlatform(platform: string): ProviderInfo {
+  const value = String(platform || '').trim().toLowerCase()
+  if (value === 'openai') return { key: 'openai', name: 'OpenAI', mark: 'O' }
+  if (value === 'anthropic' || value === 'claude') return { key: 'anthropic', name: 'Anthropic', mark: 'A' }
+  if (value === 'gemini' || value === 'google') return { key: 'google', name: 'Google', mark: 'G' }
+  if (value === 'grok' || value === 'xai') return { key: 'xai', name: 'xAI', mark: 'X' }
+  if (value === 'antigravity') return { key: 'antigravity', name: 'Antigravity', mark: 'AG' }
+  if (value === 'composite') return { key: 'composite', name: 'Composite', mark: 'C' }
+  return { key: value || 'other', name: value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Other', mark: 'AI' }
+}
+
+function family(model: string, offers: Offer[]): ProviderInfo {
   const id = model.toLowerCase()
-  if (id.startsWith('claude')) return { key:'anthropic', name:'Anthropic', mark:'A' }
-  if (id.startsWith('gemini')) return { key:'google', name:'Google', mark:'G' }
-  if (id.startsWith('grok')) return { key:'xai', name:'xAI', mark:'X' }
-  if (id.startsWith('deepseek')) return { key:'deepseek', name:'DeepSeek', mark:'D' }
-  if (id.startsWith('qwen')) return { key:'qwen', name:'Qwen', mark:'Q' }
-  if (id.startsWith('glm')) return { key:'zhipu', name:'GLM', mark:'Z' }
-  if (id.startsWith('llama')) return { key:'meta', name:'Meta', mark:'M' }
-  if (id.startsWith('gpt') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4')) return { key:'openai', name:'OpenAI', mark:'O' }
-  return { key:'other', name:'Other', mark:'AI' }
-}
-function rate(g: PlazaGroup) { return Number(g.user_rate_multiplier ?? g.rate_multiplier ?? 1) }
-function firstPrice(offers: Offer[], field: keyof Pricing): {value:number|null; source:'channel'|'official'|'none'; rate:number} {
-  const sorted = [...offers].sort((a,b) => rate(a.group)-rate(b.group))
-  for (const o of sorted) {
-    const v = o.model.pricing?.[field]
-    if (typeof v === 'number') return { value:v, source:'channel', rate:rate(o.group) }
+  if (id.startsWith('claude')) return { key: 'anthropic', name: 'Anthropic', mark: 'A' }
+  if (id.startsWith('gemini')) return { key: 'google', name: 'Google', mark: 'G' }
+  if (id.startsWith('grok')) return { key: 'xai', name: 'xAI', mark: 'X' }
+  if (id.startsWith('deepseek')) return { key: 'deepseek', name: 'DeepSeek', mark: 'D' }
+  if (id.startsWith('qwen')) return { key: 'qwen', name: 'Qwen', mark: 'Q' }
+  if (id.startsWith('glm')) return { key: 'zhipu', name: 'GLM', mark: 'Z' }
+  if (id.startsWith('llama')) return { key: 'meta', name: 'Meta', mark: 'M' }
+  if (id.startsWith('kimi') || id.startsWith('moonshot')) return { key: 'moonshot', name: 'Moonshot', mark: 'K' }
+  if (id.startsWith('mistral') || id.startsWith('codestral')) return { key: 'mistral', name: 'Mistral', mark: 'M' }
+  if (id.startsWith('gpt') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4')) {
+    return { key: 'openai', name: 'OpenAI', mark: 'O' }
   }
+
+  const modelPlatform = offers
+    .map((offer) => String(offer.model.platform || '').toLowerCase())
+    .find((value) => value && value !== 'composite')
+  if (modelPlatform) return providerFromPlatform(modelPlatform)
+
+  const groupPlatform = offers
+    .map((offer) => String(offer.group.platform || '').toLowerCase())
+    .find((value) => value && value !== 'composite')
+  if (groupPlatform) return providerFromPlatform(groupPlatform)
+
+  return { key: 'other', name: 'Other', mark: 'AI' }
+}
+
+function firstPrice(offers: Offer[], field: keyof Pricing): { value: number | null; source: PriceSource; rate: number } {
+  const sorted = [...offers].sort((a, b) => rate(a.group) - rate(b.group))
+  for (const offer of sorted) {
+    const value = offer.model.pricing?.[field]
+    if (typeof value === 'number') return { value, source: 'channel', rate: rate(offer.group) }
+  }
+
   const officialField = field as keyof OfficialPricing
-  for (const o of sorted) {
-    const v = o.model.official_pricing?.[officialField]
-    if (typeof v === 'number') return { value:v, source:'official', rate:rate(o.group) }
+  for (const offer of sorted) {
+    const value = offer.model.official_pricing?.[officialField]
+    if (typeof value === 'number') return { value, source: 'official', rate: rate(offer.group) }
   }
-  return { value:null, source:'none', rate:sorted[0] ? rate(sorted[0].group) : 1 }
+
+  return { value: null, source: 'none', rate: sorted[0] ? rate(sorted[0].group) : 1 }
 }
+
+const groupOptions = computed(() =>
+  [...groups.value].sort((a, b) => rate(a) - rate(b) || a.name.localeCompare(b.name))
+)
+
+const sourceGroups = computed(() =>
+  groupId.value === 'all' ? groups.value : groups.value.filter((group) => group.id === groupId.value)
+)
 
 const models = computed<CatalogModel[]>(() => {
   const map = new Map<string, Offer[]>()
-  for (const g of groups.value) for (const m of (g.models || [])) {
-    const id = String(m.name || '').trim(); if (!id) continue
-    const list = map.get(id) || []; list.push({ group:g, model:m }); map.set(id,list)
+  for (const group of sourceGroups.value) {
+    for (const model of group.models || []) {
+      const id = String(model.name || '').trim()
+      if (!id) continue
+      const list = map.get(id) || []
+      list.push({ group, model })
+      map.set(id, list)
+    }
   }
+
   return [...map.entries()].map(([id, offers]) => {
-    const f = family(id)
-    const input = firstPrice(offers,'input_price'), output = firstPrice(offers,'output_price'), cr = firstPrice(offers,'cache_read_price'), cw = firstPrice(offers,'cache_write_price')
-    const bestRate = Math.min(...offers.map(o => rate(o.group)))
+    const providerInfo = family(id, offers)
+    const input = firstPrice(offers, 'input_price')
+    const output = firstPrice(offers, 'output_price')
+    const cacheRead = firstPrice(offers, 'cache_read_price')
+    const cacheWrite = firstPrice(offers, 'cache_write_price')
+    const bestRate = Math.min(...offers.map((offer) => rate(offer.group)))
     const source = input.source !== 'none' ? input.source : output.source
-    const perM = (x:{value:number|null;rate:number}) => x.value == null ? null : x.value * 1_000_000 * x.rate
-    return { id, provider:f.name, providerKey:f.key, mark:f.mark, offers, bestRate, inputPerM:perM(input), outputPerM:perM(output), cacheReadPerM:perM(cr), cacheWritePerM:perM(cw), priceSource:source }
+    const perMillion = (item: { value: number | null; rate: number }) =>
+      item.value == null ? null : item.value * 1_000_000 * item.rate
+
+    return {
+      id,
+      provider: providerInfo.name,
+      providerKey: providerInfo.key,
+      mark: providerInfo.mark,
+      offers,
+      bestRate,
+      inputPerM: perMillion(input),
+      outputPerM: perMillion(output),
+      cacheReadPerM: perMillion(cacheRead),
+      cacheWritePerM: perMillion(cacheWrite),
+      priceSource: source,
+    }
   })
 })
+
+const providerOrder = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'qwen', 'zhipu', 'moonshot', 'mistral', 'meta']
 const providers = computed(() => {
-  const m = new Map<string,{key:string;name:string;count:number}>()
-  for (const x of models.value) { const old=m.get(x.providerKey); if(old) old.count++; else m.set(x.providerKey,{key:x.providerKey,name:x.provider,count:1}) }
-  return [...m.values()].sort((a,b)=>b.count-a.count || a.name.localeCompare(b.name))
-})
-const filtered = computed(() => {
-  const q=search.value.trim().toLowerCase()
-  const arr=models.value.filter(m => (provider.value==='all'||m.providerKey===provider.value) && (!q || `${m.id} ${m.provider} ${m.offers.map(o=>o.group.name).join(' ')}`.toLowerCase().includes(q)))
-  return [...arr].sort((a,b)=>{
-    if(sortBy.value==='name') return a.id.localeCompare(b.id)
-    if(sortBy.value==='routes') return b.offers.length-a.offers.length || a.id.localeCompare(b.id)
-    if(sortBy.value==='price') return (a.inputPerM ?? Number.MAX_SAFE_INTEGER)-(b.inputPerM ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id)
-    return b.offers.length-a.offers.length || a.bestRate-b.bestRate || a.id.localeCompare(b.id)
+  const map = new Map<string, { key: string; name: string; count: number }>()
+  for (const model of models.value) {
+    const existing = map.get(model.providerKey)
+    if (existing) existing.count += 1
+    else map.set(model.providerKey, { key: model.providerKey, name: model.provider, count: 1 })
+  }
+
+  return [...map.values()].sort((a, b) => {
+    const ai = providerOrder.indexOf(a.key)
+    const bi = providerOrder.indexOf(b.key)
+    if (ai !== -1 || bi !== -1) {
+      if (ai === -1) return 1
+      if (bi === -1) return -1
+      if (ai !== bi) return ai - bi
+    }
+    return b.count - a.count || a.name.localeCompare(b.name)
   })
 })
-const routeCount = computed(() => groups.value.reduce((n,g)=>n+(g.models?.length||0),0))
+
+const filtered = computed(() => {
+  const query = search.value.trim().toLowerCase()
+  const items = models.value.filter((model) => {
+    if (provider.value !== 'all' && model.providerKey !== provider.value) return false
+    if (!query) return true
+
+    const routeText = model.offers
+      .map((offer) => `${offer.group.name} ${offer.group.platform} ${offer.model.mapped_model || ''}`)
+      .join(' ')
+      .toLowerCase()
+    return `${model.id} ${model.provider} ${routeText}`.toLowerCase().includes(query)
+  })
+
+  return [...items].sort((a, b) => {
+    if (sortBy.value === 'name') return a.id.localeCompare(b.id)
+    if (sortBy.value === 'routes') return b.offers.length - a.offers.length || a.id.localeCompare(b.id)
+    if (sortBy.value === 'price') {
+      return (a.inputPerM ?? Number.MAX_SAFE_INTEGER) - (b.inputPerM ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id)
+    }
+    return b.offers.length - a.offers.length || a.bestRate - b.bestRate || a.id.localeCompare(b.id)
+  })
+})
+
+const routeCount = computed(() => models.value.reduce((count, model) => count + model.offers.length, 0))
+const activeGroup = computed(() =>
+  groupId.value === 'all' ? null : groups.value.find((group) => group.id === groupId.value) || null
+)
 
 async function loadCatalog() {
-  loading.value=true; error.value=''
-  try { const r=await api.get<PlazaResponse>('/model-plaza'); description.value=String(r.data?.description||''); groups.value=Array.isArray(r.data?.groups)?r.data.groups:[] }
-  catch(e){ groups.value=[]; error.value=getErrorMessage(e) }
-  finally{ loading.value=false }
+  loading.value = true
+  error.value = ''
+  try {
+    const response = await api.get<PlazaResponse>('/model-plaza')
+    description.value = String(response.data?.description || '')
+    groups.value = Array.isArray(response.data?.groups) ? response.data.groups : []
+    if (groupId.value !== 'all' && !groups.value.some((group) => group.id === groupId.value)) groupId.value = 'all'
+  } catch (e) {
+    groups.value = []
+    error.value = getErrorMessage(e)
+  } finally {
+    loading.value = false
+  }
 }
-function money(v:number|null){ if(v==null) return '—'; if(v<0.01) return `$${v.toFixed(4)}`; if(v<1) return `$${v.toFixed(3)}`; return `$${v.toFixed(2)}` }
-function protocol(platform:string){ return ({openai:'OpenAI Compatible',anthropic:'Messages API',gemini:'Gemini API',antigravity:'Antigravity',grok:'OpenAI Compatible',composite:'Composite'} as Record<string,string>)[platform]||platform }
-function reset(){ search.value=''; provider.value='all'; sortBy.value='recommended' }
-async function copyId(id:string){ if(!navigator.clipboard)return; await navigator.clipboard.writeText(id); copied.value=id; setTimeout(()=>{if(copied.value===id)copied.value=''},1200) }
-onMounted(()=>void loadCatalog())
+
+function money(value: number | null) {
+  if (value == null) return '—'
+  if (value < 0.01) return `$${value.toFixed(4)}`
+  if (value < 1) return `$${value.toFixed(3)}`
+  return `$${value.toFixed(2)}`
+}
+
+function protocol(platform: string) {
+  return (
+    {
+      openai: 'OpenAI Compatible',
+      anthropic: 'Messages API',
+      gemini: 'Gemini API',
+      google: 'Gemini API',
+      antigravity: 'Antigravity',
+      grok: 'OpenAI Compatible',
+      xai: 'OpenAI Compatible',
+      composite: 'Composite',
+    } as Record<string, string>
+  )[String(platform || '').toLowerCase()] || platform || 'Compatible API'
+}
+
+function providerKeyForPlatform(platform: string) {
+  return providerFromPlatform(platform).key
+}
+
+function providerMarkForPlatform(platform: string) {
+  return providerFromPlatform(platform).mark
+}
+
+function protocols(model: CatalogModel) {
+  return [...new Set(model.offers.map((offer) => protocol(offer.group.platform)).filter(Boolean))]
+}
+
+function mappedModels(model: CatalogModel) {
+  return [
+    ...new Set(
+      model.offers
+        .map((offer) => String(offer.model.mapped_model || '').trim())
+        .filter((mapped) => mapped && mapped !== model.id)
+    ),
+  ]
+}
+
+function priceSourceLabel(source: PriceSource) {
+  if (source === 'channel') return isZh.value ? '渠道配置' : 'Channel pricing'
+  if (source === 'official') return isZh.value ? '官方参考价 × 分组倍率' : 'Official reference × group rate'
+  return isZh.value ? '未配置' : 'Not configured'
+}
+
+function reset() {
+  search.value = ''
+  provider.value = 'all'
+  groupId.value = 'all'
+  sortBy.value = 'recommended'
+}
+
+function selectGroup(id: number | 'all') {
+  groupId.value = id
+  provider.value = 'all'
+}
+
+async function copyId(id: string) {
+  if (!navigator.clipboard) return
+  await navigator.clipboard.writeText(id)
+  copied.value = id
+  window.setTimeout(() => {
+    if (copied.value === id) copied.value = ''
+  }, 1200)
+}
+
+onMounted(() => void loadCatalog())
 </script>
 
 <template>
-  <section class="market-page">
-    <header class="heading">
-      <div><span class="kicker">MODEL MARKETPLACE</span><div class="title-line"><h1>{{ isZh ? '模型广场' : 'Model Marketplace' }}</h1><span class="live"><i></i>{{ loading ? '同步中' : '实时目录' }}</span></div><p>{{ description || (isZh ? '模型、分组、价格与可用路由全部来自 TermRelay 实时配置。' : 'Models, groups, pricing and routes are loaded from the live TermRelay catalog.') }}</p></div>
-      <div class="actions"><label class="search"><svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input v-model="search" :placeholder="isZh ? '搜索模型、品牌或分组' : 'Search models, providers or groups'" /></label><label class="sort"><span>{{ isZh?'排序':'Sort' }}</span><select v-model="sortBy"><option value="recommended">{{ isZh?'推荐':'Recommended' }}</option><option value="name">{{ isZh?'名称':'Name' }}</option><option value="price">{{ isZh?'输入价格':'Input price' }}</option><option value="routes">{{ isZh?'路由数量':'Routes' }}</option></select></label></div>
+  <section class="workspace-page model-market-page">
+    <header class="model-market-heading">
+      <div class="market-heading-copy">
+        <span class="market-kicker">MODEL MARKETPLACE</span>
+        <div class="market-title-line">
+          <h1>{{ isZh ? '模型广场' : 'Model Marketplace' }}</h1>
+          <span class="market-count">{{ models.length }} {{ isZh ? '个模型' : 'models' }}</span>
+        </div>
+        <p>{{ description || (isZh ? '实时浏览模型、分组、价格与可用路由。' : 'Browse live models, groups, pricing and available routes.') }}</p>
+      </div>
+
+      <div class="market-heading-actions">
+        <label class="market-search">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" /></svg>
+          <input v-model="search" type="search" :placeholder="isZh ? '搜索模型、品牌、分组或映射 ID' : 'Search model, provider, group or mapped ID'" />
+        </label>
+        <label class="market-sort">
+          <span>{{ isZh ? '排序' : 'Sort' }}</span>
+          <select v-model="sortBy">
+            <option value="recommended">{{ isZh ? '推荐' : 'Recommended' }}</option>
+            <option value="name">{{ isZh ? '名称' : 'Name' }}</option>
+            <option value="price">{{ isZh ? '输入价格' : 'Input price' }}</option>
+            <option value="routes">{{ isZh ? '路由数量' : 'Routes' }}</option>
+          </select>
+        </label>
+      </div>
     </header>
 
-    <div v-if="error" class="error-box"><strong>{{ isZh?'目录暂不可用':'Catalog unavailable' }}</strong><span>{{ error }}</span><button @click="loadCatalog">{{ isZh?'重新加载':'Retry' }}</button></div>
-
-    <section v-else class="filter-shell">
-      <div class="provider-tabs"><button :class="{active:provider==='all'}" @click="provider='all'"><span>{{ isZh?'全部模型':'All models' }}</span><b>{{ models.length }}</b></button><button v-for="p in providers" :key="p.key" :class="{active:provider===p.key}" @click="provider=p.key"><span>{{ p.name }}</span><b>{{ p.count }}</b></button></div>
-      <div class="catalog-meta"><span><i></i>{{ isZh?'服务端实时数据':'Live server data' }}</span><small>{{ isZh?'不再展示模拟可用率、延迟或虚构价格。':'No simulated availability, latency, or pricing.' }}</small></div>
-    </section>
-
-    <section class="result-head"><div><strong>{{ filtered.length }} {{ isZh?'个模型':'models' }}</strong><span>·</span><span>{{ groups.length }} {{ isZh?'个路由分组':'route groups' }}</span><span>·</span><span>{{ routeCount }} {{ isZh?'条模型路由':'model routes' }}</span></div><div><span>Base URL</span><code>https://api.smirel.com/v1</code><button :disabled="loading" @click="loadCatalog">{{ loading?'…':'↻' }}</button></div></section>
-
-    <div v-if="filtered.length" class="grid">
-      <article v-for="(m,index) in filtered" :key="m.id" class="card">
-        <header class="card-head"><div class="identity"><span class="mark" :data-provider="m.providerKey">{{ m.mark }}</span><div><h2>{{ m.id }}</h2><div class="tags"><span>{{ m.provider }}</span><span>{{ m.bestRate.toFixed(2) }}×</span><span>{{ m.offers.length }} {{ isZh?'条路由':'routes' }}</span></div></div></div><span class="rank">#{{ String(index+1).padStart(2,'0') }}</span></header>
-        <section class="prices"><div><span>{{ isZh?'输入':'Input' }}</span><strong>{{ money(m.inputPerM) }}<small v-if="m.inputPerM!=null"> / M tokens</small></strong></div><div><span>{{ isZh?'输出':'Output' }}</span><strong>{{ money(m.outputPerM) }}<small v-if="m.outputPerM!=null"> / M tokens</small></strong></div><div><span>{{ isZh?'缓存写入':'Cache write' }}</span><strong>{{ money(m.cacheWritePerM) }}<small v-if="m.cacheWritePerM!=null"> / M tokens</small></strong></div><div><span>{{ isZh?'缓存读取':'Cache read' }}</span><strong>{{ money(m.cacheReadPerM) }}<small v-if="m.cacheReadPerM!=null"> / M tokens</small></strong></div></section>
-        <section class="access"><div class="id-row"><span>{{ isZh?'模型 ID':'Model ID' }}</span><code>{{ m.id }}</code><button @click="copyId(m.id)">{{ copied===m.id?(isZh?'已复制':'Copied'):(isZh?'复制':'Copy') }}</button></div><div class="source-row"><span>{{ isZh?'价格来源':'Price source' }}</span><strong>{{ m.priceSource==='channel'?(isZh?'渠道配置':'Channel pricing'):m.priceSource==='official'?(isZh?'官方参考价 × 分组倍率':'Official reference × group rate'):(isZh?'未配置':'Not configured') }}</strong></div></section>
-        <footer class="routes"><div class="route-title"><span>{{ isZh?'可用路由':'Available routes' }}</span><strong>{{ m.offers.length }}</strong></div><div class="route-list"><div v-for="o in m.offers" :key="`${o.group.id}-${o.model.platform}`"><span><i></i><b>{{ o.group.name }}</b><small>#{{ o.group.id }} · {{ protocol(o.group.platform) }}</small></span><em>{{ rate(o.group).toFixed(2) }}×</em></div></div></footer>
-      </article>
+    <div v-if="error" class="market-error">
+      <strong>{{ isZh ? '模型目录暂不可用' : 'Catalog unavailable' }}</strong>
+      <span>{{ error }}</span>
+      <button type="button" @click="loadCatalog">{{ isZh ? '重新加载' : 'Retry' }}</button>
     </div>
-    <section v-else-if="!loading && !error" class="empty"><strong>{{ models.length ? (isZh?'没有符合筛选条件的模型':'No matching models') : (isZh?'模型目录还没有发布任何模型':'No models have been published yet') }}</strong><span>{{ models.length ? '' : (isZh?'管理员可在「分组与模型」中同步真实上游模型并发布。':'An admin can sync and publish models from Groups & Models.') }}</span><button v-if="models.length" @click="reset">{{ isZh?'清除筛选':'Reset filters' }}</button></section>
-    <div v-if="loading && !models.length" class="loading"><i v-for="n in 6" :key="n"></i></div>
+
+    <template v-else>
+      <section class="market-filter-shell">
+        <div class="provider-filter" role="tablist" :aria-label="isZh ? '模型服务商' : 'Providers'">
+          <button type="button" data-provider="all" :class="{ active: provider === 'all' }" @click="provider = 'all'">
+            <span>{{ isZh ? '全部模型' : 'All models' }}</span>
+            <b>{{ models.length }}</b>
+          </button>
+          <button
+            v-for="item in providers"
+            :key="item.key"
+            type="button"
+            :data-provider="item.key"
+            :class="{ active: provider === item.key }"
+            @click="provider = item.key"
+          >
+            <span>{{ item.name }}</span>
+            <b>{{ item.count }}</b>
+          </button>
+        </div>
+
+        <div class="group-filter-row">
+          <div class="group-filter-label">
+            <span>{{ isZh ? '分组' : 'Groups' }}</span>
+            <small>{{ isZh ? '按真实路由分组筛选' : 'Filter by live route group' }}</small>
+          </div>
+          <div class="group-filter-list">
+            <button type="button" :class="{ active: groupId === 'all' }" @click="selectGroup('all')">
+              <span class="group-all-icon" aria-hidden="true"></span>
+              <span>{{ isZh ? '全部分组' : 'All groups' }}</span>
+              <b>{{ groups.length }}</b>
+            </button>
+            <button
+              v-for="group in groupOptions"
+              :key="group.id"
+              type="button"
+              :class="{ active: groupId === group.id }"
+              @click="selectGroup(group.id)"
+            >
+              <i class="provider-mini-mark" :data-provider="providerKeyForPlatform(group.platform)">{{ providerMarkForPlatform(group.platform) }}</i>
+              <span>{{ group.name }}</span>
+              <em>{{ rate(group).toFixed(2) }}×</em>
+            </button>
+          </div>
+        </div>
+
+        <div class="market-filter-meta">
+          <div class="group-selection-summary">
+            <span>{{ activeGroup ? (isZh ? '当前分组' : 'Active group') : (isZh ? '分组视图' : 'Group view') }}</span>
+            <strong>{{ activeGroup?.name || (isZh ? '全部已发布分组' : 'All published groups') }}</strong>
+            <small v-if="activeGroup">#{{ activeGroup.id }} · {{ protocol(activeGroup.platform) }} · {{ rate(activeGroup).toFixed(2) }}×</small>
+          </div>
+          <div class="catalog-state">
+            <span><i></i>{{ loading ? (isZh ? '同步中' : 'Syncing') : (isZh ? '服务端实时数据' : 'Live server data') }}</span>
+            <small>{{ isZh ? '模型、价格与路由均来自当前 TermRelay 配置。' : 'Models, prices and routes come from the current TermRelay configuration.' }}</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="market-result-head">
+        <div>
+          <strong>{{ filtered.length }} {{ isZh ? '个模型' : 'models' }}</strong>
+          <span>·</span>
+          <span>{{ sourceGroups.length }} {{ isZh ? '个分组' : 'groups' }}</span>
+          <span>·</span>
+          <span>{{ routeCount }} {{ isZh ? '条模型路由' : 'model routes' }}</span>
+        </div>
+        <div>
+          <span>Base URL</span>
+          <code>https://api.smirel.com/v1</code>
+          <button class="catalog-refresh" type="button" :disabled="loading" @click="loadCatalog">{{ loading ? '…' : '↻' }}</button>
+        </div>
+      </section>
+
+      <div v-if="filtered.length" class="model-market-grid">
+        <article v-for="(model, index) in filtered" :key="model.id" class="model-market-card">
+          <header class="model-card-head">
+            <div class="model-identity">
+              <span class="provider-mark" :data-provider="model.providerKey">{{ model.mark }}</span>
+              <div>
+                <h2>{{ model.id }}</h2>
+                <div class="model-tags">
+                  <span>{{ model.provider }}</span>
+                  <span>{{ model.bestRate.toFixed(2) }}×</span>
+                  <span>{{ model.offers.length }} {{ isZh ? '条路由' : 'routes' }}</span>
+                </div>
+              </div>
+            </div>
+            <span class="model-rank">#{{ String(index + 1).padStart(2, '0') }}</span>
+          </header>
+
+          <section class="model-price-grid">
+            <div>
+              <span>{{ isZh ? '输入' : 'Input' }}</span>
+              <strong>{{ money(model.inputPerM) }}<small v-if="model.inputPerM != null"> / M tokens</small></strong>
+            </div>
+            <div>
+              <span>{{ isZh ? '输出' : 'Output' }}</span>
+              <strong>{{ money(model.outputPerM) }}<small v-if="model.outputPerM != null"> / M tokens</small></strong>
+            </div>
+            <div>
+              <span>{{ isZh ? '缓存写入' : 'Cache write' }}</span>
+              <strong>{{ money(model.cacheWritePerM) }}<small v-if="model.cacheWritePerM != null"> / M tokens</small></strong>
+            </div>
+            <div>
+              <span>{{ isZh ? '缓存读取' : 'Cache read' }}</span>
+              <strong>{{ money(model.cacheReadPerM) }}<small v-if="model.cacheReadPerM != null"> / M tokens</small></strong>
+            </div>
+          </section>
+
+          <section class="model-specs">
+            <div><span>{{ isZh ? '可用分组' : 'Groups' }}</span><strong>{{ model.offers.length }}</strong></div>
+            <div><span>{{ isZh ? '最低倍率' : 'Best rate' }}</span><strong>{{ model.bestRate.toFixed(2) }}×</strong></div>
+            <div><span>{{ isZh ? '价格来源' : 'Price source' }}</span><strong>{{ priceSourceLabel(model.priceSource) }}</strong></div>
+          </section>
+
+          <section class="model-access-block">
+            <div class="model-id-row">
+              <span>{{ isZh ? '模型 ID' : 'Model ID' }}</span>
+              <code>{{ model.id }}</code>
+              <button type="button" @click="copyId(model.id)">{{ copied === model.id ? (isZh ? '已复制' : 'Copied') : (isZh ? '复制' : 'Copy') }}</button>
+            </div>
+            <div class="protocol-list">
+              <span>{{ isZh ? '兼容接口' : 'APIs' }}</span>
+              <div><b v-for="item in protocols(model)" :key="item">{{ item }}</b></div>
+            </div>
+            <div v-if="mappedModels(model).length" class="mapped-model-list">
+              <span>{{ isZh ? '上游映射' : 'Mapped IDs' }}</span>
+              <div><code v-for="mapped in mappedModels(model)" :key="mapped">{{ mapped }}</code></div>
+            </div>
+          </section>
+
+          <footer class="model-group-section">
+            <div class="model-group-title">
+              <span>{{ isZh ? '可用分组 / 路由' : 'Available groups / routes' }}</span>
+              <strong>{{ model.offers.length }}</strong>
+            </div>
+            <div class="model-group-list">
+              <div v-for="offer in model.offers" :key="`${offer.group.id}-${offer.model.platform}-${offer.model.mapped_model || offer.model.name}`" class="model-group-item">
+                <i class="provider-mini-mark" :data-provider="providerKeyForPlatform(offer.group.platform)">{{ providerMarkForPlatform(offer.group.platform) }}</i>
+                <span class="model-group-copy">
+                  <b>{{ offer.group.name }}</b>
+                  <small>#{{ offer.group.id }} · {{ protocol(offer.group.platform) }}<template v-if="offer.model.mapped_model && offer.model.mapped_model !== model.id"> · {{ offer.model.mapped_model }}</template></small>
+                </span>
+                <em>{{ rate(offer.group).toFixed(2) }}×</em>
+              </div>
+            </div>
+          </footer>
+        </article>
+      </div>
+
+      <section v-else-if="!loading" class="market-empty">
+        <strong>{{ models.length ? (isZh ? '没有符合筛选条件的模型' : 'No matching models') : (isZh ? '模型目录还没有发布任何模型' : 'No models have been published yet') }}</strong>
+        <span v-if="!models.length">{{ isZh ? '管理员可在「分组与模型」中同步真实上游模型并发布。' : 'An admin can sync and publish models from Groups & Models.' }}</span>
+        <button v-if="models.length" type="button" @click="reset">{{ isZh ? '清除筛选' : 'Reset filters' }}</button>
+      </section>
+
+      <div v-if="loading && !models.length" class="market-loading" aria-label="loading">
+        <i v-for="n in 6" :key="n"></i>
+      </div>
+    </template>
   </section>
 </template>
 
 <style scoped>
-.market-page{--panel:#101217;--border:#252930;--border2:#343a43;--text:#f4f6f8;--soft:#c5cbd2;--muted:#78828d;--green:#43cd98;width:100%;color:var(--text);font-size:14px}.heading{display:flex;align-items:flex-start;justify-content:space-between;gap:26px;padding:2px 0 24px}.kicker{color:#67717d;font-size:.65rem;font-weight:700;letter-spacing:.12em}.title-line{margin-top:8px;display:flex;align-items:center;gap:11px}.heading h1{margin:0;font-size:2.05rem;line-height:1;font-weight:700;letter-spacing:-.045em}.heading p{max-width:720px;margin:11px 0 0;color:#858e99;font-size:.84rem;line-height:1.55}.live{height:26px;padding:0 9px;border:1px solid rgba(67,205,152,.2);border-radius:99px;background:rgba(67,205,152,.055);color:#8bd8ba;display:inline-flex;align-items:center;gap:6px;font-size:.65rem}.live i,.catalog-meta i,.route-list i{width:6px;height:6px;border-radius:50%;background:var(--green)}.actions{display:flex;gap:7px}.search,.sort{height:42px;border:1px solid #2c3139;border-radius:9px;background:#0b0d11;display:flex;align-items:center}.search{width:min(350px,31vw);padding:0 12px;gap:9px}.search svg{width:15px;height:15px;fill:none;stroke:#6d7782;stroke-width:1.45}.search input{width:100%;border:0;outline:0;background:transparent;color:#eef1f4;font-size:.75rem}.sort{padding:0 10px;gap:8px}.sort span{color:#626c77;font-size:.64rem}.sort select{border:0;outline:0;background:transparent;color:#c5cbd2;font-size:.7rem}.error-box{min-height:260px;border:1px solid rgba(225,108,115,.25);border-radius:12px;background:rgba(225,108,115,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}.error-box strong{font-size:.9rem}.error-box span{color:#d3959a;font-size:.7rem}.error-box button,.empty button{margin-top:6px;height:34px;padding:0 12px;border:1px solid #3a4049;border-radius:7px;background:#15181d;color:#d0d5da}.filter-shell{border:1px solid var(--border);border-radius:12px;background:#101217;overflow:hidden}.provider-tabs{min-height:70px;padding:12px 14px;display:flex;align-items:center;gap:8px;overflow:auto}.provider-tabs button{height:44px;padding:0 13px;border:1px solid transparent;border-radius:8px;background:transparent;color:#939ca6;display:flex;align-items:center;gap:9px;white-space:nowrap;cursor:pointer}.provider-tabs button b{min-width:21px;height:21px;padding:0 6px;border-radius:99px;background:#1c2026;color:#7a848e;display:grid;place-items:center;font-size:.61rem}.provider-tabs button.active{border-color:#39424d;background:#161a20;color:#eff2f5}.provider-tabs button.active b{background:#252c34;color:#cdd3d9}.catalog-meta{min-height:48px;padding:0 16px;border-top:1px solid #23272e;display:flex;align-items:center;gap:8px;color:#8bd8ba;font-size:.65rem}.catalog-meta>span{display:flex;align-items:center;gap:7px}.catalog-meta small{color:#626c77}.result-head{min-height:66px;padding:0 2px;display:flex;align-items:center;justify-content:space-between;color:#747e89;font-size:.69rem}.result-head>div{display:flex;align-items:center;gap:8px}.result-head strong{color:#cfd4da}.result-head code{color:#9da8b3;font-size:.68rem}.result-head button{width:28px;height:28px;border:1px solid #2d323a;border-radius:7px;background:#111419;color:#87919b}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{border:1px solid var(--border);border-radius:13px;background:#0f1115;overflow:hidden}.card-head{min-height:92px;padding:17px 20px;display:flex;align-items:center;justify-content:space-between}.identity{min-width:0;display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;flex:0 0 44px;border:1px solid #323840;border-radius:50%;background:#15191e;color:#d6dbe0;display:grid;place-items:center;font:700 .78rem ui-monospace,SFMono-Regular,monospace}.mark[data-provider=anthropic]{color:#d7b894;background:#1a1714}.mark[data-provider=google]{color:#a8c8ed;background:#13191f}.mark[data-provider=xai]{color:#e0e2e5}.identity>div{min-width:0}.identity h2{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:680 1rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em}.tags{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}.tags span{height:23px;padding:0 7px;border:1px solid #2d323a;border-radius:99px;color:#89939e;display:inline-flex;align-items:center;font-size:.61rem}.rank{color:#5e6873;font:600 .68rem ui-monospace,SFMono-Regular,monospace}.prices{margin:0 15px;display:grid;grid-template-columns:1fr 1fr;border:1px solid #252a31;border-radius:10px;overflow:hidden}.prices>div{min-height:72px;padding:13px 14px;display:flex;flex-direction:column;justify-content:center}.prices>div:nth-child(even){border-left:1px solid #252a31}.prices>div:nth-child(n+3){border-top:1px solid #252a31}.prices span{color:#747e89;font-size:.64rem}.prices strong{margin-top:6px;font-size:.85rem}.prices small{color:#68727d;font-size:.6rem;font-weight:500}.access{margin:14px 15px 0;border:1px solid #252a31;border-radius:10px;overflow:hidden}.id-row,.source-row{min-height:48px;padding:0 12px;display:grid;grid-template-columns:86px minmax(0,1fr) auto;align-items:center;gap:8px}.source-row{grid-template-columns:86px 1fr;border-top:1px solid #252a31}.access span{color:#707a85;font-size:.63rem}.access code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a9c5e2;font-size:.67rem}.access button{height:30px;padding:0 9px;border:1px solid #303640;border-radius:6px;background:#15181d;color:#aeb5bd;font-size:.62rem}.source-row strong{color:#adb5bd;font-size:.66rem;font-weight:560}.routes{margin-top:14px;padding:14px 15px 15px;border-top:1px solid #24282f;background:#0c0e12}.route-title{display:flex;justify-content:space-between;color:#707a85;font-size:.63rem}.route-title strong{color:#8c96a0}.route-list{margin-top:8px;display:grid;gap:5px}.route-list>div{min-height:38px;padding:0 10px;border:1px solid #232830;border-radius:7px;background:#111419;display:flex;align-items:center;justify-content:space-between}.route-list>div>span{min-width:0;display:grid;grid-template-columns:6px auto 1fr;align-items:center;gap:7px}.route-list b{font-size:.65rem;color:#c0c6cc}.route-list small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#606a75;font-size:.59rem}.route-list em{font-style:normal;color:#82909d;font-size:.62rem}.empty{min-height:300px;border:1px solid var(--border);border-radius:12px;background:#0f1115;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a848e}.empty strong{color:#c8ced4}.empty span{margin-top:7px;font-size:.68rem}.loading{display:grid;grid-template-columns:1fr 1fr;gap:14px}.loading i{height:420px;border-radius:13px;background:linear-gradient(90deg,#101217,#171a20,#101217);background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}@media(max-width:980px){.heading{flex-direction:column}.actions{width:100%}.search{width:100%;flex:1}.grid{grid-template-columns:1fr}}@media(max-width:620px){.actions{flex-direction:column}.search,.sort{width:100%}.result-head{align-items:flex-start;flex-direction:column;justify-content:center;gap:8px}.prices{grid-template-columns:1fr}.prices>div:nth-child(even){border-left:0}.prices>div+div{border-top:1px solid #252a31}.loading{grid-template-columns:1fr}}
+.market-error {
+  min-height: 260px;
+  border: 1px solid rgba(225, 108, 115, .25);
+  border-radius: 10px;
+  background: rgba(225, 108, 115, .05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+}
+
+.market-error strong { color: #f0c0c4; font-size: .86rem; }
+.market-error span { max-width: 620px; color: #a8757a; font-size: .69rem; }
+.market-error button,
+.catalog-refresh {
+  border: 1px solid #2d3239;
+  border-radius: 6px;
+  color: #b7bdc5;
+  background: #16191d;
+  cursor: pointer;
+}
+.market-error button { height: 32px; padding: 0 11px; font-size: .65rem; }
+.catalog-refresh { width: 28px; height: 28px; margin-left: 2px; }
+.catalog-refresh:disabled { opacity: .45; cursor: wait; }
+
+.group-filter-row {
+  min-height: 64px;
+  padding: 9px 12px;
+  border-top: 1px solid var(--ws-border);
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.group-filter-label { display: flex; flex-direction: column; gap: 4px; }
+.group-filter-label > span { color: #aeb5bd; font-size: .69rem; font-weight: 680; }
+.group-filter-label > small { color: #5f6771; font-size: .57rem; }
+
+.group-filter-list {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.group-filter-list button {
+  min-width: max-content;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #282d34;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #8f97a1;
+  background: #0d0f13;
+  cursor: pointer;
+  transition: .15s ease;
+}
+
+.group-filter-list button:hover { border-color: #3a4048; color: #c7ccd2; background: #14171b; }
+.group-filter-list button.active { border-color: #48505a; color: #eef1f4; background: #191c21; }
+.group-filter-list button > span:not(.group-all-icon) { font-size: .67rem; font-weight: 620; }
+.group-filter-list button > b,
+.group-filter-list button > em {
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  color: #78818b;
+  background: #090b0e;
+  font-size: .57rem;
+  font-style: normal;
+  font-weight: 660;
+}
+.group-filter-list button.active > b,
+.group-filter-list button.active > em { color: #b8c0c9; }
+.group-all-icon {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #728aa5 0 42%, transparent 42% 58%, #728aa5 58%), linear-gradient(#728aa5 0 42%, transparent 42% 58%, #728aa5 58%);
+  opacity: .9;
+}
+
+.group-selection-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-selection-summary > span { color: #656d77; font-size: .61rem; }
+.group-selection-summary > strong { color: #aeb5bd; font-size: .67rem; font-weight: 650; }
+.group-selection-summary > small { color: #5e6670; font-size: .59rem; }
+
+.provider-mini-mark {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 1px solid #2b3037;
+  border-radius: 6px;
+  display: inline-grid;
+  place-items: center;
+  color: #aeb5bd;
+  background: #15181d;
+  font: 700 .47rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-style: normal;
+}
+
+.mapped-model-list {
+  min-height: 48px;
+  padding: 8px 11px;
+  border-top: 1px solid #1f2329;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+.mapped-model-list > span { color: #626a74; font-size: .61rem; }
+.mapped-model-list > div { min-width: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.mapped-model-list code {
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 5px;
+  overflow: hidden;
+  color: #8eaed2;
+  background: #15181d;
+  font: .57rem/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-group-section { padding: 12px 14px 14px; border-top: 1px solid #22262c; }
+.model-group-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.model-group-title > span { color: #68717b; font-size: .62rem; }
+.model-group-title > strong {
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #9ba4ae;
+  background: #0b0d10;
+  font-size: .58rem;
+}
+.model-group-list { margin-top: 8px; display: grid; gap: 6px; }
+.model-group-item {
+  min-height: 45px;
+  padding: 6px 8px;
+  border: 1px solid #20242a;
+  border-radius: 7px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  background: #0c0e12;
+}
+.model-group-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.model-group-copy > b { overflow: hidden; color: #b7bec6; font-size: .65rem; font-weight: 640; text-overflow: ellipsis; white-space: nowrap; }
+.model-group-copy > small { overflow: hidden; color: #59626c; font-size: .56rem; text-overflow: ellipsis; white-space: nowrap; }
+.model-group-item > em { color: #91b6df; font-size: .61rem; font-style: normal; font-weight: 680; }
+
+.market-loading { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.market-loading > i {
+  min-height: 320px;
+  border: 1px solid #23272e;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #0f1115 20%, #15181d 40%, #0f1115 60%);
+  background-size: 220% 100%;
+  animation: market-shimmer 1.4s linear infinite;
+}
+@keyframes market-shimmer { to { background-position: -220% 0; } }
+
+@media (max-width: 820px) {
+  .group-filter-row { grid-template-columns: 1fr; }
+  .group-filter-label { flex-direction: row; align-items: baseline; }
+  .group-selection-summary { width: 100%; flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .group-filter-list { width: 100%; }
+  .market-loading { grid-template-columns: 1fr; }
+  .model-group-item { grid-template-columns: 22px minmax(0, 1fr) auto; }
+}
 </style>
