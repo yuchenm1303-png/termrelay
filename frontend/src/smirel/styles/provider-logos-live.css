@@ -108,3 +108,115 @@
   .workspace-root .provider-mark::before { width: 20px; height: 20px; }
   .workspace-root .provider-filter button::before { width: 15px; height: 15px; }
 }
+
+/* Complete vendor mark set. All vectors are vendored from Lobe Icons so the
+ * marketplace never depends on a runtime CDN request. */
+.workspace-root .provider-mark[data-provider=deepseek]::before,
+.workspace-root .provider-mini-mark[data-provider=deepseek]::before,
+.workspace-root .provider-filter button[data-provider=deepseek]::before {
+  -webkit-mask-image: url('../assets/providers/deepseek.svg');
+  mask-image: url('../assets/providers/deepseek.svg');
+}
+
+.workspace-root .provider-mark[data-provider=qwen]::before,
+.workspace-root .provider-mini-mark[data-provider=qwen]::before,
+.workspace-root .provider-filter button[data-provider=qwen]::before {
+  -webkit-mask-image: url('../assets/providers/qwen.svg');
+  mask-image: url('../assets/providers/qwen.svg');
+}
+
+.workspace-root .provider-mark[data-provider=zhipu]::before,
+.workspace-root .provider-mini-mark[data-provider=zhipu]::before,
+.workspace-root .provider-filter button[data-provider=zhipu]::before {
+  -webkit-mask-image: url('../assets/providers/zhipu.svg');
+  mask-image: url('../assets/providers/zhipu.svg');
+}
+
+.workspace-root .provider-mark[data-provider=moonshot]::before,
+.workspace-root .provider-mini-mark[data-provider=moonshot]::before,
+.workspace-root .provider-filter button[data-provider=moonshot]::before {
+  -webkit-mask-image: url('../assets/providers/kimi.svg');
+  mask-image: url('../assets/providers/kimi.svg');
+}
+
+.workspace-root .provider-mark[data-provider=minimax]::before,
+.workspace-root .provider-mini-mark[data-provider=minimax]::before,
+.workspace-root .provider-filter button[data-provider=minimax]::before {
+  -webkit-mask-image: url('../assets/providers/minimax.svg');
+  mask-image: url('../assets/providers/minimax.svg');
+}
+
+.workspace-root .provider-mark[data-provider=xiaomimimo]::before,
+.workspace-root .provider-mini-mark[data-provider=xiaomimimo]::before,
+.workspace-root .provider-filter button[data-provider=xiaomimimo]::before {
+  -webkit-mask-image: url('../assets/providers/xiaomimimo.svg');
+  mask-image: url('../assets/providers/xiaomimimo.svg');
+}
+
+.workspace-root .provider-mark[data-provider=hunyuan]::before,
+.workspace-root .provider-mini-mark[data-provider=hunyuan]::before,
+.workspace-root .provider-filter button[data-provider=hunyuan]::before {
+  -webkit-mask-image: url('../assets/providers/hunyuan.svg');
+  mask-image: url('../assets/providers/hunyuan.svg');
+}
+
+.workspace-root .provider-mark[data-provider=mistral]::before,
+.workspace-root .provider-mini-mark[data-provider=mistral]::before,
+.workspace-root .provider-filter button[data-provider=mistral]::before {
+  -webkit-mask-image: url('../assets/providers/mistral.svg');
+  mask-image: url('../assets/providers/mistral.svg');
+}
+
+.workspace-root .provider-mark[data-provider=meta]::before,
+.workspace-root .provider-mini-mark[data-provider=meta]::before,
+.workspace-root .provider-filter button[data-provider=meta]::before {
+  -webkit-mask-image: url('../assets/providers/meta.svg');
+  mask-image: url('../assets/providers/meta.svg');
+}
+
+.workspace-root .provider-mark[data-provider=antigravity]::before,
+.workspace-root .provider-mini-mark[data-provider=antigravity]::before,
+.workspace-root .provider-filter button[data-provider=antigravity]::before {
+  -webkit-mask-image: url('../assets/providers/antigravity.svg');
+  mask-image: url('../assets/providers/antigravity.svg');
+}
+
+.workspace-root .provider-mark[data-provider=deepseek],
+.workspace-root .provider-mini-mark[data-provider=deepseek],
+.workspace-root .provider-filter button[data-provider=deepseek]::before { color: #6f9cff; }
+
+.workspace-root .provider-mark[data-provider=qwen],
+.workspace-root .provider-mini-mark[data-provider=qwen],
+.workspace-root .provider-filter button[data-provider=qwen]::before { color: #9d8cff; }
+
+.workspace-root .provider-mark[data-provider=zhipu],
+.workspace-root .provider-mini-mark[data-provider=zhipu],
+.workspace-root .provider-filter button[data-provider=zhipu]::before { color: #66a3ff; }
+
+.workspace-root .provider-mark[data-provider=moonshot],
+.workspace-root .provider-mini-mark[data-provider=moonshot],
+.workspace-root .provider-filter button[data-provider=moonshot]::before { color: #8ea0ff; }
+
+.workspace-root .provider-mark[data-provider=minimax],
+.workspace-root .provider-mini-mark[data-provider=minimax],
+.workspace-root .provider-filter button[data-provider=minimax]::before { color: #ff897c; }
+
+.workspace-root .provider-mark[data-provider=xiaomimimo],
+.workspace-root .provider-mini-mark[data-provider=xiaomimimo],
+.workspace-root .provider-filter button[data-provider=xiaomimimo]::before { color: #ff8a3d; }
+
+.workspace-root .provider-mark[data-provider=hunyuan],
+.workspace-root .provider-mini-mark[data-provider=hunyuan],
+.workspace-root .provider-filter button[data-provider=hunyuan]::before { color: #6aa8ff; }
+
+.workspace-root .provider-mark[data-provider=mistral],
+.workspace-root .provider-mini-mark[data-provider=mistral],
+.workspace-root .provider-filter button[data-provider=mistral]::before { color: #ff8a45; }
+
+.workspace-root .provider-mark[data-provider=meta],
+.workspace-root .provider-mini-mark[data-provider=meta],
+.workspace-root .provider-filter button[data-provider=meta]::before { color: #7eb2ff; }
+
+.workspace-root .provider-mark[data-provider=antigravity],
+.workspace-root .provider-mini-mark[data-provider=antigravity],
+.workspace-root .provider-filter button[data-provider=antigravity]::before { color: #d8dde5; }

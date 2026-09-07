@@ -99,7 +99,10 @@ function family(model: string, offers: Offer[]): ProviderInfo {
   if (id.startsWith('qwen')) return { key: 'qwen', name: 'Qwen', mark: 'Q' }
   if (id.startsWith('glm')) return { key: 'zhipu', name: 'GLM', mark: 'Z' }
   if (id.startsWith('llama')) return { key: 'meta', name: 'Meta', mark: 'M' }
-  if (id.startsWith('kimi') || id.startsWith('moonshot')) return { key: 'moonshot', name: 'Moonshot', mark: 'K' }
+  if (id.startsWith('kimi') || id.startsWith('moonshot')) return { key: 'moonshot', name: 'Kimi', mark: 'K' }
+  if (id.startsWith('minimax')) return { key: 'minimax', name: 'MiniMax', mark: 'M' }
+  if (id.startsWith('mimo')) return { key: 'xiaomimimo', name: 'MiMo', mark: 'MI' }
+  if (id === 'hy3' || id.startsWith('hy4') || id.startsWith('hunyuan')) return { key: 'hunyuan', name: 'Hunyuan', mark: 'H' }
   if (id.startsWith('mistral') || id.startsWith('codestral')) return { key: 'mistral', name: 'Mistral', mark: 'M' }
   if (id.startsWith('gpt') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4')) {
     return { key: 'openai', name: 'OpenAI', mark: 'O' }
@@ -181,7 +184,7 @@ const models = computed<CatalogModel[]>(() => {
   })
 })
 
-const providerOrder = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'qwen', 'zhipu', 'moonshot', 'mistral', 'meta']
+const providerOrder = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'qwen', 'zhipu', 'moonshot', 'minimax', 'xiaomimimo', 'hunyuan', 'mistral', 'meta', 'antigravity']
 const providers = computed(() => {
   const map = new Map<string, { key: string; name: string; count: number }>()
   for (const model of models.value) {
@@ -268,12 +271,21 @@ function protocol(platform: string) {
   )[String(platform || '').toLowerCase()] || platform || 'Compatible API'
 }
 
-function providerKeyForPlatform(platform: string) {
-  return providerFromPlatform(platform).key
+function providerInfoForGroup(group: PlazaGroup): ProviderInfo {
+  if (String(group.name || '').toLowerCase().startsWith('smirel')) {
+    return { key: 'composite', name: 'Smirel', mark: 'S' }
+  }
+  const firstModel = group.models?.[0]
+  if (firstModel) return family(firstModel.name, [{ group, model: firstModel }])
+  return providerFromPlatform(group.platform)
 }
 
-function providerMarkForPlatform(platform: string) {
-  return providerFromPlatform(platform).mark
+function providerKeyForGroup(group: PlazaGroup) {
+  return providerInfoForGroup(group).key
+}
+
+function providerMarkForGroup(group: PlazaGroup) {
+  return providerInfoForGroup(group).mark
 }
 
 function protocols(model: CatalogModel) {
@@ -393,7 +405,7 @@ onMounted(() => void loadCatalog())
               :class="{ active: groupId === group.id }"
               @click="selectGroup(group.id)"
             >
-              <i class="provider-mini-mark" :data-provider="providerKeyForPlatform(group.platform)">{{ providerMarkForPlatform(group.platform) }}</i>
+              <i class="provider-mini-mark" :data-provider="providerKeyForGroup(group)">{{ providerMarkForGroup(group) }}</i>
               <span>{{ group.name }}</span>
               <em>{{ rate(group).toFixed(2) }}×</em>
             </button>
@@ -493,7 +505,7 @@ onMounted(() => void loadCatalog())
             </div>
             <div class="model-group-list">
               <div v-for="offer in model.offers" :key="`${offer.group.id}-${offer.model.platform}-${offer.model.mapped_model || offer.model.name}`" class="model-group-item">
-                <i class="provider-mini-mark" :data-provider="providerKeyForPlatform(offer.group.platform)">{{ providerMarkForPlatform(offer.group.platform) }}</i>
+                <i class="provider-mini-mark" :data-provider="providerKeyForGroup(offer.group)">{{ providerMarkForGroup(offer.group) }}</i>
                 <span class="model-group-copy">
                   <b>{{ offer.group.name }}</b>
                   <small>#{{ offer.group.id }} · {{ protocol(offer.group.platform) }}<template v-if="offer.model.mapped_model && offer.model.mapped_model !== model.id"> · {{ offer.model.mapped_model }}</template></small>
