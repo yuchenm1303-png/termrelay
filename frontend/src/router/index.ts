@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomePage from '../smirel/pages/HomePage.vue'
 import AuthPage from '../smirel/pages/AuthPage.vue'
+import OAuthCallbackPage from '../smirel/pages/OAuthCallbackPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import ApiKeysPage from '../smirel/pages/ApiKeysPage.vue'
 import UserUsagePage from '../smirel/pages/UserUsagePage.vue'
@@ -68,6 +69,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/payment/stripe-popup', name: 'StripePayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
   { path: '/payment/airwallex', name: 'AirwallexPayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
   { path: '/auth/wechat/payment/callback', name: 'WeChatPaymentCallback', component: PublicPage, meta: { title: '支付回调', publicKind: 'callback' } },
+  { path: '/auth/oauth/callback', name: 'SmirelOAuthCallback', component: OAuthCallbackPage, meta: { title: '登录回调' } },
   { path: '/auth/:provider/callback', name: 'OAuthProviderCallback', component: PublicPage, meta: { title: '登录回调', publicKind: 'callback' } },
   { path: '/auth/callback', redirect: '/auth/oauth/callback' },
   { path: '/auth/dingtalk/email-completion', name: 'DingTalkEmailCompletion', component: PublicPage, meta: { title: '完成登录', publicKind: 'callback' } },
