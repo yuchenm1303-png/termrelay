@@ -8,6 +8,7 @@
  */
 
 .workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
+  z-index: 38;
   height: 58px;
   padding: 0 34px;
   border-bottom-color: #1f2329;
