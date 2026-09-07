@@ -22,7 +22,7 @@ export const userNavigation: NavItem[] = [
 ]
 
 export const adminNavigation: NavItem[] = [
-  { path: '/admin/dashboard', name: 'AdminDashboard', label: 'Overview', feature: 'admin-dashboard', short: 'OV' },
+  { path: '/admin/dashboard', name: 'AdminDashboard', label: '控制台', feature: 'admin-dashboard', short: 'OV' },
   { path: '/admin/users', name: 'AdminUsers', label: '用户', feature: 'admin-users', short: 'UR' },
   { path: '/admin/accounts', name: 'AdminAccounts', label: '上游账户', feature: 'admin-accounts', short: 'UP' },
   { path: '/admin/groups', name: 'AdminGroups', label: '分组与模型', feature: 'admin-groups', short: 'GP' },
