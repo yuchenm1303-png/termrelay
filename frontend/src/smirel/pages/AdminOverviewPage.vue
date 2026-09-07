@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import WorkspaceNavIcon from '../components/WorkspaceNavIcon.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
+import { pushNotification } from '../core/notifications'
+import { interfacePreferences } from '../core/preferences'
 
 interface AdminStats {
   total_users?: number
@@ -21,6 +24,7 @@ interface Snapshot {
   stats?: AdminStats
 }
 
+const { t } = useI18n()
 const loading = ref(false)
 const error = ref('')
 const snapshot = ref<Snapshot | null>(null)
@@ -30,7 +34,7 @@ function compact(value: unknown) {
   const n = Number(value || 0)
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
-  return n.toLocaleString()
+  return n.toLocaleString(interfacePreferences.locale)
 }
 
 function money(value: unknown) {
@@ -52,10 +56,12 @@ const activeUserRate = computed(() => percent(stats.value.active_users, stats.va
 const accountAvailabilityRate = computed(() => percent(stats.value.active_accounts, stats.value.total_accounts))
 const generatedLabel = computed(() => {
   const value = snapshot.value?.generated_at
-  if (!value) return '等待首次同步'
+  if (!value) return t('admin.waitingFirstSync')
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '刚刚更新'
-  return `更新于 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+  if (Number.isNaN(date.getTime())) return t('admin.justUpdated')
+  return t('admin.updatedAt', {
+    time: date.toLocaleTimeString(interfacePreferences.locale, { hour: '2-digit', minute: '2-digit' }),
+  })
 })
 
 async function load() {
@@ -85,6 +91,11 @@ async function load() {
     }
   } catch (caught) {
     error.value = getErrorMessage(caught)
+    pushNotification({
+      title: t('admin.refreshFailedTitle'),
+      message: t('admin.refreshFailedMessage'),
+      tone: 'error',
+    })
   } finally {
     loading.value = false
   }
@@ -97,16 +108,16 @@ onMounted(() => void load())
   <section class="workspace-page admin-overview">
     <header class="page-heading admin-page-heading">
       <div class="admin-heading-copy">
-        <div class="admin-heading-eyebrow"><i></i><span>SMIREL OPERATIONS</span></div>
-        <h1>控制台</h1>
-        <p>平台核心运行数据、资源状态与实时调用概览。</p>
+        <div class="admin-heading-eyebrow"><i></i><span>{{ t('admin.eyebrow') }}</span></div>
+        <h1>{{ t('admin.title') }}</h1>
+        <p>{{ t('admin.description') }}</p>
       </div>
 
       <div class="admin-utility-cluster">
         <div class="admin-snapshot-meta" :class="{ ready: snapshot }">
           <span class="admin-snapshot-icon"><WorkspaceNavIcon name="activity" /></span>
           <span class="admin-snapshot-copy">
-            <strong>{{ snapshot ? '数据已同步' : '等待数据' }}</strong>
+            <strong>{{ snapshot ? t('admin.dataSynced') : t('admin.waitingData') }}</strong>
             <small>{{ generatedLabel }}</small>
           </span>
         </div>
@@ -116,7 +127,7 @@ onMounted(() => void load())
             <path d="M20 6v5h-5M4 18v-5h5" />
             <path d="M6.1 9a7 7 0 0 1 11.5-2.4L20 11M4 13l2.4 4.4A7 7 0 0 0 18 15" />
           </svg>
-          <span>{{ loading ? '刷新中…' : '刷新数据' }}</span>
+          <span>{{ loading ? t('workspace.refreshing') : t('admin.refreshData') }}</span>
         </button>
       </div>
     </header>
@@ -126,7 +137,7 @@ onMounted(() => void load())
     <div class="admin-summary-grid">
       <RouterLink to="/admin/users" class="glass metric-card admin-metric-card admin-metric-users">
         <div class="admin-metric-head">
-          <span>活跃用户</span>
+          <span>{{ t('admin.activeUsers') }}</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="users" /></span>
             <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
@@ -134,15 +145,15 @@ onMounted(() => void load())
         </div>
         <strong>{{ compact(stats.active_users) }}</strong>
         <footer>
-          <span>总用户 {{ compact(stats.total_users) }}</span>
-          <b>{{ activeUserRate }}% 活跃</b>
+          <span>{{ t('admin.totalUsers', { value: compact(stats.total_users) }) }}</span>
+          <b>{{ t('admin.activeRate', { value: activeUserRate }) }}</b>
         </footer>
         <div class="admin-metric-progress" aria-hidden="true"><i :style="{ width: `${activeUserRate}%` }"></i></div>
       </RouterLink>
 
       <RouterLink to="/admin/accounts" class="glass metric-card admin-metric-card admin-metric-upstream">
         <div class="admin-metric-head">
-          <span>上游账户</span>
+          <span>{{ t('admin.upstreamAccounts') }}</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="server" /></span>
             <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
@@ -150,15 +161,15 @@ onMounted(() => void load())
         </div>
         <strong>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }}</strong>
         <footer>
-          <span>{{ stats.active_accounts || 0 }} 个账户可用</span>
-          <b>{{ accountAvailabilityRate }}% 可用</b>
+          <span>{{ t('admin.accountsAvailable', { value: stats.active_accounts || 0 }) }}</span>
+          <b>{{ t('admin.availability', { value: accountAvailabilityRate }) }}</b>
         </footer>
         <div class="admin-metric-progress" aria-hidden="true"><i :style="{ width: `${accountAvailabilityRate}%` }"></i></div>
       </RouterLink>
 
       <RouterLink to="/admin/usage" class="glass metric-card admin-metric-card admin-metric-requests">
         <div class="admin-metric-head">
-          <span class="admin-live-label"><i></i>今日请求</span>
+          <span class="admin-live-label"><i></i>{{ t('admin.todayRequests') }}</span>
           <span class="admin-metric-actions">
             <span class="admin-metric-icon"><WorkspaceNavIcon name="activity" /></span>
             <span class="admin-metric-arrow" aria-hidden="true"><WorkspaceNavIcon name="arrow-up-right" /></span>
@@ -166,12 +177,12 @@ onMounted(() => void load())
         </div>
         <strong>{{ compact(stats.today_requests) }}</strong>
         <footer>
-          <span>实时调用负载</span>
+          <span>{{ t('admin.realtimeLoad') }}</span>
           <b>RPM {{ compact(stats.rpm) }}</b>
         </footer>
         <div class="admin-request-context">
-          <span><small>今日 Token</small><b>{{ compact(stats.today_tokens) }}</b></span>
-          <span><small>平均响应</small><b>{{ duration(stats.average_duration_ms) }}</b></span>
+          <span><small>{{ t('admin.todayToken') }}</small><b>{{ compact(stats.today_tokens) }}</b></span>
+          <span><small>{{ t('admin.averageResponse') }}</small><b>{{ duration(stats.average_duration_ms) }}</b></span>
         </div>
       </RouterLink>
     </div>
@@ -179,24 +190,24 @@ onMounted(() => void load())
     <section class="glass admin-ops-panel">
       <header class="admin-ops-head">
         <div>
-          <span class="admin-ops-kicker">运行概览</span>
-          <strong>今日资源消耗与服务性能</strong>
+          <span class="admin-ops-kicker">{{ t('admin.operationsOverview') }}</span>
+          <strong>{{ t('admin.resourcePerformance') }}</strong>
         </div>
-        <div class="admin-ops-state" :class="{ ready: snapshot }"><i></i>{{ snapshot ? '快照已同步' : '等待同步' }}</div>
+        <div class="admin-ops-state" :class="{ ready: snapshot }"><i></i>{{ snapshot ? t('admin.snapshotSynced') : t('admin.waitingSync') }}</div>
       </header>
 
       <div class="admin-health-grid">
         <div class="admin-health-stat">
           <span class="admin-health-icon"><WorkspaceNavIcon name="chart" /></span>
-          <div><span>今日 Token</span><strong>{{ compact(stats.today_tokens) }}</strong><small>TODAY</small></div>
+          <div><span>{{ t('admin.todayToken') }}</span><strong>{{ compact(stats.today_tokens) }}</strong><small>TODAY</small></div>
         </div>
         <div class="admin-health-stat">
           <span class="admin-health-icon"><WorkspaceNavIcon name="wallet" /></span>
-          <div><span>今日成本</span><strong>{{ money(stats.today_actual_cost) }}</strong><small>USD</small></div>
+          <div><span>{{ t('admin.todayCost') }}</span><strong>{{ money(stats.today_actual_cost) }}</strong><small>USD</small></div>
         </div>
         <div class="admin-health-stat">
           <span class="admin-health-icon"><WorkspaceNavIcon name="activity" /></span>
-          <div><span>平均响应</span><strong>{{ duration(stats.average_duration_ms) }}</strong><small>LATENCY</small></div>
+          <div><span>{{ t('admin.averageResponse') }}</span><strong>{{ duration(stats.average_duration_ms) }}</strong><small>LATENCY</small></div>
         </div>
         <div class="admin-health-stat">
           <span class="admin-health-icon"><WorkspaceNavIcon name="key" /></span>
@@ -207,25 +218,25 @@ onMounted(() => void load())
 
     <section class="admin-management-panel">
       <header class="admin-management-head">
-        <div><span>管理入口</span><strong>从关键数据直接进入对应模块</strong></div>
-        <RouterLink to="/admin/ops">查看运行监控 <b>→</b></RouterLink>
+        <div><span>{{ t('admin.managementEntry') }}</span><strong>{{ t('admin.managementHint') }}</strong></div>
+        <RouterLink to="/admin/ops">{{ t('admin.viewOperations') }} <b>→</b></RouterLink>
       </header>
       <div class="admin-management-links">
         <RouterLink to="/admin/accounts">
           <span class="admin-management-icon"><WorkspaceNavIcon name="server" /></span>
-          <span class="admin-management-copy"><small>UPSTREAM</small><strong>上游调度</strong><b>{{ stats.active_accounts || 0 }} / {{ stats.total_accounts || 0 }} 可用</b></span>
+          <span class="admin-management-copy"><small>UPSTREAM</small><strong>{{ t('admin.upstreamScheduling') }}</strong><b>{{ t('admin.availableInline', { active: stats.active_accounts || 0, total: stats.total_accounts || 0 }) }}</b></span>
           <span class="admin-management-meta">{{ accountAvailabilityRate }}%</span>
           <i>→</i>
         </RouterLink>
         <RouterLink to="/admin/ops">
           <span class="admin-management-icon"><WorkspaceNavIcon name="activity" /></span>
-          <span class="admin-management-copy"><small>OPERATIONS</small><strong>运行监控</strong><b>{{ duration(stats.average_duration_ms) }} 平均响应</b></span>
+          <span class="admin-management-copy"><small>OPERATIONS</small><strong>{{ t('admin.operationsMonitor') }}</strong><b>{{ t('admin.averageResponseInline', { value: duration(stats.average_duration_ms) }) }}</b></span>
           <span class="admin-management-meta">RPM {{ compact(stats.rpm) }}</span>
           <i>→</i>
         </RouterLink>
         <RouterLink to="/admin/usage">
           <span class="admin-management-icon"><WorkspaceNavIcon name="chart" /></span>
-          <span class="admin-management-copy"><small>USAGE</small><strong>用量记录</strong><b>{{ compact(stats.today_tokens) }} Token</b></span>
+          <span class="admin-management-copy"><small>USAGE</small><strong>{{ t('admin.usageRecords') }}</strong><b>{{ compact(stats.today_tokens) }} Token</b></span>
           <span class="admin-management-meta">{{ money(stats.today_actual_cost) }}</span>
           <i>→</i>
         </RouterLink>
