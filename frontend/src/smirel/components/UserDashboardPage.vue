@@ -81,7 +81,7 @@ async function copyEndpoint() {
         <div class="user-endpoint-meta">
           <span><i></i>OpenAI Compatible</span>
           <span>Bearer API Key</span>
-          <RouterLink to="/model-plaza">{{ t('nav.modelCatalog') || '模型与价格' }} →</RouterLink>
+          <RouterLink to="/model-plaza">{{ t('userDashboard.models') }} →</RouterLink>
         </div>
       </div>
     </section>
