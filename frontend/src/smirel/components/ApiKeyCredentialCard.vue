@@ -2,11 +2,24 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+interface ApiKeyGroup {
+  id?: number
+  name?: string
+  platform?: string
+}
+
 interface ApiKeyItem {
   id: number
   name?: string
   key?: string
   status?: string
+  group_id?: number | null
+  group?: ApiKeyGroup | null
+  quota?: number
+  quota_used?: number
+  current_concurrency?: number
+  last_used_at?: string | null
+  expires_at?: string | null
   created_at?: string
   [key: string]: unknown
 }
@@ -20,12 +33,37 @@ const copied = ref(false)
 let copiedTimer: number | undefined
 
 const labels = computed(() => locale.value === 'zh-CN'
-  ? { show: '显示', hide: '隐藏', copy: '复制', copied: '已复制', clickCopy: '点击复制完整密钥' }
-  : { show: 'Show', hide: 'Hide', copy: 'Copy', copied: 'Copied', clickCopy: 'Click to copy full key' })
+  ? {
+      show: '显示', hide: '隐藏', copy: '复制', copied: '已复制', clickCopy: '点击复制完整密钥',
+      group: '分组', unbound: '未绑定分组', quota: '额度', unlimited: '不限额', concurrency: '当前并发',
+      lastUsed: '最近使用', neverUsed: '尚未使用',
+    }
+  : {
+      show: 'Show', hide: 'Hide', copy: 'Copy', copied: 'Copied', clickCopy: 'Click to copy full key',
+      group: 'Group', unbound: 'No group', quota: 'Quota', unlimited: 'Unlimited', concurrency: 'Concurrency',
+      lastUsed: 'Last used', neverUsed: 'Never used',
+    })
 
 const rawKey = computed(() => String(props.item.key || ''))
 const serverMasked = computed(() => /[•*]{3,}/.test(rawKey.value))
 const canReveal = computed(() => Boolean(rawKey.value) && !serverMasked.value)
+const hasGroup = computed(() => props.item.group_id != null || Boolean(props.item.group?.name))
+const groupLabel = computed(() => props.item.group?.name || (props.item.group_id != null ? `#${props.item.group_id}` : labels.value.unbound))
+const quotaLabel = computed(() => {
+  const limit = Number(props.item.quota || 0)
+  if (limit <= 0) return labels.value.unlimited
+  const used = Number(props.item.quota_used || 0)
+  return `$${used.toFixed(2)} / $${limit.toFixed(2)}`
+})
+const concurrencyLabel = computed(() => String(Number(props.item.current_concurrency || 0)))
+const lastUsedLabel = computed(() => {
+  if (!props.item.last_used_at) return labels.value.neverUsed
+  const date = new Date(props.item.last_used_at)
+  if (Number.isNaN(date.getTime())) return String(props.item.last_used_at)
+  return new Intl.DateTimeFormat(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(date)
+})
 
 const maskedKey = computed(() => {
   const value = rawKey.value
@@ -78,7 +116,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <article class="api-key-card">
+  <article class="api-key-card" :class="{ 'api-key-card--unbound': !hasGroup }">
     <header class="api-key-card-head">
       <div class="api-key-identity">
         <span class="api-key-mark" aria-hidden="true">
@@ -92,7 +130,7 @@ onBeforeUnmount(() => {
           <small>API KEY</small>
         </div>
       </div>
-      <span class="api-key-state"><i></i>{{ item.status || 'active' }}</span>
+      <span class="api-key-state" :class="{ 'is-inactive': item.status && item.status !== 'active' }"><i></i>{{ item.status || 'active' }}</span>
     </header>
 
     <div class="api-key-secret">
@@ -142,6 +180,25 @@ onBeforeUnmount(() => {
         <code>{{ displayKey }}</code>
       </button>
     </div>
+
+    <dl class="api-key-meta">
+      <div :class="{ warning: !hasGroup }">
+        <dt>{{ labels.group }}</dt>
+        <dd>{{ groupLabel }}</dd>
+      </div>
+      <div>
+        <dt>{{ labels.quota }}</dt>
+        <dd>{{ quotaLabel }}</dd>
+      </div>
+      <div>
+        <dt>{{ labels.concurrency }}</dt>
+        <dd>{{ concurrencyLabel }}</dd>
+      </div>
+      <div>
+        <dt>{{ labels.lastUsed }}</dt>
+        <dd>{{ lastUsedLabel }}</dd>
+      </div>
+    </dl>
 
     <footer class="api-key-card-foot">
       <span class="api-key-created">
@@ -246,6 +303,54 @@ onBeforeUnmount(() => {
   color: #d9e8f4 !important;
 }
 
+.api-key-meta {
+  margin: 14px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid #20252c;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+}
+
+.api-key-meta div {
+  min-width: 0;
+}
+
+.api-key-meta dt {
+  color: #59636e;
+  font-size: .59rem;
+  font-weight: 680;
+  letter-spacing: .06em;
+}
+
+.api-key-meta dd {
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: #9aa5b0;
+  font-size: .69rem;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-key-meta .warning dd {
+  color: #c9a76a;
+}
+
+.api-key-card--unbound {
+  border-color: #3b3529 !important;
+}
+
+.api-key-state.is-inactive {
+  border-color: #3d3032 !important;
+  color: #aa8589 !important;
+  background: #171113 !important;
+}
+
+.api-key-state.is-inactive i {
+  background: #b96f78 !important;
+}
+
 @media (max-width: 560px) {
   .api-key-secret-head {
     align-items: flex-start;
@@ -259,6 +364,10 @@ onBeforeUnmount(() => {
 
   .api-key-secret-actions button {
     flex: 1 1 0;
+  }
+
+  .api-key-meta {
+    grid-template-columns: 1fr;
   }
 }
 
