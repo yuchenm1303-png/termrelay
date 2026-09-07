@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import AdminOpsPage from '../components/AdminOpsPage.vue'
 import AdminUsersPage from '../components/AdminUsersPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
@@ -29,6 +30,7 @@ const isKeys = computed(() => feature.value === 'keys')
 const isUsage = computed(() => feature.value === 'usage')
 const isProfile = computed(() => feature.value === 'profile')
 const isAdminUsers = computed(() => feature.value === 'admin-users')
+const isAdminOps = computed(() => feature.value === 'admin-ops')
 const accountBalance = computed(() => Number(state.user?.balance || 0))
 const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
 const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
@@ -160,7 +162,9 @@ onMounted(() => void load())
 
       <p v-if="error" class="inline-error">{{ error }}</p>
 
-      <template v-if="isDashboard">
+      <AdminOpsPage v-if="isAdminOps" />
+
+      <template v-else-if="isDashboard">
         <section class="glass account-summary">
           <div class="summary-balance">
             <span>{{ t('workspace.availableBalance') }}</span>
