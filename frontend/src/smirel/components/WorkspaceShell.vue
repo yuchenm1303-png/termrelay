@@ -29,19 +29,18 @@ const navigationGroups = computed<NavGroup[]>(() => {
 
   if (!isAdmin.value) {
     return [
-      { label: 'WORKSPACE', items: take(items, ['dashboard', 'keys', 'usage']) },
-      { label: 'BILLING', items: take(items, ['subscriptions', 'purchase', 'orders', 'redeem', 'affiliate']) },
-      { label: 'SERVICES', items: take(items, ['channels', 'monitor', 'batch-image']) },
-      { label: 'ACCOUNT', items: take(items, ['profile']) },
+      { label: '控制台', items: take(items, ['dashboard', 'keys', 'usage']) },
+      { label: '账单', items: take(items, ['subscriptions', 'purchase', 'orders']) },
+      { label: '账户', items: take(items, ['profile']) },
     ].filter((group) => group.items.length)
   }
 
   return [
-    { label: 'PLATFORM', items: take(items, ['admin-dashboard', 'admin-users']) },
-    { label: 'RESOURCES', items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels', 'admin-monitor']) },
-    { label: 'OPERATIONS', items: take(items, ['admin-usage', 'admin-ops', 'admin-audit', 'admin-prompt-audit']) },
-    { label: 'COMMERCE', items: take(items, ['admin-subscriptions', 'admin-payment-dashboard', 'admin-orders', 'admin-plans', 'admin-redeem', 'admin-promo', 'admin-affiliate-invites', 'admin-affiliate-rebates', 'admin-affiliate-transfers']) },
-    { label: 'SYSTEM', items: take(items, ['admin-proxies', 'admin-announcements', 'admin-risk', 'admin-backup', 'admin-settings']) },
+    { label: '控制台', items: take(items, ['admin-dashboard', 'admin-users']) },
+    { label: '资源', items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels']) },
+    { label: '运营', items: take(items, ['admin-usage', 'admin-ops']) },
+    { label: '交易', items: take(items, ['admin-payment-dashboard', 'admin-orders']) },
+    { label: '系统', items: take(items, ['admin-settings']) },
   ].filter((group) => group.items.length)
 })
 
@@ -68,12 +67,6 @@ async function signOut() {
         <button class="mobile-close" type="button" @click="mobileOpen = false">×</button>
       </div>
 
-      <div class="workspace-context">
-        <span>{{ isAdmin ? 'ADMIN CONSOLE' : 'WORKSPACE' }}</span>
-        <strong>{{ isAdmin ? '平台管理' : 'Smirel API' }}</strong>
-        <small>{{ navigation.length }} 个功能模块</small>
-      </div>
-
       <nav class="workspace-nav">
         <section v-for="group in navigationGroups" :key="group.label" class="workspace-nav-group">
           <div class="workspace-nav-label">{{ group.label }}</div>
@@ -84,7 +77,7 @@ async function signOut() {
             :class="{ active: route.path === item.path }"
             @click="mobileOpen = false"
           >
-            <i>{{ item.short }}</i><span>{{ item.label }}</span>
+            <span>{{ item.label }}</span>
           </RouterLink>
         </section>
       </nav>
@@ -92,11 +85,11 @@ async function signOut() {
       <div class="workspace-account">
         <RouterLink to="/profile" class="account-row" @click="mobileOpen = false">
           <b>{{ initials }}</b>
-          <span><strong>{{ accountName }}</strong><small>{{ isAdmin ? '管理员账户' : state.user?.email }}</small></span>
+          <span><strong>{{ accountName }}</strong><small>{{ isAdmin ? '管理员' : state.user?.email }}</small></span>
         </RouterLink>
         <div class="account-actions">
-          <RouterLink to="/home">返回首页</RouterLink>
-          <button type="button" :disabled="loggingOut" @click="signOut">{{ loggingOut ? '退出中…' : '退出登录' }}</button>
+          <RouterLink to="/home">首页</RouterLink>
+          <button type="button" :disabled="loggingOut" @click="signOut">{{ loggingOut ? '退出中…' : '退出' }}</button>
         </div>
       </div>
     </aside>
@@ -107,13 +100,9 @@ async function signOut() {
       <header class="workspace-topbar glass">
         <div class="workspace-topbar-left">
           <button class="mobile-menu" type="button" @click="mobileOpen = true"><span></span><span></span><span></span></button>
-          <p><span>Smirel</span><b>/</b><span>{{ isAdmin ? 'Admin' : 'Workspace' }}</span><b>/</b><strong>{{ route.meta.title }}</strong></p>
+          <strong class="workspace-topbar-title">{{ isAdmin ? '管理后台' : 'Smirel Console' }}</strong>
         </div>
-        <div class="workspace-topbar-right">
-          <span class="endpoint-pill">api.smirel.com/v1</span>
-          <span v-if="isAdmin" class="admin-pill">ADMIN</span>
-          <RouterLink to="/profile" class="mini-avatar">{{ initials }}</RouterLink>
-        </div>
+        <RouterLink to="/profile" class="mini-avatar">{{ initials }}</RouterLink>
       </header>
       <main class="workspace-canvas"><slot /></main>
     </section>
