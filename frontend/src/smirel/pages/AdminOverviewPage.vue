@@ -81,7 +81,7 @@ onMounted(() => void load())
     <header class="page-heading admin-page-heading">
       <div>
         <h1>控制台</h1>
-        <p>平台核心数据与服务状态。</p>
+        <p>平台核心运行数据。</p>
       </div>
       <button class="ghost-button admin-refresh" type="button" :disabled="loading" @click="load">
         {{ loading ? '刷新中…' : '刷新数据' }}
@@ -109,11 +109,6 @@ onMounted(() => void load())
     </div>
 
     <section class="glass admin-health-strip">
-      <div class="admin-health-summary">
-        <span>服务状态</span>
-        <strong><i></i>运行正常</strong>
-        <small>核心服务可用</small>
-      </div>
       <div class="admin-health-stat">
         <span>今日 Token</span>
         <strong>{{ compact(stats.today_tokens) }}</strong>
@@ -206,11 +201,10 @@ onMounted(() => void load())
   border-radius: 11px;
   background: #0f1115;
   display: grid;
-  grid-template-columns: minmax(190px, 1.25fr) repeat(4, minmax(140px, 1fr));
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
   overflow: hidden;
 }
 
-.admin-health-summary,
 .admin-health-stat {
   min-width: 0;
   padding: 20px 22px;
@@ -219,39 +213,14 @@ onMounted(() => void load())
   justify-content: center;
 }
 
-.admin-health-stat {
+.admin-health-stat + .admin-health-stat {
   border-left: 1px solid #252930;
 }
 
-.admin-health-summary > span,
 .admin-health-stat span {
   color: #747d88;
   font-size: .75rem;
   font-weight: 560;
-}
-
-.admin-health-summary strong {
-  margin-top: 9px;
-  color: #dff7ed;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1rem;
-  font-weight: 640;
-}
-
-.admin-health-summary strong i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #42ce99;
-  box-shadow: 0 0 0 4px rgba(66, 206, 153, .08);
-}
-
-.admin-health-summary small {
-  margin-top: 7px;
-  color: #626b76;
-  font-size: .70rem;
 }
 
 .admin-health-stat strong {
@@ -264,20 +233,15 @@ onMounted(() => void load())
 
 @media (max-width: 1080px) {
   .admin-health-strip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .admin-health-summary {
-    grid-column: span 3;
-    border-bottom: 1px solid #252930;
-  }
-
-  .admin-health-stat {
-    border-left: 1px solid #252930;
-  }
-
-  .admin-health-stat:nth-of-type(2) {
+  .admin-health-stat:nth-child(odd) {
     border-left: 0;
+  }
+
+  .admin-health-stat:nth-child(n + 3) {
+    border-top: 1px solid #252930;
   }
 }
 
@@ -288,23 +252,6 @@ onMounted(() => void load())
 
   .admin-page-heading h1 {
     font-size: 1.82rem;
-  }
-
-  .admin-health-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-health-summary {
-    grid-column: span 2;
-  }
-
-  .admin-health-stat:nth-of-type(2),
-  .admin-health-stat:nth-of-type(4) {
-    border-left: 0;
-  }
-
-  .admin-health-stat:nth-of-type(n + 4) {
-    border-top: 1px solid #252930;
   }
 }
 
@@ -317,12 +264,12 @@ onMounted(() => void load())
     grid-template-columns: 1fr;
   }
 
-  .admin-health-summary {
-    grid-column: auto;
+  .admin-health-stat,
+  .admin-health-stat:nth-child(odd) {
+    border-left: 0;
   }
 
-  .admin-health-stat {
-    border-left: 0;
+  .admin-health-stat + .admin-health-stat {
     border-top: 1px solid #252930;
   }
 }
