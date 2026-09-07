@@ -135,6 +135,24 @@ func TestListPlazaGroups_PlatformIsolation(t *testing.T) {
 	require.Equal(t, "gpt-5", byName["g-gpt"][0].Name)
 }
 
+func TestListPlazaGroups_CompositeKeepsConcretePlatforms(t *testing.T) {
+	ch := Channel{
+		ID: 1, Name: "composite", Status: StatusActive, GroupIDs: []int64{10},
+		ModelPricing: []ChannelModelPricing{
+			{Platform: PlatformAnthropic, Models: []string{"shared-model"}, InputPrice: testPtrFloat64(3e-6)},
+			{Platform: PlatformOpenAI, Models: []string{"shared-model"}, InputPrice: testPtrFloat64(2e-6)},
+		},
+	}
+	groups := []Group{{ID: 10, Name: "g-composite", Platform: PlatformComposite, RateMultiplier: 1}}
+	svc := newPlazaChannelService([]Channel{ch}, groups, nil)
+	out, err := svc.ListPlazaGroups(context.Background())
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Len(t, out[0].Models, 2, "Composite 分组应保留各具体平台的同名模型")
+	require.Equal(t, PlatformAnthropic, out[0].Models[0].Platform)
+	require.Equal(t, PlatformOpenAI, out[0].Models[1].Platform)
+}
+
 func TestListPlazaGroups_InactiveChannelSkipped(t *testing.T) {
 	inactive := plazaPricedChannel(1, "off", []int64{10}, "anthropic", "claude-sonnet")
 	inactive.Status = "inactive"
