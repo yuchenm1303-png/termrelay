@@ -28,7 +28,8 @@ type PlazaModel struct {
 // PlazaGroup 模型广场中以分组为顶层的条目。
 //
 // 与 AvailableGroupRef 相比多了 Description 与 Models；Models 来自该分组关联渠道的
-// 支持模型（按分组平台隔离，防跨平台泄漏），与「可用渠道」页口径一致。
+// 支持模型。普通平台分组仍按平台隔离；composite 分组以「渠道绑定 + 分组模型白名单」
+// 作为逻辑模型归属，允许底层通过 OpenAI-compatible 等不同传输协议接入。
 type PlazaGroup struct {
 	ID                 int64
 	Name               string
@@ -47,8 +48,10 @@ type PlazaGroup struct {
 // ListPlazaGroups 返回模型广场数据：每个活跃分组附带其可用模型与定价。
 //
 // 聚合口径与 ListAvailable 一致（Active 渠道、SupportedModels ∪ 全局定价回落、
-// 平台隔离），仅把顶层从渠道换成分组：
+// 分组绑定），仅把顶层从渠道换成分组：
 //   - 渠道按 lower(name) 排序后遍历，保证同名模型去重结果确定；
+//   - 普通分组保持 platform 隔离；composite 逻辑分组不再把传输协议当成品牌归属；
+//   - 启用 models_list_config 时按该白名单约束展示，与真实 /v1/models 范围保持一致；
 //   - 同分组同名模型「先见者胜」，仅当已存条目无定价而新条目有定价时升级替换；
 //   - 每个模型附带 LiteLLM 官方参考价（查不到为 nil）；
 //   - 只返回 Models 非空的分组；分组按 RateMultiplier 升序（同倍率按名称），
@@ -70,9 +73,11 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 	})
 
 	byGroup := make(map[int64]*PlazaGroup, len(groups))
+	groupConfig := make(map[int64]*Group, len(groups))
 	order := make([]int64, 0, len(groups))
 	for i := range groups {
 		g := groups[i]
+		groupConfig[g.ID] = &groups[i]
 		byGroup[g.ID] = &PlazaGroup{
 			ID:                 g.ID,
 			Name:               g.Name,
@@ -112,7 +117,7 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 			}
 			for j := range supported {
 				m := supported[j]
-				if m.Platform != pg.Platform {
+				if !plazaGroupAllowsModel(groupConfig[gid], m) {
 					continue
 				}
 				if at, seen := idx[m.Name]; seen {
@@ -153,6 +158,41 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 		return out[i].Name < out[j].Name
 	})
 	return out, nil
+}
+
+// plazaGroupAllowsModel separates logical group membership from upstream
+// transport protocol. A composite group may intentionally expose Claude,
+// Gemini, Grok, DeepSeek, etc. through an OpenAI-compatible channel, so the
+// model's transport Platform must not be compared to "composite".
+//
+// For non-composite groups we retain strict platform isolation. When a group
+// has a custom models list, that list is an additional whitelist for both
+// composite and non-composite groups so Model Plaza mirrors the models that
+// the group is configured to publish.
+func plazaGroupAllowsModel(group *Group, model SupportedModel) bool {
+	if group == nil {
+		return false
+	}
+	if group.Platform != PlatformComposite && model.Platform != group.Platform {
+		return false
+	}
+	if !group.CustomModelsListEnabled() {
+		return true
+	}
+
+	for _, pattern := range group.ModelsListConfig.Models {
+		pattern = strings.TrimSpace(pattern)
+		if pattern == "" {
+			continue
+		}
+		if pattern == model.Name {
+			return true
+		}
+		if prefix, wildcard := splitWildcardSuffix(pattern); wildcard && strings.HasPrefix(model.Name, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // lookupOfficialPricing 查询模型的 LiteLLM 官方参考价，带 memo 避免同名模型重复转换。
