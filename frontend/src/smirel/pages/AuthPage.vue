@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, getErrorMessage, previewMode } from '../core/api'
+import {
+  api,
+  buildOAuthStartUrl,
+  getErrorMessage,
+  previewMode,
+  sanitizeOAuthRedirect,
+  type OAuthProvider,
+} from '../core/api'
 import { useSession } from '../core/session'
 
 const route = useRoute()
@@ -16,6 +23,7 @@ const loading = ref(false)
 const message = ref('')
 const error = ref('')
 const kind = computed(() => String(route.meta.authKind || 'login'))
+const showOAuth = computed(() => kind.value === 'login' || kind.value === 'register')
 const titles: Record<string, string> = {
   login: '登录 Smirel',
   register: '创建 Smirel 账户',
@@ -37,6 +45,23 @@ const submitLabels: Record<string, string> = {
 const title = computed(() => titles[kind.value] || titles.login)
 const subtitle = computed(() => subtitles[kind.value] || '')
 const submitLabel = computed(() => submitLabels[kind.value] || submitLabels.login)
+
+function startOAuth(provider: OAuthProvider) {
+  error.value = ''
+  message.value = ''
+
+  if (previewMode) {
+    void router.push('/admin/dashboard')
+    return
+  }
+
+  const redirect = sanitizeOAuthRedirect(
+    typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard',
+  )
+  sessionStorage.setItem('smirel_oauth_provider', provider)
+  sessionStorage.setItem('smirel_oauth_redirect', redirect)
+  window.location.assign(buildOAuthStartUrl(provider, redirect))
+}
 
 async function submit() {
   error.value = ''
@@ -133,7 +158,21 @@ async function submit() {
           <p>{{ subtitle }}</p>
         </header>
 
-        <form @submit.prevent="submit">
+        <div v-if="showOAuth" class="oauth-login">
+          <div class="oauth-actions">
+            <button type="button" class="oauth-button" @click="startOAuth('google')">
+              <span class="oauth-provider-mark" aria-hidden="true">G</span>
+              <span>使用 Google 继续</span>
+            </button>
+            <button type="button" class="oauth-button" @click="startOAuth('github')">
+              <span class="oauth-provider-mark github" aria-hidden="true">GH</span>
+              <span>使用 GitHub 继续</span>
+            </button>
+          </div>
+          <div class="oauth-divider"><span>或使用邮箱</span></div>
+        </div>
+
+        <form :class="{ 'with-oauth': showOAuth }" @submit.prevent="submit">
           <label>
             <span>邮箱</span>
             <input
@@ -403,11 +442,86 @@ async function submit() {
   line-height: 1.6;
 }
 
+.oauth-login {
+  margin-top: 24px;
+}
+
+.oauth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.oauth-button {
+  min-width: 0;
+  height: 46px;
+  padding: 0 11px;
+  border: 1px solid #29313a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #090c10;
+  color: #dbe1e6;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+}
+
+.oauth-button:hover {
+  border-color: #414e5a;
+  background: #11161c;
+  transform: translateY(-1px);
+}
+
+.oauth-provider-mark {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #303b45;
+  border-radius: 50%;
+  color: #eef2f5;
+  font: 750 .72rem/1 ui-sans-serif, system-ui, sans-serif;
+}
+
+.oauth-provider-mark.github {
+  font-size: .55rem;
+  letter-spacing: -.04em;
+}
+
+.oauth-divider {
+  margin-top: 17px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #5e6974;
+  font-size: .66rem;
+  white-space: nowrap;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: #20262d;
+}
+
 .auth-card form {
   display: flex;
   flex-direction: column;
   gap: 17px;
   margin-top: 29px;
+}
+
+.auth-card form.with-oauth {
+  margin-top: 17px;
 }
 
 .auth-card label {
@@ -594,8 +708,16 @@ async function submit() {
     font-size: 1.78rem;
   }
 
+  .oauth-actions {
+    grid-template-columns: 1fr;
+  }
+
   .auth-card form {
     margin-top: 25px;
+  }
+
+  .auth-card form.with-oauth {
+    margin-top: 17px;
   }
 
   .auth-card footer {
