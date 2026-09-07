@@ -40,7 +40,12 @@ const mobileOpen = ref(false)
 const openUtility = ref<UtilityPanel | null>(null)
 const { state, isAdmin } = useSession()
 const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
-const navigation = computed(() => isAdmin.value ? adminNavigation : userNavigation)
+const sharedKeysNavigation = userNavigation.find((item) => item.feature === 'keys')
+const navigation = computed<NavItem[]>(() => {
+  if (!isAdmin.value) return userNavigation
+  if (!sharedKeysNavigation) return adminNavigation
+  return [adminNavigation[0], sharedKeysNavigation, ...adminNavigation.slice(1)]
+})
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel')
 const accountRole = computed(() => isAdmin.value ? t('shell.roleAdmin') : t('shell.roleUser'))
@@ -108,7 +113,7 @@ const navigationGroups = computed<NavGroup[]>(() => {
   }
 
   return [
-    { label: t('groups.console'), items: take(items, ['admin-dashboard', 'admin-users']) },
+    { label: t('groups.console'), items: take(items, ['admin-dashboard', 'keys', 'admin-users']) },
     { label: t('groups.resources'), items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels']) },
     { label: t('groups.operations'), items: take(items, ['admin-usage', 'admin-ops']) },
     { label: t('groups.transactions'), items: take(items, ['admin-payment-dashboard', 'admin-orders']) },
