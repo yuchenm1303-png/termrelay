@@ -1,0 +1,68 @@
+/* Provider brand marks for the Smirel model marketplace.
+ * Vector shapes are vendored from lobehub/lobe-icons static SVG assets.
+ * CSS masks keep them themeable and avoid runtime CDN/image requests.
+ */
+
+@supports ((-webkit-mask-image: url("")) or (mask-image: url(""))) {
+  .workspace-root .provider-mark {
+    font-size: 0;
+    line-height: 0;
+  }
+
+  .workspace-root .provider-mark::before {
+    content: "";
+    width: 24px;
+    height: 24px;
+    display: block;
+    background: currentColor;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+  }
+
+  .workspace-root .provider-mark[data-provider="openai"]::before {
+    -webkit-mask-image: url('../assets/providers/openai.svg');
+    mask-image: url('../assets/providers/openai.svg');
+  }
+
+  .workspace-root .provider-mark[data-provider="anthropic"]::before {
+    -webkit-mask-image: url('../assets/providers/claude.svg');
+    mask-image: url('../assets/providers/claude.svg');
+  }
+
+  .workspace-root .provider-mark[data-provider="google"]::before {
+    -webkit-mask-image: url('../assets/providers/gemini.svg');
+    mask-image: url('../assets/providers/gemini.svg');
+  }
+
+  .workspace-root .provider-mark[data-provider="xai"]::before {
+    -webkit-mask-image: url('../assets/providers/grok.svg');
+    mask-image: url('../assets/providers/grok.svg');
+  }
+
+  .workspace-root .provider-mark[data-provider="openai"] {
+    color: #f2f4f6;
+  }
+
+  .workspace-root .provider-mark[data-provider="anthropic"] {
+    color: #d98b68;
+  }
+
+  .workspace-root .provider-mark[data-provider="google"] {
+    color: #9bbcff;
+  }
+
+  .workspace-root .provider-mark[data-provider="xai"] {
+    color: #f2f3f5;
+  }
+
+  @media (max-width: 640px) {
+    .workspace-root .provider-mark::before {
+      width: 21px;
+      height: 21px;
+    }
+  }
+}
