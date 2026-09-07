@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import AdminOpsPage from '../components/AdminOpsPage.vue'
 import AdminUsersPage from '../components/AdminUsersPage.vue'
+import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import UserDashboardPage from '../components/UserDashboardPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
@@ -194,36 +195,12 @@ onMounted(() => void load())
           </header>
 
           <div v-if="keys.length" class="api-key-grid">
-            <article v-for="item in keys" :key="item.id" class="api-key-card">
-              <header class="api-key-card-head">
-                <div class="api-key-identity">
-                  <span class="api-key-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <circle cx="8" cy="15" r="3.5" />
-                      <path d="m10.7 12.3 7.6-7.6M15.7 7.3l2 2M13.6 9.4l2 2" />
-                    </svg>
-                  </span>
-                  <div>
-                    <strong>{{ item.name || `Key #${item.id}` }}</strong>
-                    <small>API KEY</small>
-                  </div>
-                </div>
-                <span class="api-key-state"><i></i>{{ item.status || 'active' }}</span>
-              </header>
-
-              <div class="api-key-secret">
-                <span>{{ t('workspace.key') }}</span>
-                <code>{{ item.key || '••••••••' }}</code>
-              </div>
-
-              <footer class="api-key-card-foot">
-                <span class="api-key-created">
-                  <b>{{ t('workspace.createdAt') }}</b>
-                  {{ item.created_at || '—' }}
-                </span>
-                <button class="api-key-delete" type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
-              </footer>
-            </article>
+            <ApiKeyCredentialCard
+              v-for="item in keys"
+              :key="item.id"
+              :item="item"
+              @remove="removeKey"
+            />
           </div>
 
           <p v-else-if="!loading" class="keys-empty-state">{{ t('workspace.noKeys') }}</p>
