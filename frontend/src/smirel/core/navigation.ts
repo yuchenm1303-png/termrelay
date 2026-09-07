@@ -7,7 +7,7 @@ export interface NavItem {
 }
 
 export const userNavigation: NavItem[] = [
-  { path: '/dashboard', name: 'Dashboard', label: 'Overview', feature: 'dashboard', short: 'OV' },
+  { path: '/dashboard', name: 'Dashboard', label: '控制台', feature: 'dashboard', short: 'DB' },
   { path: '/keys', name: 'Keys', label: 'API Keys', feature: 'keys', short: 'AK' },
   { path: '/usage', name: 'Usage', label: '用量与日志', feature: 'usage', short: 'US' },
   { path: '/subscriptions', name: 'Subscriptions', label: '订阅', feature: 'subscriptions', short: 'SB' },
