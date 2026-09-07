@@ -13,6 +13,7 @@ import './smirel/styles/interface-preferences.css'
 import './smirel/styles/select-controls.css'
 import './smirel/styles/models-commercial.css'
 import './smirel/styles/model-catalog-workspace.css'
+import './smirel/styles/user-usage-polish.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
