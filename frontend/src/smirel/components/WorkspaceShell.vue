@@ -116,7 +116,8 @@ const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
             v-for="item in group.items"
             :key="item.path"
             :to="item.path"
-            :class="{ active: route.path === item.path }"
+            :class="{ active: route.path === item.path || route.path.startsWith(`${item.path}/`) }"
+            :aria-current="route.path === item.path || route.path.startsWith(`${item.path}/`) ? 'page' : undefined"
             @click="mobileOpen = false"
           >
             <WorkspaceNavIcon :name="navIconByFeature[item.feature] || 'circle'" />
@@ -183,8 +184,96 @@ const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
   object-fit: contain;
 }
 
+/*
+ * Sidebar interaction system: keep the commercial-dark rail quiet at rest,
+ * then use position, luminance and a narrow blue rail to communicate intent.
+ * The previous state changed only fill/border colours, so hover and selection
+ * read almost the same and nested routes could lose their selected state.
+ */
 .workspace-nav a {
-  gap: 10px;
+  position: relative;
+  isolation: isolate;
+  gap: 11px;
+  overflow: hidden;
+  transition:
+    color .18s ease,
+    background-color .18s ease,
+    border-color .18s ease,
+    transform .18s cubic-bezier(.2, .75, .25, 1),
+    box-shadow .18s ease;
+}
+
+.workspace-nav a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 20px;
+  border-radius: 999px;
+  background: #67baf1;
+  opacity: 0;
+  transform: translateY(-50%) scaleY(.35);
+  transform-origin: center;
+  transition: opacity .16s ease, transform .2s cubic-bezier(.2, .75, .25, 1);
+}
+
+.workspace-nav a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(52, 151, 221, .075), rgba(52, 151, 221, .018) 64%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+.workspace-nav a:hover {
+  border-color: #252d36;
+  background: #11151b;
+  color: #eef2f6;
+  transform: translateX(2px);
+}
+
+.workspace-nav a:hover::after {
+  opacity: 1;
+}
+
+.workspace-nav a:active {
+  transform: translateX(1px) scale(.995);
+  transition-duration: .06s;
+}
+
+.workspace-nav a:focus-visible {
+  outline: none;
+  border-color: #365873;
+  box-shadow: 0 0 0 3px rgba(57, 145, 207, .10);
+  color: #f5f8fb;
+}
+
+.workspace-nav a.active {
+  border-color: #2b3c4c;
+  background: #121d28;
+  color: #f7fafc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .018);
+}
+
+.workspace-nav a.active::before {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+}
+
+.workspace-nav a.active::after {
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(47, 150, 232, .12), rgba(47, 150, 232, .025) 72%, transparent);
+}
+
+.workspace-nav a.active:hover {
+  border-color: #33495c;
+  background: #142230;
+  transform: translateX(1px);
 }
 
 .workspace-nav-icon {
@@ -192,19 +281,30 @@ const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
   height: 18px;
   flex: 0 0 18px;
   color: #68717d;
-  transition: color .15s ease;
+  transition: color .18s ease, transform .18s cubic-bezier(.2, .75, .25, 1);
 }
 
 .workspace-nav a:hover .workspace-nav-icon {
-  color: #aeb6c1;
+  color: #aeb8c3;
+  transform: translateX(1px);
 }
 
 .workspace-nav a.active .workspace-nav-icon {
-  color: #73bdf2;
+  color: #78c2f3;
+  transform: translateX(1px);
 }
 
 .workspace-nav a > span {
   min-width: 0;
+  transition: color .18s ease, transform .18s cubic-bezier(.2, .75, .25, 1);
+}
+
+.workspace-nav a:hover > span {
+  transform: translateX(1px);
+}
+
+.workspace-nav a.active > span {
+  color: #f3f7fa;
 }
 
 /*
@@ -380,6 +480,25 @@ const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
 
 .workspace-canvas {
   padding-top: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-nav a,
+  .workspace-nav a::before,
+  .workspace-nav a::after,
+  .workspace-nav-icon,
+  .workspace-nav a > span {
+    transition: none;
+  }
+
+  .workspace-nav a:hover,
+  .workspace-nav a:active,
+  .workspace-nav a.active:hover,
+  .workspace-nav a:hover .workspace-nav-icon,
+  .workspace-nav a.active .workspace-nav-icon,
+  .workspace-nav a:hover > span {
+    transform: none;
+  }
 }
 
 @media (max-width: 1260px) {
