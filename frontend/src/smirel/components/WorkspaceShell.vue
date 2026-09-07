@@ -127,73 +127,44 @@ const breadcrumbGroupLabel = computed(() => (
 }
 
 /*
- * Secondary-page header: keep this component contextual instead of decorative.
- * The page heading below owns the large title; the topbar only communicates
- * location and account identity, so it stays useful without competing with it.
+ * The desktop header is intentionally reduced to an account shortcut. Page
+ * headings already provide context, so repeating breadcrumbs here only adds a
+ * second visual hierarchy. Mobile keeps the bar because it owns navigation.
  */
 .workspace-topbar.workspace-topbar--contextual {
-  height: 64px;
-  padding: 0 36px;
-  border-bottom: 1px solid #20232a;
-  background: rgba(9, 10, 13, .985);
+  position: relative;
+  top: auto;
+  height: 44px;
+  padding: 10px 34px 0;
+  border-bottom: 0;
+  background: transparent;
+  align-items: flex-start;
 }
 
 .workspace-topbar--contextual .workspace-topbar-left {
   min-width: 0;
-  gap: 14px;
 }
 
-.workspace-breadcrumb {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  white-space: nowrap;
-}
-
-.workspace-breadcrumb-root,
-.workspace-breadcrumb-group {
-  color: #707783;
-  font-size: .73rem;
-  font-weight: 560;
-  letter-spacing: .01em;
-}
-
-.workspace-breadcrumb-group {
-  color: #8b929c;
-}
-
-.workspace-breadcrumb-separator {
-  color: #3d424a;
-  font-size: .70rem;
-  user-select: none;
-}
-
-.workspace-topbar--contextual .workspace-topbar-title {
-  min-width: 0;
-  overflow: hidden;
-  color: #e9ecf0;
-  font-size: .82rem;
-  font-weight: 640;
-  letter-spacing: -.005em;
-  text-overflow: ellipsis;
+.workspace-breadcrumb,
+.workspace-profile-copy,
+.workspace-profile-chevron {
+  display: none;
 }
 
 .workspace-profile-link {
-  min-width: 0;
-  min-height: 42px;
-  padding: 4px 8px 4px 5px;
-  border: 1px solid transparent;
-  border-radius: 9px;
+  min-width: 32px;
+  min-height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 9px;
   color: inherit;
-  transition: background-color .15s ease, border-color .15s ease;
+  background: transparent;
 }
 
 .workspace-profile-link:hover {
-  border-color: #282c34;
   background: #121419;
 }
 
@@ -201,65 +172,38 @@ const breadcrumbGroupLabel = computed(() => (
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border-color: #343943;
-  background: #181b21;
+  border-color: #30353e;
+  background: #15181e;
 }
 
-.workspace-profile-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.workspace-profile-copy strong {
-  max-width: 148px;
-  overflow: hidden;
-  color: #d9dde2;
-  font-size: .74rem;
-  line-height: 1.15;
-  font-weight: 620;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workspace-profile-copy small {
-  color: #6f7781;
-  font-size: .64rem;
-  line-height: 1.1;
-  font-weight: 540;
-}
-
-.workspace-profile-chevron {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  color: #555d68;
+.workspace-canvas {
+  padding-top: 8px;
 }
 
 @media (max-width: 1120px) {
   .workspace-topbar.workspace-topbar--contextual {
-    padding: 0 24px;
+    padding: 10px 24px 0;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 980px) {
   .workspace-topbar.workspace-topbar--contextual {
+    position: sticky;
+    top: 0;
     height: 56px;
     padding: 0 14px;
+    border-bottom: 1px solid #20232a;
+    background: rgba(9, 10, 13, .985);
+    align-items: center;
   }
 
-  .workspace-breadcrumb-root,
-  .workspace-breadcrumb-group,
-  .workspace-breadcrumb-separator,
-  .workspace-profile-copy,
-  .workspace-profile-chevron {
-    display: none;
+  .workspace-topbar--contextual .workspace-topbar-left {
+    display: flex;
+    align-items: center;
   }
 
-  .workspace-profile-link {
-    min-height: 36px;
-    padding: 2px;
+  .workspace-canvas {
+    padding-top: 24px;
   }
 }
 </style>
