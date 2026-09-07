@@ -17,6 +17,7 @@ const messages = {
     },
     groups: {
       console: '控制台',
+      workspace: '工作台',
       billing: '账单',
       account: '账户',
       resources: '资源',
@@ -25,7 +26,7 @@ const messages = {
       system: '系统',
     },
     nav: {
-      dashboard: 'Overview',
+      dashboard: '控制台',
       keys: 'API Keys',
       usage: '用量与日志',
       subscriptions: '订阅',
@@ -71,7 +72,7 @@ const messages = {
     },
     workspace: {
       descriptions: {
-        dashboard: '查看账户余额、API Key 和今日调用情况。',
+        dashboard: '余额、API Key 和调用情况都在这里。',
         keys: '创建和管理用于调用 Smirel API 的访问密钥。',
         usage: '查看最近请求、Token 与费用。',
         profile: '查看当前账户信息。',
@@ -117,6 +118,25 @@ const messages = {
       keyCreatedMessage: '密钥“{name}”已创建。',
       keyDeletedTitle: 'API Key 已删除',
       keyDeletedMessage: '密钥已从当前账户删除。',
+    },
+    userDashboard: {
+      endpointTitle: '生产 API 地址',
+      copy: '复制地址',
+      copied: '已复制',
+      today: 'TODAY',
+      usageTitle: '今日使用',
+      viewUsage: '查看用量明细',
+      requestsHint: '今天已发送的 API 请求',
+      tokensHint: '今天累计处理的 Token',
+      costHint: '今天累计产生的费用',
+      lifetime: 'ACCOUNT TOTAL',
+      lifetimeTitle: '累计使用',
+      totalRequests: '累计请求',
+      totalTokens: '累计 Token',
+      totalCost: '累计费用',
+      quick: 'QUICK ACCESS',
+      quickTitle: '常用入口',
+      models: '模型与价格',
     },
     admin: {
       title: '控制台',
@@ -168,6 +188,7 @@ const messages = {
     },
     groups: {
       console: 'Console',
+      workspace: 'Workspace',
       billing: 'Billing',
       account: 'Account',
       resources: 'Resources',
@@ -176,7 +197,7 @@ const messages = {
       system: 'System',
     },
     nav: {
-      dashboard: 'Overview',
+      dashboard: 'Console',
       keys: 'API Keys',
       usage: 'Usage & Logs',
       subscriptions: 'Subscriptions',
@@ -222,7 +243,7 @@ const messages = {
     },
     workspace: {
       descriptions: {
-        dashboard: 'Review balance, API keys, and today’s usage.',
+        dashboard: 'Balance, API keys, and usage in one place.',
         keys: 'Create and manage credentials for the Smirel API.',
         usage: 'Review recent requests, tokens, and cost.',
         profile: 'Review the current account.',
@@ -268,6 +289,25 @@ const messages = {
       keyCreatedMessage: 'Key “{name}” was created.',
       keyDeletedTitle: 'API key deleted',
       keyDeletedMessage: 'The key was removed from this account.',
+    },
+    userDashboard: {
+      endpointTitle: 'Production API endpoint',
+      copy: 'Copy endpoint',
+      copied: 'Copied',
+      today: 'TODAY',
+      usageTitle: 'Today’s usage',
+      viewUsage: 'View usage details',
+      requestsHint: 'API requests sent today',
+      tokensHint: 'Tokens processed today',
+      costHint: 'Cost generated today',
+      lifetime: 'ACCOUNT TOTAL',
+      lifetimeTitle: 'Lifetime usage',
+      totalRequests: 'Total requests',
+      totalTokens: 'Total tokens',
+      totalCost: 'Total cost',
+      quick: 'QUICK ACCESS',
+      quickTitle: 'Common actions',
+      models: 'Models & Pricing',
     },
     admin: {
       title: 'Dashboard',
