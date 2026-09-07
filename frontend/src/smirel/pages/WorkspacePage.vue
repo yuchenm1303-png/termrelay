@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import AdminOpsPage from '../components/AdminOpsPage.vue'
 import AdminUsersPage from '../components/AdminUsersPage.vue'
+import UserDashboardPage from '../components/UserDashboardPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 import { useSession } from '../core/session'
@@ -152,39 +153,25 @@ onMounted(() => void load())
     <AdminUsersPage v-if="isAdminUsers" />
 
     <template v-else>
-      <header class="page-heading">
+      <header v-if="!isDashboard" class="page-heading">
         <div>
           <h1>{{ title }}</h1>
           <p>{{ pageDescription }}</p>
         </div>
-        <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</button>
+        <button v-if="isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</button>
       </header>
 
       <p v-if="error" class="inline-error">{{ error }}</p>
 
       <AdminOpsPage v-if="isAdminOps" />
 
-      <template v-else-if="isDashboard">
-        <section class="glass account-summary">
-          <div class="summary-balance">
-            <span>{{ t('workspace.availableBalance') }}</span>
-            <strong>${{ accountBalance.toFixed(2) }}</strong>
-            <small>{{ t('workspace.keyAvailability', { active: stats?.active_api_keys || 0, total: stats?.total_api_keys || 0 }) }}</small>
-          </div>
-          <div class="summary-meta">
-            <span>API Endpoint</span>
-            <strong>https://api.smirel.com/v1</strong>
-            <small>OpenAI compatible</small>
-          </div>
-          <RouterLink to="/purchase" class="primary-button">{{ t('workspace.purchase') }}</RouterLink>
-        </section>
-
-        <div class="metric-grid metric-grid-three">
-          <article class="glass metric-card"><span>{{ t('workspace.todayRequests') }}</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong></article>
-          <article class="glass metric-card"><span>{{ t('workspace.todayTokens') }}</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong></article>
-          <article class="glass metric-card"><span>{{ t('workspace.todayCost') }}</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong></article>
-        </div>
-      </template>
+      <UserDashboardPage
+        v-else-if="isDashboard"
+        :stats="stats"
+        :balance="accountBalance"
+        :loading="loading"
+        @refresh="load"
+      />
 
       <template v-else-if="isKeys">
         <section class="keys-create-panel">
