@@ -85,31 +85,33 @@ async function signOut() {
         <div class="gateway-preview" aria-label="Smirel API 接入信息">
           <div class="gateway-preview-head">
             <div>
-              <strong>API 接入</strong>
-              <span>一个地址，调用不同模型</span>
+              <span>SMIREL API</span>
+              <strong>生产接口</strong>
             </div>
-            <small class="gateway-health"><i></i>正常</small>
+            <RouterLink :to="isAuthenticated ? '/keys' : '/register'" class="gateway-key-link">
+              {{ isAuthenticated ? 'API Keys' : '创建 API Key' }} <b>↗</b>
+            </RouterLink>
           </div>
 
           <div class="gateway-endpoint">
-            <span>BASE URL</span>
-            <div class="gateway-endpoint-row">
-              <code>{{ apiBase }}</code>
-              <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
+            <div class="gateway-endpoint-label">
+              <span>BASE URL</span>
+              <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制地址' }}</button>
             </div>
+            <code>{{ apiBase }}</code>
           </div>
 
           <div class="gateway-details">
             <div class="gateway-detail">
-              <span>协议</span>
-              <strong>OpenAI Compatible</strong>
+              <span>接口格式</span>
+              <strong>OpenAI-compatible API</strong>
             </div>
             <div class="gateway-detail">
-              <span>认证</span>
+              <span>认证方式</span>
               <strong>Bearer API Key</strong>
             </div>
             <div class="gateway-detail">
-              <span>模型</span>
+              <span>可用模型</span>
               <div class="gateway-models">
                 <b>OpenAI</b>
                 <b>Claude</b>
@@ -120,8 +122,8 @@ async function signOut() {
           </div>
 
           <div class="gateway-preview-foot">
-            <span>只需替换 Base URL</span>
-            <RouterLink to="/model-plaza">查看全部模型 →</RouterLink>
+            <RouterLink to="/model-plaza">模型目录 <b>→</b></RouterLink>
+            <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'">用量与日志 <b>→</b></RouterLink>
           </div>
         </div>
       </section>
