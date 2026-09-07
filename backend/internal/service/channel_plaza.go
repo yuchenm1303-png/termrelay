@@ -17,9 +17,10 @@ type PlazaOfficialPricing struct {
 	CacheReadPrice    *float64
 }
 
-// PlazaModel 模型广场中单个模型条目：渠道定价 + 官方参考价。
+// PlazaModel 模型广场中单个模型条目：用户侧模型名 + 渠道映射后的模型标识 + 渠道定价 + 官方参考价。
 type PlazaModel struct {
 	Name            string
+	MappedModel     string
 	Platform        string
 	Pricing         *ChannelModelPricing
 	OfficialPricing *PlazaOfficialPricing
@@ -115,18 +116,21 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 				if m.Platform != pg.Platform {
 					continue
 				}
+				mappedModel := plazaMappedModel(ch, m.Platform, m.Name)
 				if at, seen := idx[m.Name]; seen {
 					// 先见者胜；仅当已存条目无定价而新条目有定价时升级。
 					if pg.Models[at].Pricing == nil && m.Pricing != nil {
 						pg.Models[at].Pricing = m.Pricing
+						pg.Models[at].MappedModel = mappedModel
 					}
 					continue
 				}
 				idx[m.Name] = len(pg.Models)
 				pg.Models = append(pg.Models, PlazaModel{
-					Name:     m.Name,
-					Platform: m.Platform,
-					Pricing:  m.Pricing,
+					Name:        m.Name,
+					MappedModel: mappedModel,
+					Platform:    m.Platform,
+					Pricing:     m.Pricing,
 				})
 			}
 		}
@@ -153,6 +157,49 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 		return out[i].Name < out[j].Name
 	})
 	return out, nil
+}
+
+// plazaMappedModel 返回 Model Plaza 可展示的渠道映射目标。
+// Name 始终保留客户端应请求的模型名；仅在配置了实际改写时返回目标模型。
+// 通配符目标无法可靠展开成单个实际标识，因此不在广场中伪造具体模型名。
+func plazaMappedModel(ch *Channel, platform, model string) string {
+	if ch == nil || model == "" {
+		return ""
+	}
+	mapping := ch.ModelMapping[platform]
+	if len(mapping) == 0 {
+		return ""
+	}
+
+	// 运行时映射优先精确匹配，再匹配通配符。
+	for src, target := range mapping {
+		if !strings.EqualFold(src, model) {
+			continue
+		}
+		if target == "" || strings.EqualFold(target, model) {
+			return ""
+		}
+		if _, wildcard := splitWildcardSuffix(target); wildcard {
+			return ""
+		}
+		return target
+	}
+
+	modelLower := strings.ToLower(model)
+	for src, target := range mapping {
+		prefix, wildcard := splitWildcardSuffix(src)
+		if !wildcard || !strings.HasPrefix(modelLower, strings.ToLower(prefix)) {
+			continue
+		}
+		if target == "" || strings.EqualFold(target, model) {
+			return ""
+		}
+		if _, targetWildcard := splitWildcardSuffix(target); targetWildcard {
+			return ""
+		}
+		return target
+	}
+	return ""
 }
 
 // lookupOfficialPricing 查询模型的 LiteLLM 官方参考价，带 memo 避免同名模型重复转换。
