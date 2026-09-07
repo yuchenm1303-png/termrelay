@@ -27,6 +27,51 @@ defineProps<{ name: string }>()
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </template>
 
+    <template v-else-if="name === 'user-plus'">
+      <path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8" cy="7" r="4" />
+      <path d="M19 8v6" />
+      <path d="M22 11h-6" />
+    </template>
+
+    <template v-else-if="name === 'user-check'">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <path d="m17 11 2 2 4-4" />
+    </template>
+
+    <template v-else-if="name === 'user-x'">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <path d="m18 8 5 5" />
+      <path d="m23 8-5 5" />
+    </template>
+
+    <template v-else-if="name === 'shield'">
+      <path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z" />
+      <path d="m9 12 2 2 4-4" />
+    </template>
+
+    <template v-else-if="name === 'search'">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
+    </template>
+
+    <template v-else-if="name === 'refresh'">
+      <path d="M20 6v5h-5" />
+      <path d="M4 18v-5h5" />
+      <path d="M18.6 9A7 7 0 0 0 6.7 6.7L4 11" />
+      <path d="M5.4 15A7 7 0 0 0 17.3 17.3L20 13" />
+    </template>
+
+    <template v-else-if="name === 'chevron-left'">
+      <path d="m15 18-6-6 6-6" />
+    </template>
+
+    <template v-else-if="name === 'chevron-right'">
+      <path d="m9 18 6-6-6-6" />
+    </template>
+
     <template v-else-if="name === 'server'">
       <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
       <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
