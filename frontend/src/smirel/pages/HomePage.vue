@@ -1,26 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import HomeAccountMenu from '../components/HomeAccountMenu.vue'
 import { useSession } from '../core/session'
 import '../styles/home-layout.css'
 import '../styles/home-gateway.css'
 
-const { state, isAuthenticated, isAdmin, logout } = useSession()
+const { isAuthenticated, isAdmin } = useSession()
 const copied = ref(false)
-const menuOpen = ref(false)
 const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
 const apiBase = 'https://api.smirel.com/v1'
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
-const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 
 async function copyBase() {
   await navigator.clipboard.writeText(apiBase)
   copied.value = true
   window.setTimeout(() => { copied.value = false }, 1400)
-}
-
-async function signOut() {
-  menuOpen.value = false
-  await logout()
 }
 </script>
 
@@ -41,17 +35,7 @@ async function signOut() {
       <div class="home-actions">
         <template v-if="isAuthenticated">
           <RouterLink :to="consolePath" class="top-console">{{ isAdmin ? '管理控制台' : '控制台' }}</RouterLink>
-          <div class="account-menu-wrap">
-            <button class="account-trigger" type="button" @click="menuOpen = !menuOpen">{{ initials }}</button>
-            <div v-if="menuOpen" class="account-menu">
-              <strong>{{ state.user?.username || 'Smirel Account' }}</strong>
-              <small>{{ state.user?.email }}</small>
-              <RouterLink to="/profile" @click="menuOpen = false">账户设置</RouterLink>
-              <RouterLink to="/keys" @click="menuOpen = false">API Keys</RouterLink>
-              <RouterLink to="/usage" @click="menuOpen = false">用量与日志</RouterLink>
-              <button type="button" @click="signOut">退出登录</button>
-            </div>
-          </div>
+          <HomeAccountMenu />
         </template>
         <template v-else>
           <RouterLink to="/login" class="quiet-link">登录</RouterLink>
