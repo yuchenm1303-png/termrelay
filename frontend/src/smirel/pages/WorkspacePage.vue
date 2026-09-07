@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import AdminOpsPage from '../components/AdminOpsPage.vue'
+import AdminSettingsPage from '../components/AdminSettingsPage.vue'
 import AdminUsersPage from '../components/AdminUsersPage.vue'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import UserDashboardPage from '../components/UserDashboardPage.vue'
@@ -33,6 +34,7 @@ const isUsage = computed(() => feature.value === 'usage')
 const isProfile = computed(() => feature.value === 'profile')
 const isAdminUsers = computed(() => feature.value === 'admin-users')
 const isAdminOps = computed(() => feature.value === 'admin-ops')
+const isAdminSettings = computed(() => feature.value === 'admin-settings')
 const accountBalance = computed(() => Number(state.user?.balance || 0))
 const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
 const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
@@ -165,6 +167,8 @@ onMounted(() => void load())
       <p v-if="error" class="inline-error">{{ error }}</p>
 
       <AdminOpsPage v-if="isAdminOps" />
+
+      <AdminSettingsPage v-else-if="isAdminSettings" />
 
       <UserDashboardPage
         v-else-if="isDashboard"
