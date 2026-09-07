@@ -3,6 +3,7 @@ import HomePage from '../smirel/pages/HomePage.vue'
 import AuthPage from '../smirel/pages/AuthPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import UserUsagePage from '../smirel/pages/UserUsagePage.vue'
+import UserBillingRoutePage from '../smirel/pages/UserBillingRoutePage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
 import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
 import AdminChannelsPage from '../smirel/pages/AdminChannelsPage.vue'
@@ -18,7 +19,11 @@ const workspaceRoutes: RouteRecordRaw[] = [
   ...userNavigation.map((item) => ({
     path: item.path,
     name: item.name,
-    component: item.path === '/usage' ? UserUsagePage : WorkspacePage,
+    component: item.path === '/usage'
+      ? UserUsagePage
+      : item.path === '/subscriptions'
+        ? UserBillingRoutePage
+        : WorkspacePage,
     meta: { shell: 'workspace', requiresAuth: true, title: item.label, feature: item.feature },
   })),
   ...adminNavigation.map((item) => ({
