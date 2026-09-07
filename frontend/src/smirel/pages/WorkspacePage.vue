@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import AdminUsersPage from '../components/AdminUsersPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 import { useSession } from '../core/session'
@@ -25,6 +26,7 @@ const isDashboard = computed(() => feature.value === 'dashboard')
 const isKeys = computed(() => feature.value === 'keys')
 const isUsage = computed(() => feature.value === 'usage')
 const isProfile = computed(() => feature.value === 'profile')
+const isAdminUsers = computed(() => feature.value === 'admin-users')
 const accountBalance = computed(() => Number(state.user?.balance || 0))
 const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
 const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
@@ -143,94 +145,98 @@ onMounted(() => void load())
 
 <template>
   <section class="workspace-page">
-    <header class="page-heading">
-      <div>
-        <h1>{{ title }}</h1>
-        <p>{{ pageDescription }}</p>
-      </div>
-      <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</button>
-    </header>
-
-    <p v-if="error" class="inline-error">{{ error }}</p>
-
-    <template v-if="isDashboard">
-      <section class="glass account-summary">
-        <div class="summary-balance">
-          <span>{{ t('workspace.availableBalance') }}</span>
-          <strong>${{ accountBalance.toFixed(2) }}</strong>
-          <small>{{ t('workspace.keyAvailability', { active: stats?.active_api_keys || 0, total: stats?.total_api_keys || 0 }) }}</small>
-        </div>
-        <div class="summary-meta">
-          <span>API Endpoint</span>
-          <strong>https://api.smirel.com/v1</strong>
-          <small>OpenAI compatible</small>
-        </div>
-        <RouterLink to="/purchase" class="primary-button">{{ t('workspace.purchase') }}</RouterLink>
-      </section>
-
-      <div class="metric-grid metric-grid-three">
-        <article class="glass metric-card"><span>{{ t('workspace.todayRequests') }}</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong></article>
-        <article class="glass metric-card"><span>{{ t('workspace.todayTokens') }}</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong></article>
-        <article class="glass metric-card"><span>{{ t('workspace.todayCost') }}</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong></article>
-      </div>
-    </template>
-
-    <template v-else-if="isKeys">
-      <section class="glass action-strip">
-        <input v-model="newKeyName" :aria-label="`${t('workspace.key')} ${t('workspace.name')}`" :placeholder="t('workspace.keyNamePlaceholder')" @keydown.enter="createKey" />
-        <button class="primary-button" type="button" :disabled="loading" @click="createKey">{{ t('workspace.createKey') }}</button>
-      </section>
-      <div class="glass data-table">
-        <div class="table-toolbar">
-          <div><strong>API Keys</strong><span class="table-count">{{ keys.length }}</span></div>
-        </div>
-        <div class="table-head"><span>{{ t('workspace.name') }}</span><span>{{ t('workspace.key') }}</span><span>{{ t('workspace.status') }}</span><span>{{ t('workspace.createdAt') }}</span><span></span></div>
-        <div v-for="item in keys" :key="item.id" class="table-row">
-          <strong>{{ item.name || `Key #${item.id}` }}</strong>
-          <code>{{ item.key || '••••••••' }}</code>
-          <span><i class="status-dot"></i>{{ item.status || 'active' }}</span>
-          <span>{{ item.created_at || '—' }}</span>
-          <button type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
-        </div>
-        <p v-if="!keys.length && !loading" class="empty-state">{{ t('workspace.noKeys') }}</p>
-      </div>
-    </template>
-
-    <template v-else-if="isUsage">
-      <section class="glass table-toolbar standalone-toolbar">
-        <div><strong>{{ t('workspace.recentRequests') }}</strong><span class="table-count">{{ usage.length }}</span></div>
-        <div class="usage-total"><span>{{ visibleUsageTokens.toLocaleString() }} Tokens</span><span>${{ visibleUsageCost.toFixed(4) }}</span></div>
-      </section>
-      <div class="glass data-table usage-table">
-        <div class="table-head"><span>{{ t('workspace.time') }}</span><span>{{ t('workspace.model') }}</span><span>{{ t('workspace.endpoint') }}</span><span>{{ t('workspace.token') }}</span><span>{{ t('workspace.cost') }}</span></div>
-        <div v-for="(item, index) in usage" :key="item.id || index" class="table-row">
-          <span>{{ item.created_at || '—' }}</span>
-          <strong>{{ item.model || '—' }}</strong>
-          <code>{{ item.endpoint || '—' }}</code>
-          <span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
-          <span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span>
-        </div>
-        <p v-if="!usage.length && !loading" class="empty-state">{{ t('workspace.noUsage') }}</p>
-      </div>
-    </template>
-
-    <template v-else-if="isProfile">
-      <section class="glass profile-panel">
-        <div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div>
-        <div class="profile-copy"><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div>
-        <dl>
-          <div><dt>{{ t('workspace.role') }}</dt><dd>{{ state.user?.role === 'admin' ? t('shell.roleAdmin') : t('workspace.user') }}</dd></div>
-          <div><dt>{{ t('workspace.status') }}</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
-          <div><dt>{{ t('workspace.availableBalance') }}</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
-        </dl>
-      </section>
-    </template>
+    <AdminUsersPage v-if="isAdminUsers" />
 
     <template v-else>
-      <section class="glass module-panel">
-        <h2>{{ title }}</h2>
-        <p>{{ t('workspace.modulePending') }}</p>
-      </section>
+      <header class="page-heading">
+        <div>
+          <h1>{{ title }}</h1>
+          <p>{{ pageDescription }}</p>
+        </div>
+        <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</button>
+      </header>
+
+      <p v-if="error" class="inline-error">{{ error }}</p>
+
+      <template v-if="isDashboard">
+        <section class="glass account-summary">
+          <div class="summary-balance">
+            <span>{{ t('workspace.availableBalance') }}</span>
+            <strong>${{ accountBalance.toFixed(2) }}</strong>
+            <small>{{ t('workspace.keyAvailability', { active: stats?.active_api_keys || 0, total: stats?.total_api_keys || 0 }) }}</small>
+          </div>
+          <div class="summary-meta">
+            <span>API Endpoint</span>
+            <strong>https://api.smirel.com/v1</strong>
+            <small>OpenAI compatible</small>
+          </div>
+          <RouterLink to="/purchase" class="primary-button">{{ t('workspace.purchase') }}</RouterLink>
+        </section>
+
+        <div class="metric-grid metric-grid-three">
+          <article class="glass metric-card"><span>{{ t('workspace.todayRequests') }}</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong></article>
+          <article class="glass metric-card"><span>{{ t('workspace.todayTokens') }}</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong></article>
+          <article class="glass metric-card"><span>{{ t('workspace.todayCost') }}</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong></article>
+        </div>
+      </template>
+
+      <template v-else-if="isKeys">
+        <section class="glass action-strip">
+          <input v-model="newKeyName" :aria-label="`${t('workspace.key')} ${t('workspace.name')}`" :placeholder="t('workspace.keyNamePlaceholder')" @keydown.enter="createKey" />
+          <button class="primary-button" type="button" :disabled="loading" @click="createKey">{{ t('workspace.createKey') }}</button>
+        </section>
+        <div class="glass data-table">
+          <div class="table-toolbar">
+            <div><strong>API Keys</strong><span class="table-count">{{ keys.length }}</span></div>
+          </div>
+          <div class="table-head"><span>{{ t('workspace.name') }}</span><span>{{ t('workspace.key') }}</span><span>{{ t('workspace.status') }}</span><span>{{ t('workspace.createdAt') }}</span><span></span></div>
+          <div v-for="item in keys" :key="item.id" class="table-row">
+            <strong>{{ item.name || `Key #${item.id}` }}</strong>
+            <code>{{ item.key || '••••••••' }}</code>
+            <span><i class="status-dot"></i>{{ item.status || 'active' }}</span>
+            <span>{{ item.created_at || '—' }}</span>
+            <button type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
+          </div>
+          <p v-if="!keys.length && !loading" class="empty-state">{{ t('workspace.noKeys') }}</p>
+        </div>
+      </template>
+
+      <template v-else-if="isUsage">
+        <section class="glass table-toolbar standalone-toolbar">
+          <div><strong>{{ t('workspace.recentRequests') }}</strong><span class="table-count">{{ usage.length }}</span></div>
+          <div class="usage-total"><span>{{ visibleUsageTokens.toLocaleString() }} Tokens</span><span>${{ visibleUsageCost.toFixed(4) }}</span></div>
+        </section>
+        <div class="glass data-table usage-table">
+          <div class="table-head"><span>{{ t('workspace.time') }}</span><span>{{ t('workspace.model') }}</span><span>{{ t('workspace.endpoint') }}</span><span>{{ t('workspace.token') }}</span><span>{{ t('workspace.cost') }}</span></div>
+          <div v-for="(item, index) in usage" :key="item.id || index" class="table-row">
+            <span>{{ item.created_at || '—' }}</span>
+            <strong>{{ item.model || '—' }}</strong>
+            <code>{{ item.endpoint || '—' }}</code>
+            <span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
+            <span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span>
+          </div>
+          <p v-if="!usage.length && !loading" class="empty-state">{{ t('workspace.noUsage') }}</p>
+        </div>
+      </template>
+
+      <template v-else-if="isProfile">
+        <section class="glass profile-panel">
+          <div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div>
+          <div class="profile-copy"><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div>
+          <dl>
+            <div><dt>{{ t('workspace.role') }}</dt><dd>{{ state.user?.role === 'admin' ? t('shell.roleAdmin') : t('workspace.user') }}</dd></div>
+            <div><dt>{{ t('workspace.status') }}</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
+            <div><dt>{{ t('workspace.availableBalance') }}</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
+          </dl>
+        </section>
+      </template>
+
+      <template v-else>
+        <section class="glass module-panel">
+          <h2>{{ title }}</h2>
+          <p>{{ t('workspace.modulePending') }}</p>
+        </section>
+      </template>
     </template>
   </section>
 </template>
