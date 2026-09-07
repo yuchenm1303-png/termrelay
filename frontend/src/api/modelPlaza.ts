@@ -19,7 +19,10 @@ export interface PlazaOfficialPricing {
 }
 
 export interface PlazaModel {
+  /** 客户端请求时使用的模型名。 */
   name: string
+  /** 渠道映射后的实际模型标识；未发生映射时省略。 */
+  mapped_model?: string
   platform: string
   pricing: UserSupportedModelPricing | null
   official_pricing: PlazaOfficialPricing | null
