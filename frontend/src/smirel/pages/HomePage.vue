@@ -126,43 +126,6 @@ async function signOut() {
         </div>
       </section>
 
-      <section class="integration-section">
-        <div class="section-heading">
-          <span>接入</span>
-          <h2>接入，不换写法。</h2>
-          <p>原来的业务代码继续用。把请求地址换成 Smirel，就可以开始调用。</p>
-        </div>
-
-        <div class="integration-panel">
-          <div class="integration-code" aria-label="Base URL change example">
-            <div class="code-caption">
-              <span>base_url.py</span>
-              <small>Python</small>
-            </div>
-            <div class="code-line code-line--old"><b>−</b><code>base_url="https://api.openai.com/v1"</code></div>
-            <div class="code-line code-line--new"><b>+</b><code>base_url="https://api.smirel.com/v1"</code></div>
-          </div>
-
-          <div class="integration-notes">
-            <div>
-              <span>01</span>
-              <strong>Base URL</strong>
-              <p>统一请求入口，不需要维护多套地址。</p>
-            </div>
-            <div>
-              <span>02</span>
-              <strong>API Key</strong>
-              <p>按项目创建、停用和管理访问凭证。</p>
-            </div>
-            <div>
-              <span>03</span>
-              <strong>Model</strong>
-              <p>模型按需要切换，接入方式保持一致。</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="workspace-section">
         <div class="workspace-copy">
           <span>工作区</span>
