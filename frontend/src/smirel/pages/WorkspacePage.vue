@@ -6,6 +6,7 @@ import AdminUsersPage from '../components/AdminUsersPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 import { useSession } from '../core/session'
+import '../styles/api-keys.css'
 
 interface ApiKeyRow { id: number; name?: string; key?: string; status?: string; created_at?: string; [key: string]: unknown }
 interface UsageRow { id?: number; model?: string; endpoint?: string; total_tokens?: number; actual_cost?: number; created_at?: string; [key: string]: unknown }
@@ -181,24 +182,60 @@ onMounted(() => void load())
       </template>
 
       <template v-else-if="isKeys">
-        <section class="glass action-strip">
-          <input v-model="newKeyName" :aria-label="`${t('workspace.key')} ${t('workspace.name')}`" :placeholder="t('workspace.keyNamePlaceholder')" @keydown.enter="createKey" />
-          <button class="primary-button" type="button" :disabled="loading" @click="createKey">{{ t('workspace.createKey') }}</button>
+        <section class="keys-create-panel">
+          <div class="keys-create-copy">
+            <span>NEW KEY</span>
+            <strong>{{ t('workspace.createKey') }}</strong>
+          </div>
+          <div class="keys-create-form">
+            <input v-model="newKeyName" :aria-label="`${t('workspace.key')} ${t('workspace.name')}`" :placeholder="t('workspace.keyNamePlaceholder')" @keydown.enter="createKey" />
+            <button class="primary-button" type="button" :disabled="loading" @click="createKey">{{ t('workspace.createKey') }}</button>
+          </div>
         </section>
-        <div class="glass data-table">
-          <div class="table-toolbar">
-            <div><strong>API Keys</strong><span class="table-count">{{ keys.length }}</span></div>
+
+        <section class="keys-library">
+          <header class="keys-library-head">
+            <div>
+              <strong>API Keys</strong>
+              <span class="keys-library-count">{{ keys.length }}</span>
+            </div>
+          </header>
+
+          <div v-if="keys.length" class="api-key-grid">
+            <article v-for="item in keys" :key="item.id" class="api-key-card">
+              <header class="api-key-card-head">
+                <div class="api-key-identity">
+                  <span class="api-key-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="8" cy="15" r="3.5" />
+                      <path d="m10.7 12.3 7.6-7.6M15.7 7.3l2 2M13.6 9.4l2 2" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>{{ item.name || `Key #${item.id}` }}</strong>
+                    <small>API KEY</small>
+                  </div>
+                </div>
+                <span class="api-key-state"><i></i>{{ item.status || 'active' }}</span>
+              </header>
+
+              <div class="api-key-secret">
+                <span>{{ t('workspace.key') }}</span>
+                <code>{{ item.key || '••••••••' }}</code>
+              </div>
+
+              <footer class="api-key-card-foot">
+                <span class="api-key-created">
+                  <b>{{ t('workspace.createdAt') }}</b>
+                  {{ item.created_at || '—' }}
+                </span>
+                <button class="api-key-delete" type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
+              </footer>
+            </article>
           </div>
-          <div class="table-head"><span>{{ t('workspace.name') }}</span><span>{{ t('workspace.key') }}</span><span>{{ t('workspace.status') }}</span><span>{{ t('workspace.createdAt') }}</span><span></span></div>
-          <div v-for="item in keys" :key="item.id" class="table-row">
-            <strong>{{ item.name || `Key #${item.id}` }}</strong>
-            <code>{{ item.key || '••••••••' }}</code>
-            <span><i class="status-dot"></i>{{ item.status || 'active' }}</span>
-            <span>{{ item.created_at || '—' }}</span>
-            <button type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
-          </div>
-          <p v-if="!keys.length && !loading" class="empty-state">{{ t('workspace.noKeys') }}</p>
-        </div>
+
+          <p v-else-if="!loading" class="keys-empty-state">{{ t('workspace.noKeys') }}</p>
+        </section>
       </template>
 
       <template v-else-if="isUsage">
