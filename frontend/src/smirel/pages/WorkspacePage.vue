@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { api, getErrorMessage, previewMode } from '../core/api'
+import { pushNotification } from '../core/notifications'
 import { useSession } from '../core/session'
 
 interface ApiKeyRow { id: number; name?: string; key?: string; status?: string; created_at?: string; [key: string]: unknown }
@@ -9,9 +11,9 @@ interface UsageRow { id?: number; model?: string; endpoint?: string; total_token
 interface DashboardStats { total_api_keys?: number; active_api_keys?: number; total_requests?: number; total_tokens?: number; total_actual_cost?: number; today_requests?: number; today_tokens?: number; today_actual_cost?: number; [key: string]: unknown }
 
 const route = useRoute()
+const { t } = useI18n()
 const { state } = useSession()
 const feature = computed(() => String(route.meta.feature || 'module'))
-const title = computed(() => String(route.meta.title || 'Workspace'))
 const loading = ref(false)
 const error = ref('')
 const stats = ref<DashboardStats | null>(null)
@@ -27,12 +29,27 @@ const accountBalance = computed(() => Number(state.user?.balance || 0))
 const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
 const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
 
+const featureTitleKeys: Record<string, string> = {
+  dashboard: 'nav.dashboard',
+  keys: 'nav.keys',
+  usage: 'nav.usage',
+  subscriptions: 'nav.subscriptions',
+  purchase: 'nav.purchase',
+  orders: 'nav.orders',
+  profile: 'nav.profile',
+}
+
+const title = computed(() => {
+  const key = featureTitleKeys[feature.value]
+  return key ? t(key) : String(route.meta.title || 'Workspace')
+})
+
 const pageDescription = computed(() => {
-  if (isDashboard.value) return '查看账户余额、API Key 和今日调用情况。'
-  if (isKeys.value) return '创建和管理用于调用 Smirel API 的访问密钥。'
-  if (isUsage.value) return '查看最近请求、Token 与费用。'
-  if (isProfile.value) return '查看当前账户信息。'
-  return '管理当前 Smirel 服务。'
+  if (isDashboard.value) return t('workspace.descriptions.dashboard')
+  if (isKeys.value) return t('workspace.descriptions.keys')
+  if (isUsage.value) return t('workspace.descriptions.usage')
+  if (isProfile.value) return t('workspace.descriptions.profile')
+  return t('workspace.descriptions.generic')
 })
 
 async function load() {
@@ -59,24 +76,42 @@ async function load() {
 }
 
 async function createKey() {
-  if (!newKeyName.value.trim()) return
+  const keyName = newKeyName.value.trim()
+  if (!keyName) return
+
   if (previewMode) {
-    keys.value.unshift({ id: Date.now(), name: newKeyName.value.trim(), key: 'sk-preview-new', status: 'active', created_at: new Date().toISOString().slice(0, 10) })
+    keys.value.unshift({ id: Date.now(), name: keyName, key: 'sk-preview-new', status: 'active', created_at: new Date().toISOString().slice(0, 10) })
     newKeyName.value = ''
+    pushNotification({
+      title: t('workspace.keyCreatedTitle'),
+      message: t('workspace.keyCreatedMessage', { name: keyName }),
+      tone: 'success',
+    })
     return
   }
+
   loading.value = true
   try {
-    const created = (await api.post<ApiKeyRow>('/keys', { name: newKeyName.value.trim() })).data
+    const created = (await api.post<ApiKeyRow>('/keys', { name: keyName })).data
     keys.value.unshift(created)
     newKeyName.value = ''
+    pushNotification({
+      title: t('workspace.keyCreatedTitle'),
+      message: t('workspace.keyCreatedMessage', { name: keyName }),
+      tone: 'success',
+    })
   } catch (caught) { error.value = getErrorMessage(caught) } finally { loading.value = false }
 }
 
 async function removeKey(id: number) {
-  if (!window.confirm('确认删除这把 API Key？')) return
+  if (!window.confirm(t('workspace.confirmDelete'))) return
   if (!previewMode) await api.delete(`/keys/${id}`)
   keys.value = keys.value.filter((item) => item.id !== id)
+  pushNotification({
+    title: t('workspace.keyDeletedTitle'),
+    message: t('workspace.keyDeletedMessage'),
+    tone: 'info',
+  })
 }
 
 watch(() => route.fullPath, () => void load())
@@ -90,7 +125,7 @@ onMounted(() => void load())
         <h1>{{ title }}</h1>
         <p>{{ pageDescription }}</p>
       </div>
-      <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? '刷新中…' : '刷新' }}</button>
+      <button v-if="isDashboard || isKeys || isUsage" class="ghost-button" type="button" :disabled="loading" @click="load">{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</button>
     </header>
 
     <p v-if="error" class="inline-error">{{ error }}</p>
@@ -98,53 +133,53 @@ onMounted(() => void load())
     <template v-if="isDashboard">
       <section class="glass account-summary">
         <div class="summary-balance">
-          <span>可用余额</span>
+          <span>{{ t('workspace.availableBalance') }}</span>
           <strong>${{ accountBalance.toFixed(2) }}</strong>
-          <small>{{ stats?.active_api_keys || 0 }} / {{ stats?.total_api_keys || 0 }} 个 API Key 可用</small>
+          <small>{{ t('workspace.keyAvailability', { active: stats?.active_api_keys || 0, total: stats?.total_api_keys || 0 }) }}</small>
         </div>
         <div class="summary-meta">
           <span>API Endpoint</span>
           <strong>https://api.smirel.com/v1</strong>
           <small>OpenAI compatible</small>
         </div>
-        <RouterLink to="/purchase" class="primary-button">购买服务</RouterLink>
+        <RouterLink to="/purchase" class="primary-button">{{ t('workspace.purchase') }}</RouterLink>
       </section>
 
       <div class="metric-grid metric-grid-three">
-        <article class="glass metric-card"><span>今日请求</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong></article>
-        <article class="glass metric-card"><span>今日 Token</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong></article>
-        <article class="glass metric-card"><span>今日费用</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong></article>
+        <article class="glass metric-card"><span>{{ t('workspace.todayRequests') }}</span><strong>{{ Number(stats?.today_requests || 0).toLocaleString() }}</strong></article>
+        <article class="glass metric-card"><span>{{ t('workspace.todayTokens') }}</span><strong>{{ Number(stats?.today_tokens || 0).toLocaleString() }}</strong></article>
+        <article class="glass metric-card"><span>{{ t('workspace.todayCost') }}</span><strong>${{ Number(stats?.today_actual_cost || 0).toFixed(3) }}</strong></article>
       </div>
     </template>
 
     <template v-else-if="isKeys">
       <section class="glass action-strip">
-        <input v-model="newKeyName" aria-label="API Key 名称" placeholder="密钥名称，例如 Production" @keydown.enter="createKey" />
-        <button class="primary-button" type="button" :disabled="loading" @click="createKey">创建 API Key</button>
+        <input v-model="newKeyName" :aria-label="`${t('workspace.key')} ${t('workspace.name')}`" :placeholder="t('workspace.keyNamePlaceholder')" @keydown.enter="createKey" />
+        <button class="primary-button" type="button" :disabled="loading" @click="createKey">{{ t('workspace.createKey') }}</button>
       </section>
       <div class="glass data-table">
         <div class="table-toolbar">
           <div><strong>API Keys</strong><span class="table-count">{{ keys.length }}</span></div>
         </div>
-        <div class="table-head"><span>名称</span><span>密钥</span><span>状态</span><span>创建时间</span><span></span></div>
+        <div class="table-head"><span>{{ t('workspace.name') }}</span><span>{{ t('workspace.key') }}</span><span>{{ t('workspace.status') }}</span><span>{{ t('workspace.createdAt') }}</span><span></span></div>
         <div v-for="item in keys" :key="item.id" class="table-row">
           <strong>{{ item.name || `Key #${item.id}` }}</strong>
           <code>{{ item.key || '••••••••' }}</code>
           <span><i class="status-dot"></i>{{ item.status || 'active' }}</span>
           <span>{{ item.created_at || '—' }}</span>
-          <button type="button" @click="removeKey(item.id)">删除</button>
+          <button type="button" @click="removeKey(item.id)">{{ t('workspace.delete') }}</button>
         </div>
-        <p v-if="!keys.length && !loading" class="empty-state">还没有 API Key。</p>
+        <p v-if="!keys.length && !loading" class="empty-state">{{ t('workspace.noKeys') }}</p>
       </div>
     </template>
 
     <template v-else-if="isUsage">
       <section class="glass table-toolbar standalone-toolbar">
-        <div><strong>最近请求</strong><span class="table-count">{{ usage.length }}</span></div>
+        <div><strong>{{ t('workspace.recentRequests') }}</strong><span class="table-count">{{ usage.length }}</span></div>
         <div class="usage-total"><span>{{ visibleUsageTokens.toLocaleString() }} Tokens</span><span>${{ visibleUsageCost.toFixed(4) }}</span></div>
       </section>
       <div class="glass data-table usage-table">
-        <div class="table-head"><span>时间</span><span>模型</span><span>Endpoint</span><span>Token</span><span>费用</span></div>
+        <div class="table-head"><span>{{ t('workspace.time') }}</span><span>{{ t('workspace.model') }}</span><span>{{ t('workspace.endpoint') }}</span><span>{{ t('workspace.token') }}</span><span>{{ t('workspace.cost') }}</span></div>
         <div v-for="(item, index) in usage" :key="item.id || index" class="table-row">
           <span>{{ item.created_at || '—' }}</span>
           <strong>{{ item.model || '—' }}</strong>
@@ -152,7 +187,7 @@ onMounted(() => void load())
           <span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
           <span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span>
         </div>
-        <p v-if="!usage.length && !loading" class="empty-state">暂无用量记录。</p>
+        <p v-if="!usage.length && !loading" class="empty-state">{{ t('workspace.noUsage') }}</p>
       </div>
     </template>
 
@@ -161,9 +196,9 @@ onMounted(() => void load())
         <div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div>
         <div class="profile-copy"><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div>
         <dl>
-          <div><dt>角色</dt><dd>{{ state.user?.role === 'admin' ? '管理员' : '用户' }}</dd></div>
-          <div><dt>状态</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
-          <div><dt>可用余额</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
+          <div><dt>{{ t('workspace.role') }}</dt><dd>{{ state.user?.role === 'admin' ? t('shell.roleAdmin') : t('workspace.user') }}</dd></div>
+          <div><dt>{{ t('workspace.status') }}</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
+          <div><dt>{{ t('workspace.availableBalance') }}</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
         </dl>
       </section>
     </template>
@@ -171,7 +206,7 @@ onMounted(() => void load())
     <template v-else>
       <section class="glass module-panel">
         <h2>{{ title }}</h2>
-        <p>该功能正在接入商业版控制台。</p>
+        <p>{{ t('workspace.modulePending') }}</p>
       </section>
     </template>
   </section>

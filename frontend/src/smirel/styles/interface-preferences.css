@@ -1,0 +1,219 @@
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  background: #f3f5f7;
+}
+
+html[data-theme='light'] body {
+  color: #17191d;
+  background: #f3f5f7;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root {
+  --ws-bg: #f3f5f7;
+  --ws-sidebar: #ffffff;
+  --ws-surface: #ffffff;
+  --ws-surface-soft: #f8f9fb;
+  --ws-border: #e1e5ea;
+  --ws-border-strong: #d3d8df;
+  --ws-text: #17191d;
+  --ws-text-soft: #3d434b;
+  --ws-muted: #68717c;
+  --ws-subtle: #8b949f;
+  --ws-accent: #1877c9;
+  --ws-success: #168c66;
+  color: var(--ws-text);
+  background: var(--ws-bg);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .site-environment,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-main {
+  background: var(--ws-bg);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .glass,
+html.smirel-app[data-theme='light'] .workspace-root .account-summary,
+html.smirel-app[data-theme='light'] .workspace-root .metric-card,
+html.smirel-app[data-theme='light'] .workspace-root .action-strip,
+html.smirel-app[data-theme='light'] .workspace-root .table-toolbar,
+html.smirel-app[data-theme='light'] .workspace-root .data-table,
+html.smirel-app[data-theme='light'] .workspace-root .profile-panel,
+html.smirel-app[data-theme='light'] .workspace-root .module-panel,
+html.smirel-app[data-theme='light'] .workspace-root .information-panel {
+  border-color: var(--ws-border);
+  background: var(--ws-surface);
+  box-shadow: none;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-sidebar {
+  border-color: var(--ws-border);
+  background: var(--ws-sidebar);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-brand-row,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-account {
+  border-color: var(--ws-border);
+  background: var(--ws-sidebar);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .brand-link strong,
+html.smirel-app[data-theme='light'] .workspace-root .page-heading h1,
+html.smirel-app[data-theme='light'] .workspace-root .summary-balance strong,
+html.smirel-app[data-theme='light'] .workspace-root .metric-card strong,
+html.smirel-app[data-theme='light'] .workspace-root .table-toolbar strong,
+html.smirel-app[data-theme='light'] .workspace-root .table-row strong,
+html.smirel-app[data-theme='light'] .workspace-root .profile-panel h2,
+html.smirel-app[data-theme='light'] .workspace-root .module-panel h2 {
+  color: #17191d;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .brand-link small,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-nav-label,
+html.smirel-app[data-theme='light'] .workspace-root .page-heading p,
+html.smirel-app[data-theme='light'] .workspace-root .summary-balance > span,
+html.smirel-app[data-theme='light'] .workspace-root .summary-meta > span,
+html.smirel-app[data-theme='light'] .workspace-root .summary-balance small,
+html.smirel-app[data-theme='light'] .workspace-root .summary-meta small,
+html.smirel-app[data-theme='light'] .workspace-root .metric-card span,
+html.smirel-app[data-theme='light'] .workspace-root .metric-card small,
+html.smirel-app[data-theme='light'] .workspace-root .usage-total,
+html.smirel-app[data-theme='light'] .workspace-root .table-head,
+html.smirel-app[data-theme='light'] .workspace-root .table-row,
+html.smirel-app[data-theme='light'] .workspace-root .empty-state,
+html.smirel-app[data-theme='light'] .workspace-root .profile-panel p,
+html.smirel-app[data-theme='light'] .workspace-root .module-panel p {
+  color: #68717c;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-nav a {
+  color: #5f6873;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-nav a:hover {
+  border-color: #dfe4ea;
+  background: #f5f7fa;
+  color: #20242a;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-nav a.active {
+  border-color: #cdddeb;
+  background: #edf5fb;
+  color: #155e98;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar.workspace-topbar--contextual {
+  border-color: var(--ws-border);
+  background: rgba(255, 255, 255, .96);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-breadcrumb-root,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-breadcrumb-group {
+  color: #7a838e;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar-title {
+  color: #25292f;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar-link {
+  color: #66707b;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar-link:hover {
+  border-color: #dde2e8;
+  background: #f6f8fa;
+  color: #252a31;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar-link.active {
+  border-color: #cdddea;
+  background: #edf5fb;
+  color: #155e98;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar-divider,
+html.smirel-app[data-theme='light'] .workspace-root .summary-meta,
+html.smirel-app[data-theme='light'] .workspace-root .table-head,
+html.smirel-app[data-theme='light'] .workspace-root .table-row {
+  border-color: var(--ws-border);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-profile-link {
+  border-color: #dfe3e8;
+  background: #f8f9fb;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-profile-link:hover {
+  border-color: #cfd5dc;
+  background: #f2f4f7;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-profile-copy strong,
+html.smirel-app[data-theme='light'] .workspace-root .summary-meta strong,
+html.smirel-app[data-theme='light'] .workspace-root .table-row code,
+html.smirel-app[data-theme='light'] .workspace-root code {
+  color: #30353c;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-profile-copy small {
+  color: #7a838d;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .mini-avatar,
+html.smirel-app[data-theme='light'] .workspace-root .account-row > b {
+  border-color: #d7dde4;
+  background: #eef1f4;
+  color: #3f464f;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .secondary-button,
+html.smirel-app[data-theme='light'] .workspace-root .ghost-button {
+  border-color: #d6dce3;
+  background: #ffffff;
+  color: #4b535d;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .secondary-button:hover,
+html.smirel-app[data-theme='light'] .workspace-root .ghost-button:hover {
+  border-color: #c7cfd8;
+  background: #f5f7f9;
+  color: #20242a;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .action-strip input {
+  border-color: #d8dee5;
+  background: #fbfcfd;
+  color: #20242a;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .action-strip input::placeholder {
+  color: #8d96a1;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .data-table .table-head {
+  background: #f8f9fb;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .table-row button {
+  color: #69727d;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .status-dot {
+  box-shadow: none;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .inline-error {
+  border-color: #f0c8c8;
+  background: #fff4f4;
+  color: #a13b3b;
+}
+
+@media (prefers-color-scheme: light) {
+  html[data-theme-preference='system'][data-theme='light'] {
+    color-scheme: light;
+  }
+}
