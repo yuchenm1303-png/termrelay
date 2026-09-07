@@ -61,11 +61,13 @@ const platformOptions = computed(() => {
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const schedulableCount = computed(() => accounts.value.filter((item) => item.status === 'active' && item.schedulable !== false).length)
-const issueCount = computed(() => accounts.value.filter((item) => item.status === 'error' || item.schedulable === false).length)
+const issueCount = computed(() => accounts.value.filter((item) => item.status === 'error' || item.status === 'inactive' || item.schedulable === false).length)
 const currentConcurrency = computed(() => accounts.value.reduce((sum, item) => sum + Number(item.current_concurrency || 0), 0))
 const maxConcurrency = computed(() => accounts.value.reduce((sum, item) => sum + Number(item.concurrency || item.load_factor || 0), 0))
 const providerCount = computed(() => new Set(accounts.value.map((item) => item.platform).filter(Boolean)).size)
 const hasFilters = computed(() => Boolean(search.value.trim() || platform.value || status.value || accountType.value))
+const healthPercent = computed(() => accounts.value.length ? Math.round((schedulableCount.value / accounts.value.length) * 100) : 0)
+const concurrencyPercent = computed(() => maxConcurrency.value > 0 ? Math.min(100, Math.round((currentConcurrency.value / maxConcurrency.value) * 100)) : 0)
 
 function platformLabel(value?: string) {
   const labels: Record<string, string> = {
@@ -82,8 +84,17 @@ function platformLabel(value?: string) {
 }
 
 function platformMark(value?: string) {
-  const label = platformLabel(value)
-  return label.slice(0, 2).toUpperCase()
+  const marks: Record<string, string> = {
+    openai: 'O',
+    anthropic: 'A',
+    gemini: 'G',
+    antigravity: 'AG',
+    grok: 'X',
+    xai: 'X',
+    ollama: 'OL',
+  }
+  const key = String(value || '').toLowerCase()
+  return marks[key] || platformLabel(value).slice(0, 1).toUpperCase()
 }
 
 function accountTypeLabel(value?: string) {
@@ -103,6 +114,13 @@ function healthLabel(item: UpstreamAccount) {
   if (item.status === 'inactive') return '已停用'
   if (item.schedulable === false) return '暂停调度'
   return '可调度'
+}
+
+function healthHint(item: UpstreamAccount) {
+  if (item.status === 'error') return '需要处理'
+  if (item.status === 'inactive') return '手动停用'
+  if (item.schedulable === false) return '调度关闭'
+  return '运行正常'
 }
 
 function healthClass(item: UpstreamAccount) {
@@ -135,13 +153,6 @@ function formatExpiry(value?: number | null) {
   const date = new Date(value * 1000)
   if (Number.isNaN(date.getTime())) return '未设置'
   return new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
-}
-
-function groupLabel(item: UpstreamAccount) {
-  const ids = Array.isArray(item.group_ids) ? item.group_ids : []
-  if (!ids.length) return '未分组'
-  if (ids.length === 1) return `分组 #${ids[0]}`
-  return `${ids.length} 个分组`
 }
 
 function toggleExpanded(id: number) {
@@ -219,117 +230,173 @@ onMounted(() => void loadAccounts())
 <template>
   <section class="admin-accounts-page">
     <header class="accounts-heading">
-      <div>
-        <h1>上游账户</h1>
-        <p>统一查看账号健康状态、实时负载与调度配置。</p>
+      <div class="accounts-heading-copy">
+        <span class="accounts-kicker">账户基础设施</span>
+        <div class="accounts-title-line">
+          <h1>上游账户</h1>
+          <span class="fleet-state" :class="{ attention: issueCount > 0 }">
+            <i></i>
+            {{ issueCount ? `${issueCount} 个需关注` : '运行正常' }}
+          </span>
+        </div>
+        <p>管理接入账号、调度状态与实时负载。</p>
       </div>
       <button class="refresh-button" type="button" :disabled="loading" @click="loadAccounts">
-        <span class="refresh-icon" :class="{ spinning: loading }">↻</span>
-        {{ loading ? '正在刷新' : '刷新' }}
+        <svg :class="{ spinning: loading }" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M16.2 6.1A7 7 0 1 0 17 12" />
+          <path d="M16.3 2.9v3.6h-3.6" />
+        </svg>
+        {{ loading ? '刷新中' : '刷新数据' }}
       </button>
     </header>
 
-    <section class="account-metrics" aria-label="账户概览">
-      <article>
-        <span>账户总数</span>
-        <strong>{{ total.toLocaleString() }}</strong>
-        <small>当前筛选范围</small>
+    <section class="fleet-overview" aria-label="账户概览">
+      <article class="fleet-primary">
+        <span class="metric-label">账户总数</span>
+        <div class="fleet-primary-value">
+          <strong>{{ total.toLocaleString() }}</strong>
+          <span>个</span>
+        </div>
+        <small>{{ hasFilters ? '当前筛选结果' : '已接入上游账户' }}</small>
       </article>
-      <article>
-        <span>本页可调度</span>
-        <strong>{{ schedulableCount }}</strong>
-        <small>{{ issueCount ? `${issueCount} 个需关注` : '运行状态正常' }}</small>
+
+      <article class="fleet-metric health-metric">
+        <div class="fleet-metric-head">
+          <span>当前页可调度</span>
+          <b>{{ healthPercent }}%</b>
+        </div>
+        <strong>{{ schedulableCount }}<small>/ {{ accounts.length || 0 }}</small></strong>
+        <i class="fleet-progress"><b :style="{ width: `${healthPercent}%` }"></b></i>
       </article>
-      <article>
-        <span>实时并发</span>
-        <strong>{{ currentConcurrency }}<em>/ {{ maxConcurrency || '—' }}</em></strong>
-        <small>当前占用 / 配置上限</small>
+
+      <article class="fleet-metric">
+        <div class="fleet-metric-head">
+          <span>实时并发</span>
+          <b>{{ concurrencyPercent }}%</b>
+        </div>
+        <strong>{{ currentConcurrency }}<small>/ {{ maxConcurrency || '—' }}</small></strong>
+        <i class="fleet-progress"><b :style="{ width: `${concurrencyPercent}%` }"></b></i>
       </article>
-      <article>
-        <span>本页平台</span>
+
+      <article class="fleet-metric provider-metric">
+        <span>上游平台</span>
         <strong>{{ providerCount }}</strong>
-        <small>独立上游提供方</small>
+        <small>{{ issueCount ? `${issueCount} 个账户需关注` : '当前页状态稳定' }}</small>
       </article>
     </section>
 
     <section class="accounts-panel">
       <header class="accounts-toolbar">
         <div class="toolbar-title">
-          <strong>账户池</strong>
-          <span>{{ total }} 个账户</span>
+          <div>
+            <strong>账户池</strong>
+            <span>{{ total }} 个账户</span>
+          </div>
+          <small>按名称排序</small>
         </div>
+
         <div class="toolbar-controls">
           <label class="search-control">
-            <span>⌕</span>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" /></svg>
             <input v-model="search" type="search" placeholder="搜索名称、平台或 ID" aria-label="搜索上游账户" />
           </label>
-          <select v-model="platform" aria-label="筛选平台">
-            <option value="">全部平台</option>
-            <option v-for="item in platformOptions" :key="item" :value="item">{{ platformLabel(item) }}</option>
-          </select>
-          <select v-model="accountType" aria-label="筛选账户类型">
-            <option value="">全部类型</option>
-            <option value="oauth">OAuth</option>
-            <option value="setup-token">Setup Token</option>
-            <option value="apikey">API Key</option>
-            <option value="upstream">Upstream</option>
-            <option value="bedrock">Bedrock</option>
-            <option value="service_account">Service Account</option>
-          </select>
-          <select v-model="status" aria-label="筛选状态">
-            <option value="">全部状态</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="error">Error</option>
-          </select>
-          <button v-if="hasFilters" class="clear-button" type="button" @click="resetFilters">清除</button>
+
+          <label class="select-control">
+            <span>平台</span>
+            <select v-model="platform" aria-label="筛选平台">
+              <option value="">全部</option>
+              <option v-for="item in platformOptions" :key="item" :value="item">{{ platformLabel(item) }}</option>
+            </select>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+          </label>
+
+          <label class="select-control">
+            <span>类型</span>
+            <select v-model="accountType" aria-label="筛选账户类型">
+              <option value="">全部</option>
+              <option value="oauth">OAuth</option>
+              <option value="setup-token">Setup Token</option>
+              <option value="apikey">API Key</option>
+              <option value="upstream">Upstream</option>
+              <option value="bedrock">Bedrock</option>
+              <option value="service_account">Service Account</option>
+            </select>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+          </label>
+
+          <label class="select-control">
+            <span>状态</span>
+            <select v-model="status" aria-label="筛选状态">
+              <option value="">全部</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="error">Error</option>
+            </select>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+          </label>
+
+          <button v-if="hasFilters" class="clear-button" type="button" @click="resetFilters">清除筛选</button>
         </div>
       </header>
 
       <p v-if="error" class="accounts-error">{{ error }}</p>
 
-      <div class="account-table" :class="{ loading }">
-        <div class="account-table-head">
+      <div class="upstream-table" :class="{ loading }">
+        <div class="upstream-table-head">
           <span>账户</span>
-          <span>运行状态</span>
-          <span>实时负载</span>
-          <span>调度</span>
+          <span>状态</span>
+          <span>负载</span>
+          <span>调度策略</span>
           <span>分组</span>
           <span>最近使用</span>
           <span></span>
         </div>
 
         <template v-for="item in accounts" :key="item.id">
-          <button class="account-row" type="button" @click="toggleExpanded(item.id)">
-            <span class="account-identity">
+          <button class="upstream-row" type="button" @click="toggleExpanded(item.id)">
+            <span class="upstream-identity">
               <i class="provider-mark" :data-platform="String(item.platform || '').toLowerCase()">{{ platformMark(item.platform) }}</i>
               <span>
                 <strong>{{ item.name || `Account #${item.id}` }}</strong>
-                <small>{{ platformLabel(item.platform) }} · {{ accountTypeLabel(item.type) }} · #{{ item.id }}</small>
+                <small>{{ platformLabel(item.platform) }}<b>·</b>{{ accountTypeLabel(item.type) }}<b>·</b>#{{ item.id }}</small>
               </span>
             </span>
-            <span class="health-cell">
-              <i class="health-dot" :class="healthClass(item)"></i>
-              <span>
-                <strong>{{ healthLabel(item) }}</strong>
-                <small>{{ item.status || 'unknown' }}</small>
+
+            <span class="upstream-health">
+              <span class="health-badge" :class="healthClass(item)"><i></i>{{ healthLabel(item) }}</span>
+              <small>{{ healthHint(item) }}</small>
+            </span>
+
+            <span class="upstream-load">
+              <span class="load-values">
+                <b>{{ Number(item.current_concurrency || 0) }} / {{ Number(item.concurrency || item.load_factor || 0) || '—' }}</b>
+                <small>{{ loadPercent(item) }}%</small>
               </span>
+              <i class="load-track"><b :style="{ width: `${loadPercent(item)}%` }"></b></i>
             </span>
-            <span class="load-cell">
-              <span><b>{{ Number(item.current_concurrency || 0) }}</b> / {{ Number(item.concurrency || item.load_factor || 0) || '—' }}</span>
-              <i><b :style="{ width: `${loadPercent(item)}%` }"></b></i>
+
+            <span class="upstream-routing">
+              <b>P{{ Number(item.priority || 0) }}</b>
+              <small>倍率 ×{{ Number(item.rate_multiplier ?? 1).toFixed(2) }}</small>
             </span>
-            <span class="routing-cell">
-              <strong>P{{ Number(item.priority || 0) }}</strong>
-              <small>×{{ Number(item.rate_multiplier ?? 1).toFixed(2) }}</small>
+
+            <span class="upstream-groups">
+              <template v-if="item.group_ids?.length">
+                <b v-for="id in item.group_ids.slice(0, 2)" :key="id">#{{ id }}</b>
+                <b v-if="item.group_ids.length > 2">+{{ item.group_ids.length - 2 }}</b>
+              </template>
+              <small v-else>未分组</small>
             </span>
-            <span class="group-cell">{{ groupLabel(item) }}</span>
-            <span class="last-used">{{ formatTime(item.last_used_at) }}</span>
-            <span class="row-chevron" :class="{ open: expandedAccountId === item.id }">›</span>
+
+            <span class="upstream-last-used">{{ formatTime(item.last_used_at) }}</span>
+
+            <span class="row-action" :class="{ open: expandedAccountId === item.id }" aria-hidden="true">
+              <svg viewBox="0 0 16 16"><path d="m6 3 5 5-5 5" /></svg>
+            </span>
           </button>
 
-          <div v-if="expandedAccountId === item.id" class="account-detail">
-            <div>
+          <div v-if="expandedAccountId === item.id" class="upstream-detail">
+            <div class="detail-intro">
               <span>账户说明</span>
               <strong>{{ item.notes || '暂无备注' }}</strong>
             </div>
@@ -354,7 +421,7 @@ onMounted(() => void loadAccounts())
 
         <div v-if="!accounts.length && !loading" class="accounts-empty">
           <strong>{{ hasFilters ? '没有符合条件的账户' : '暂无上游账户' }}</strong>
-          <span>{{ hasFilters ? '调整筛选条件后再试。' : '账户接入后会在这里集中显示运行状态和调度信息。' }}</span>
+          <span>{{ hasFilters ? '调整筛选条件后再试。' : '账户接入后会在这里显示运行状态和调度信息。' }}</span>
           <button v-if="hasFilters" type="button" @click="resetFilters">清除筛选</button>
         </div>
 
@@ -366,8 +433,14 @@ onMounted(() => void loadAccounts())
       <footer class="accounts-footer">
         <span>第 {{ page }} / {{ totalPages }} 页</span>
         <div>
-          <button type="button" :disabled="page <= 1 || loading" @click="page -= 1">上一页</button>
-          <button type="button" :disabled="page >= totalPages || loading" @click="page += 1">下一页</button>
+          <button type="button" :disabled="page <= 1 || loading" @click="page -= 1">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m10 3-5 5 5 5" /></svg>
+            上一页
+          </button>
+          <button type="button" :disabled="page >= totalPages || loading" @click="page += 1">
+            下一页
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg>
+          </button>
         </div>
       </footer>
     </section>
@@ -378,14 +451,14 @@ onMounted(() => void loadAccounts())
 .admin-accounts-page {
   --aa-surface: #101116;
   --aa-surface-soft: #0d0f13;
-  --aa-surface-hover: #14161b;
+  --aa-surface-raised: #14161b;
+  --aa-surface-hover: #15171d;
   --aa-border: #23262d;
   --aa-border-strong: #30343d;
-  --aa-text: #f3f5f7;
+  --aa-text: #f4f6f8;
   --aa-text-soft: #c8cdd4;
   --aa-muted: #858d98;
-  --aa-subtle: #626b76;
-  --aa-blue: #5bbcf5;
+  --aa-subtle: #616a75;
   --aa-green: #43cd98;
   --aa-amber: #d7a95b;
   --aa-red: #e16c73;
@@ -395,27 +468,79 @@ onMounted(() => void loadAccounts())
 }
 
 .accounts-heading {
-  min-height: 98px;
+  min-height: 106px;
+  padding: 4px 0 24px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
-  padding: 8px 0 20px;
+  gap: 28px;
+}
+
+.accounts-heading-copy {
+  min-width: 0;
+}
+
+.accounts-kicker {
+  display: block;
+  margin-bottom: 9px;
+  color: #68717d;
+  font-size: .66rem;
+  line-height: 1;
+  font-weight: 680;
+  letter-spacing: .08em;
+}
+
+.accounts-title-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .accounts-heading h1 {
   margin: 0;
-  font-size: 2rem;
-  line-height: 1.05;
-  font-weight: 680;
+  color: #f6f7f9;
+  font-size: 2.1rem;
+  line-height: 1;
+  font-weight: 690;
   letter-spacing: -.045em;
 }
 
 .accounts-heading p {
-  margin: 10px 0 0;
+  margin: 11px 0 0;
   color: var(--aa-muted);
   font-size: .86rem;
   line-height: 1.5;
+}
+
+.fleet-state {
+  height: 27px;
+  padding: 0 9px;
+  border: 1px solid rgba(67, 205, 152, .20);
+  border-radius: 999px;
+  background: rgba(67, 205, 152, .06);
+  color: #8bdaba;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .68rem;
+  font-weight: 620;
+}
+
+.fleet-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--aa-green);
+}
+
+.fleet-state.attention {
+  border-color: rgba(215, 169, 91, .22);
+  background: rgba(215, 169, 91, .06);
+  color: #d8b578;
+}
+
+.fleet-state.attention i {
+  background: var(--aa-amber);
 }
 
 .refresh-button,
@@ -435,9 +560,23 @@ onMounted(() => void loadAccounts())
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: .78rem;
+  gap: 8px;
+  font-size: .76rem;
   font-weight: 620;
+}
+
+.refresh-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.refresh-button svg.spinning {
+  animation: account-spin .8s linear infinite;
 }
 
 .refresh-button:hover:not(:disabled),
@@ -455,122 +594,207 @@ onMounted(() => void loadAccounts())
   cursor: default;
 }
 
-.refresh-icon {
-  display: inline-block;
-  font-size: 1rem;
-}
-
-.refresh-icon.spinning {
-  animation: account-spin .8s linear infinite;
-}
-
-.account-metrics {
+.fleet-overview {
+  min-height: 126px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1.25fr repeat(3, minmax(0, .82fr));
   border: 1px solid var(--aa-border);
-  border-radius: 10px;
-  background: var(--aa-surface);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #111217, #0f1014);
   overflow: hidden;
 }
 
-.account-metrics article {
-  min-height: 112px;
-  padding: 20px 22px;
+.fleet-overview article {
+  position: relative;
+  min-width: 0;
+  padding: 21px 22px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.account-metrics article + article {
-  border-left: 1px solid var(--aa-border);
+.fleet-overview article + article::before {
+  content: '';
+  position: absolute;
+  inset: 20px auto 20px 0;
+  width: 1px;
+  background: #24272e;
 }
 
-.account-metrics span {
-  color: var(--aa-muted);
+.metric-label,
+.fleet-metric > span,
+.fleet-metric-head > span {
+  color: #7d8590;
+  font-size: .70rem;
+  font-weight: 620;
+}
+
+.fleet-primary-value {
+  margin-top: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.fleet-primary-value strong {
+  color: #f7f8fa;
+  font-size: 2rem;
+  line-height: .96;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+
+.fleet-primary-value span {
+  color: #6d7580;
   font-size: .72rem;
-  font-weight: 600;
 }
 
-.account-metrics strong {
-  margin-top: 7px;
-  font-size: 1.55rem;
+.fleet-primary > small,
+.provider-metric > small {
+  margin-top: 9px;
+  color: #656d78;
+  font-size: .66rem;
+}
+
+.fleet-metric-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fleet-metric-head > b {
+  color: #6d7580;
+  font-size: .65rem;
+  font-weight: 620;
+}
+
+.fleet-metric > strong {
+  margin-top: 9px;
+  color: #eff2f5;
+  font-size: 1.35rem;
   line-height: 1;
   font-weight: 680;
-  letter-spacing: -.03em;
+  letter-spacing: -.025em;
 }
 
-.account-metrics em {
+.fleet-metric > strong small {
   margin-left: 4px;
-  color: var(--aa-subtle);
-  font-size: .85rem;
-  font-style: normal;
-  font-weight: 580;
+  color: #747c87;
+  font-size: .74rem;
+  font-weight: 560;
 }
 
-.account-metrics small {
-  margin-top: 8px;
-  color: var(--aa-subtle);
-  font-size: .68rem;
+.fleet-progress {
+  width: 100%;
+  height: 4px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #282b32;
+}
+
+.fleet-progress > b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #7d8792;
+}
+
+.health-metric .fleet-progress > b {
+  background: var(--aa-green);
+}
+
+.provider-metric > strong {
+  margin-top: 9px;
+  font-size: 1.55rem;
 }
 
 .accounts-panel {
-  margin-top: 12px;
+  margin-top: 14px;
   border: 1px solid var(--aa-border);
-  border-radius: 10px;
-  background: var(--aa-surface);
+  border-radius: 12px;
+  background: #0f1014;
   overflow: hidden;
 }
 
 .accounts-toolbar {
-  min-height: 66px;
-  padding: 11px 14px 11px 18px;
+  min-height: 72px;
+  padding: 12px 14px 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 18px;
   border-bottom: 1px solid var(--aa-border);
+  background: #101116;
 }
 
 .toolbar-title {
-  min-width: max-content;
+  min-width: 145px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-title > div {
   display: flex;
   align-items: baseline;
-  gap: 9px;
+  gap: 8px;
 }
 
 .toolbar-title strong {
+  color: #edf0f3;
   font-size: .92rem;
   font-weight: 660;
 }
 
-.toolbar-title span {
-  color: var(--aa-subtle);
-  font-size: .68rem;
+.toolbar-title span,
+.toolbar-title small {
+  color: #68717c;
+  font-size: .66rem;
+}
+
+.toolbar-title small {
+  padding-left: 12px;
+  border-left: 1px solid #2b2e35;
+  white-space: nowrap;
 }
 
 .toolbar-controls {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 7px;
-  min-width: 0;
 }
 
 .search-control {
-  width: min(300px, 25vw);
-  height: 38px;
-  padding: 0 11px;
+  width: min(330px, 27vw);
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #292d34;
+  border-radius: 8px;
+  background: #0b0d11;
+  color: #666f7a;
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid var(--aa-border);
-  border-radius: 7px;
-  background: #0b0d11;
-  color: var(--aa-subtle);
+  gap: 9px;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
 
 .search-control:focus-within {
-  border-color: #3a414c;
+  border-color: #3b4653;
+  box-shadow: 0 0 0 3px rgba(120, 143, 166, .06);
+}
+
+.search-control svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
 }
 
 .search-control input {
@@ -583,278 +807,414 @@ onMounted(() => void loadAccounts())
 }
 
 .search-control input::placeholder {
-  color: #5d6570;
+  color: #59616c;
 }
 
-.toolbar-controls select {
-  height: 38px;
-  max-width: 150px;
-  padding: 0 30px 0 11px;
-  border: 1px solid var(--aa-border);
-  border-radius: 7px;
-  outline: 0;
+.search-control input::-webkit-search-cancel-button {
+  opacity: .55;
+  filter: invert(1);
+}
+
+.select-control {
+  position: relative;
+  min-width: 116px;
+  height: 40px;
+  padding: 0 27px 0 11px;
+  border: 1px solid #292d34;
+  border-radius: 8px;
   background: #0b0d11;
-  color: var(--aa-text-soft);
-  font-size: .73rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 7px;
+}
+
+.select-control > span {
+  color: #626b76;
+  font-size: .66rem;
+  pointer-events: none;
+}
+
+.select-control select {
+  min-width: 0;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  appearance: none;
+  background: transparent;
+  color: #c5cad1;
+  font-size: .72rem;
+  cursor: pointer;
+}
+
+.select-control > svg {
+  position: absolute;
+  right: 9px;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: #727a85;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .clear-button {
-  height: 38px;
+  height: 40px;
   padding: 0 11px;
-  border-radius: 7px;
-  font-size: .72rem;
+  border-radius: 8px;
+  font-size: .70rem;
+  white-space: nowrap;
 }
 
 .accounts-error {
   margin: 12px 14px 0;
   padding: 10px 12px;
   border: 1px solid rgba(225, 108, 115, .28);
-  border-radius: 7px;
-  background: rgba(225, 108, 115, .08);
-  color: #eaa0a5;
+  border-radius: 8px;
+  background: rgba(225, 108, 115, .07);
+  color: #e6a0a5;
   font-size: .74rem;
 }
 
-.account-table {
-  min-height: 304px;
+.upstream-table {
+  min-height: 312px;
 }
 
-.account-table.loading {
-  opacity: .76;
+.upstream-table.loading {
+  opacity: .74;
 }
 
-.account-table-head,
-.account-row {
+.upstream-table-head,
+.upstream-row {
   display: grid;
-  grid-template-columns: minmax(240px, 1.55fr) minmax(118px, .76fr) minmax(120px, .72fr) minmax(90px, .55fr) minmax(100px, .66fr) minmax(110px, .68fr) 24px;
-  gap: 18px;
+  grid-template-columns: minmax(260px, 1.55fr) minmax(126px, .72fr) minmax(142px, .78fr) minmax(116px, .62fr) minmax(118px, .66fr) minmax(112px, .66fr) 30px;
+  gap: 16px;
   align-items: center;
 }
 
-.account-table-head {
-  min-height: 40px;
+.upstream-table-head {
+  min-height: 42px;
   padding: 0 18px;
-  border-bottom: 1px solid var(--aa-border);
-  background: var(--aa-surface-soft);
-  color: var(--aa-subtle);
-  font-size: .65rem;
+  border-bottom: 1px solid #23262d;
+  background: #0c0e12;
+  color: #656d78;
+  font-size: .64rem;
   font-weight: 650;
   letter-spacing: .02em;
 }
 
-.account-row {
+.upstream-row {
   width: 100%;
-  min-height: 72px;
+  min-height: 68px;
   padding: 0 18px;
   border: 0;
-  border-bottom: 1px solid #1d2026;
+  border-bottom: 1px solid #1e2127;
   background: transparent;
   color: var(--aa-text-soft);
   text-align: left;
   cursor: pointer;
-  transition: background .14s ease;
+  transition: background .14s ease, box-shadow .14s ease;
 }
 
-.account-row:hover {
+.upstream-row:hover {
   background: var(--aa-surface-hover);
+  box-shadow: inset 2px 0 #3a414a;
 }
 
-.account-identity,
-.health-cell {
+.upstream-identity {
   min-width: 0;
   display: flex;
   align-items: center;
-}
-
-.account-identity {
-  gap: 12px;
+  gap: 11px;
 }
 
 .provider-mark {
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
+  border: 1px solid #30343c;
+  border-radius: 10px;
+  background: #17191e;
+  color: #b2b8c0;
   display: grid;
   place-items: center;
-  border: 1px solid #2c3037;
-  border-radius: 8px;
-  background: #17191e;
-  color: #aeb5be;
-  font: 650 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 680 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   font-style: normal;
-  letter-spacing: .02em;
 }
 
-.provider-mark[data-platform="openai"] { color: #d6dbdf; }
-.provider-mark[data-platform="anthropic"] { color: #d7b997; }
-.provider-mark[data-platform="gemini"] { color: #92bff4; }
+.provider-mark[data-platform="openai"] { color: #dde1e5; background: #171a1d; }
+.provider-mark[data-platform="anthropic"] { color: #d7b894; background: #1a1714; }
+.provider-mark[data-platform="gemini"] { color: #9bc3ef; background: #14191f; }
 .provider-mark[data-platform="grok"],
-.provider-mark[data-platform="xai"] { color: #d8d9dc; }
+.provider-mark[data-platform="xai"] { color: #d6d8dc; background: #16171a; }
 
-.account-identity > span,
-.health-cell > span {
+.upstream-identity > span {
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
-.account-identity strong {
+.upstream-identity strong {
   overflow: hidden;
-  color: var(--aa-text);
-  font-size: .80rem;
+  color: #f0f2f4;
+  font-size: .81rem;
+  line-height: 1.2;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.account-identity small,
-.health-cell small,
-.routing-cell small {
-  margin-top: 4px;
-  color: var(--aa-subtle);
-  font-size: .64rem;
-}
-
-.health-cell {
-  gap: 8px;
-}
-
-.health-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-radius: 50%;
-  background: var(--aa-subtle);
-  box-shadow: 0 0 0 3px rgba(98, 107, 118, .10);
-}
-
-.health-dot.good {
-  background: var(--aa-green);
-  box-shadow: 0 0 0 3px rgba(67, 205, 152, .10);
-}
-
-.health-dot.danger {
-  background: var(--aa-red);
-  box-shadow: 0 0 0 3px rgba(225, 108, 115, .10);
-}
-
-.health-dot.muted {
-  background: var(--aa-amber);
-  box-shadow: 0 0 0 3px rgba(215, 169, 91, .09);
-}
-
-.health-cell strong {
-  color: var(--aa-text-soft);
-  font-size: .73rem;
-  font-weight: 620;
-}
-
-.load-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  color: var(--aa-muted);
-  font-size: .69rem;
-}
-
-.load-cell > span b {
-  color: var(--aa-text-soft);
-  font-size: .75rem;
-  font-weight: 650;
-}
-
-.load-cell > i {
-  width: 74px;
-  height: 3px;
+.upstream-identity small {
+  margin-top: 5px;
   overflow: hidden;
-  border-radius: 99px;
-  background: #272a31;
+  color: #68717c;
+  font-size: .64rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.load-cell > i b {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #79828e;
+.upstream-identity small b {
+  margin: 0 5px;
+  color: #3f454e;
+  font-weight: 400;
 }
 
-.routing-cell {
-  display: flex;
-  flex-direction: column;
-}
-
-.routing-cell strong {
-  color: var(--aa-text-soft);
-  font: 650 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.group-cell,
-.last-used {
-  color: var(--aa-muted);
-  font-size: .70rem;
-}
-
-.row-chevron {
-  justify-self: end;
-  color: var(--aa-subtle);
-  font-size: 1.1rem;
-  transform: rotate(0deg);
-  transition: transform .15s ease, color .15s ease;
-}
-
-.row-chevron.open {
-  color: var(--aa-text-soft);
-  transform: rotate(90deg);
-}
-
-.account-detail {
-  margin: -1px 0 0;
-  padding: 15px 18px 16px 64px;
-  display: grid;
-  grid-template-columns: 1.4fr .7fr .8fr 1fr;
-  gap: 12px 22px;
-  border-bottom: 1px solid var(--aa-border);
-  background: #0d0f13;
-}
-
-.account-detail > div {
+.upstream-health,
+.upstream-load,
+.upstream-routing {
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.upstream-health {
+  align-items: flex-start;
   gap: 5px;
 }
 
-.account-detail span {
-  color: var(--aa-subtle);
+.health-badge {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #30343b;
+  border-radius: 999px;
+  background: #14161a;
+  color: #a9b0b8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .67rem;
+  font-weight: 620;
+}
+
+.health-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7d8590;
+}
+
+.health-badge.good {
+  border-color: rgba(67, 205, 152, .17);
+  background: rgba(67, 205, 152, .055);
+  color: #90d7bb;
+}
+
+.health-badge.good i { background: var(--aa-green); }
+
+.health-badge.muted {
+  border-color: rgba(215, 169, 91, .18);
+  background: rgba(215, 169, 91, .055);
+  color: #cbb07e;
+}
+
+.health-badge.muted i { background: var(--aa-amber); }
+
+.health-badge.danger {
+  border-color: rgba(225, 108, 115, .2);
+  background: rgba(225, 108, 115, .06);
+  color: #dfa0a5;
+}
+
+.health-badge.danger i { background: var(--aa-red); }
+
+.upstream-health > small,
+.upstream-routing > small {
+  color: #626b76;
   font-size: .62rem;
 }
 
-.account-detail strong {
+.upstream-load {
+  gap: 8px;
+}
+
+.load-values {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.load-values > b {
+  color: #cdd2d8;
+  font-size: .70rem;
+  font-weight: 650;
+}
+
+.load-values > small {
+  color: #626a75;
+  font-size: .62rem;
+}
+
+.load-track {
+  width: 100%;
+  max-width: 108px;
+  height: 4px;
   overflow: hidden;
-  color: var(--aa-text-soft);
+  border-radius: 99px;
+  background: #292c33;
+}
+
+.load-track > b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #818b97;
+}
+
+.upstream-routing {
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.upstream-routing > b {
+  min-width: 38px;
+  height: 23px;
+  padding: 0 7px;
+  border: 1px solid #31353d;
+  border-radius: 6px;
+  background: #15171b;
+  color: #d0d4da;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 650 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.upstream-groups {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.upstream-groups > b {
+  height: 23px;
+  padding: 0 7px;
+  border: 1px solid #2d3138;
+  border-radius: 6px;
+  background: #121419;
+  color: #89919b;
+  display: inline-flex;
+  align-items: center;
+  font: 560 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.upstream-groups > small,
+.upstream-last-used {
+  color: #737b86;
+  font-size: .68rem;
+}
+
+.upstream-last-used {
+  white-space: nowrap;
+}
+
+.row-action {
+  width: 28px;
+  height: 28px;
+  justify-self: end;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #68717c;
+  display: grid;
+  place-items: center;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+
+.upstream-row:hover .row-action {
+  border-color: #30343c;
+  background: #181a20;
+  color: #c3c8ce;
+}
+
+.row-action svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .15s ease;
+}
+
+.row-action.open svg {
+  transform: rotate(90deg);
+}
+
+.upstream-detail {
+  margin: -1px 0 0;
+  padding: 17px 18px 18px 63px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.35fr) .72fr .78fr .95fr;
+  gap: 13px 24px;
+  border-bottom: 1px solid var(--aa-border);
+  background: #0c0e12;
+}
+
+.upstream-detail > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upstream-detail span {
+  color: #626b76;
+  font-size: .62rem;
+}
+
+.upstream-detail strong {
+  overflow: hidden;
+  color: #bdc3ca;
   font-size: .71rem;
   font-weight: 580;
-  line-height: 1.45;
+  line-height: 1.5;
   text-overflow: ellipsis;
 }
 
 .account-warning {
   grid-column: 1 / -1;
-  margin: 1px 0 0;
+  margin: 2px 0 0;
   padding: 10px 12px;
+  border: 1px solid rgba(225, 108, 115, .20);
+  border-radius: 8px;
+  background: rgba(225, 108, 115, .055);
   display: flex;
   gap: 10px;
-  border: 1px solid rgba(225, 108, 115, .22);
-  border-radius: 7px;
-  background: rgba(225, 108, 115, .06);
 }
 
 .account-warning strong {
-  color: #e7a1a6;
+  color: #dda0a4;
 }
 
 .accounts-empty {
-  min-height: 278px;
+  min-height: 280px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -889,75 +1249,88 @@ onMounted(() => void loadAccounts())
 
 .accounts-loading i {
   display: block;
-  height: 48px;
-  border-radius: 7px;
+  height: 52px;
+  border-radius: 8px;
   background: linear-gradient(90deg, #111318 20%, #17191f 50%, #111318 80%);
   background-size: 200% 100%;
   animation: skeleton-shift 1.15s linear infinite;
 }
 
 .accounts-footer {
-  min-height: 54px;
+  min-height: 56px;
   padding: 0 14px 0 18px;
+  border-top: 1px solid var(--aa-border);
+  background: #0c0e12;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--aa-border);
-  background: var(--aa-surface-soft);
 }
 
 .accounts-footer > span {
-  color: var(--aa-subtle);
+  color: #626b76;
   font-size: .67rem;
 }
 
 .accounts-footer > div {
   display: flex;
-  gap: 6px;
+  gap: 7px;
 }
 
 .accounts-footer button {
-  min-height: 32px;
-  padding: 0 11px;
-  border-radius: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: .68rem;
+}
+
+.accounts-footer button svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 @keyframes account-spin { to { transform: rotate(360deg); } }
 @keyframes skeleton-shift { to { background-position: -200% 0; } }
 
 @media (max-width: 1180px) {
-  .account-table-head,
-  .account-row {
-    grid-template-columns: minmax(220px, 1.45fr) minmax(118px, .8fr) minmax(112px, .7fr) minmax(86px, .55fr) minmax(98px, .66fr) 24px;
+  .fleet-overview {
+    grid-template-columns: 1.15fr repeat(3, minmax(0, .85fr));
   }
 
-  .account-table-head > span:nth-child(5),
-  .account-row > span:nth-child(5) {
+  .upstream-table-head,
+  .upstream-row {
+    grid-template-columns: minmax(230px, 1.42fr) minmax(122px, .74fr) minmax(136px, .76fr) minmax(105px, .62fr) minmax(105px, .62fr) 30px;
+  }
+
+  .upstream-table-head > span:nth-child(5),
+  .upstream-row > span:nth-child(5) {
     display: none;
   }
 
-  .toolbar-controls select:nth-of-type(2) {
+  .toolbar-title small,
+  .select-control:nth-of-type(2) {
     display: none;
   }
 }
 
-@media (max-width: 900px) {
-  .accounts-heading {
-    min-height: auto;
-  }
-
-  .account-metrics {
+@media (max-width: 960px) {
+  .fleet-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .account-metrics article:nth-child(3) {
-    border-left: 0;
-    border-top: 1px solid var(--aa-border);
+  .fleet-overview article:nth-child(3)::before {
+    display: none;
   }
 
-  .account-metrics article:nth-child(4) {
-    border-top: 1px solid var(--aa-border);
+  .fleet-overview article:nth-child(n + 3) {
+    border-top: 1px solid #24272e;
   }
 
   .accounts-toolbar {
@@ -975,34 +1348,77 @@ onMounted(() => void loadAccounts())
     width: 100%;
   }
 
-  .account-table-head,
-  .account-row {
-    grid-template-columns: minmax(200px, 1.4fr) minmax(110px, .8fr) minmax(105px, .7fr) 24px;
+  .upstream-table-head,
+  .upstream-row {
+    grid-template-columns: minmax(220px, 1.35fr) minmax(120px, .8fr) minmax(125px, .75fr) 30px;
   }
 
-  .account-table-head > span:nth-child(4),
-  .account-table-head > span:nth-child(5),
-  .account-table-head > span:nth-child(6),
-  .account-row > span:nth-child(4),
-  .account-row > span:nth-child(5),
-  .account-row > span:nth-child(6) {
+  .upstream-table-head > span:nth-child(4),
+  .upstream-table-head > span:nth-child(5),
+  .upstream-table-head > span:nth-child(6),
+  .upstream-row > span:nth-child(4),
+  .upstream-row > span:nth-child(5),
+  .upstream-row > span:nth-child(6) {
     display: none;
   }
 
-  .account-detail {
+  .upstream-detail {
     padding-left: 18px;
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 620px) {
-  .accounts-heading h1 { font-size: 1.7rem; }
-  .account-metrics { grid-template-columns: 1fr; }
-  .account-metrics article + article { border-left: 0; border-top: 1px solid var(--aa-border); }
-  .toolbar-controls select { flex: 1 1 120px; max-width: none; }
-  .account-table-head { display: none; }
-  .account-row { grid-template-columns: minmax(0, 1fr) 24px; min-height: 78px; }
-  .account-row > span:not(.account-identity):not(.row-chevron) { display: none; }
-  .account-detail { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .accounts-heading {
+    min-height: auto;
+    padding-bottom: 20px;
+  }
+
+  .accounts-title-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .accounts-heading h1 {
+    font-size: 1.75rem;
+  }
+
+  .refresh-button {
+    padding: 0 11px;
+  }
+
+  .fleet-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-overview article + article::before {
+    display: none;
+  }
+
+  .fleet-overview article + article {
+    border-top: 1px solid #24272e;
+  }
+
+  .select-control {
+    flex: 1 1 130px;
+  }
+
+  .upstream-table-head {
+    display: none;
+  }
+
+  .upstream-row {
+    grid-template-columns: minmax(0, 1fr) 30px;
+    min-height: 76px;
+  }
+
+  .upstream-row > span:not(.upstream-identity):not(.row-action) {
+    display: none;
+  }
+
+  .upstream-detail {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
