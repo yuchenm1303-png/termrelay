@@ -13,48 +13,122 @@ interface UsageRow {
   [key: string]: unknown
 }
 
+type Period = 'today' | '7d' | '30d' | 'all'
+type Metric = 'tokens' | 'cost'
+
 const loading = ref(false)
 const error = ref('')
 const usage = ref<UsageRow[]>([])
 const search = ref('')
 const modelFilter = ref('all')
+const period = ref<Period>('7d')
+const metric = ref<Metric>('tokens')
 
 const previewRows: UsageRow[] = [
-  { id: 1, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 18420, actual_cost: 0.0820, created_at: '2026-09-06 14:20' },
-  { id: 2, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 9820, actual_cost: 0.0510, created_at: '2026-09-06 14:12' },
-  { id: 3, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 12680, actual_cost: 0.0564, created_at: '2026-09-06 13:54' },
-  { id: 4, model: 'gemini-2.5-pro', endpoint: '/v1/chat/completions', total_tokens: 7340, actual_cost: 0.0318, created_at: '2026-09-06 13:31' },
-  { id: 5, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 6210, actual_cost: 0.0287, created_at: '2026-09-06 12:48' },
-  { id: 6, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 15460, actual_cost: 0.0689, created_at: '2026-09-06 11:26' },
+  { id: 1, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 18420, actual_cost: 0.0820, created_at: '2026-09-07 10:18' },
+  { id: 2, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 9820, actual_cost: 0.0510, created_at: '2026-09-07 09:42' },
+  { id: 3, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 12680, actual_cost: 0.0564, created_at: '2026-09-06 21:54' },
+  { id: 4, model: 'gemini-2.5-pro', endpoint: '/v1/chat/completions', total_tokens: 7340, actual_cost: 0.0318, created_at: '2026-09-06 16:31' },
+  { id: 5, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 6210, actual_cost: 0.0287, created_at: '2026-09-05 18:48' },
+  { id: 6, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 15460, actual_cost: 0.0689, created_at: '2026-09-05 11:26' },
+  { id: 7, model: 'gpt-5.6-mini', endpoint: '/v1/chat/completions', total_tokens: 11320, actual_cost: 0.0241, created_at: '2026-09-04 20:08' },
+  { id: 8, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 13880, actual_cost: 0.0706, created_at: '2026-09-03 14:22' },
+  { id: 9, model: 'gemini-2.5-pro', endpoint: '/v1/chat/completions', total_tokens: 8640, actual_cost: 0.0384, created_at: '2026-09-02 17:05' },
+  { id: 10, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 19620, actual_cost: 0.0897, created_at: '2026-09-01 09:37' },
 ]
 
-const modelOptions = computed(() => Array.from(new Set(usage.value.map((item) => item.model).filter(Boolean) as string[])))
+function parseTime(value?: string) {
+  if (!value) return 0
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  const timestamp = new Date(normalized).getTime()
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+const referenceTime = computed(() => {
+  const timestamps = usage.value.map((item) => parseTime(item.created_at)).filter(Boolean)
+  return timestamps.length ? Math.max(...timestamps) : Date.now()
+})
+
+const periodUsage = computed(() => {
+  if (period.value === 'all') return usage.value
+  const days = period.value === 'today' ? 1 : period.value === '7d' ? 7 : 30
+  const cutoff = referenceTime.value - days * 24 * 60 * 60 * 1000
+  return usage.value.filter((item) => parseTime(item.created_at) >= cutoff)
+})
+
+const modelOptions = computed(() => Array.from(new Set(periodUsage.value.map((item) => item.model).filter(Boolean) as string[])))
 
 const filteredUsage = computed(() => {
   const keyword = search.value.trim().toLowerCase()
-  return usage.value.filter((item) => {
+  return periodUsage.value.filter((item) => {
     if (modelFilter.value !== 'all' && item.model !== modelFilter.value) return false
     if (!keyword) return true
     return `${item.model || ''} ${item.endpoint || ''}`.toLowerCase().includes(keyword)
   })
 })
 
-const totalTokens = computed(() => filteredUsage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
-const totalCost = computed(() => filteredUsage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
-const averageCost = computed(() => filteredUsage.value.length ? totalCost.value / filteredUsage.value.length : 0)
+const totalRequests = computed(() => periodUsage.value.length)
+const totalTokens = computed(() => periodUsage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
+const totalCost = computed(() => periodUsage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
+const averageCost = computed(() => totalRequests.value ? totalCost.value / totalRequests.value : 0)
+const averageTokens = computed(() => totalRequests.value ? Math.round(totalTokens.value / totalRequests.value) : 0)
 
-const modelBreakdown = computed(() => {
-  const totals = new Map<string, number>()
-  filteredUsage.value.forEach((item) => {
-    const model = item.model || 'Unknown'
-    totals.set(model, (totals.get(model) || 0) + Number(item.total_tokens || 0))
+function distributionBy(key: 'model' | 'endpoint') {
+  const totals = new Map<string, { tokens: number; cost: number; requests: number }>()
+  periodUsage.value.forEach((item) => {
+    const label = String(item[key] || 'Unknown')
+    const current = totals.get(label) || { tokens: 0, cost: 0, requests: 0 }
+    current.tokens += Number(item.total_tokens || 0)
+    current.cost += Number(item.actual_cost || 0)
+    current.requests += 1
+    totals.set(label, current)
   })
-  const grandTotal = Math.max(1, Array.from(totals.values()).reduce((sum, value) => sum + value, 0))
+  const denominator = metric.value === 'tokens' ? Math.max(1, totalTokens.value) : Math.max(0.000001, totalCost.value)
   return Array.from(totals.entries())
-    .map(([model, tokens]) => ({ model, tokens, percent: Math.round(tokens / grandTotal * 100) }))
-    .sort((a, b) => b.tokens - a.tokens)
-    .slice(0, 4)
+    .map(([label, value]) => ({
+      label,
+      ...value,
+      amount: metric.value === 'tokens' ? value.tokens : value.cost,
+      percent: Math.round(((metric.value === 'tokens' ? value.tokens : value.cost) / denominator) * 100),
+    }))
+    .sort((a, b) => b.amount - a.amount)
+}
+
+const modelBreakdown = computed(() => distributionBy('model').slice(0, 5))
+const endpointBreakdown = computed(() => distributionBy('endpoint').slice(0, 5))
+
+const trendData = computed(() => {
+  const end = new Date(referenceTime.value)
+  end.setHours(0, 0, 0, 0)
+  const span = period.value === 'today' ? 1 : period.value === '30d' ? 10 : 7
+  const stepDays = period.value === '30d' ? 3 : 1
+  const rows = Array.from({ length: span }, (_, index) => {
+    const bucketEnd = new Date(end)
+    bucketEnd.setDate(end.getDate() - (span - 1 - index) * stepDays)
+    const bucketStart = new Date(bucketEnd)
+    bucketStart.setDate(bucketEnd.getDate() - stepDays + 1)
+    bucketStart.setHours(0, 0, 0, 0)
+    bucketEnd.setHours(23, 59, 59, 999)
+    const items = periodUsage.value.filter((item) => {
+      const timestamp = parseTime(item.created_at)
+      return timestamp >= bucketStart.getTime() && timestamp <= bucketEnd.getTime()
+    })
+    const tokens = items.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0)
+    const cost = items.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
+    return {
+      label: stepDays === 1 ? `${bucketEnd.getMonth() + 1}/${bucketEnd.getDate()}` : `${bucketStart.getMonth() + 1}/${bucketStart.getDate()}`,
+      tokens,
+      cost,
+      requests: items.length,
+      value: metric.value === 'tokens' ? tokens : cost,
+    }
+  })
+  const max = Math.max(...rows.map((item) => item.value), 1)
+  return rows.map((item) => ({ ...item, height: Math.max(item.value ? 10 : 2, (item.value / max) * 100) }))
 })
+
+const topModel = computed(() => modelBreakdown.value[0]?.label || '—')
+const topEndpoint = computed(() => endpointBreakdown.value[0]?.label || '—')
 
 function compact(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -74,11 +148,6 @@ function formatTime(value?: string) {
   return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function costShare(item: UsageRow) {
-  if (!totalCost.value) return 0
-  return Math.max(0, Math.min(100, Number(item.actual_cost || 0) / totalCost.value * 100))
-}
-
 async function load() {
   error.value = ''
   loading.value = true
@@ -87,7 +156,7 @@ async function load() {
       usage.value = previewRows
       return
     }
-    const data = (await api.get<{ items?: UsageRow[] } | UsageRow[]>('/usage', { params: { page: 1, page_size: 50 } })).data
+    const data = (await api.get<{ items?: UsageRow[] } | UsageRow[]>('/usage', { params: { page: 1, page_size: 100 } })).data
     usage.value = Array.isArray(data) ? data : (data.items || [])
   } catch (caught) {
     error.value = getErrorMessage(caught)
@@ -102,92 +171,188 @@ onMounted(() => void load())
 <template>
   <section class="workspace-page user-usage-page">
     <header class="usage-heading">
-      <div>
-        <span class="usage-eyebrow"><i></i>USAGE ACTIVITY</span>
+      <div class="usage-heading-copy">
+        <span class="usage-eyebrow"><i></i>USAGE ANALYTICS</span>
         <h1>用量与日志</h1>
-        <p>查看最近请求、Token 消耗与费用，快速定位主要模型的使用情况。</p>
+        <p>查看 API 请求、Token 与费用趋势，了解主要模型和 Endpoint 的消耗情况。</p>
       </div>
-      <button class="usage-refresh" type="button" :disabled="loading" @click="load">
-        <WorkspaceNavIcon name="refresh" />
-        <span>{{ loading ? '刷新中' : '刷新数据' }}</span>
-      </button>
+      <div class="usage-heading-actions">
+        <div class="period-switch" aria-label="统计范围">
+          <button :class="{ active: period === 'today' }" type="button" @click="period = 'today'">今日</button>
+          <button :class="{ active: period === '7d' }" type="button" @click="period = '7d'">7 天</button>
+          <button :class="{ active: period === '30d' }" type="button" @click="period = '30d'">30 天</button>
+          <button :class="{ active: period === 'all' }" type="button" @click="period = 'all'">全部</button>
+        </div>
+        <button class="usage-refresh" type="button" :disabled="loading" aria-label="刷新数据" @click="load">
+          <WorkspaceNavIcon name="refresh" />
+        </button>
+      </div>
     </header>
 
     <p v-if="error" class="inline-error">{{ error }}</p>
 
     <div class="usage-summary-grid">
       <article class="usage-summary-card">
-        <div class="usage-summary-head"><span>当前请求</span><i><WorkspaceNavIcon name="activity" /></i></div>
-        <strong>{{ filteredUsage.length }}</strong>
-        <footer><span>最近加载记录</span><b>REQUESTS</b></footer>
+        <div class="summary-icon"><WorkspaceNavIcon name="activity" /></div>
+        <div class="summary-copy">
+          <span>总请求数</span>
+          <strong>{{ totalRequests.toLocaleString() }}</strong>
+          <small>所选范围内 API 调用</small>
+        </div>
       </article>
       <article class="usage-summary-card">
-        <div class="usage-summary-head"><span>Token 消耗</span><i><WorkspaceNavIcon name="chart" /></i></div>
-        <strong>{{ compact(totalTokens) }}</strong>
-        <footer><span>{{ totalTokens.toLocaleString() }} Tokens</span><b>TOKENS</b></footer>
+        <div class="summary-icon"><WorkspaceNavIcon name="chart" /></div>
+        <div class="summary-copy">
+          <span>总 Token</span>
+          <strong>{{ compact(totalTokens) }}</strong>
+          <small>平均 {{ compact(averageTokens) }} / 请求</small>
+        </div>
       </article>
       <article class="usage-summary-card">
-        <div class="usage-summary-head"><span>当前费用</span><i><WorkspaceNavIcon name="wallet" /></i></div>
-        <strong>${{ totalCost.toFixed(4) }}</strong>
-        <footer><span>当前列表累计</span><b>USD</b></footer>
+        <div class="summary-icon"><WorkspaceNavIcon name="wallet" /></div>
+        <div class="summary-copy">
+          <span>总费用</span>
+          <strong>{{ money(totalCost) }}</strong>
+          <small>按实际记录累计</small>
+        </div>
       </article>
-      <article class="usage-summary-card usage-summary-muted">
-        <div class="usage-summary-head"><span>平均请求成本</span><i><WorkspaceNavIcon name="receipt" /></i></div>
-        <strong>${{ averageCost.toFixed(4) }}</strong>
-        <footer><span>按当前记录计算</span><b>AVG / REQ</b></footer>
+      <article class="usage-summary-card">
+        <div class="summary-icon"><WorkspaceNavIcon name="receipt" /></div>
+        <div class="summary-copy">
+          <span>平均请求成本</span>
+          <strong>{{ money(averageCost) }}</strong>
+          <small>每次 API 调用</small>
+        </div>
       </article>
     </div>
 
-    <section class="usage-insight-grid">
-      <article class="usage-panel usage-breakdown-panel">
-        <header class="usage-panel-head">
-          <div><small>MODEL MIX</small><h2>模型用量构成</h2></div>
-          <span>按 Token 统计</span>
+    <section class="analytics-toolbar">
+      <div class="toolbar-context">
+        <WorkspaceNavIcon name="chart" />
+        <span>用量分析</span>
+        <b>{{ totalRequests }} 条记录</b>
+      </div>
+      <div class="metric-switch" aria-label="统计口径">
+        <button :class="{ active: metric === 'tokens' }" type="button" @click="metric = 'tokens'">按 Token</button>
+        <button :class="{ active: metric === 'cost' }" type="button" @click="metric = 'cost'">按费用</button>
+      </div>
+    </section>
+
+    <div class="analytics-grid">
+      <article class="analytics-panel trend-panel">
+        <header class="panel-heading">
+          <div>
+            <small>TREND</small>
+            <h2>{{ metric === 'tokens' ? 'Token 使用趋势' : '费用趋势' }}</h2>
+          </div>
+          <div class="panel-total">
+            <span>{{ metric === 'tokens' ? '当前总量' : '当前费用' }}</span>
+            <strong>{{ metric === 'tokens' ? compact(totalTokens) : money(totalCost) }}</strong>
+          </div>
         </header>
-        <div v-if="modelBreakdown.length" class="usage-model-list">
-          <div v-for="item in modelBreakdown" :key="item.model" class="usage-model-row">
-            <div class="usage-model-meta"><strong>{{ item.model }}</strong><span>{{ compact(item.tokens) }} Tokens</span></div>
-            <div class="usage-model-track"><i :style="{ width: `${item.percent}%` }"></i></div>
-            <b>{{ item.percent }}%</b>
+        <div v-if="totalRequests" class="trend-chart">
+          <div class="trend-grid-lines"><i></i><i></i><i></i><i></i></div>
+          <div class="trend-bars">
+            <div v-for="item in trendData" :key="item.label" class="trend-column">
+              <div class="trend-value-wrap">
+                <span class="trend-tooltip">{{ metric === 'tokens' ? compact(item.tokens) : money(item.cost) }}</span>
+                <i class="trend-value" :style="{ height: `${item.height}%` }"></i>
+              </div>
+              <small>{{ item.label }}</small>
+            </div>
           </div>
         </div>
-        <p v-else class="usage-empty-compact">暂无可统计记录</p>
+        <div v-else class="panel-empty">
+          <WorkspaceNavIcon name="chart" />
+          <strong>暂无用量数据</strong>
+          <span>开始调用 API 后，这里会显示趋势。</span>
+        </div>
       </article>
 
-      <article class="usage-panel usage-filter-panel">
-        <header class="usage-panel-head">
-          <div><small>FILTER</small><h2>筛选日志</h2></div>
-          <span>{{ filteredUsage.length }} 条</span>
+      <article class="analytics-panel distribution-panel">
+        <header class="panel-heading">
+          <div>
+            <small>MODEL MIX</small>
+            <h2>模型分布</h2>
+          </div>
+          <span class="panel-caption">{{ metric === 'tokens' ? '按 Token' : '按费用' }}</span>
         </header>
-        <div class="usage-filter-body">
+        <div v-if="modelBreakdown.length" class="distribution-list">
+          <div v-for="(item, index) in modelBreakdown" :key="item.label" class="distribution-row">
+            <div class="distribution-head">
+              <span><i>{{ String(index + 1).padStart(2, '0') }}</i><strong>{{ item.label }}</strong></span>
+              <b>{{ item.percent }}%</b>
+            </div>
+            <div class="distribution-track"><i :style="{ width: `${item.percent}%` }"></i></div>
+            <small>{{ metric === 'tokens' ? `${compact(item.tokens)} Tokens` : money(item.cost) }} · {{ item.requests }} 次</small>
+          </div>
+        </div>
+        <div v-else class="panel-empty compact">
+          <strong>暂无模型数据</strong>
+        </div>
+      </article>
+
+      <article class="analytics-panel distribution-panel endpoint-panel">
+        <header class="panel-heading">
+          <div>
+            <small>ENDPOINT</small>
+            <h2>Endpoint 分布</h2>
+          </div>
+          <span class="panel-caption">{{ endpointBreakdown.length }} 个接口</span>
+        </header>
+        <div v-if="endpointBreakdown.length" class="distribution-list endpoint-list">
+          <div v-for="item in endpointBreakdown" :key="item.label" class="distribution-row">
+            <div class="distribution-head">
+              <code>{{ item.label }}</code>
+              <b>{{ item.percent }}%</b>
+            </div>
+            <div class="distribution-track"><i :style="{ width: `${item.percent}%` }"></i></div>
+            <small>{{ item.requests }} 次请求 · {{ metric === 'tokens' ? `${compact(item.tokens)} Tokens` : money(item.cost) }}</small>
+          </div>
+        </div>
+        <div v-else class="panel-empty compact"><strong>暂无 Endpoint 数据</strong></div>
+      </article>
+
+      <article class="analytics-panel overview-panel">
+        <header class="panel-heading">
+          <div>
+            <small>PROFILE</small>
+            <h2>使用概况</h2>
+          </div>
+          <span class="panel-caption">当前范围</span>
+        </header>
+        <dl class="usage-profile-list">
+          <div><dt>主要模型</dt><dd>{{ topModel }}</dd></div>
+          <div><dt>主要 Endpoint</dt><dd><code>{{ topEndpoint }}</code></dd></div>
+          <div><dt>平均 Token / 请求</dt><dd>{{ compact(averageTokens) }}</dd></div>
+          <div><dt>平均费用 / 请求</dt><dd>{{ money(averageCost) }}</dd></div>
+        </dl>
+      </article>
+    </div>
+
+    <section class="usage-log-panel">
+      <header class="usage-log-heading">
+        <div>
+          <small>REQUEST LOG</small>
+          <h2>明细记录</h2>
+          <p>查看每次 API 调用对应的模型、Endpoint、Token 和费用。</p>
+        </div>
+        <div class="log-filters">
           <label class="usage-search">
             <WorkspaceNavIcon name="search" />
             <input v-model="search" type="search" placeholder="搜索模型或 Endpoint" />
           </label>
-          <label class="usage-select-wrap">
-            <span>模型</span>
-            <select v-model="modelFilter">
-              <option value="all">全部模型</option>
-              <option v-for="model in modelOptions" :key="model" :value="model">{{ model }}</option>
-            </select>
-          </label>
+          <select v-model="modelFilter" aria-label="筛选模型">
+            <option value="all">全部模型</option>
+            <option v-for="model in modelOptions" :key="model" :value="model">{{ model }}</option>
+          </select>
         </div>
-      </article>
-    </section>
-
-    <section class="usage-log-panel">
-      <header class="usage-log-head">
-        <div>
-          <small>REQUEST LOG</small>
-          <h2>最近请求</h2>
-        </div>
-        <div class="usage-log-total"><span>{{ compact(totalTokens) }} Tokens</span><b>{{ money(totalCost) }}</b></div>
       </header>
 
       <div class="usage-table-scroll">
         <div class="usage-table">
           <div class="usage-row usage-table-head">
-            <span>时间</span><span>模型</span><span>Endpoint</span><span>Token</span><span>费用</span><span>成本占比</span>
+            <span>时间</span><span>模型</span><span>Endpoint</span><span>Token</span><span>费用</span>
           </div>
           <div v-for="(item, index) in filteredUsage" :key="item.id || index" class="usage-row">
             <time>{{ formatTime(item.created_at) }}</time>
@@ -195,107 +360,204 @@ onMounted(() => void load())
             <code>{{ item.endpoint || '—' }}</code>
             <span class="usage-number">{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
             <strong class="usage-cost">{{ money(Number(item.actual_cost || 0)) }}</strong>
-            <div class="usage-share"><span><i :style="{ width: `${costShare(item)}%` }"></i></span><b>{{ costShare(item).toFixed(0) }}%</b></div>
           </div>
           <div v-if="!filteredUsage.length && !loading" class="usage-empty">没有匹配的用量记录</div>
         </div>
       </div>
+      <footer class="log-footer">
+        <span>当前显示 {{ filteredUsage.length }} / {{ periodUsage.length }} 条记录</span>
+        <span>费用以最终账单结算为准</span>
+      </footer>
     </section>
-
-    <footer class="usage-footnote">
-      <span>当前页面展示最近加载的请求记录；费用以最终账单结算为准。</span>
-      <RouterLink to="/model-plaza">查看模型与价格 →</RouterLink>
-    </footer>
   </section>
 </template>
 
 <style scoped>
-.user-usage-page { width: 100%; max-width: 1280px; margin: 0 auto; padding-bottom: 36px; }
-.usage-heading { min-height: 116px; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 27px; }
-.usage-heading > div { min-width: 0; }
-.usage-eyebrow { margin-bottom: 12px; display: inline-flex; align-items: center; gap: 8px; color: #69727d; font: 700 .64rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
-.usage-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: #4bc494; box-shadow: 0 0 0 4px rgba(75,196,148,.07); }
-.usage-heading h1 { margin: 0; color: #f5f6f8; font-size: 2.25rem; line-height: 1.05; letter-spacing: -.045em; font-weight: 720; }
-.usage-heading p { margin: 10px 0 0; color: #79828d; font-size: .87rem; line-height: 1.65; }
-.usage-refresh { min-height: 40px; padding: 0 14px; border: 1px solid #272c34; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px; color: #aeb4bc; background: #101216; font: inherit; font-size: .75rem; cursor: pointer; transition: border-color .15s ease, color .15s ease, background-color .15s ease; }
-.usage-refresh:hover:not(:disabled) { border-color: #373d46; color: #f2f4f6; background: #14171b; }
-.usage-refresh:disabled { opacity: .58; cursor: wait; }
+.user-usage-page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-bottom: 42px;
+}
+
+.usage-heading {
+  min-height: 116px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.usage-heading-copy { min-width: 0; }
+.usage-eyebrow {
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #69727c;
+  font: 700 .64rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+}
+.usage-eyebrow i { width: 6px; height: 6px; border-radius: 50%; background: #54c99a; box-shadow: 0 0 0 4px rgba(84,201,154,.06); }
+.usage-heading h1 { margin: 0; color: #f5f6f7; font-size: 2.25rem; line-height: 1.03; font-weight: 720; letter-spacing: -.045em; }
+.usage-heading p { margin: 10px 0 0; color: #7b838d; font-size: .88rem; line-height: 1.65; }
+.usage-heading-actions { display: flex; align-items: center; gap: 9px; }
+
+.period-switch,
+.metric-switch {
+  padding: 3px;
+  border: 1px solid #272b31;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  background: #0f1114;
+}
+.period-switch button,
+.metric-switch button {
+  min-height: 33px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 6px;
+  color: #777f89;
+  background: transparent;
+  font: inherit;
+  font-size: .72rem;
+  cursor: pointer;
+}
+.period-switch button.active,
+.metric-switch button.active { color: #eef0f2; background: #202329; box-shadow: inset 0 1px rgba(255,255,255,.04); }
+.usage-refresh { width: 41px; height: 41px; border: 1px solid #272b31; border-radius: 9px; display: grid; place-items: center; color: #8c949e; background: #0f1114; cursor: pointer; }
+.usage-refresh:hover:not(:disabled) { color: #f0f2f4; border-color: #363b43; }
+.usage-refresh:disabled { opacity: .5; cursor: wait; }
 .usage-refresh :deep(.workspace-nav-icon) { width: 15px; height: 15px; }
 
-.usage-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
-.usage-summary-card { min-height: 150px; padding: 19px 20px 17px; border: 1px solid #22272e; border-radius: 12px; display: flex; flex-direction: column; background: #0f1115; box-shadow: inset 0 1px rgba(255,255,255,.012); }
-.usage-summary-card:hover { border-color: #2d333c; }
-.usage-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.usage-summary-head > span { color: #858e99; font-size: .76rem; font-weight: 600; }
-.usage-summary-head > i { width: 31px; height: 31px; border: 1px solid #293039; border-radius: 8px; display: grid; place-items: center; color: #78838f; background: #12151a; font-style: normal; }
-.usage-summary-head :deep(.workspace-nav-icon) { width: 15px; height: 15px; }
-.usage-summary-card > strong { margin-top: 17px; color: #f1f3f5; font-size: 1.72rem; line-height: 1; font-weight: 680; letter-spacing: -.035em; }
-.usage-summary-card footer { margin-top: auto; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #69727c; font-size: .66rem; }
-.usage-summary-card footer b { color: #535d68; font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; }
-.usage-summary-muted { background: #0d0f12; }
-
-.usage-insight-grid { margin-top: 12px; display: grid; grid-template-columns: minmax(0,1.55fr) minmax(310px,.72fr); gap: 12px; }
-.usage-panel, .usage-log-panel { border: 1px solid #22272e; border-radius: 12px; background: #0d0f13; overflow: hidden; }
-.usage-panel-head { min-height: 70px; padding: 16px 20px; border-bottom: 1px solid #1f2329; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.usage-panel-head small, .usage-log-head small { display: block; margin-bottom: 5px; color: #626c76; font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .11em; }
-.usage-panel-head h2, .usage-log-head h2 { margin: 0; color: #e6e9ec; font-size: .94rem; line-height: 1.2; font-weight: 650; }
-.usage-panel-head > span { color: #68717b; font-size: .66rem; }
-.usage-model-list { padding: 8px 20px 13px; }
-.usage-model-row { min-height: 49px; display: grid; grid-template-columns: 176px 1fr 38px; align-items: center; gap: 16px; }
-.usage-model-meta { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.usage-model-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d7dbe0; font-size: .73rem; font-weight: 600; }
-.usage-model-meta span { color: #646e79; font-size: .61rem; }
-.usage-model-track { height: 5px; border-radius: 999px; overflow: hidden; background: #1d2126; }
-.usage-model-track i { display: block; height: 100%; border-radius: inherit; background: #58636e; }
-.usage-model-row:first-child .usage-model-track i { background: #4b9279; }
-.usage-model-row > b { color: #818a94; font-size: .65rem; font-weight: 650; text-align: right; }
-.usage-empty-compact { padding: 22px 20px; margin: 0; color: #666f79; font-size: .72rem; }
-
-.usage-filter-body { padding: 16px 20px 19px; display: grid; gap: 14px; }
-.usage-search { min-height: 40px; padding: 0 12px; border: 1px solid #282d34; border-radius: 8px; display: flex; align-items: center; gap: 9px; color: #67717b; background: #111318; }
-.usage-search:focus-within { border-color: #3a414a; }
-.usage-search :deep(.workspace-nav-icon) { width: 15px; height: 15px; flex: 0 0 15px; }
-.usage-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: #dce0e4; background: transparent; font: inherit; font-size: .72rem; }
-.usage-search input::placeholder { color: #5f6872; }
-.usage-select-wrap { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; }
-.usage-select-wrap > span { color: #69727c; font-size: .68rem; }
-.usage-select-wrap select { min-height: 40px; padding: 0 11px; border: 1px solid #282d34; border-radius: 8px; color: #cbd0d6; background: #111318; font: inherit; font-size: .72rem; outline: none; }
-
-.usage-log-panel { margin-top: 12px; }
-.usage-log-head { min-height: 76px; padding: 17px 20px; border-bottom: 1px solid #20242a; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.usage-log-total { display: flex; align-items: center; gap: 15px; color: #707984; font-size: .68rem; }
-.usage-log-total b { color: #d4d8dd; font-size: .75rem; font-weight: 600; }
-.usage-table-scroll { overflow-x: auto; }
-.usage-table { min-width: 920px; }
-.usage-row { min-height: 58px; padding: 0 20px; display: grid; grid-template-columns: 1.02fr 1.2fr 1.45fr .68fr .67fr 1fr; align-items: center; gap: 16px; border-bottom: 1px solid #1d2025; color: #8b949e; font-size: .71rem; }
-.usage-row:last-child { border-bottom: 0; }
-.usage-table-head { min-height: 42px; color: #59636e; font-size: .6rem; font-weight: 700; letter-spacing: .04em; }
-.usage-row time { color: #747d87; }
-.usage-model-cell { min-width: 0; display: flex; align-items: center; gap: 8px; }
-.usage-model-cell i { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #596570; }
-.usage-model-cell strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #dce0e4; font-size: .73rem; font-weight: 620; }
-.usage-row code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #8b96a2; font: 500 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.usage-number { color: #9ba3ac; font-variant-numeric: tabular-nums; }
-.usage-cost { color: #d5d9de; font-size: .72rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.usage-share { display: grid; grid-template-columns: 1fr 30px; align-items: center; gap: 9px; }
-.usage-share > span { height: 4px; border-radius: 999px; overflow: hidden; background: #1e2227; }
-.usage-share > span i { display: block; height: 100%; border-radius: inherit; background: #596570; }
-.usage-share b { color: #6e7781; font-size: .61rem; font-weight: 600; text-align: right; }
-.usage-empty { min-height: 130px; display: grid; place-items: center; color: #66707a; font-size: .75rem; }
-.usage-footnote { padding: 13px 3px 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #59626c; font-size: .62rem; }
-.usage-footnote a { color: #7d8792; }
-.usage-footnote a:hover { color: #dce0e4; }
-
-@media (max-width: 1050px) {
-  .usage-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .usage-insight-grid { grid-template-columns: 1fr; }
+.usage-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.usage-summary-card {
+  min-height: 118px;
+  padding: 20px;
+  border: 1px solid #23272e;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #0f1115;
+  box-shadow: inset 0 1px rgba(255,255,255,.012);
 }
-@media (max-width: 720px) {
-  .usage-heading { min-height: auto; padding-top: 12px; align-items: flex-start; flex-direction: column; }
+.summary-icon { width: 38px; height: 38px; flex: 0 0 38px; border: 1px solid #2b3038; border-radius: 9px; display: grid; place-items: center; color: #87919c; background: #14171b; }
+.summary-icon :deep(.workspace-nav-icon) { width: 17px; height: 17px; }
+.summary-copy { min-width: 0; display: flex; flex-direction: column; }
+.summary-copy > span { color: #818995; font-size: .76rem; font-weight: 600; }
+.summary-copy > strong { margin-top: 8px; color: #f1f3f5; font-size: 1.52rem; line-height: 1; font-weight: 680; letter-spacing: -.03em; }
+.summary-copy > small { margin-top: 10px; color: #626b75; font-size: .65rem; }
+
+.analytics-toolbar { margin-top: 13px; min-height: 56px; padding: 0 10px 0 17px; border: 1px solid #23272d; border-radius: 11px; display: flex; align-items: center; justify-content: space-between; gap: 18px; background: #0d0f12; }
+.toolbar-context { display: flex; align-items: center; gap: 9px; color: #9aa1aa; font-size: .75rem; font-weight: 600; }
+.toolbar-context :deep(.workspace-nav-icon) { width: 15px; height: 15px; color: #68727d; }
+.toolbar-context b { min-height: 23px; padding: 0 8px; border: 1px solid #282d34; border-radius: 999px; display: inline-flex; align-items: center; color: #626b75; font-size: .61rem; font-weight: 600; }
+.metric-switch button { min-height: 29px; padding: 0 11px; font-size: .68rem; }
+
+.analytics-grid { margin-top: 13px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(330px, .8fr); gap: 13px; }
+.analytics-panel { min-width: 0; border: 1px solid #23272e; border-radius: 12px; background: #0e1013; overflow: hidden; }
+.panel-heading { min-height: 74px; padding: 17px 20px; border-bottom: 1px solid #20242a; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.panel-heading small { display: block; margin-bottom: 6px; color: #606974; font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .11em; }
+.panel-heading h2 { margin: 0; color: #e9ebee; font-size: .95rem; font-weight: 650; letter-spacing: -.01em; }
+.panel-caption { color: #666f79; font-size: .66rem; }
+.panel-total { text-align: right; }
+.panel-total span { display: block; margin-bottom: 4px; color: #626b75; font-size: .63rem; }
+.panel-total strong { color: #e5e8eb; font-size: .94rem; }
+
+.trend-panel { min-height: 330px; }
+.trend-chart { position: relative; height: 255px; padding: 24px 22px 18px; }
+.trend-grid-lines { position: absolute; inset: 24px 22px 45px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.trend-grid-lines i { height: 1px; background: #1d2025; }
+.trend-bars { position: relative; height: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 14px; }
+.trend-column { height: 100%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 10px; }
+.trend-value-wrap { position: relative; width: min(42px, 72%); height: calc(100% - 24px); display: flex; align-items: flex-end; }
+.trend-value { width: 100%; min-height: 2px; border-radius: 5px 5px 2px 2px; display: block; background: linear-gradient(180deg, #747d87, #343a42); opacity: .78; transition: opacity .15s ease, background-color .15s ease; }
+.trend-column:hover .trend-value { opacity: 1; background: #727c87; }
+.trend-tooltip { position: absolute; z-index: 2; left: 50%; bottom: calc(100% + 7px); transform: translateX(-50%); padding: 5px 7px; border: 1px solid #2c3239; border-radius: 6px; opacity: 0; pointer-events: none; white-space: nowrap; color: #dfe2e5; background: #15181c; font-size: .58rem; transition: opacity .12s ease; }
+.trend-column:hover .trend-tooltip { opacity: 1; }
+.trend-column > small { color: #606975; font-size: .61rem; }
+
+.distribution-panel { min-height: 330px; }
+.distribution-list { padding: 8px 20px 16px; }
+.distribution-row { padding: 13px 0 11px; border-bottom: 1px solid #1d2025; }
+.distribution-row:last-child { border-bottom: 0; }
+.distribution-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.distribution-head > span { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.distribution-head > span i { color: #4f5862; font: 600 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; }
+.distribution-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #bdc3ca; font-size: .72rem; font-weight: 600; }
+.distribution-head b { color: #d9dde1; font-size: .7rem; font-weight: 650; }
+.distribution-head code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #a8b0b8; font: 500 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.distribution-track { margin-top: 8px; height: 4px; border-radius: 99px; overflow: hidden; background: #1c2025; }
+.distribution-track i { display: block; height: 100%; border-radius: inherit; background: #626c76; }
+.distribution-row > small { margin-top: 6px; display: block; color: #5f6872; font-size: .6rem; }
+.endpoint-panel { min-height: 285px; }
+.endpoint-list { padding-top: 6px; }
+
+.overview-panel { min-height: 285px; }
+.usage-profile-list { margin: 0; padding: 7px 20px 14px; }
+.usage-profile-list > div { min-height: 48px; display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 16px; border-bottom: 1px solid #1d2025; }
+.usage-profile-list > div:last-child { border-bottom: 0; }
+.usage-profile-list dt { color: #68717b; font-size: .68rem; }
+.usage-profile-list dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d7dbe0; font-size: .72rem; font-weight: 600; text-align: right; }
+.usage-profile-list code { color: #aeb6be; font: 500 .65rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.panel-empty { min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #555e68; }
+.panel-empty :deep(.workspace-nav-icon) { width: 27px; height: 27px; color: #3f464e; }
+.panel-empty strong { color: #717a84; font-size: .78rem; }
+.panel-empty span { color: #505862; font-size: .65rem; }
+.panel-empty.compact { min-height: 190px; }
+
+.usage-log-panel { margin-top: 13px; border: 1px solid #23272e; border-radius: 12px; overflow: hidden; background: #0e1013; }
+.usage-log-heading { min-height: 86px; padding: 17px 20px; border-bottom: 1px solid #20242a; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.usage-log-heading small { display: block; margin-bottom: 5px; color: #606974; font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .11em; }
+.usage-log-heading h2 { margin: 0; color: #e9ebee; font-size: .95rem; font-weight: 650; }
+.usage-log-heading p { margin: 6px 0 0; color: #626b75; font-size: .65rem; }
+.log-filters { display: flex; align-items: center; gap: 8px; }
+.usage-search { width: 220px; height: 36px; padding: 0 11px; border: 1px solid #292e35; border-radius: 8px; display: flex; align-items: center; gap: 8px; background: #111317; }
+.usage-search :deep(.workspace-nav-icon) { width: 14px; height: 14px; color: #616a74; }
+.usage-search input { width: 100%; border: 0; outline: none; color: #d7dbe0; background: transparent; font: inherit; font-size: .68rem; }
+.usage-search input::placeholder { color: #525a64; }
+.log-filters select { min-width: 126px; height: 36px; padding: 0 28px 0 10px; border: 1px solid #292e35; border-radius: 8px; color: #a4abb4; background-color: #111317; font: inherit; font-size: .68rem; }
+
+.usage-table-scroll { overflow-x: auto; }
+.usage-table { min-width: 820px; }
+.usage-row { min-height: 56px; padding: 0 20px; display: grid; grid-template-columns: 1fr 1.25fr 1.4fr .75fr .72fr; align-items: center; gap: 18px; border-bottom: 1px solid #1d2025; color: #8b939d; font-size: .71rem; }
+.usage-row:last-child { border-bottom: 0; }
+.usage-table-head { min-height: 42px; color: #59626c; font-size: .61rem; font-weight: 650; letter-spacing: .035em; }
+.usage-row time { color: #737c86; }
+.usage-model-cell { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.usage-model-cell i { width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%; background: #69747e; }
+.usage-model-cell strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #dce0e4; font-size: .72rem; font-weight: 620; }
+.usage-row code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9ba4ad; font: 500 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.usage-number { color: #aeb5bd; font-variant-numeric: tabular-nums; }
+.usage-cost { color: #d8dce0; font-size: .71rem; font-weight: 620; font-variant-numeric: tabular-nums; }
+.usage-empty { min-height: 140px; display: grid; place-items: center; color: #606974; font-size: .72rem; }
+.log-footer { min-height: 45px; padding: 0 20px; border-top: 1px solid #20242a; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #59626c; font-size: .61rem; }
+
+@media (max-width: 1120px) {
+  .usage-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analytics-grid { grid-template-columns: 1fr; }
+  .trend-panel, .distribution-panel, .endpoint-panel, .overview-panel { min-height: auto; }
+}
+
+@media (max-width: 760px) {
+  .usage-heading { min-height: auto; padding-top: 16px; align-items: flex-start; flex-direction: column; }
+  .usage-heading-actions { width: 100%; justify-content: space-between; }
+  .period-switch { flex: 1; }
+  .period-switch button { flex: 1; padding: 0 8px; }
   .usage-heading h1 { font-size: 1.9rem; }
-  .usage-refresh { align-self: flex-end; }
   .usage-summary-grid { grid-template-columns: 1fr; }
-  .usage-model-row { grid-template-columns: minmax(120px,1fr) 1fr 36px; gap: 10px; }
-  .usage-footnote { align-items: flex-start; flex-direction: column; }
+  .analytics-toolbar { align-items: flex-start; flex-direction: column; padding: 12px; }
+  .metric-switch { width: 100%; }
+  .metric-switch button { flex: 1; }
+  .usage-log-heading { align-items: flex-start; flex-direction: column; }
+  .log-filters { width: 100%; }
+  .usage-search { width: auto; flex: 1; }
+  .usage-profile-list > div { grid-template-columns: 1fr; gap: 5px; padding: 10px 0; }
+  .usage-profile-list dd { text-align: left; }
+  .log-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 10px 20px; }
 }
 </style>
