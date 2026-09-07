@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSession } from '../core/session'
 
-const { state, isAdmin, logout } = useSession()
+const props = withDefaults(defineProps<{
+  variant?: 'home' | 'workspace'
+}>(), {
+  variant: 'home',
+})
+
+const router = useRouter()
+const { state, isAdmin, logout, previewMode } = useSession()
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLButtonElement | null>(null)
@@ -10,6 +18,9 @@ const trigger = ref<HTMLButtonElement | null>(null)
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const displayName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Smirel Account')
 const secondaryText = computed(() => state.user?.email || (isAdmin.value ? '管理员账户' : 'Smirel 账户'))
+const avatarUrl = computed(() => state.user?.avatar_url || '')
+const roleLabel = computed(() => isAdmin.value ? 'ADMIN' : 'ACCOUNT')
+const isWorkspace = computed(() => props.variant === 'workspace')
 
 function closeMenu(focusTrigger = false) {
   open.value = false
@@ -33,6 +44,7 @@ function handleKeydown(event: KeyboardEvent) {
 async function signOut() {
   closeMenu()
   await logout()
+  if (!previewMode) await router.push('/login')
 }
 
 onMounted(() => {
@@ -47,11 +59,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="root" class="home-account-menu">
+  <div
+    ref="root"
+    class="home-account-menu"
+    :class="{ 'home-account-menu--workspace': isWorkspace }"
+  >
     <button
       ref="trigger"
       class="home-account-trigger"
-      :class="{ 'is-open': open }"
+      :class="{ 'is-open': open, 'is-workspace': isWorkspace }"
       type="button"
       aria-haspopup="menu"
       :aria-expanded="open"
@@ -59,7 +75,15 @@ onBeforeUnmount(() => {
       aria-label="账户菜单"
       @click="toggleMenu"
     >
-      <span class="home-account-trigger-avatar">{{ initials }}</span>
+      <span class="home-account-trigger-avatar">
+        <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+        <span v-else>{{ initials }}</span>
+      </span>
+
+      <span v-if="isWorkspace" class="home-account-trigger-copy">
+        <strong>{{ displayName }}</strong>
+      </span>
+
       <svg class="home-account-trigger-chevron" viewBox="0 0 16 16" aria-hidden="true">
         <path d="m5 6 3 3 3-3" />
       </svg>
@@ -68,12 +92,15 @@ onBeforeUnmount(() => {
     <Transition name="home-account-pop">
       <div v-if="open" id="home-account-popover" class="home-account-popover" role="menu">
         <header class="home-account-identity">
-          <span class="home-account-avatar">{{ initials }}</span>
+          <span class="home-account-avatar">
+            <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+            <span v-else>{{ initials }}</span>
+          </span>
           <span class="home-account-copy">
             <strong>{{ displayName }}</strong>
             <small>{{ secondaryText }}</small>
           </span>
-          <span class="home-account-role">{{ isAdmin ? 'ADMIN' : 'ACCOUNT' }}</span>
+          <span class="home-account-role">{{ roleLabel }}</span>
         </header>
 
         <div class="home-account-divider"></div>
@@ -81,21 +108,41 @@ onBeforeUnmount(() => {
         <nav class="home-account-nav" aria-label="账户快捷入口">
           <RouterLink class="home-account-item" to="/profile" role="menuitem" @click="closeMenu()">
             <svg viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx="10" cy="7" r="3" />
-              <path d="M4.5 16c.8-2.6 2.7-4 5.5-4s4.7 1.4 5.5 4" />
+              <circle cx="10" cy="6.5" r="3" />
+              <path d="M4.4 16c.85-2.75 2.75-4.2 5.6-4.2s4.75 1.45 5.6 4.2" />
             </svg>
-            <span><strong>账户设置</strong><small>资料与账户信息</small></span>
+            <span><strong>个人资料</strong><small>账户信息与安全设置</small></span>
           </RouterLink>
 
           <RouterLink class="home-account-item" to="/keys" role="menuitem" @click="closeMenu()">
             <svg viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx="7" cy="10" r="3" />
-              <path d="m9.7 8.3 5.8-5.8M12.6 5.4l2 2M14.4 3.6l2 2" />
+              <circle cx="6.8" cy="10.2" r="3.2" />
+              <path d="m9.5 8.5 6-6M12.4 5.6l2 2M14.3 3.7l2 2" />
             </svg>
-            <span><strong>API Keys</strong><small>创建与管理密钥</small></span>
+            <span><strong>API 密钥</strong><small>创建与管理访问密钥</small></span>
           </RouterLink>
 
-          <RouterLink class="home-account-item" to="/usage" role="menuitem" @click="closeMenu()">
+          <RouterLink
+            v-if="isWorkspace"
+            class="home-account-item"
+            to="/support"
+            role="menuitem"
+            @click="closeMenu()"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4.2 4.7h11.6a1.7 1.7 0 0 1 1.7 1.7v6.2a1.7 1.7 0 0 1-1.7 1.7H9l-3.9 2.6v-2.6h-.9a1.7 1.7 0 0 1-1.7-1.7V6.4a1.7 1.7 0 0 1 1.7-1.7Z" />
+              <path d="M6.2 8.1h7.6M6.2 11h5.2" />
+            </svg>
+            <span><strong>联系客服</strong><small>帮助、反馈与工单支持</small></span>
+          </RouterLink>
+
+          <RouterLink
+            v-else
+            class="home-account-item"
+            to="/usage"
+            role="menuitem"
+            @click="closeMenu()"
+          >
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M3 16.5h14M5 14V9.5M10 14V5.5M15 14V8" />
             </svg>
@@ -121,6 +168,18 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
+.home-account-menu--workspace {
+  position: fixed;
+  z-index: 92;
+  top: 11px;
+  right: 28px;
+}
+
+:global(.workspace-root .workspace-profile-link) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .home-account-trigger {
   width: 46px;
   height: 38px;
@@ -137,10 +196,20 @@ onBeforeUnmount(() => {
   transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
 }
 
+.home-account-trigger.is-workspace {
+  width: auto;
+  min-width: 146px;
+  height: 42px;
+  padding: 4px 10px 4px 5px;
+  gap: 9px;
+  border-color: #252930;
+  background: #101217;
+}
+
 .home-account-trigger:hover,
 .home-account-trigger.is-open {
   border-color: #414853;
-  background: #14171c;
+  background: #15181e;
 }
 
 .home-account-trigger.is-open {
@@ -152,9 +221,15 @@ onBeforeUnmount(() => {
   outline-offset: 2px;
 }
 
+.home-account-trigger-avatar,
+.home-account-avatar {
+  overflow: hidden;
+}
+
 .home-account-trigger-avatar {
   width: 25px;
   height: 25px;
+  flex: 0 0 25px;
   border: 1px solid #353b45;
   border-radius: 7px;
   display: grid;
@@ -166,9 +241,44 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
+.is-workspace .home-account-trigger-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border-color: #343943;
+  border-radius: 8px;
+}
+
+.home-account-trigger-avatar img,
+.home-account-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.home-account-trigger-copy {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.home-account-trigger-copy strong {
+  display: block;
+  max-width: 112px;
+  overflow: hidden;
+  color: #dce0e5;
+  font-size: .76rem;
+  font-weight: 640;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-account-trigger-chevron {
   width: 12px;
   height: 12px;
+  flex: 0 0 12px;
   fill: none;
   stroke: #68717d;
   stroke-width: 1.55;
@@ -190,8 +300,8 @@ onBeforeUnmount(() => {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  z-index: 80;
-  width: min(292px, calc(100vw - 28px));
+  z-index: 95;
+  width: min(302px, calc(100vw - 28px));
   padding: 8px;
   border: 1px solid #292f38;
   border-radius: 12px;
@@ -200,8 +310,12 @@ onBeforeUnmount(() => {
   transform-origin: top right;
 }
 
+.home-account-menu--workspace .home-account-popover {
+  width: min(314px, calc(100vw - 28px));
+}
+
 .home-account-identity {
-  min-height: 66px;
+  min-height: 68px;
   padding: 9px 10px;
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr) auto;
@@ -232,8 +346,8 @@ onBeforeUnmount(() => {
 .home-account-copy strong {
   overflow: hidden;
   color: #eef1f4;
-  font-size: .82rem;
-  font-weight: 650;
+  font-size: .84rem;
+  font-weight: 660;
   line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -252,7 +366,7 @@ onBeforeUnmount(() => {
   align-self: start;
   margin-top: 4px;
   color: #58626f;
-  font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: .08em;
 }
 
@@ -324,7 +438,7 @@ onBeforeUnmount(() => {
 .home-account-item strong {
   color: inherit;
   font-size: .78rem;
-  font-weight: 610;
+  font-weight: 620;
   line-height: 1.15;
 }
 
@@ -385,6 +499,42 @@ onBeforeUnmount(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 1120px) {
+  .home-account-menu--workspace .home-account-trigger {
+    min-width: 42px;
+    width: 42px;
+    padding: 4px;
+    justify-content: center;
+  }
+
+  .home-account-menu--workspace .home-account-trigger-copy,
+  .home-account-menu--workspace .home-account-trigger-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .home-account-menu--workspace {
+    top: 10px;
+    right: 14px;
+  }
+
+  .home-account-menu--workspace .home-account-trigger {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    padding: 2px;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .home-account-menu--workspace .home-account-trigger-avatar {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 }
 
