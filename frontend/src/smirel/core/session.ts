@@ -20,6 +20,13 @@ interface AuthResult {
   requires_2fa?: boolean
 }
 
+export interface OAuthTokenResult {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
+  token_type?: string
+}
+
 const state = reactive({
   token: '',
   user: null as SmirelUser | null,
@@ -97,6 +104,17 @@ export async function register(email: string, password: string) {
   if (previewMode) return
   const { data } = await api.post<AuthResult>('/auth/register', { email, password })
   persist(data)
+}
+
+export async function completeOAuthTokenLogin(result: OAuthTokenResult) {
+  if (previewMode) return
+  if (!result.access_token) throw new Error('OAuth 登录响应缺少访问令牌')
+
+  const { data } = await api.get<SmirelUser | { user: SmirelUser }>('/auth/me', {
+    headers: { Authorization: `Bearer ${result.access_token}` },
+  })
+  const user = 'user' in data ? data.user : data
+  persist({ ...result, user })
 }
 
 export async function logout() {
