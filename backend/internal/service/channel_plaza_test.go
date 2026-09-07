@@ -107,6 +107,45 @@ func TestListPlazaGroups_PlatformIsolation(t *testing.T) {
 	require.Equal(t, "gpt-5", byName["g-gpt"][0].Name)
 }
 
+func TestListPlazaGroups_CompositeGroupSeparatesLogicalFamilyFromTransport(t *testing.T) {
+	// 真实中转场景：Claude/GPT 都通过 OpenAI-compatible 上游传输，但 composite
+	// 逻辑分组必须按 models_list_config 决定品牌/模型归属，而不是拿 transport platform
+	// 与 "composite" 做相等判断。
+	ch := plazaPricedChannel(1, "relay", []int64{10}, "openai", "claude-sonnet-5", "gpt-5.6")
+	groups := []Group{{
+		ID:             10,
+		Name:           "anthropic-default",
+		Platform:       PlatformComposite,
+		RateMultiplier: 1,
+		ModelsListConfig: GroupModelsListConfig{
+			Enabled: true,
+			Models:  []string{"claude-sonnet-5"},
+		},
+	}}
+
+	svc := newPlazaChannelService([]Channel{ch}, groups, nil)
+	out, err := svc.ListPlazaGroups(context.Background())
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Equal(t, "anthropic-default", out[0].Name)
+	require.Len(t, out[0].Models, 1)
+	require.Equal(t, "claude-sonnet-5", out[0].Models[0].Name)
+	require.Equal(t, "openai", out[0].Models[0].Platform, "transport protocol should remain observable")
+}
+
+func TestListPlazaGroups_CompositeGroupWithoutCustomListUsesChannelBinding(t *testing.T) {
+	ch := plazaPricedChannel(1, "relay", []int64{10}, "openai", "claude-sonnet-5", "gpt-5.6")
+	groups := []Group{{ID: 10, Name: "unified", Platform: PlatformComposite, RateMultiplier: 1}}
+
+	svc := newPlazaChannelService([]Channel{ch}, groups, nil)
+	out, err := svc.ListPlazaGroups(context.Background())
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Len(t, out[0].Models, 2)
+	require.Equal(t, "claude-sonnet-5", out[0].Models[0].Name)
+	require.Equal(t, "gpt-5.6", out[0].Models[1].Name)
+}
+
 func TestListPlazaGroups_InactiveChannelSkipped(t *testing.T) {
 	inactive := plazaPricedChannel(1, "off", []int64{10}, "anthropic", "claude-sonnet")
 	inactive.Status = "inactive"
