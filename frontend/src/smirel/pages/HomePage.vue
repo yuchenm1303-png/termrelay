@@ -25,8 +25,6 @@ async function signOut() {
 
 <template>
   <div class="home-page">
-    <div class="site-environment" aria-hidden="true"></div>
-
     <header class="home-topbar">
       <RouterLink to="/home" class="brand-link">
         <img :src="logoUrl" alt="Smirel" />
@@ -64,61 +62,82 @@ async function signOut() {
 
     <main class="home-content">
       <section class="hero-section">
-        <h1>一个 API，接入主流模型。</h1>
-        <p class="hero-copy">OpenAI、Claude、Gemini 等模型共用一套地址和密钥，调用方式保持一致。</p>
-
-        <div class="hero-actions">
-          <RouterLink :to="isAuthenticated ? consolePath : '/register'" class="primary-button">
-            {{ isAuthenticated ? '进入控制台' : '开始使用' }}
-          </RouterLink>
-          <RouterLink to="/model-plaza" class="secondary-button">查看模型</RouterLink>
+        <div class="hero-message">
+          <h1>模型很多，<br><strong>接口一个。</strong></h1>
+          <p>OpenAI、Claude、Gemini、Grok 接入 Smirel 后，你只维护一个 Base URL 和一套 Key。</p>
+          <div class="hero-actions">
+            <RouterLink :to="isAuthenticated ? consolePath : '/register'" class="primary-button">
+              {{ isAuthenticated ? '进入控制台' : '创建 API Key' }}
+            </RouterLink>
+            <RouterLink to="/model-plaza" class="text-button">查看模型与价格 →</RouterLink>
+          </div>
         </div>
 
-        <div class="endpoint-bar" aria-label="Smirel API endpoint">
-          <span>Base URL</span>
-          <code>{{ apiBase }}</code>
-          <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
+        <div class="route-signature" aria-label="Smirel model routing">
+          <div class="route-providers">
+            <span>OpenAI</span>
+            <span>Claude</span>
+            <span>Gemini</span>
+            <span>Grok</span>
+          </div>
+          <div class="route-track" aria-hidden="true"><i></i></div>
+          <div class="route-endpoint">
+            <small>BASE URL</small>
+            <code>{{ apiBase }}</code>
+            <button type="button" @click="copyBase">{{ copied ? '已复制' : '复制' }}</button>
+          </div>
         </div>
 
-        <div class="hero-meta">
+        <div class="route-meta">
           <span><i></i>服务正常</span>
           <span>OpenAI Compatible</span>
           <span>按实际用量计费</span>
         </div>
       </section>
 
-      <section class="provider-line" aria-label="Supported model providers">
-        <span>OpenAI</span>
-        <b>·</b>
-        <span>Claude</span>
-        <b>·</b>
-        <span>Gemini</span>
-        <b>·</b>
-        <span>Grok</span>
-        <b>·</b>
-        <RouterLink to="/model-plaza">更多模型</RouterLink>
+      <section class="change-section">
+        <div class="change-copy">
+          <span>接入</span>
+          <h2>你真正要改的，<br>只有一行。</h2>
+          <p>原来的 SDK、请求结构和业务代码都不用重写。</p>
+        </div>
+
+        <div class="change-code" aria-label="Base URL change example">
+          <div class="code-line code-line--old"><b>−</b><code>base_url="https://api.openai.com/v1"</code></div>
+          <div class="code-line code-line--new"><b>+</b><code>base_url="https://api.smirel.com/v1"</code></div>
+        </div>
       </section>
 
-      <section class="benefit-grid">
-        <RouterLink :to="isAuthenticated ? '/keys' : '/register'" class="benefit-card">
-          <span>接入</span>
-          <h2>改地址就能用</h2>
-          <p>沿用 OpenAI SDK，把 Base URL 换成 Smirel。</p>
-          <b>开始接入 →</b>
-        </RouterLink>
+      <section class="capability-list">
+        <article>
+          <span>01</span>
+          <h2>换模型，不换接口。</h2>
+          <p>应用继续请求同一个地址，模型按需要切换。</p>
+          <RouterLink to="/model-plaza">查看模型 →</RouterLink>
+        </article>
 
-        <RouterLink to="/model-plaza" class="benefit-card">
-          <span>模型</span>
-          <h2>模型随时换</h2>
-          <p>接入地址不变，按需要选择不同模型。</p>
-          <b>查看模型 →</b>
-        </RouterLink>
+        <article>
+          <span>02</span>
+          <h2>Key 按项目分开。</h2>
+          <p>每个项目独立创建和停用，权限边界更清楚。</p>
+          <RouterLink :to="isAuthenticated ? '/keys' : '/register'">管理 Key →</RouterLink>
+        </article>
 
-        <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'" class="benefit-card">
-          <span>用量</span>
-          <h2>账单看得清</h2>
-          <p>请求、Token 和费用集中查看。</p>
-          <b>查看用量 →</b>
+        <article>
+          <span>03</span>
+          <h2>每次调用，都有记录。</h2>
+          <p>请求、Token 和费用放在一起看，不需要自己对账。</p>
+          <RouterLink :to="isAuthenticated ? '/usage' : '/key-usage'">查看用量 →</RouterLink>
+        </article>
+      </section>
+
+      <section class="closing-section">
+        <div>
+          <span>SMIREL</span>
+          <h2>创建一个 Key，开始调用。</h2>
+        </div>
+        <RouterLink :to="isAuthenticated ? consolePath : '/register'">
+          {{ isAuthenticated ? '进入控制台' : '开始使用' }} →
         </RouterLink>
       </section>
     </main>
