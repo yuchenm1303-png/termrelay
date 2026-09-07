@@ -209,3 +209,23 @@ async function signOut() {
     </footer>
   </div>
 </template>
+
+<style scoped>
+.brand-link {
+  gap: 12px;
+}
+
+.brand-link img {
+  width: 46px;
+  height: 46px;
+}
+
+.brand-link strong {
+  font-size: 1.12rem;
+}
+
+.brand-link small {
+  margin-top: 5px;
+  font-size: .75rem;
+}
+</style>
