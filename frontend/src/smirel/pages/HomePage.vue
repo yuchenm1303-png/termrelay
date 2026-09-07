@@ -39,7 +39,6 @@ async function signOut() {
       </nav>
 
       <div class="home-actions">
-        <span class="service-state"><i></i>服务正常</span>
         <template v-if="isAuthenticated">
           <RouterLink :to="consolePath" class="top-console">{{ isAdmin ? '管理控制台' : '控制台' }}</RouterLink>
           <div class="account-menu-wrap">
@@ -76,7 +75,6 @@ async function signOut() {
           </div>
 
           <div class="hero-trust">
-            <span><i></i>服务正常</span>
             <span>OpenAI Compatible</span>
             <span>按实际用量计费</span>
           </div>
