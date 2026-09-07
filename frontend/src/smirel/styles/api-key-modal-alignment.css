@@ -1,0 +1,239 @@
+/* API key creation modal alignment pass.
+ *
+ * Root cause: the modal mixed three vertical systems: 43px core controls,
+ * browser/base-select picker geometry, and an advanced row with top-only
+ * padding. Header/body/footer shared similar but not identical spacing, so
+ * labels, controls, chevrons and action buttons never landed on one rhythm.
+ * This layer establishes one dialog gutter and one form-control baseline
+ * without changing any API-key business logic.
+ */
+
+#app .keys-create-modal {
+  --key-modal-gutter: 28px;
+  --key-control-height: 48px;
+  width: min(800px, 100%);
+}
+
+#app .keys-create-modal .keys-modal-header {
+  min-height: 126px;
+  padding: 24px var(--key-modal-gutter) 23px;
+  align-items: flex-start;
+}
+
+#app .keys-create-modal .keys-modal-header > div {
+  min-width: 0;
+  padding-right: 18px;
+}
+
+#app .keys-create-modal .keys-modal-header > div > span {
+  display: block;
+  line-height: 1;
+}
+
+#app .keys-create-modal .keys-modal-header h2 {
+  margin: 9px 0 7px;
+  font-size: 1.28rem;
+  line-height: 1.16;
+}
+
+#app .keys-create-modal .keys-modal-header p {
+  max-width: 610px;
+  font-size: .78rem;
+  line-height: 1.58;
+}
+
+#app .keys-create-modal .keys-modal-close {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  margin-top: -2px;
+}
+
+#app .keys-create-modal .keys-modal-body,
+#app .keys-create-modal .keys-success-body {
+  padding: 26px var(--key-modal-gutter) 28px;
+}
+
+#app .keys-create-modal .keys-core-fields {
+  gap: 21px;
+}
+
+#app .keys-create-modal .keys-form-field {
+  min-width: 0;
+  gap: 9px;
+}
+
+#app .keys-create-modal .keys-form-field > span {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #d1d6dc;
+  font-size: .78rem;
+  line-height: 20px;
+  font-weight: 630;
+}
+
+#app .keys-create-modal .keys-form-field > span b {
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  color: #62a9d8;
+  font-size: .64rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+#app .keys-create-modal .keys-form-field input,
+#app .keys-create-modal .keys-form-field select {
+  box-sizing: border-box;
+  height: var(--key-control-height);
+  min-height: var(--key-control-height);
+  padding: 0 14px;
+  font-size: .82rem;
+  line-height: 1.2;
+}
+
+#app .keys-create-modal .keys-form-field input {
+  display: block;
+}
+
+#app .keys-create-modal .keys-form-field select {
+  display: flex;
+  align-items: center;
+  padding-block: 0;
+}
+
+#app .keys-create-modal .keys-form-field textarea {
+  box-sizing: border-box;
+  padding: 13px 14px;
+  font-size: .82rem;
+}
+
+#app .keys-create-modal .keys-form-field small,
+#app .keys-create-modal .keys-ip-hint {
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+#app .keys-create-modal .keys-selected-group,
+#app .keys-create-modal .keys-no-groups {
+  margin-top: 0;
+}
+
+#app .keys-create-modal .keys-selected-group {
+  min-height: 78px;
+  padding: 14px 16px;
+}
+
+#app .keys-create-modal .keys-selected-group dl {
+  align-items: center;
+}
+
+#app .keys-create-modal .keys-advanced-toggle {
+  min-height: 78px;
+  margin-top: 25px;
+  padding: 18px 2px;
+  align-items: center;
+}
+
+#app .keys-create-modal .keys-advanced-toggle div {
+  gap: 5px;
+}
+
+#app .keys-create-modal .keys-advanced-toggle strong {
+  font-size: .79rem;
+  line-height: 1.25;
+}
+
+#app .keys-create-modal .keys-advanced-toggle span {
+  font-size: .68rem;
+  line-height: 1.45;
+}
+
+#app .keys-create-modal .keys-advanced-toggle svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+#app .keys-create-modal .keys-advanced-panel {
+  margin-top: 2px;
+  padding: 18px;
+  gap: 18px;
+}
+
+#app .keys-create-modal .keys-number-grid,
+#app .keys-create-modal .keys-ip-grid {
+  gap: 15px 16px;
+}
+
+#app .keys-create-modal .keys-modal-footer {
+  min-height: 76px;
+  padding: 14px var(--key-modal-gutter);
+  gap: 10px;
+}
+
+#app .keys-create-modal .keys-modal-footer .keys-primary-button,
+#app .keys-create-modal .keys-modal-footer .keys-secondary-button {
+  min-height: 44px;
+  height: 44px;
+  padding: 0 17px;
+  font-size: .79rem;
+}
+
+#app .keys-create-modal .keys-modal-footer .keys-secondary-button {
+  min-width: 82px;
+}
+
+#app .keys-create-modal .keys-modal-footer .keys-primary-button {
+  min-width: 128px;
+}
+
+@supports (appearance: base-select) {
+  #app .keys-create-modal .keys-form-field select {
+    align-items: center;
+  }
+
+  #app .keys-create-modal .keys-form-field select::picker-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  #app .keys-create-modal {
+    --key-modal-gutter: 18px;
+  }
+
+  #app .keys-create-modal .keys-modal-header {
+    min-height: 118px;
+    padding-top: 21px;
+    padding-bottom: 20px;
+  }
+
+  #app .keys-create-modal .keys-modal-body,
+  #app .keys-create-modal .keys-success-body {
+    padding-top: 22px;
+    padding-bottom: 23px;
+  }
+
+  #app .keys-create-modal .keys-core-fields {
+    gap: 18px;
+  }
+
+  #app .keys-create-modal .keys-advanced-toggle {
+    min-height: 72px;
+    margin-top: 22px;
+    padding: 16px 1px;
+  }
+
+  #app .keys-create-modal .keys-modal-footer {
+    min-height: 72px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}

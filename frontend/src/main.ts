@@ -19,6 +19,7 @@ import './smirel/styles/provider-logos.css'
 import './smirel/styles/model-capability-filter.css'
 import './smirel/styles/model-card-readability.css'
 import './smirel/styles/api-keys-overview-readability.css'
+import './smirel/styles/api-key-modal-alignment.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
