@@ -152,3 +152,120 @@ onBeforeUnmount(() => {
     </footer>
   </article>
 </template>
+
+<style scoped>
+.api-key-secret-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.api-key-secret-head > span {
+  color: #69727e;
+  font-size: .66rem;
+  font-weight: 720;
+  letter-spacing: .1em;
+}
+
+.api-key-secret-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.api-key-secret-actions button {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid #272d35;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #89929d;
+  background: #101318;
+  cursor: pointer;
+  font: inherit;
+  font-size: .69rem;
+  font-weight: 600;
+  transition: border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+
+.api-key-secret-actions button:hover {
+  border-color: #3a424c;
+  color: #dfe5ea;
+  background: #151920;
+}
+
+.api-key-secret-actions button:focus-visible,
+.api-key-value:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 150, 232, .10);
+}
+
+.api-key-secret-actions button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.api-key-secret-actions .api-key-copy-button.copied {
+  border-color: #275044;
+  color: #74d7b0;
+  background: #101b17;
+}
+
+.api-key-value {
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  padding: 3px 0 0;
+  border: 0;
+  border-radius: 5px;
+  display: block;
+  overflow: hidden;
+  color: inherit;
+  background: transparent;
+  cursor: copy;
+  text-align: left;
+}
+
+.api-key-value code {
+  margin-top: 0 !important;
+  color: #b6c4d2 !important;
+  font-size: .85rem !important;
+  transition: color .15s ease;
+}
+
+.api-key-value:hover code {
+  color: #d9e8f4 !important;
+}
+
+@media (max-width: 560px) {
+  .api-key-secret-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .api-key-secret-actions {
+    width: 100%;
+  }
+
+  .api-key-secret-actions button {
+    flex: 1 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .api-key-secret-actions button,
+  .api-key-value code {
+    transition: none;
+  }
+}
+</style>
