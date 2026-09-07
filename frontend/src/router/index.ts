@@ -54,6 +54,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/custom/:id', name: 'CustomPage', component: WorkspacePage, meta: { shell: 'workspace', requiresAuth: true, title: '自定义页面', feature: 'custom' } },
   ...workspaceRoutes,
   { path: '/admin', redirect: '/admin/dashboard' },
+  { path: '/admin/groups', redirect: '/model-plaza' },
   { path: '/admin/channels', redirect: '/admin/channels/pricing' },
   { path: '/admin/affiliates', redirect: '/admin/affiliates/invites' },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundPage, meta: { title: '页面不存在' } },
