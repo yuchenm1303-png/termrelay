@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
 import { adminNavigation, userNavigation, type NavItem } from '../core/navigation'
 import { type SmirelLocale } from '../core/i18n'
@@ -33,14 +33,46 @@ interface TopbarLink {
 }
 
 type UtilityPanel = 'notifications' | 'language' | 'theme'
+type WorkspaceMode = 'user' | 'admin'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const mobileOpen = ref(false)
 const openUtility = ref<UtilityPanel | null>(null)
 const { state, isAdmin } = useSession()
 const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
 const sharedKeysNavigation = userNavigation.find((item) => item.feature === 'keys')
+const MODE_STORAGE_KEY = 'smirel.workspace.mode'
+const LAST_ADMIN_ROUTE_KEY = 'smirel.workspace.last-admin-route'
+const LAST_USER_ROUTE_KEY = 'smirel.workspace.last-user-route'
+const neutralWorkspacePaths = ['/keys', '/model-plaza', '/profile']
+
+function readSessionValue(key: string, fallback: string) {
+  if (typeof window === 'undefined') return fallback
+  return window.sessionStorage.getItem(key) || fallback
+}
+
+function writeSessionValue(key: string, value: string) {
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(key, value)
+}
+
+function inferWorkspaceMode(path: string): WorkspaceMode {
+  if (!isAdmin.value) return 'user'
+  if (path.startsWith('/admin')) return 'admin'
+  if (neutralWorkspacePaths.some((neutralPath) => path === neutralPath || path.startsWith(`${neutralPath}/`))) {
+    return readSessionValue(MODE_STORAGE_KEY, 'admin') === 'user' ? 'user' : 'admin'
+  }
+  return 'user'
+}
+
+const workspaceMode = ref<WorkspaceMode>(inferWorkspaceMode(route.path))
+const isAdminWorkspace = computed(() => isAdmin.value && workspaceMode.value === 'admin')
+const workspaceModeLabels = computed(() => interfacePreferences.locale === 'zh-CN'
+  ? { user: '用户端', admin: '管理端', switcher: '切换工作区' }
+  : { user: 'User', admin: 'Admin', switcher: 'Switch workspace' })
+
 const modelCatalogNavItem = computed<NavItem>(() => ({
   path: '/model-plaza',
   name: 'ModelPlaza',
@@ -49,7 +81,7 @@ const modelCatalogNavItem = computed<NavItem>(() => ({
   short: 'MD',
 }))
 const navigation = computed<NavItem[]>(() => {
-  if (!isAdmin.value) return [...userNavigation, modelCatalogNavItem.value]
+  if (!isAdminWorkspace.value) return [...userNavigation, modelCatalogNavItem.value]
   if (!sharedKeysNavigation) return [...adminNavigation, modelCatalogNavItem.value]
   return [adminNavigation[0], sharedKeysNavigation, ...adminNavigation.slice(1), modelCatalogNavItem.value]
 })
@@ -112,7 +144,7 @@ function take(items: NavItem[], features: string[]) {
 const navigationGroups = computed<NavGroup[]>(() => {
   const items = navigation.value
 
-  if (!isAdmin.value) {
+  if (!isAdminWorkspace.value) {
     return [
       { label: t('groups.console'), items: take(items, ['dashboard', 'keys', 'usage']) },
       { label: t('groups.resources'), items: take(items, ['model-catalog']) },
@@ -136,7 +168,7 @@ const activeItem = computed(() => navigation.value
 
 const activeItemLabel = computed(() => activeItem.value
   ? navLabel(activeItem.value)
-  : (isAdmin.value ? t('nav.adminDashboard') : t('nav.dashboard')))
+  : (isAdminWorkspace.value ? t('nav.adminDashboard') : t('nav.dashboard')))
 
 const activeGroupLabel = computed(() => navigationGroups.value.find((group) =>
   group.items.some((item) => item.path === activeItem.value?.path),
@@ -148,7 +180,7 @@ const breadcrumbGroupLabel = computed(() => (
     : ''
 ))
 
-const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
+const topbarLinks = computed<TopbarLink[]>(() => isAdminWorkspace.value
   ? [
       { label: t('quick.model'), path: '/admin/groups', icon: 'layers' },
       { label: t('quick.upstream'), path: '/admin/accounts', icon: 'server' },
@@ -170,6 +202,24 @@ const themeOptions = computed(() => [
   { value: 'light' as ThemePreference, label: t('utility.light') },
   { value: 'system' as ThemePreference, label: t('utility.system') },
 ])
+
+function setWorkspaceMode(mode: WorkspaceMode) {
+  if (!isAdmin.value || workspaceMode.value === mode) return
+
+  const currentMode = workspaceMode.value
+  const currentPath = route.fullPath
+  writeSessionValue(currentMode === 'admin' ? LAST_ADMIN_ROUTE_KEY : LAST_USER_ROUTE_KEY, currentPath)
+  workspaceMode.value = mode
+  writeSessionValue(MODE_STORAGE_KEY, mode)
+  openUtility.value = null
+  mobileOpen.value = false
+
+  const destination = mode === 'admin'
+    ? readSessionValue(LAST_ADMIN_ROUTE_KEY, '/admin/dashboard')
+    : readSessionValue(LAST_USER_ROUTE_KEY, '/dashboard')
+
+  void router.push(destination)
+}
 
 function toggleUtility(panel: UtilityPanel) {
   openUtility.value = openUtility.value === panel ? null : panel
@@ -195,6 +245,23 @@ function formatNotificationTime(value: string) {
     minute: '2-digit',
   })
 }
+
+watch(() => route.fullPath, (fullPath) => {
+  if (!isAdmin.value) {
+    workspaceMode.value = 'user'
+    return
+  }
+
+  const path = route.path
+  if (path.startsWith('/admin')) {
+    workspaceMode.value = 'admin'
+  } else if (!neutralWorkspacePaths.some((neutralPath) => path === neutralPath || path.startsWith(`${neutralPath}/`))) {
+    workspaceMode.value = 'user'
+  }
+
+  writeSessionValue(MODE_STORAGE_KEY, workspaceMode.value)
+  writeSessionValue(workspaceMode.value === 'admin' ? LAST_ADMIN_ROUTE_KEY : LAST_USER_ROUTE_KEY, fullPath)
+}, { immediate: true })
 </script>
 
 <template>
@@ -235,7 +302,7 @@ function formatNotificationTime(value: string) {
         <div class="workspace-topbar-left">
           <button class="mobile-menu" type="button" :aria-label="t('shell.openNav')" @click="mobileOpen = true"><span></span><span></span><span></span></button>
           <nav class="workspace-breadcrumb" :aria-label="t('shell.currentLocation')">
-            <span class="workspace-breadcrumb-root">{{ isAdmin ? t('shell.adminConsole') : t('shell.userConsole') }}</span>
+            <span class="workspace-breadcrumb-root">{{ isAdminWorkspace ? t('shell.adminConsole') : t('shell.userConsole') }}</span>
             <span class="workspace-breadcrumb-separator" aria-hidden="true">/</span>
             <template v-if="breadcrumbGroupLabel">
               <span class="workspace-breadcrumb-group">{{ breadcrumbGroupLabel }}</span>
@@ -258,6 +325,30 @@ function formatNotificationTime(value: string) {
             <WorkspaceNavIcon :name="item.icon" />
             <span>{{ item.label }}</span>
           </RouterLink>
+
+          <div v-if="isAdmin" class="workspace-mode-switch" role="group" :aria-label="workspaceModeLabels.switcher">
+            <span class="workspace-mode-indicator" :class="{ 'is-admin': isAdminWorkspace }" aria-hidden="true"></span>
+            <button
+              type="button"
+              :class="{ active: !isAdminWorkspace }"
+              :aria-pressed="!isAdminWorkspace"
+              :title="workspaceModeLabels.user"
+              @click="setWorkspaceMode('user')"
+            >
+              <span class="workspace-mode-long">{{ workspaceModeLabels.user }}</span>
+              <span class="workspace-mode-short">{{ interfacePreferences.locale === 'zh-CN' ? '用户' : 'User' }}</span>
+            </button>
+            <button
+              type="button"
+              :class="{ active: isAdminWorkspace }"
+              :aria-pressed="isAdminWorkspace"
+              :title="workspaceModeLabels.admin"
+              @click="setWorkspaceMode('admin')"
+            >
+              <span class="workspace-mode-long">{{ workspaceModeLabels.admin }}</span>
+              <span class="workspace-mode-short">{{ interfacePreferences.locale === 'zh-CN' ? '管理' : 'Admin' }}</span>
+            </button>
+          </div>
 
           <span class="workspace-topbar-divider" aria-hidden="true"></span>
 
@@ -632,6 +723,73 @@ function formatNotificationTime(value: string) {
 
 .workspace-topbar-link.active .workspace-nav-icon {
   color: #73bdf2;
+}
+
+.workspace-mode-switch {
+  position: relative;
+  width: 122px;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid #252a31;
+  border-radius: 9px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: stretch;
+  background: #0d0f13;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .018);
+}
+
+.workspace-mode-indicator {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: calc(50% - 3px);
+  height: 28px;
+  border: 1px solid #30353d;
+  border-radius: 7px;
+  background: #181b20;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .24), inset 0 1px rgba(255, 255, 255, .02);
+  transform: translateX(0);
+  transition: transform .2s cubic-bezier(.22, .72, .25, 1), border-color .18s ease, background-color .18s ease;
+}
+
+.workspace-mode-indicator.is-admin {
+  border-color: #294358;
+  background: #121d27;
+  transform: translateX(100%);
+}
+
+.workspace-mode-switch button {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 7px;
+  color: #69727d;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: .67rem;
+  font-weight: 610;
+  white-space: nowrap;
+  transition: color .16s ease;
+}
+
+.workspace-mode-switch button:hover {
+  color: #b7bec7;
+}
+
+.workspace-mode-switch button.active {
+  color: #e9edf1;
+}
+
+.workspace-mode-switch button:focus-visible {
+  outline: 1px solid #4d8fbd;
+  outline-offset: -2px;
+}
+
+.workspace-mode-short {
+  display: none;
 }
 
 .workspace-topbar-divider {
@@ -1016,7 +1174,8 @@ function formatNotificationTime(value: string) {
   .workspace-nav a::before,
   .workspace-nav a::after,
   .workspace-nav-icon,
-  .workspace-nav a > span {
+  .workspace-nav a > span,
+  .workspace-mode-indicator {
     transition: none;
   }
 
@@ -1039,6 +1198,10 @@ function formatNotificationTime(value: string) {
 
   .workspace-topbar-link > span {
     display: none;
+  }
+
+  .workspace-mode-switch {
+    width: 108px;
   }
 }
 
@@ -1078,6 +1241,23 @@ function formatNotificationTime(value: string) {
     display: none;
   }
 
+  .workspace-mode-switch {
+    width: 92px;
+    height: 34px;
+  }
+
+  .workspace-mode-indicator {
+    height: 26px;
+  }
+
+  .workspace-mode-long {
+    display: none;
+  }
+
+  .workspace-mode-short {
+    display: inline;
+  }
+
   .workspace-profile-link {
     min-height: 36px;
     border: 0;
@@ -1092,6 +1272,14 @@ function formatNotificationTime(value: string) {
 @media (max-width: 620px) {
   .workspace-topbar-actions {
     gap: 5px;
+  }
+
+  .workspace-mode-switch {
+    width: 82px;
+  }
+
+  .workspace-mode-switch button {
+    font-size: .61rem;
   }
 
   .workspace-utility-button {
