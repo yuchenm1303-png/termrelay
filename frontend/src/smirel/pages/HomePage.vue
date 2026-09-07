@@ -192,14 +192,23 @@ async function signOut() {
         </div>
       </section>
 
-      <section class="closing-section">
-        <div>
-          <span>READY</span>
+      <section class="closing-section closing-cta">
+        <div class="closing-copy">
+          <span class="closing-status"><i></i>接入准备就绪</span>
           <h2>创建一个 Key，开始调用。</h2>
+          <p>保留现有 SDK，只需要换上 Smirel 的 Base URL 和 API Key，几分钟内即可完成接入。</p>
+          <div class="closing-meta">
+            <span>统一 Base URL</span>
+            <span>OpenAI Compatible</span>
+            <span>按量计费</span>
+          </div>
         </div>
-        <RouterLink :to="isAuthenticated ? consolePath : '/register'">
-          {{ isAuthenticated ? '进入控制台' : '开始使用' }} →
-        </RouterLink>
+        <div class="closing-actions">
+          <RouterLink :to="isAuthenticated ? consolePath : '/register'" class="closing-primary">
+            <span>{{ isAuthenticated ? '进入控制台' : '开始使用' }}</span><b>→</b>
+          </RouterLink>
+          <a class="closing-secondary" href="https://api.smirel.com" target="_blank" rel="noreferrer">查看接入文档</a>
+        </div>
       </section>
     </main>
 
@@ -227,5 +236,169 @@ async function signOut() {
 .brand-link small {
   margin-top: 5px;
   font-size: .75rem;
+}
+
+.closing-cta {
+  position: relative;
+  min-height: 280px;
+  margin: 28px 0 30px;
+  padding: 46px 50px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  align-items: center;
+  gap: clamp(40px, 6vw, 84px);
+  overflow: hidden;
+  border: 1px solid #262b33;
+  border-radius: 16px;
+  background: #0f1115;
+}
+
+.closing-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: #2499e6;
+}
+
+.closing-copy {
+  max-width: 760px;
+}
+
+.closing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #8c949f !important;
+  font-size: .78rem !important;
+  font-weight: 650 !important;
+  letter-spacing: .02em !important;
+}
+
+.closing-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3bd09a;
+}
+
+.closing-cta h2 {
+  max-width: 760px;
+  margin: 17px 0 0;
+  font-size: clamp(2.35rem, 3.7vw, 3.45rem);
+  line-height: 1.08;
+  letter-spacing: -.05em;
+}
+
+.closing-copy > p {
+  max-width: 650px;
+  margin: 18px 0 0;
+  color: #858c96;
+  font-size: .95rem;
+  line-height: 1.75;
+}
+
+.closing-meta {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 0;
+  color: #69717c;
+  font-size: .78rem;
+}
+
+.closing-meta span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.closing-meta span + span::before {
+  content: '·';
+  margin: 0 13px;
+  color: #343a43;
+}
+
+.closing-actions {
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.closing-primary,
+.closing-secondary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: .86rem;
+  font-weight: 620;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.closing-primary {
+  padding: 0 16px;
+  justify-content: space-between;
+  border: 1px solid #2498e5;
+  background: #2499e6;
+  color: #fff;
+}
+
+.closing-primary:hover {
+  border-color: #39aff9;
+  background: #31a7f3;
+}
+
+.closing-primary b {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.closing-secondary {
+  border: 1px solid #30353e;
+  background: #111318;
+  color: #aeb4bd;
+}
+
+.closing-secondary:hover {
+  border-color: #464c56;
+  background: #16191f;
+  color: #fff;
+}
+
+@media (max-width: 820px) {
+  .closing-cta {
+    min-height: 0;
+    padding: 38px 32px;
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .closing-actions {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .closing-primary,
+  .closing-secondary {
+    flex: 1 1 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .closing-cta {
+    padding: 32px 24px;
+    border-radius: 12px;
+  }
+
+  .closing-cta h2 {
+    font-size: 2.25rem;
+  }
+
+  .closing-actions {
+    flex-direction: column;
+  }
 }
 </style>
