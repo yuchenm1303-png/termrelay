@@ -212,6 +212,109 @@ html.smirel-app[data-theme='light'] .workspace-root .inline-error {
   color: #a13b3b;
 }
 
+/* Utility controls already use workspace tokens; these selectors only remove
+ * the last dark-only assumptions so popovers stay coherent in light mode. */
+html.smirel-app[data-theme='light'] .workspace-root .workspace-utility-popover {
+  border-color: #dfe4e9;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(32, 42, 54, .12);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-notification-item,
+html.smirel-app[data-theme='light'] .workspace-root .workspace-utility-head {
+  border-color: #e3e7ec;
+}
+
+/* Admin Overview used an independent palette instead of workspace tokens.
+ * Keep its information hierarchy, but map every structural surface back into
+ * the active theme so switching theme never leaves a dark island behind. */
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-page-heading h1,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-card > strong,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-health-stat strong,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-head strong,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-copy strong,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-head > div strong {
+  color: #1d2228;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-page-heading p,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-heading-eyebrow,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-head > span:first-child,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-card footer,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-request-context small,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-health-stat > div > span,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-kicker,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-head > div span,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-copy b {
+  color: #6d7681;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-utility-cluster,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-card,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-requests,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-panel,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-panel {
+  border-color: #dfe4e9;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-card:hover,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-links > a:hover,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-refresh:hover:not(:disabled) {
+  border-color: #d1d7de;
+  background: #f7f9fb;
+  color: #20252b;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-snapshot-icon,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-health-icon,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-icon,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-arrow,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-card footer b,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-state {
+  border-color: #d9dfe6;
+  background: #f7f9fb;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-snapshot-copy strong,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-request-context b,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-meta,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-refresh {
+  color: #59636e;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-snapshot-copy small,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-health-stat small,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-copy small {
+  color: #8b949e;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-utility-divider,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-request-context,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-head,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-head,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-health-stat + .admin-health-stat,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-management-links > a + a {
+  border-color: #e2e6eb;
+  background-color: transparent;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-metric-progress {
+  background: #edf0f3;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-panel::after {
+  background-image: linear-gradient(rgba(24, 31, 39, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(24, 31, 39, .025) 1px, transparent 1px);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-snapshot-meta.ready .admin-snapshot-icon,
+html.smirel-app[data-theme='light'] .workspace-root .admin-overview .admin-ops-state.ready {
+  border-color: #c7e5d8;
+  color: #187a5b;
+  background: #edf8f3;
+}
+
 @media (prefers-color-scheme: light) {
   html[data-theme-preference='system'][data-theme='light'] {
     color-scheme: light;
