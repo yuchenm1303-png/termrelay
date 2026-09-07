@@ -159,6 +159,14 @@ async function submit() {
     return
   }
 
+  // Always verify the live upstream before persisting the account. Besides
+  // validating the credentials, this gives us the exact model whitelist that
+  // should be advertised by TermRelay for this relay account.
+  if (!syncedModels.value.length) {
+    await syncModels()
+    if (!syncedModels.value.length) return
+  }
+
   saving.value = true
   try {
     if (previewMode) {
@@ -167,7 +175,8 @@ async function submit() {
       return
     }
 
-    const response = await api.post<CreateAccountResult>('/admin/accounts', {
+    const modelMapping = Object.fromEntries(syncedModels.value.map((model) => [model, model]))
+    await api.post<CreateAccountResult>('/admin/accounts', {
       name: name.value.trim(),
       notes: notes.value.trim() || undefined,
       platform: 'openai',
@@ -175,23 +184,16 @@ async function submit() {
       credentials: {
         api_key: apiKey.value.trim(),
         base_url: cleanBaseUrl(baseUrl.value),
+        model_mapping: modelMapping,
       },
-      extra: {},
+      // OpenAI-compatible relay accounts should preserve the caller's request
+      // semantics and only replace upstream authentication.
+      extra: { openai_passthrough: true },
       concurrency: Math.max(1, Math.round(Number(concurrency.value) || 1)),
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
       group_ids: groupIds.value,
     })
-
-    const accountId = Number(response.data?.id || 0)
-    if (accountId > 0 && !syncedModels.value.length) {
-      try {
-        const modelResponse = await api.post<{ models?: unknown[] }>(`/admin/accounts/${accountId}/models/sync-upstream`)
-        syncedModels.value = normalizeModels(modelResponse.data?.models)
-      } catch {
-        // Account creation succeeded; model discovery can be retried later.
-      }
-    }
 
     apiKey.value = ''
     emit('created')
