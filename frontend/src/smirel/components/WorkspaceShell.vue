@@ -11,6 +11,12 @@ interface NavGroup {
   items: NavItem[]
 }
 
+interface TopbarLink {
+  label: string
+  path: string
+  icon: string
+}
+
 const route = useRoute()
 const mobileOpen = ref(false)
 const { state, isAdmin } = useSession()
@@ -77,6 +83,18 @@ const breadcrumbGroupLabel = computed(() => (
     ? activeGroupLabel.value
     : ''
 ))
+
+const topbarLinks = computed<TopbarLink[]>(() => isAdmin.value
+  ? [
+      { label: '模型', path: '/admin/groups', icon: 'layers' },
+      { label: '上游', path: '/admin/accounts', icon: 'server' },
+      { label: '监控', path: '/admin/ops', icon: 'activity' },
+    ]
+  : [
+      { label: '模型', path: '/model-plaza', icon: 'layers' },
+      { label: 'API Keys', path: '/keys', icon: 'key' },
+      { label: '状态', path: '/monitor', icon: 'activity' },
+    ])
 </script>
 
 <template>
@@ -125,16 +143,33 @@ const breadcrumbGroupLabel = computed(() => (
           </nav>
         </div>
 
-        <RouterLink to="/profile" class="workspace-profile-link" aria-label="打开账户设置">
-          <span class="mini-avatar">{{ initials }}</span>
-          <span class="workspace-profile-copy">
-            <strong>{{ accountName }}</strong>
-            <small>{{ accountRole }}</small>
-          </span>
-          <svg class="workspace-profile-chevron" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </RouterLink>
+        <div class="workspace-topbar-actions">
+          <RouterLink
+            v-for="item in topbarLinks"
+            :key="item.path"
+            :to="item.path"
+            class="workspace-topbar-link"
+            :class="{ active: route.path === item.path || route.path.startsWith(`${item.path}/`) }"
+            :aria-label="item.label"
+            :title="item.label"
+          >
+            <WorkspaceNavIcon :name="item.icon" />
+            <span>{{ item.label }}</span>
+          </RouterLink>
+
+          <span class="workspace-topbar-divider" aria-hidden="true"></span>
+
+          <RouterLink to="/profile" class="workspace-profile-link" aria-label="打开账户设置">
+            <span class="mini-avatar">{{ initials }}</span>
+            <span class="workspace-profile-copy">
+              <strong>{{ accountName }}</strong>
+              <small>{{ accountRole }}</small>
+            </span>
+            <svg class="workspace-profile-chevron" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </RouterLink>
+        </div>
       </header>
       <main class="workspace-canvas"><slot /></main>
     </section>
@@ -173,18 +208,18 @@ const breadcrumbGroupLabel = computed(() => (
 }
 
 /*
- * The topbar is a real secondary-navigation layer: it must remain visually
- * distinct from the page canvas. Breadcrumbs communicate location while the
- * account control stays compact enough not to compete with the page heading.
+ * The header is a utility rail, not another page hero. Mature API consoles use
+ * this space for persistent context plus a small set of high-frequency global
+ * actions. Only routes that already exist in Smirel are surfaced here.
  */
 .workspace-topbar.workspace-topbar--contextual {
   position: sticky;
   top: 0;
   z-index: 35;
-  height: 60px;
-  padding: 0 34px;
+  height: 64px;
+  padding: 0 28px 0 34px;
   border-bottom: 1px solid #20232a;
-  background: rgba(10, 11, 15, .985);
+  background: rgba(10, 11, 15, .988);
   align-items: center;
 }
 
@@ -227,23 +262,80 @@ const breadcrumbGroupLabel = computed(() => (
   text-overflow: ellipsis;
 }
 
-.workspace-profile-link {
+.workspace-topbar-actions {
   min-width: 0;
-  min-height: 40px;
   margin-left: auto;
-  padding: 4px 8px 4px 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-topbar-link {
+  min-height: 36px;
+  padding: 0 11px;
   border: 1px solid transparent;
   border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #858d98;
+  font-size: .72rem;
+  font-weight: 570;
+  white-space: nowrap;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+
+.workspace-topbar-link .workspace-nav-icon {
+  width: 17px;
+  height: 17px;
+  flex-basis: 17px;
+  color: #68717d;
+}
+
+.workspace-topbar-link:hover {
+  border-color: #292e36;
+  background: #121419;
+  color: #e2e6eb;
+}
+
+.workspace-topbar-link:hover .workspace-nav-icon {
+  color: #b6bec8;
+}
+
+.workspace-topbar-link.active {
+  border-color: #273644;
+  background: #111c27;
+  color: #dcecf8;
+}
+
+.workspace-topbar-link.active .workspace-nav-icon {
+  color: #73bdf2;
+}
+
+.workspace-topbar-divider {
+  width: 1px;
+  height: 28px;
+  margin: 0 3px;
+  background: #252930;
+}
+
+.workspace-profile-link {
+  min-width: 0;
+  min-height: 42px;
+  padding: 4px 9px 4px 5px;
+  border: 1px solid #252930;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 9px;
   color: inherit;
+  background: #101217;
   transition: background-color .15s ease, border-color .15s ease;
 }
 
 .workspace-profile-link:hover {
-  border-color: #292d35;
-  background: #121419;
+  border-color: #373c45;
+  background: #15181e;
 }
 
 .workspace-profile-link .mini-avatar {
@@ -290,9 +382,32 @@ const breadcrumbGroupLabel = computed(() => (
   padding-top: 28px;
 }
 
+@media (max-width: 1260px) {
+  .workspace-topbar-link {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .workspace-topbar-link > span {
+    display: none;
+  }
+}
+
 @media (max-width: 1120px) {
   .workspace-topbar.workspace-topbar--contextual {
     padding: 0 24px;
+  }
+
+  .workspace-profile-copy,
+  .workspace-profile-chevron {
+    display: none;
+  }
+
+  .workspace-profile-link {
+    min-width: 38px;
+    padding: 4px 3px;
+    justify-content: center;
   }
 }
 
@@ -310,15 +425,15 @@ const breadcrumbGroupLabel = computed(() => (
   .workspace-breadcrumb-root,
   .workspace-breadcrumb-group,
   .workspace-breadcrumb-separator,
-  .workspace-profile-copy,
-  .workspace-profile-chevron {
+  .workspace-topbar-link,
+  .workspace-topbar-divider {
     display: none;
   }
 
   .workspace-profile-link {
     min-height: 36px;
-    padding: 2px;
     border: 0;
+    background: transparent;
   }
 
   .workspace-canvas {
