@@ -13,10 +13,10 @@ import ModelCatalogPage from '../smirel/pages/ModelCatalogPage.vue'
 import PublicPage from '../smirel/pages/PublicPage.vue'
 import NotFoundPage from '../smirel/pages/NotFoundPage.vue'
 import { isAuthenticated, isAdmin } from '../smirel/core/session'
-import { adminNavigation, userNavigation } from '../smirel/core/navigation'
+import { adminNavigation, userNavigation, userSecondaryRoutes } from '../smirel/core/navigation'
 
 const workspaceRoutes: RouteRecordRaw[] = [
-  ...userNavigation.map((item) => ({
+  ...[...userNavigation, ...userSecondaryRoutes].map((item) => ({
     path: item.path,
     name: item.name,
     component: item.path === '/usage'
