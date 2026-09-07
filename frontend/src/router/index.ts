@@ -4,6 +4,7 @@ import AuthPage from '../smirel/pages/AuthPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
 import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
+import AdminChannelsPage from '../smirel/pages/AdminChannelsPage.vue'
 import AdminPaymentDashboardPage from '../smirel/pages/AdminPaymentDashboardPage.vue'
 import ModelCatalogPage from '../smirel/pages/ModelCatalogPage.vue'
 import PublicPage from '../smirel/pages/PublicPage.vue'
@@ -25,9 +26,11 @@ const workspaceRoutes: RouteRecordRaw[] = [
       ? AdminOverviewPage
       : item.path === '/admin/accounts'
         ? AdminAccountsPage
-        : item.path === '/admin/orders/dashboard'
-          ? AdminPaymentDashboardPage
-          : WorkspacePage,
+        : item.path === '/admin/channels/pricing'
+          ? AdminChannelsPage
+          : item.path === '/admin/orders/dashboard'
+            ? AdminPaymentDashboardPage
+            : WorkspacePage,
     meta: { shell: 'workspace', requiresAuth: true, requiresAdmin: true, title: item.label, feature: item.feature },
   })),
 ]
