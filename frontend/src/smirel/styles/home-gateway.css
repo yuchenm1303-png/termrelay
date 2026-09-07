@@ -185,6 +185,31 @@
   color: #fff;
 }
 
+/*
+ * Homepage type scale: the previous display sizes were too dominant for the
+ * restrained commercial direction and forced awkward wrapping on desktop.
+ * Keep the hierarchy, but let the API surface and navigation share attention.
+ */
+.home-page .home-content .hero-section .hero-copy-block h1 {
+  max-width: 720px;
+  font-size: clamp(2.65rem, 3.55vw, 3.45rem) !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.045em !important;
+}
+
+.home-page .home-content .workspace-section .workspace-copy h2 {
+  max-width: 760px;
+  font-size: clamp(2.15rem, 3vw, 2.9rem) !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.04em !important;
+}
+
+.home-page .home-content .closing-section.closing-cta h2 {
+  font-size: clamp(1.95rem, 2.5vw, 2.4rem) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.035em !important;
+}
+
 @media (max-width: 1040px) {
   .home-page .gateway-preview {
     max-width: 720px;
@@ -207,6 +232,18 @@
   .home-page .gateway-detail {
     grid-template-columns: 82px minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .home-page .home-content .hero-section .hero-copy-block h1 {
+    font-size: clamp(2.15rem, 10vw, 2.55rem) !important;
+  }
+
+  .home-page .home-content .workspace-section .workspace-copy h2 {
+    font-size: clamp(1.9rem, 8vw, 2.2rem) !important;
+  }
+
+  .home-page .home-content .closing-section.closing-cta h2 {
+    font-size: clamp(1.75rem, 7vw, 2rem) !important;
   }
 }
 
