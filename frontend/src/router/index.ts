@@ -3,6 +3,7 @@ import HomePage from '../smirel/pages/HomePage.vue'
 import AuthPage from '../smirel/pages/AuthPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
+import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
 import PublicPage from '../smirel/pages/PublicPage.vue'
 import NotFoundPage from '../smirel/pages/NotFoundPage.vue'
 import { isAuthenticated, isAdmin } from '../smirel/core/session'
@@ -18,7 +19,11 @@ const workspaceRoutes: RouteRecordRaw[] = [
   ...adminNavigation.map((item) => ({
     path: item.path,
     name: item.name,
-    component: item.path === '/admin/dashboard' ? AdminOverviewPage : WorkspacePage,
+    component: item.path === '/admin/dashboard'
+      ? AdminOverviewPage
+      : item.path === '/admin/accounts'
+        ? AdminAccountsPage
+        : WorkspacePage,
     meta: { shell: 'workspace', requiresAuth: true, requiresAdmin: true, title: item.label, feature: item.feature },
   })),
 ]
