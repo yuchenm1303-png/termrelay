@@ -102,10 +102,16 @@
     color: #67bff2;
   }
 
+  /* Keep native picker indicators in a stable trailing lane. Their own box,
+   * rather than the glyph's baseline, is the rotation reference. */
   .smirel-app select::picker-icon {
     width: 14px;
     height: 14px;
+    flex: 0 0 14px;
+    margin-inline-start: auto;
     color: #77818c;
+    transform-box: border-box;
+    transform-origin: 50% 50%;
     transition: transform .15s ease, color .15s ease;
   }
 
@@ -118,15 +124,40 @@
     transform: rotate(180deg);
   }
 
-  /* Account filters already provide an outer field shell. Keep that shell as
-   * the visual trigger and let the standardized picker icon replace the old
-   * hand-drawn SVG arrow. */
-  .smirel-app .select-control > svg {
+  /* Composite filter fields (label + select + chevron) already own a fixed
+   * arrow lane. Do not inject Chromium's picker icon into the value column:
+   * that creates the duplicate arrow and pulls the selected value off-center.
+   * The outer SVG is positioned independently; only its path rotates, so
+   * opening the menu cannot change the arrow's geometric center. */
+  .smirel-app .select-control select {
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding-inline-end: 0;
+    line-height: 1;
+  }
+
+  .smirel-app .select-control select::picker-icon {
     display: none;
   }
 
-  .smirel-app .select-control select {
-    padding-inline-end: 2px;
+  .smirel-app .select-control > svg {
+    display: block;
+    pointer-events: none;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .smirel-app .select-control > svg path {
+    transform-box: view-box;
+    transform-origin: 8px 8px;
+    transition: transform .15s ease;
+  }
+
+  .smirel-app .select-control select:open ~ svg path {
+    transform: rotate(180deg);
   }
 
   .smirel-app select::picker(select)::-webkit-scrollbar {
@@ -146,7 +177,8 @@
 @media (prefers-reduced-motion: reduce) {
   .smirel-app select,
   .smirel-app select::picker-icon,
-  .smirel-app select option {
+  .smirel-app select option,
+  .smirel-app .select-control > svg path {
     transition: none;
   }
 }
