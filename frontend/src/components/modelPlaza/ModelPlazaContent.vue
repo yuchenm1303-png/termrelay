@@ -139,11 +139,18 @@ const filteredGroups = computed(() => {
   if (selectedRate.value !== 'all') {
     groups = groups.filter((g) => effectiveRate(g) === selectedRate.value)
   }
-  // 模型名搜索:分组内只留命中的模型,整组无命中则隐藏该分组。
+  // 模型搜索:同时匹配客户端请求名和渠道映射后的实际模型标识。
   const q = searchQuery.value.trim().toLowerCase()
   if (q) {
     groups = groups
-      .map((g) => ({ ...g, models: g.models.filter((m) => m.name.toLowerCase().includes(q)) }))
+      .map((g) => ({
+        ...g,
+        models: g.models.filter(
+          (m) =>
+            m.name.toLowerCase().includes(q) ||
+            (m.mapped_model?.toLowerCase().includes(q) ?? false)
+        )
+      }))
       .filter((g) => g.models.length > 0)
   }
   // 专属倍率会改变生效值,不能只依赖后端按默认倍率的排序。
