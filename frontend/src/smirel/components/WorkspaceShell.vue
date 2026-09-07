@@ -73,10 +73,9 @@ const navigationGroups = computed<NavGroup[]>(() => {
     <button v-if="mobileOpen" class="workspace-scrim" type="button" @click="mobileOpen = false"></button>
 
     <section class="workspace-main">
-      <header class="workspace-topbar glass">
+      <header class="workspace-topbar">
         <div class="workspace-topbar-left">
           <button class="mobile-menu" type="button" @click="mobileOpen = true"><span></span><span></span><span></span></button>
-          <strong class="workspace-topbar-title">{{ isAdmin ? '管理后台' : 'Smirel Console' }}</strong>
         </div>
         <RouterLink to="/profile" class="mini-avatar">{{ initials }}</RouterLink>
       </header>
