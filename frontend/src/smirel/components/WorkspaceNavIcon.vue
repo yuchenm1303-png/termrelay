@@ -94,6 +94,11 @@ defineProps<{ name: string }>()
       <path d="M7 20.66V19a5 5 0 0 1 10 0v1.66" />
     </template>
 
+    <template v-else-if="name === 'arrow-up-right'">
+      <path d="M7 17 17 7" />
+      <path d="M9 7h8v8" />
+    </template>
+
     <circle v-else cx="12" cy="12" r="4" />
   </svg>
 </template>
