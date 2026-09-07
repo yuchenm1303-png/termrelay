@@ -62,7 +62,7 @@
           :key="m.name"
           class="border-b border-gray-100 transition-colors last:border-b-0 hover:bg-gray-50/70 dark:border-dark-800 dark:hover:bg-dark-800/50"
         >
-          <!-- 模型名 + 非 token 计费模式徽章 -->
+          <!-- 模型名 + 映射目标 + 非 token 计费模式徽章 -->
           <td class="border-r border-gray-100 py-2.5 pl-5 pr-4 align-middle dark:border-dark-700/60">
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="font-medium text-gray-900 dark:text-white">{{ m.name }}</span>
@@ -72,6 +72,13 @@
               >
                 {{ billingModeLabel(m) }}
               </span>
+            </div>
+            <div
+              v-if="hasMappedModel(m)"
+              class="mt-0.5 flex min-w-0 items-center gap-1 font-mono text-[11px] leading-4 text-gray-400 dark:text-dark-500"
+            >
+              <span aria-hidden="true">→</span>
+              <span class="truncate" :title="m.mapped_model">{{ m.mapped_model }}</span>
             </div>
           </td>
 
@@ -257,6 +264,10 @@ function billingModeLabel(m: PlazaModel): string {
   return billingMode(m) === BILLING_MODE_IMAGE
     ? t('modelPlaza.table.perImage')
     : t('modelPlaza.table.perRequest')
+}
+
+function hasMappedModel(m: PlazaModel): boolean {
+  return Boolean(m.mapped_model && m.mapped_model.toLowerCase() !== m.name.toLowerCase())
 }
 
 /** 价格统一保底 2 位小数,更长的有效小数原样保留。 */
