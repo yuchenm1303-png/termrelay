@@ -315,7 +315,7 @@ func scoreAccountPoolCandidates(inputs []accountPoolCandidateInput, stats *accou
 		}
 		loadFactor, queueFactor := 0.5, 0.5
 		if input.Load != nil {
-			loadFactor = 1 - clampAccountPool01(input.Load.LoadRate/100)
+			loadFactor = 1 - clampAccountPool01(float64(input.Load.LoadRate)/100)
 			if maxWaiting > 0 {
 				queueFactor = 1 - clampAccountPool01(float64(input.Load.WaitingCount)/float64(maxWaiting))
 			} else {
