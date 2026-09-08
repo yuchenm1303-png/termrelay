@@ -16,8 +16,8 @@ import (
 
 const (
 	defaultGatewayAccountPoolTopK = 3
-	gatewayAccountPoolEnabledEnv   = "SUB2API_ACCOUNT_POOL_SCHEDULER"
-	gatewayAccountPoolTopKEnv      = "SUB2API_ACCOUNT_POOL_TOP_K"
+	gatewayAccountPoolEnabledEnv  = "SUB2API_ACCOUNT_POOL_SCHEDULER"
+	gatewayAccountPoolTopKEnv     = "SUB2API_ACCOUNT_POOL_TOP_K"
 )
 
 // Keep the migration runtime outside GatewayService until the selection path is
