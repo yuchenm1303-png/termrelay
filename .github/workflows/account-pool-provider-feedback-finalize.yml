@@ -1,0 +1,527 @@
+name: Finalize account pool provider feedback
+
+on:
+  push:
+    branches:
+      - chatgpt/account-pool-provider-feedback
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.5'
+          cache-dependency-path: backend/go.sum
+      - name: Apply minimal provider feedback integration
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          root = Path('backend')
+
+          def rep(path, old, new, count=1):
+              p = root / path
+              s = p.read_text()
+              got = s.count(old)
+              if got < count:
+                  raise SystemExit(f'{path}: expected >= {count} matches, got {got}: {old[:100]!r}')
+              p.write_text(s.replace(old, new, count))
+
+          # Shared provider-neutral feedback/admission boundary. Feature flag remains default-off.
+          rep('internal/service/gateway_account_pool_scheduler.go', '''func (s *GatewayService) ReportAccountPoolAttempt(accountID int64, result *ForwardResult, err error) {
+          \tif s == nil || accountID <= 0 {
+          \t\treturn
+          \t}
+          \treport, success, transient := classifyAccountPoolAttempt(err)
+          \tif !report {
+          \t\treturn
+          \t}
+          \tvar firstTokenMs *int
+          \tif result != nil {
+          \t\tfirstTokenMs = result.FirstTokenMs
+          \t}
+          \ts.accountPoolScheduler().Report(accountID, success, transient, firstTokenMs, time.Now())
+          }
+          ''', '''func (s *GatewayService) ReportAccountPoolAttempt(accountID int64, result *ForwardResult, err error) {
+          \tvar firstTokenMs *int
+          \tif result != nil {
+          \t\tfirstTokenMs = result.FirstTokenMs
+          \t}
+          \ts.ReportAccountPoolOutcome(accountID, firstTokenMs, err)
+          }
+
+          // BeginAccountPoolAttempt reserves the fast-breaker half-open probe immediately
+          // before a real upstream attempt. Callers using the generic Gateway scheduler
+          // already do this during selection; provider-specific OpenAI/Grok paths call it
+          // after acquiring their existing Redis concurrency slot.
+          func (s *GatewayService) BeginAccountPoolAttempt(accountID int64) bool {
+          \tif s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+          \t\treturn true
+          \t}
+          \tscheduler := s.accountPoolScheduler()
+          \tif scheduler == nil {
+          \t\treturn true
+          \t}
+          \treturn scheduler.Allow(accountID, time.Now())
+          }
+
+          // AbandonAccountPoolAttempt releases a half-open reservation when no
+          // account-attributable upstream outcome was observed (for example client
+          // cancellation before the probe completes).
+          func (s *GatewayService) AbandonAccountPoolAttempt(accountID int64) {
+          \tif s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+          \t\treturn
+          \t}
+          \tif scheduler := s.accountPoolScheduler(); scheduler != nil {
+          \t\tscheduler.Abandon(accountID)
+          \t}
+          }
+
+          // ReportAccountPoolOutcome is the provider-neutral feedback boundary for
+          // request paths that do not execute GatewayService.Forward directly (OpenAI,
+          // Gemini native/compat, Grok and Antigravity adapters). Keeping classification
+          // here guarantees every provider uses the same 429/5xx/transport/cancel rules.
+          func (s *GatewayService) ReportAccountPoolOutcome(accountID int64, firstTokenMs *int, err error) {
+          \tif s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+          \t\treturn
+          \t}
+          \tscheduler := s.accountPoolScheduler()
+          \tif scheduler == nil {
+          \t\treturn
+          \t}
+          \treport, success, transient := classifyAccountPoolAttempt(err)
+          \tif !report {
+          \t\t// Do not poison health for client/request-scoped failures, but release
+          \t\t// any reserved half-open probe so a later request can test the account.
+          \t\tscheduler.Abandon(accountID)
+          \t\treturn
+          \t}
+          \tscheduler.Report(accountID, success, transient, firstTokenMs, time.Now())
+          }
+          ''')
+
+          # Gemini Provider Adapter transport failures must retain failover semantics internally.
+          rep('internal/service/gemini_messages_compat_service.go', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, s.writeClaudeError(c, http.StatusBadGateway, "upstream_error", "Upstream request failed after retries: "+safeErr)
+          ''', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
+          ''')
+          rep('internal/service/gemini_messages_compat_service.go', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, s.writeGoogleError(c, http.StatusBadGateway, "Upstream request failed after retries: "+safeErr)
+          ''', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
+          ''')
+          rep('internal/service/gemini_chat_completions_compat_service.go', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, s.writeChatCompletionsError(c, http.StatusBadGateway, "upstream_error", "Upstream request failed after retries: "+safeErr)
+          ''', '''\t\t\tsetOpsUpstreamError(c, 0, safeErr, "")
+          \t\t\treturn nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}
+          ''')
+
+          # Generic Gateway side paths that bypass GatewayService.Forward report once at the handler boundary.
+          rep('internal/handler/gateway_handler.go', '''\t\t\t} else {
+          \t\t\t\tresult, err = h.geminiCompatService.Forward(requestCtx, c, account, body)
+          \t\t\t}
+          \t\t\tif accountReleaseFunc != nil {
+          ''', '''\t\t\t} else {
+          \t\t\t\tresult, err = h.geminiCompatService.Forward(requestCtx, c, account, body)
+          \t\t\t}
+          \t\t\th.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
+          \t\t\tif accountReleaseFunc != nil {
+          ''')
+          rep('internal/handler/gateway_handler.go', '''\t\t\tif account.Platform == service.PlatformAntigravity && account.Type != service.AccountTypeAPIKey {
+          \t\t\t\tresult, err = h.antigravityGatewayService.Forward(requestCtx, c, account, attemptBody, hasBoundSession)
+          \t\t\t} else {
+          \t\t\t\tresult, err = h.gatewayService.Forward(requestCtx, c, account, attemptParsedReq)
+          \t\t\t}
+          ''', '''\t\t\tif account.Platform == service.PlatformAntigravity && account.Type != service.AccountTypeAPIKey {
+          \t\t\t\tresult, err = h.antigravityGatewayService.Forward(requestCtx, c, account, attemptBody, hasBoundSession)
+          \t\t\t\th.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
+          \t\t\t} else {
+          \t\t\t\t// GatewayService.Forward owns its Account Pool feedback defer.
+          \t\t\t\tresult, err = h.gatewayService.Forward(requestCtx, c, account, attemptParsedReq)
+          \t\t\t}
+          ''')
+          rep('internal/handler/gateway_handler_chat_completions.go', '''\t\t} else {
+          \t\t\tresult, err = h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, forwardBody, parsedReq)
+          \t\t}
+
+          \t\tif accountReleaseFunc != nil {
+          ''', '''\t\t} else {
+          \t\t\tresult, err = h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, forwardBody, parsedReq)
+          \t\t}
+
+          \t\th.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
+          \t\tif accountReleaseFunc != nil {
+          ''')
+          rep('internal/handler/gateway_handler_responses.go', '''\t\t} else {
+          \t\t\tresult, err = h.gatewayService.ForwardAsResponses(requestCtx, c, account, forwardBody, parsedReq)
+          \t\t}
+
+          \t\tif accountReleaseFunc != nil {
+          ''', '''\t\t} else {
+          \t\t\tresult, err = h.gatewayService.ForwardAsResponses(requestCtx, c, account, forwardBody, parsedReq)
+          \t\t}
+
+          \t\th.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
+          \t\tif accountReleaseFunc != nil {
+          ''')
+          rep('internal/handler/gemini_v1beta_handler.go', '''\t\t} else {
+          \t\t\tresult, err = h.geminiCompatService.ForwardNative(requestCtx, c, account, modelName, action, stream, body)
+          \t\t}
+          \t\tif accountReleaseFunc != nil {
+          ''', '''\t\t} else {
+          \t\t\tresult, err = h.geminiCompatService.ForwardNative(requestCtx, c, account, modelName, action, stream, body)
+          \t\t}
+          \t\th.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
+          \t\tif accountReleaseFunc != nil {
+          ''')
+
+          # Inject the generic Account Pool reporter into OpenAI/Grok handlers without changing provider adapters.
+          rep('internal/handler/openai_gateway_handler.go', '''type OpenAIGatewayHandler struct {
+          \tgatewayService             *service.OpenAIGatewayService
+          ''', '''type OpenAIGatewayHandler struct {
+          \tgatewayService             *service.OpenAIGatewayService
+          \taccountPoolReporter        *service.GatewayService
+          ''')
+          rep('internal/handler/openai_gateway_handler.go', '''func openAIForwardSucceededForScheduling(result *service.OpenAIForwardResult) bool {
+          \treturn result.SucceededForScheduling()
+          }
+          ''', '''func openAIForwardSucceededForScheduling(result *service.OpenAIForwardResult) bool {
+          \treturn result.SucceededForScheduling()
+          }
+
+          func (h *OpenAIGatewayHandler) beginAccountPoolAttempt(account *service.Account) bool {
+          \tif h == nil || h.accountPoolReporter == nil || account == nil {
+          \t\treturn true
+          \t}
+          \treturn h.accountPoolReporter.BeginAccountPoolAttempt(account.ID)
+          }
+
+          func (h *OpenAIGatewayHandler) abandonAccountPoolAttempt(account *service.Account) {
+          \tif h == nil || h.accountPoolReporter == nil || account == nil {
+          \t\treturn
+          \t}
+          \th.accountPoolReporter.AbandonAccountPoolAttempt(account.ID)
+          }
+
+          func (h *OpenAIGatewayHandler) reportAccountPoolAttempt(account *service.Account, result *service.OpenAIForwardResult, err error) {
+          \tif h == nil || h.accountPoolReporter == nil || account == nil {
+          \t\treturn
+          \t}
+          \tif result != nil && result.ClientDisconnect {
+          \t\th.accountPoolReporter.AbandonAccountPoolAttempt(account.ID)
+          \t\treturn
+          \t}
+          \tif err == nil && result != nil && !result.SucceededForScheduling() {
+          \t\terr = &service.UpstreamFailoverError{StatusCode: http.StatusBadGateway}
+          \t}
+          \tvar firstTokenMs *int
+          \tif result != nil {
+          \t\tfirstTokenMs = result.FirstTokenMs
+          \t}
+          \th.accountPoolReporter.ReportAccountPoolOutcome(account.ID, firstTokenMs, err)
+          }
+          ''')
+
+          # Wire reporter into OpenAI handler.
+          rep('internal/handler/wire.go', '''func ProvideOpenAIGatewayHandler(
+          \tgatewayService *service.OpenAIGatewayService,
+          \tconcurrencyService *service.ConcurrencyService,
+          ''', '''func ProvideOpenAIGatewayHandler(
+          \tgatewayService *service.OpenAIGatewayService,
+          \taccountPoolReporter *service.GatewayService,
+          \tconcurrencyService *service.ConcurrencyService,
+          ''')
+          rep('internal/handler/wire.go', '''\th := NewOpenAIGatewayHandler(gatewayService, concurrencyService, billingCacheService, apiKeyService,
+          \t\tusageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, cfg)
+          \th.securityAuditCoordinator = coordinator
+          ''', '''\th := NewOpenAIGatewayHandler(gatewayService, concurrencyService, billingCacheService, apiKeyService,
+          \t\tusageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, cfg)
+          \th.accountPoolReporter = accountPoolReporter
+          \th.securityAuditCoordinator = coordinator
+          ''')
+          rep('cmd/server/wire_gen.go', '''openAIGatewayHandler := handler.ProvideOpenAIGatewayHandler(openAIGatewayService, concurrencyService, billingCacheService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, grokQuotaService, configConfig, coordinator)''', '''openAIGatewayHandler := handler.ProvideOpenAIGatewayHandler(openAIGatewayService, gatewayService, concurrencyService, billingCacheService, apiKeyService, usageRecordWorkerPool, errorPassthroughService, contentModerationService, opsService, grokQuotaService, configConfig, coordinator)''')
+
+          # HTTP OpenAI/Grok paths: reserve Account Pool admission after the existing Redis slot,
+          # skip cooling accounts without counting a switch, then report the real outcome.
+          def admission(path, marker, release_var, event):
+              rep(path, marker, marker + f'''\t\tif !h.beginAccountPoolAttempt(account) {{
+          \t\t\tif {release_var} != nil {{
+          \t\t\t\t{release_var}()
+          \t\t\t}}
+          \t\t\tfailedAccountIDs[account.ID] = struct{{}}{{}}
+          \t\t\treqLog.Debug("{event}", zap.Int64("account_id", account.ID))
+          \t\t\tcontinue
+          \t\t}}
+
+          ''')
+
+          common_acquire = '''\t\taccountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
+          \t\tif !acquired {
+          \t\t\treturn
+          \t\t}
+
+          '''
+          admission('internal/handler/openai_gateway_handler.go', common_acquire, 'accountReleaseFunc', 'openai.account_pool_circuit_skipped')
+          admission('internal/handler/openai_gateway_handler.go', common_acquire, 'accountReleaseFunc', 'openai_messages.account_pool_circuit_skipped')
+          admission('internal/handler/openai_chat_completions.go', common_acquire, 'accountReleaseFunc', 'openai_chat_completions.account_pool_circuit_skipped')
+          admission('internal/handler/openai_embeddings.go', '''\t\taccountReleaseFunc, accountAcquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, "", selection, false, &streamStarted, reqLog)
+          \t\tif !accountAcquired {
+          \t\t\treturn
+          \t\t}
+
+          ''', 'accountReleaseFunc', 'openai_embeddings.account_pool_circuit_skipped')
+          admission('internal/handler/openai_alpha_search.go', '''\t\taccountRelease, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, false, &streamStarted, reqLog)
+          \t\tif !acquired {
+          \t\t\treturn
+          \t\t}
+          ''', 'accountRelease', 'openai_alpha_search.account_pool_circuit_skipped')
+          admission('internal/handler/openai_images.go', '''\t\taccountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, parsed.Stream, &streamStarted, reqLog)
+          \t\tif !acquired {
+          \t\t\treturn
+          \t\t}
+
+          ''', 'accountReleaseFunc', 'openai.images.account_pool_circuit_skipped')
+          admission('internal/handler/grok_media.go', '''\t\taccountReleaseFunc, accountAcquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, false, &streamStarted, reqLog)
+          \t\tif !accountAcquired {
+          \t\t\treturn
+          \t\t}
+
+          ''', 'accountReleaseFunc', 'grok_media.account_pool_circuit_skipped')
+
+          # Primary OpenAI responses/messages/chat outcome feedback.
+          rep('internal/handler/openai_gateway_handler.go', '''\t\t\treturn h.gatewayService.Forward(c.Request.Context(), c, account, attemptBody)
+          \t\t}()
+          \t\tcyberBlockKeyHTTP := ""
+          ''', '''\t\t\treturn h.gatewayService.Forward(c.Request.Context(), c, account, attemptBody)
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+          \t\tcyberBlockKeyHTTP := ""
+          ''')
+          rep('internal/handler/openai_gateway_handler.go', '''\t\t\treturn h.gatewayService.ForwardAsAnthropic(c.Request.Context(), c, account, forwardBody, promptCacheKey, defaultMappedModel)
+          \t\t}()
+          \t\tcyberBlockKeyMsg := ""
+          ''', '''\t\t\treturn h.gatewayService.ForwardAsAnthropic(c.Request.Context(), c, account, forwardBody, promptCacheKey, defaultMappedModel)
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+          \t\tcyberBlockKeyMsg := ""
+          ''')
+          rep('internal/handler/openai_chat_completions.go', '''\t\t\treturn h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, forwardBody, promptCacheKey, "")
+          \t\t}()
+          \t\tcyberBlockKeyChat := ""
+          ''', '''\t\t\treturn h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, forwardBody, promptCacheKey, "")
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+          \t\tcyberBlockKeyChat := ""
+          ''')
+
+          # Remaining OpenAI/Grok endpoints.
+          rep('internal/handler/openai_embeddings.go', '''\t\t\treturn h.gatewayService.ForwardEmbeddings(c.Request.Context(), c, account, forwardBody, "")
+          \t\t}()
+
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''', '''\t\t\treturn h.gatewayService.ForwardEmbeddings(c.Request.Context(), c, account, forwardBody, "")
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''')
+          rep('internal/handler/openai_alpha_search.go', '''\t\t\treturn h.gatewayService.ForwardAlphaSearch(c.Request.Context(), c, account, forwardBody)
+          \t\t}()
+          \t\tservice.SetOpsLatencyMs(c, service.OpsResponseLatencyMsKey, time.Since(forwardStart).Milliseconds())
+          ''', '''\t\t\treturn h.gatewayService.ForwardAlphaSearch(c.Request.Context(), c, account, forwardBody)
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+          \t\tservice.SetOpsLatencyMs(c, service.OpsResponseLatencyMsKey, time.Since(forwardStart).Milliseconds())
+          ''')
+          rep('internal/handler/openai_images.go', '''\t\t\treturn h.gatewayService.ForwardImages(requestCtx, c, account, body, parsed, channelMapping.MappedModel)
+          \t\t}()
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''', '''\t\t\treturn h.gatewayService.ForwardImages(requestCtx, c, account, body, parsed, channelMapping.MappedModel)
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''')
+          rep('internal/handler/grok_media.go', '''\t\t\treturn h.gatewayService.ForwardGrokMedia(requestCtx, c, account, endpoint, requestID, body, contentType)
+          \t\t}()
+
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''', '''\t\t\treturn h.gatewayService.ForwardGrokMedia(requestCtx, c, account, endpoint, requestID, body, contentType)
+          \t\t}()
+          \t\th.reportAccountPoolAttempt(account, result, err)
+
+          \t\tforwardDurationMs := time.Since(forwardStart).Milliseconds()
+          ''')
+
+          # WebSocket connection + subsequent turns use the same single-probe admission.
+          rep('internal/handler/openai_gateway_handler.go', '''\t\t\taccountReleaseFunc = fastReleaseFunc
+          \t\t}
+          \t\tcurrentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
+          ''', '''\t\t\taccountReleaseFunc = fastReleaseFunc
+          \t\t}
+          \t\tif !h.beginAccountPoolAttempt(account) {
+          \t\t\tif accountReleaseFunc != nil {
+          \t\t\t\taccountReleaseFunc()
+          \t\t\t}
+          \t\t\tfailedAccountIDs[account.ID] = struct{}{}
+          \t\t\treqLog.Debug("openai.websocket_account_pool_circuit_skipped", zap.Int64("account_id", account.ID))
+          \t\t\tcontinue
+          \t\t}
+          \t\tcurrentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
+          ''')
+          rep('internal/handler/openai_gateway_handler.go', '''\t\t\t\tif !accountAcquired {
+          \t\t\t\t\tif userReleaseFunc != nil {
+          \t\t\t\t\t\tuserReleaseFunc()
+          \t\t\t\t\t}
+          \t\t\t\t\treturn service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account is busy, please retry later", nil)
+          \t\t\t\t}
+          \t\t\t\tcurrentUserRelease = wrapReleaseOnDone(ctx, userReleaseFunc)
+          \t\t\t\tcurrentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
+          ''', '''\t\t\t\tif !accountAcquired {
+          \t\t\t\t\tif userReleaseFunc != nil {
+          \t\t\t\t\t\tuserReleaseFunc()
+          \t\t\t\t\t}
+          \t\t\t\t\treturn service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account is busy, please retry later", nil)
+          \t\t\t\t}
+          \t\t\t\tif !h.beginAccountPoolAttempt(account) {
+          \t\t\t\t\tif accountReleaseFunc != nil {
+          \t\t\t\t\t\taccountReleaseFunc()
+          \t\t\t\t\t}
+          \t\t\t\t\tif userReleaseFunc != nil {
+          \t\t\t\t\t\tuserReleaseFunc()
+          \t\t\t\t\t}
+          \t\t\t\t\treturn service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account temporarily unavailable", nil)
+          \t\t\t\t}
+          \t\t\t\tcurrentUserRelease = wrapReleaseOnDone(ctx, userReleaseFunc)
+          \t\t\t\tcurrentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
+          ''')
+          rep('internal/handler/openai_gateway_handler.go', '''\t\t\tAfterTurn: func(turn int, result *service.OpenAIForwardResult, turnErr error) {
+          \t\t\t\t// F1: cyber 标记按 turn 生命周期清理——defer 保证任意早返回路径都执行；
+          ''', '''\t\t\tAfterTurn: func(turn int, result *service.OpenAIForwardResult, turnErr error) {
+          \t\t\t\tif turnErr != nil || result != nil {
+          \t\t\t\t\th.reportAccountPoolAttempt(account, result, turnErr)
+          \t\t\t\t}
+          \t\t\t\t// F1: cyber 标记按 turn 生命周期清理——defer 保证任意早返回路径都执行；
+          ''')
+          rep('internal/handler/openai_gateway_handler.go', '''\t\tif err := h.gatewayService.ProxyResponsesWebSocketFromClient(ctx, c, wsConn, account, token, wsFirstMessage, hooks); err != nil {
+          \t\t\tvar failoverErr *service.UpstreamFailoverError
+          ''', '''\t\tproxyErr := h.gatewayService.ProxyResponsesWebSocketFromClient(ctx, c, wsConn, account, token, wsFirstMessage, hooks)
+          \t\t// Release a possible half-open reservation if the proxy exits before
+          \t\t// any turn emitted an account-attributable outcome. No-op after Report.
+          \t\th.abandonAccountPoolAttempt(account)
+          \t\tif proxyErr != nil {
+          \t\t\terr := proxyErr
+          \t\t\tvar failoverErr *service.UpstreamFailoverError
+          ''')
+
+          # Focused lifecycle regression tests.
+          test = root / 'internal/service/account_pool_provider_feedback_integration_test.go'
+          test.write_text(r'''package service
+
+          import (
+          \t"context"
+          \t"errors"
+          \t"net/http"
+          \t"testing"
+          \t"time"
+          )
+
+          func TestAccountPoolProviderFeedbackCancelReleasesHalfOpenProbe(t *testing.T) {
+          \tt.Setenv(gatewayAccountPoolEnabledEnv, "true")
+          \tsvc := &GatewayService{}
+          \taccountID := int64(88001)
+          \tscheduler := svc.accountPoolScheduler()
+          \tnow := time.Now()
+          \tscheduler.Report(accountID, false, true, nil, now.Add(-3*time.Second))
+          \tscheduler.Report(accountID, false, true, nil, now.Add(-2*time.Second))
+          \tprobeAt := now.Add(2 * time.Second)
+          \tif !scheduler.Allow(accountID, probeAt) { t.Fatal("expected half-open probe") }
+          \tif scheduler.Allow(accountID, probeAt) { t.Fatal("expected single half-open probe") }
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, context.Canceled)
+          \tif !scheduler.Allow(accountID, probeAt) { t.Fatal("cancel must release half-open probe") }
+          }
+
+          func TestAccountPoolProviderFeedbackAdmissionHonorsOpenCircuit(t *testing.T) {
+          \tt.Setenv(gatewayAccountPoolEnabledEnv, "true")
+          \tsvc := &GatewayService{}
+          \taccountID := int64(88002)
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, &UpstreamFailoverError{StatusCode: http.StatusServiceUnavailable})
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway})
+          \tif svc.BeginAccountPoolAttempt(accountID) { t.Fatal("open circuit must reject provider-specific attempt") }
+          }
+
+          func TestAccountPoolProviderFeedback429DoesNotTripFastBreaker(t *testing.T) {
+          \tt.Setenv(gatewayAccountPoolEnabledEnv, "true")
+          \tsvc := &GatewayService{}
+          \taccountID := int64(88003)
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, &UpstreamFailoverError{StatusCode: http.StatusTooManyRequests})
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, &UpstreamFailoverError{StatusCode: http.StatusTooManyRequests})
+          \tif !svc.BeginAccountPoolAttempt(accountID) { t.Fatal("429 must not trip fast breaker") }
+          }
+
+          func TestAccountPoolProviderFeedbackTransportFailureTripsFastBreaker(t *testing.T) {
+          \tt.Setenv(gatewayAccountPoolEnabledEnv, "true")
+          \tsvc := &GatewayService{}
+          \taccountID := int64(88004)
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, errors.New("upstream request failed: connection reset"))
+          \tsvc.ReportAccountPoolOutcome(accountID, nil, errors.New("upstream request failed: connection reset"))
+          \tif svc.BeginAccountPoolAttempt(accountID) { t.Fatal("transport failures should open fast breaker") }
+          }
+          ''')
+          PY
+
+      - name: Format and static checks
+        working-directory: backend
+        run: |
+          gofmt -w internal/service/gateway_account_pool_scheduler.go \
+            internal/service/account_pool_provider_feedback_integration_test.go \
+            internal/service/gemini_messages_compat_service.go \
+            internal/service/gemini_chat_completions_compat_service.go \
+            internal/handler/gateway_handler.go \
+            internal/handler/gateway_handler_chat_completions.go \
+            internal/handler/gateway_handler_responses.go \
+            internal/handler/gemini_v1beta_handler.go \
+            internal/handler/openai_gateway_handler.go \
+            internal/handler/openai_chat_completions.go \
+            internal/handler/openai_embeddings.go \
+            internal/handler/openai_alpha_search.go \
+            internal/handler/openai_images.go \
+            internal/handler/grok_media.go \
+            internal/handler/wire.go \
+            cmd/server/wire_gen.go
+          git diff --check
+          grep -q 'return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}' internal/service/gemini_messages_compat_service.go
+          grep -q 'return nil, &UpstreamFailoverError{StatusCode: http.StatusBadGateway}' internal/service/gemini_chat_completions_compat_service.go
+
+      - name: Account Pool focused tests
+        working-directory: backend
+        run: go test ./internal/service -run 'Test(AccountPool|GatewayAccountPool|ClassifyAccountPool|BuildOpenAIWeightedSelectionOrder|OpenAIAccountScheduler)' -count=1
+
+      - name: Handler and server compile tests
+        working-directory: backend
+        run: |
+          go test ./internal/handler -run '^$' -count=1
+          go test ./cmd/server -run '^$' -count=1
+
+      - name: Full Go test suite
+        working-directory: backend
+        run: go test ./... -count=1
+
+      - name: Commit validated follow-up
+        shell: bash
+        run: |
+          git rm .github/workflows/account-pool-provider-feedback-finalize.yml
+          git add backend
+          git diff --cached --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'fix(scheduler): unify provider account pool feedback'
+          git push origin HEAD:chatgpt/account-pool-provider-feedback
