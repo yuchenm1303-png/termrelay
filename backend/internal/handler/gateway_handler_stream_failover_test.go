@@ -73,22 +73,21 @@ func TestStreamWrittenGuard_GeminiPath_AbortFailoverOnSSEContentWritten(t *testi
 	assert.Equal(t, firstIdx, lastIdx, "Gemini 路径不得出现双 message_start")
 }
 
-// TestGatewayResponseCommitted_HeaderOnlyCommitBlocksFailover 覆盖旧的 writer-size 守卫漏掉的关键边界：
-// 只提交 200/headers、尚未写 body 时 Size 仍可能不变，但此时客户端已经观察到响应，绝不能切上游。
-func TestGatewayResponseCommitted_HeaderOnlyCommitBlocksFailover(t *testing.T) {
+// TestGatewayResponseCommitted_HeaderCommitBlocksFailover 覆盖只提交响应头、尚未写 body 的边界。
+// 一旦响应头真正 flush 给客户端，本次请求就不能再切换到另一个上游。
+func TestGatewayResponseCommitted_HeaderCommitBlocksFailover(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
 
-	sizeBefore := c.Writer.Size()
 	require.False(t, gatewayResponseCommitted(c))
 
 	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.WriteHeaderNow()
 
-	require.Equal(t, sizeBefore, c.Writer.Size(), "header-only commit 不应依赖 body size 变化")
 	require.True(t, c.Writer.Written())
-	require.True(t, gatewayResponseCommitted(c), "header-only commit 必须立即禁止 retry/failover")
+	require.True(t, gatewayResponseCommitted(c), "响应头真正提交后必须立即禁止 retry/failover")
 }
 
 func TestGatewayResponseCommitted_NoResponseAllowsFailover(t *testing.T) {
