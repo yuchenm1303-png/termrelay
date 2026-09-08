@@ -62,26 +62,31 @@ func newAccountTestProviderAdapterRegistry(s *AccountTestService) *ProviderAdapt
 			name:               PlatformAnthropic,
 			platform:           PlatformAnthropic,
 			buildModelsRequest: s.buildAnthropicUpstreamModelsRequest,
+			normalizeError:     normalizeAnthropicProviderError,
 		},
 		&builtinProviderAdapter{
 			name:               PlatformOpenAI,
 			platform:           PlatformOpenAI,
 			buildModelsRequest: s.buildOpenAIUpstreamModelsRequest,
+			normalizeError:     normalizeOpenAIProviderError,
 		},
 		&builtinProviderAdapter{
 			name:               PlatformGemini,
 			platform:           PlatformGemini,
 			buildModelsRequest: s.buildGeminiUpstreamModelsRequest,
+			normalizeError:     normalizeGeminiProviderError,
 		},
 		&builtinProviderAdapter{
 			name:               PlatformAntigravity,
 			platform:           PlatformAntigravity,
 			buildModelsRequest: s.buildAntigravityAPIKeyModelsRequest,
+			normalizeError:     normalizeAntigravityProviderError,
 		},
 		&builtinProviderAdapter{
 			name:               PlatformGrok,
 			platform:           PlatformGrok,
 			buildModelsRequest: s.buildGrokUpstreamModelsRequest,
+			normalizeError:     normalizeGrokProviderError,
 		},
 	)
 }
