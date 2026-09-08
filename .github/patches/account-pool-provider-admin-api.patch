@@ -1,0 +1,422 @@
+diff --git a/backend/internal/handler/admin/account_handler.go b/backend/internal/handler/admin/account_handler.go
+index 123d23bd3..13c13941a 100644
+--- a/backend/internal/handler/admin/account_handler.go
++++ b/backend/internal/handler/admin/account_handler.go
+@@ -121,6 +121,7 @@ type CreateAccountRequest struct {
+ 	ProxyID                 *int64         `json:"proxy_id"`
+ 	Concurrency             int            `json:"concurrency"`
+ 	Priority                int            `json:"priority"`
++	ProviderID              *string        `json:"provider_id"`
+ 	SchedulingWeight        *float64       `json:"scheduling_weight"`
+ 	RateMultiplier          *float64       `json:"rate_multiplier"`
+ 	LoadFactor              *int           `json:"load_factor"`
+@@ -142,6 +143,7 @@ type UpdateAccountRequest struct {
+ 	ProxyID                 *int64         `json:"proxy_id"`
+ 	Concurrency             *int           `json:"concurrency"`
+ 	Priority                *int           `json:"priority"`
++	ProviderID              *string        `json:"provider_id"`
+ 	SchedulingWeight        *float64       `json:"scheduling_weight"`
+ 	RateMultiplier          *float64       `json:"rate_multiplier"`
+ 	LoadFactor              *int           `json:"load_factor"`
+@@ -160,6 +162,7 @@ type BulkUpdateAccountsRequest struct {
+ 	ProxyID                 *int64                    `json:"proxy_id"`
+ 	Concurrency             *int                      `json:"concurrency"`
+ 	Priority                *int                      `json:"priority"`
++	ProviderID              *string                   `json:"provider_id"`
+ 	SchedulingWeight        *float64                  `json:"scheduling_weight"`
+ 	RateMultiplier          *float64                  `json:"rate_multiplier"`
+ 	LoadFactor              *int                      `json:"load_factor"`
+@@ -857,6 +860,7 @@ func (h *AccountHandler) Create(c *gin.Context) {
+ 			ProxyID:               req.ProxyID,
+ 			Concurrency:           req.Concurrency,
+ 			Priority:              req.Priority,
++			ProviderID:            req.ProviderID,
+ 			SchedulingWeight:      req.SchedulingWeight,
+ 			RateMultiplier:        req.RateMultiplier,
+ 			LoadFactor:            req.LoadFactor,
+@@ -985,6 +989,7 @@ func (h *AccountHandler) Update(c *gin.Context) {
+ 		ProxyID:               req.ProxyID,
+ 		Concurrency:           req.Concurrency, // 指针类型，nil 表示未提供
+ 		Priority:              req.Priority,    // 指针类型，nil 表示未提供
++		ProviderID:            req.ProviderID,
+ 		SchedulingWeight:      req.SchedulingWeight,
+ 		RateMultiplier:        req.RateMultiplier,
+ 		LoadFactor:            req.LoadFactor,
+@@ -2073,6 +2078,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
+ 		req.ProxyID != nil ||
+ 		req.Concurrency != nil ||
+ 		req.Priority != nil ||
++		req.ProviderID != nil ||
+ 		req.SchedulingWeight != nil ||
+ 		req.RateMultiplier != nil ||
+ 		req.LoadFactor != nil ||
+@@ -2095,6 +2101,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
+ 		ProxyID:               req.ProxyID,
+ 		Concurrency:           req.Concurrency,
+ 		Priority:              req.Priority,
++		ProviderID:            req.ProviderID,
+ 		SchedulingWeight:      req.SchedulingWeight,
+ 		RateMultiplier:        req.RateMultiplier,
+ 		LoadFactor:            req.LoadFactor,
+diff --git a/backend/internal/handler/dto/account_mapper_redact_test.go b/backend/internal/handler/dto/account_mapper_redact_test.go
+index 5aa834a68..4ff3da80c 100644
+--- a/backend/internal/handler/dto/account_mapper_redact_test.go
++++ b/backend/internal/handler/dto/account_mapper_redact_test.go
+@@ -113,3 +113,28 @@ func TestAccountFromServiceShallow_ExposesSchedulingWeight(t *testing.T) {
+ 	require.NotNil(t, got)
+ 	require.Equal(t, 4.5, got.SchedulingWeight)
+ }
++
++func TestAccountFromServiceShallow_ExposesSafeProviderIdentity(t *testing.T) {
++	src := &service.Account{
++		ID:       88,
++		Platform: service.PlatformOpenAI,
++		Type:     service.AccountTypeAPIKey,
++		Credentials: map[string]any{
++			"base_url": "https://user:secret@api.example.com/v1?token=hidden",
++			"api_key":  "sk-secret",
++		},
++		Extra: map[string]any{"provider_id": "llmgw"},
++	}
++
++	got := AccountFromServiceShallow(src)
++	require.NotNil(t, got)
++	require.Equal(t, "llmgw", got.ProviderID)
++	require.Equal(t, "provider:llmgw", got.Provider.Key)
++	require.Equal(t, service.PlatformOpenAI, got.Provider.Platform)
++	require.Empty(t, got.Provider.Origin)
++
++	raw, err := json.Marshal(got)
++	require.NoError(t, err)
++	require.NotContains(t, string(raw), "sk-secret")
++	require.NotContains(t, string(raw), "hidden")
++}
+diff --git a/backend/internal/handler/dto/mappers.go b/backend/internal/handler/dto/mappers.go
+index 163bb1c18..d200f4775 100644
+--- a/backend/internal/handler/dto/mappers.go
++++ b/backend/internal/handler/dto/mappers.go
+@@ -241,6 +241,8 @@ func AccountFromServiceShallow(a *service.Account) *Account {
+ 		Concurrency:             a.Concurrency,
+ 		LoadFactor:              a.LoadFactor,
+ 		Priority:                a.Priority,
++		ProviderID:              a.ExplicitProviderID(),
++		Provider:                a.ProviderIdentity(),
+ 		SchedulingWeight:        a.SchedulingWeight(),
+ 		RateMultiplier:          a.BillingRateMultiplier(),
+ 		Status:                  a.Status,
+diff --git a/backend/internal/handler/dto/types.go b/backend/internal/handler/dto/types.go
+index 142f7540c..9dbae8882 100644
+--- a/backend/internal/handler/dto/types.go
++++ b/backend/internal/handler/dto/types.go
+@@ -196,6 +196,8 @@ type Account struct {
+ 	Concurrency             int                            `json:"concurrency"`
+ 	LoadFactor              *int                           `json:"load_factor,omitempty"`
+ 	Priority                int                            `json:"priority"`
++	ProviderID              string                         `json:"provider_id,omitempty"`
++	Provider                service.AccountPoolProviderIdentity `json:"provider"`
+ 	SchedulingWeight        float64                        `json:"scheduling_weight"`
+ 	RateMultiplier          float64                        `json:"rate_multiplier"`
+ 	Status                  string                         `json:"status"`
+diff --git a/backend/internal/service/account_pool_provider.go b/backend/internal/service/account_pool_provider.go
+index 134c977b2..d36efc6fb 100644
+--- a/backend/internal/service/account_pool_provider.go
++++ b/backend/internal/service/account_pool_provider.go
+@@ -5,17 +5,88 @@ import (
+ 	"encoding/hex"
+ 	"net/url"
+ 	"strings"
++	"unicode"
++
++	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+ )
+ 
+-const accountPoolProviderIDExtraKey = "provider_id"
++const (
++	accountPoolProviderIDExtraKey = "provider_id"
++	maxAccountPoolProviderIDLen  = 128
++)
+ 
+ // AccountPoolProviderIdentity is the scheduler-facing provider identity. It is
+ // deliberately separate from Account: one provider may own many API-key/OAuth
+ // accounts, while credentials and per-account health remain account-scoped.
+ type AccountPoolProviderIdentity struct {
+-	Key      string
+-	Platform string
+-	Origin   string
++	Key      string `json:"key"`
++	Platform string `json:"platform"`
++	Origin   string `json:"origin,omitempty"`
++}
++
++
++// ExplicitProviderID returns the normalized operator-owned logical provider ID.
++// Empty means the account falls back to the derived platform+origin identity.
++func (a *Account) ExplicitProviderID() string {
++	if a == nil {
++		return ""
++	}
++	return strings.TrimSpace(a.GetExtraString(accountPoolProviderIDExtraKey))
++}
++
++// NormalizeAccountPoolProviderID validates the optional logical provider ID. A
++// typed field wins over the legacy Extra value. Empty explicitly clears the
++// logical provider by storing JSON null, which makes readers use derived identity
++// while remaining safe for key-level JSONB merge updates.
++func NormalizeAccountPoolProviderID(extra map[string]any, explicit *string) (map[string]any, error) {
++	raw, hasProviderID := any(nil), false
++	if extra != nil {
++		raw, hasProviderID = extra[accountPoolProviderIDExtraKey]
++	}
++	if explicit != nil {
++		raw = *explicit
++		hasProviderID = true
++	}
++	if !hasProviderID {
++		return extra, nil
++	}
++
++	providerID := ""
++	if raw != nil {
++		value, ok := raw.(string)
++		if !ok {
++			return nil, infraerrors.BadRequest(
++				"INVALID_ACCOUNT_PROVIDER_ID",
++				"provider_id must be a string",
++			)
++		}
++		providerID = strings.TrimSpace(value)
++	}
++	if len(providerID) > maxAccountPoolProviderIDLen {
++		return nil, infraerrors.BadRequest(
++			"INVALID_ACCOUNT_PROVIDER_ID",
++			"provider_id must be at most 128 characters",
++		)
++	}
++	for _, r := range providerID {
++		if unicode.IsControl(r) {
++			return nil, infraerrors.BadRequest(
++				"INVALID_ACCOUNT_PROVIDER_ID",
++				"provider_id must not contain control characters",
++			)
++		}
++	}
++
++	normalized := make(map[string]any, len(extra)+1)
++	for key, value := range extra {
++		normalized[key] = value
++	}
++	if providerID == "" {
++		normalized[accountPoolProviderIDExtraKey] = nil
++	} else {
++		normalized[accountPoolProviderIDExtraKey] = providerID
++	}
++	return normalized, nil
+ }
+ 
+ // ProviderIdentity derives a stable non-secret provider identity. Operators can
+@@ -28,7 +99,7 @@ func (a *Account) ProviderIdentity() AccountPoolProviderIdentity {
+ 		return AccountPoolProviderIdentity{}
+ 	}
+ 	platform := strings.ToLower(strings.TrimSpace(a.Platform))
+-	if explicit := strings.TrimSpace(a.GetExtraString(accountPoolProviderIDExtraKey)); explicit != "" {
++	if explicit := a.ExplicitProviderID(); explicit != "" {
+ 		return AccountPoolProviderIdentity{
+ 			Key:      "provider:" + explicit,
+ 			Platform: platform,
+diff --git a/backend/internal/service/account_pool_provider_test.go b/backend/internal/service/account_pool_provider_test.go
+index 17119fb21..112b36e72 100644
+--- a/backend/internal/service/account_pool_provider_test.go
++++ b/backend/internal/service/account_pool_provider_test.go
+@@ -58,3 +58,39 @@ func TestProviderIdentityExplicitProviderIDOverridesOrigin(t *testing.T) {
+ 		t.Fatalf("explicit provider id should group accounts: first=%+v second=%+v", first, second)
+ 	}
+ }
++
++func TestNormalizeAccountPoolProviderID(t *testing.T) {
++	t.Run("explicit typed value wins and trims", func(t *testing.T) {
++		providerID := "  llmgw-primary  "
++		extra, err := NormalizeAccountPoolProviderID(map[string]any{
++			accountPoolProviderIDExtraKey: "legacy",
++			"keep":                       true,
++		}, &providerID)
++		if err != nil {
++			t.Fatalf("unexpected error: %v", err)
++		}
++		if got := extra[accountPoolProviderIDExtraKey]; got != "llmgw-primary" {
++			t.Fatalf("provider_id=%v want=llmgw-primary", got)
++		}
++		if extra["keep"] != true {
++			t.Fatal("unrelated extra field was not preserved")
++		}
++	})
++
++	t.Run("empty explicit value clears to derived mode", func(t *testing.T) {
++		providerID := ""
++		extra, err := NormalizeAccountPoolProviderID(nil, &providerID)
++		if err != nil {
++			t.Fatalf("unexpected error: %v", err)
++		}
++		if value, ok := extra[accountPoolProviderIDExtraKey]; !ok || value != nil {
++			t.Fatalf("expected provider_id JSON null, got %#v", extra)
++		}
++	})
++
++	t.Run("rejects malformed raw value", func(t *testing.T) {
++		if _, err := NormalizeAccountPoolProviderID(map[string]any{accountPoolProviderIDExtraKey: 42}, nil); err == nil {
++			t.Fatal("expected non-string provider_id to be rejected")
++		}
++	})
++}
+diff --git a/backend/internal/service/admin_account.go b/backend/internal/service/admin_account.go
+index ce20b3503..a2688200d 100644
+--- a/backend/internal/service/admin_account.go
++++ b/backend/internal/service/admin_account.go
+@@ -514,7 +514,11 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
+ }
+ 
+ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccountInput) (*Account, error) {
+-	accountExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
++	accountExtra, err := NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
++	if err != nil {
++		return nil, err
++	}
++	accountExtra, err = NormalizeAccountPoolSchedulingWeight(accountExtra, input.SchedulingWeight)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -608,14 +612,22 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ 		return nil, err
+ 	}
+ 
+-	var schedulingWeightPatch map[string]any
++	var accountPoolExtraPatch map[string]any
+ 	if input.Extra != nil {
++		input.Extra, err = NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
++		if err != nil {
++			return nil, err
++		}
+ 		input.Extra, err = NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+-	} else if input.SchedulingWeight != nil {
+-		schedulingWeightPatch, err = NormalizeAccountPoolSchedulingWeight(nil, input.SchedulingWeight)
++	} else if input.ProviderID != nil || input.SchedulingWeight != nil {
++		accountPoolExtraPatch, err = NormalizeAccountPoolProviderID(nil, input.ProviderID)
++		if err != nil {
++			return nil, err
++		}
++		accountPoolExtraPatch, err = NormalizeAccountPoolSchedulingWeight(accountPoolExtraPatch, input.SchedulingWeight)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -845,8 +857,8 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ 			}
+ 		}
+ 	}
+-	if len(schedulingWeightPatch) > 0 {
+-		if err := s.accountRepo.UpdateExtra(ctx, account.ID, schedulingWeightPatch); err != nil {
++	if len(accountPoolExtraPatch) > 0 {
++		if err := s.accountRepo.UpdateExtra(ctx, account.ID, accountPoolExtraPatch); err != nil {
+ 			return nil, err
+ 		}
+ 	}
+@@ -877,7 +889,11 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ // UpdateAccountExtra 仅对 Extra JSONB 做 key 级合并，避免覆盖其它运行态键
+ // （如 model_rate_limits / passive_usage_* 等）。
+ func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, updates map[string]any) error {
+-	normalizedUpdates, err := NormalizeAccountPoolSchedulingWeight(updates, nil)
++	normalizedUpdates, err := NormalizeAccountPoolProviderID(updates, nil)
++	if err != nil {
++		return err
++	}
++	normalizedUpdates, err = NormalizeAccountPoolSchedulingWeight(normalizedUpdates, nil)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -904,11 +920,15 @@ func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, upd
+ // BulkUpdateAccounts updates multiple accounts in one request.
+ // It merges credentials/extra keys instead of overwriting the whole object.
+ func (s *adminServiceImpl) BulkUpdateAccounts(ctx context.Context, input *BulkUpdateAccountsInput) (*BulkUpdateAccountsResult, error) {
+-	normalizedSchedulingExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
++	normalizedAccountPoolExtra, err := NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
++	if err != nil {
++		return nil, err
++	}
++	normalizedAccountPoolExtra, err = NormalizeAccountPoolSchedulingWeight(normalizedAccountPoolExtra, input.SchedulingWeight)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	input.Extra = normalizedSchedulingExtra
++	input.Extra = normalizedAccountPoolExtra
+ 
+ 	// Managed probe/session state may only enter through dedicated typed endpoints.
+ 	delete(input.Extra, UpstreamBillingProbeEnabledExtraKey)
+diff --git a/backend/internal/service/admin_service.go b/backend/internal/service/admin_service.go
+index 3a98be52a..8ebcfcddf 100644
+--- a/backend/internal/service/admin_service.go
++++ b/backend/internal/service/admin_service.go
+@@ -339,6 +339,7 @@ type CreateAccountInput struct {
+ 	ProxyID            *int64
+ 	Concurrency        int
+ 	Priority           int
++	ProviderID         *string  // 逻辑上游 Provider ID；nil=按 platform+origin 自动派生
+ 	SchedulingWeight   *float64 // 账号池流量权重（>0 且 <=1000；nil=默认 1）
+ 	RateMultiplier     *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor         *int
+@@ -371,6 +372,7 @@ type UpdateAccountInput struct {
+ 	ProxyID               *int64
+ 	Concurrency           *int     // 使用指针区分"未提供"和"设置为0"
+ 	Priority              *int     // 使用指针区分"未提供"和"设置为0"
++	ProviderID            *string  // 逻辑上游 Provider ID；空字符串表示恢复自动派生
+ 	SchedulingWeight      *float64 // 账号池流量权重；nil 表示不修改
+ 	RateMultiplier        *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor            *int
+@@ -389,6 +391,7 @@ type BulkUpdateAccountsInput struct {
+ 	ProxyID          *int64
+ 	Concurrency      *int
+ 	Priority         *int
++	ProviderID       *string  // 逻辑上游 Provider ID；空字符串表示恢复自动派生
+ 	SchedulingWeight *float64 // 账号池流量权重；nil 表示不修改
+ 	RateMultiplier   *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor       *int
+diff --git a/backend/internal/service/admin_service_bulk_update_test.go b/backend/internal/service/admin_service_bulk_update_test.go
+index 3f96d1541..1c55fb6a0 100644
+--- a/backend/internal/service/admin_service_bulk_update_test.go
++++ b/backend/internal/service/admin_service_bulk_update_test.go
+@@ -320,3 +320,35 @@ func TestAdminServiceBulkUpdateAccounts_RejectsInvalidSchedulingWeight(t *testin
+ 	require.Error(t, err)
+ 	require.Empty(t, repo.bulkUpdateIDs)
+ }
++
++func TestAdminServiceCreateAccount_AppliesProviderID(t *testing.T) {
++	repo := &accountRepoStubForBulkUpdate{createID: 92}
++	svc := &adminServiceImpl{accountRepo: repo}
++	providerID := "llmgw"
++
++	account, err := svc.CreateAccount(context.Background(), &CreateAccountInput{
++		Name:                 "provider-bound",
++		Platform:             PlatformOpenAI,
++		Type:                 AccountTypeAPIKey,
++		ProviderID:           &providerID,
++		SkipDefaultGroupBind: true,
++	})
++	require.NoError(t, err)
++	require.NotNil(t, account)
++	require.Equal(t, "llmgw", account.ExplicitProviderID())
++	require.Equal(t, "provider:llmgw", account.ProviderIdentity().Key)
++}
++
++func TestAdminServiceBulkUpdateAccounts_AppliesProviderIDAsExtraPatch(t *testing.T) {
++	repo := &accountRepoStubForBulkUpdate{}
++	svc := &adminServiceImpl{accountRepo: repo}
++	providerID := "swiftapi"
++
++	result, err := svc.BulkUpdateAccounts(context.Background(), &BulkUpdateAccountsInput{
++		AccountIDs: []int64{1, 2},
++		ProviderID: &providerID,
++	})
++	require.NoError(t, err)
++	require.Equal(t, 2, result.Success)
++	require.Equal(t, "swiftapi", repo.lastBulkUpdate.Extra[accountPoolProviderIDExtraKey])
++}
