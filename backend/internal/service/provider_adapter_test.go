@@ -46,6 +46,20 @@ func TestProviderAdapterRegistryResolve(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestProviderAdapterRegistryRejectsAmbiguousMatches(t *testing.T) {
+	registry := MustNewProviderAdapterRegistry(
+		&testProviderAdapter{name: "openai-primary", platform: PlatformOpenAI},
+		&testProviderAdapter{name: "openai-compatible", platform: PlatformOpenAI},
+	)
+
+	adapter, err := registry.Resolve(&Account{Platform: PlatformOpenAI, Type: AccountTypeAPIKey})
+	require.Nil(t, adapter)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "ambiguous provider adapter match")
+	require.Contains(t, err.Error(), "openai-primary")
+	require.Contains(t, err.Error(), "openai-compatible")
+}
+
 func TestProviderAdapterRegistryRejectsDuplicateNames(t *testing.T) {
 	_, err := NewProviderAdapterRegistry(
 		&testProviderAdapter{name: "OpenAI", platform: PlatformOpenAI},
@@ -97,9 +111,10 @@ func TestNormalizeGenericProviderError(t *testing.T) {
 			"X-Request-Id": []string{"req_123"},
 		},
 	}
-	got := normalizeGenericProviderError(resp, []byte(`{"error":{"message":"rate limited"}}`))
+	got := normalizeGenericProviderError(resp, []byte(`{"error":{"code":"rate_limit_exceeded","message":"rate limited"}}`))
 
 	require.Equal(t, http.StatusTooManyRequests, got.StatusCode)
+	require.Equal(t, "rate_limit_exceeded", got.Code)
 	require.Equal(t, "req_123", got.RequestID)
 	require.Equal(t, "rate_limit_error", got.Type)
 	require.Equal(t, "rate limited", got.Message)
