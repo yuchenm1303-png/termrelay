@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import AccountSettingsPage from '../components/AccountSettingsPage.vue'
 import AdminOpsPage from '../components/AdminOpsPage.vue'
 import AdminSettingsPage from '../components/AdminSettingsPage.vue'
 import AdminUsersPage from '../components/AdminUsersPage.vue'
@@ -229,17 +230,7 @@ onMounted(() => void load())
         </div>
       </template>
 
-      <template v-else-if="isProfile">
-        <section class="glass profile-panel">
-          <div class="profile-avatar">{{ (state.user?.username || state.user?.email || 'S').slice(0,1).toUpperCase() }}</div>
-          <div class="profile-copy"><h2>{{ state.user?.username || 'Smirel Account' }}</h2><p>{{ state.user?.email }}</p></div>
-          <dl>
-            <div><dt>{{ t('workspace.role') }}</dt><dd>{{ state.user?.role === 'admin' ? t('shell.roleAdmin') : t('workspace.user') }}</dd></div>
-            <div><dt>{{ t('workspace.status') }}</dt><dd>{{ state.user?.status || 'active' }}</dd></div>
-            <div><dt>{{ t('workspace.availableBalance') }}</dt><dd>${{ accountBalance.toFixed(2) }}</dd></div>
-          </dl>
-        </section>
-      </template>
+      <AccountSettingsPage v-else-if="isProfile" />
 
       <template v-else>
         <section class="glass module-panel">
