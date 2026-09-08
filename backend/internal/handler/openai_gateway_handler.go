@@ -559,15 +559,6 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 				accountReleaseFunc()
 			}
 			failedAccountIDs[account.ID] = struct{}{}
-			reqLog.Debug("openai_messages.account_pool_circuit_skipped", zap.Int64("account_id", account.ID))
-			continue
-		}
-
-		if !h.beginAccountPoolAttempt(account) {
-			if accountReleaseFunc != nil {
-				accountReleaseFunc()
-			}
-			failedAccountIDs[account.ID] = struct{}{}
 			reqLog.Debug("openai.account_pool_circuit_skipped", zap.Int64("account_id", account.ID))
 			continue
 		}
@@ -1113,6 +1104,15 @@ func (h *OpenAIGatewayHandler) Messages(c *gin.Context) {
 		accountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
 		if !acquired {
 			return
+		}
+
+		if !h.beginAccountPoolAttempt(account) {
+			if accountReleaseFunc != nil {
+				accountReleaseFunc()
+			}
+			failedAccountIDs[account.ID] = struct{}{}
+			reqLog.Debug("openai_messages.account_pool_circuit_skipped", zap.Int64("account_id", account.ID))
+			continue
 		}
 
 		service.SetOpsLatencyMs(c, service.OpsRoutingLatencyMsKey, time.Since(routingStart).Milliseconds())
