@@ -255,9 +255,12 @@
 }
 
 .workspace-root .workspace-main .workspace-profile-link {
-  min-height: 38px;
-  padding: 3px 9px 3px 4px;
+  height: 36px;
+  min-height: 36px;
+  padding: 2px 8px 2px 4px;
   gap: 9px;
+  align-self: center;
+  box-sizing: border-box;
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
@@ -284,9 +287,9 @@
 }
 
 .workspace-root .workspace-main .workspace-profile-link .mini-avatar {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   border-color: #2c323a;
   border-radius: 8px;
   background: #15181d;
