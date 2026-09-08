@@ -9,6 +9,32 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
 )
 
+func TestAccountPoolSchedulerFeatureGateDefaultsOff(t *testing.T) {
+	t.Setenv(gatewayAccountPoolEnabledEnv, "")
+	if (&GatewayService{}).AccountPoolSchedulerEnabled() {
+		t.Fatal("account-pool scheduler must default off")
+	}
+	t.Setenv(gatewayAccountPoolEnabledEnv, "true")
+	if !(&GatewayService{}).AccountPoolSchedulerEnabled() {
+		t.Fatal("explicit true should enable account-pool scheduler")
+	}
+}
+
+func TestGatewayAccountPoolTopKBounds(t *testing.T) {
+	t.Setenv(gatewayAccountPoolTopKEnv, "")
+	if got := gatewayAccountPoolTopK(); got != defaultGatewayAccountPoolTopK {
+		t.Fatalf("default top-k=%d want=%d", got, defaultGatewayAccountPoolTopK)
+	}
+	t.Setenv(gatewayAccountPoolTopKEnv, "999")
+	if got := gatewayAccountPoolTopK(); got != 32 {
+		t.Fatalf("top-k should clamp at 32, got %d", got)
+	}
+	t.Setenv(gatewayAccountPoolTopKEnv, "invalid")
+	if got := gatewayAccountPoolTopK(); got != defaultGatewayAccountPoolTopK {
+		t.Fatalf("invalid top-k should use default, got %d", got)
+	}
+}
+
 func TestAccountPoolSelectionSeedPrefersRequestID(t *testing.T) {
 	ctx := context.WithValue(context.Background(), ctxkey.RequestID, "req-123")
 	ctx = context.WithValue(ctx, ctxkey.ClientRequestID, "client-456")
