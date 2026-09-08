@@ -68,16 +68,6 @@ func accountPoolNumericValue(value any) (float64, bool) {
 	}
 }
 
-func applyAccountPoolStaticWeights(candidates []accountPoolCandidateScore) []accountPoolCandidateScore {
-	for i := range candidates {
-		if candidates[i].Account == nil {
-			continue
-		}
-		candidates[i].Score *= candidates[i].Account.SchedulingWeight()
-	}
-	return candidates
-}
-
 type accountPoolHealthTracker struct {
 	accounts sync.Map // map[int64]*accountPoolHealthState
 }
