@@ -24,9 +24,13 @@ func TestGatewayResponseCommitted_HeaderOnly(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", nil)
 
+	// gin.Context.Status only stages the status code; WriteHeaderNow performs the
+	// actual HTTP header commit. The failover boundary is client visibility, not
+	// merely selecting a status code internally.
 	c.Status(http.StatusOK)
+	c.Writer.WriteHeaderNow()
 
-	require.True(t, gatewayResponseCommitted(c), "WriteHeader must cross the failover boundary even with a zero-byte body")
+	require.True(t, gatewayResponseCommitted(c), "an actually committed header must cross the failover boundary even with a zero-byte body")
 	require.Equal(t, 0, c.Writer.Size())
 }
 
