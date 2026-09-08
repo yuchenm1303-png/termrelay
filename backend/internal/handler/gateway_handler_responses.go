@@ -244,6 +244,7 @@ func (h *GatewayHandler) Responses(c *gin.Context) {
 			result, err = h.gatewayService.ForwardAsResponses(requestCtx, c, account, forwardBody, parsedReq)
 		}
 
+		h.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
 		if accountReleaseFunc != nil {
 			accountReleaseFunc()
 		}
