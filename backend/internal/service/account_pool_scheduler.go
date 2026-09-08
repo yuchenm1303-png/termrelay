@@ -359,16 +359,16 @@ func scoreAccountPoolCandidates(inputs []accountPoolCandidateInput, stats *accou
 			weights.QuotaHeadroom*quotaFactor +
 			weights.Sticky*stickyFactor
 		out = append(out, accountPoolCandidateScore{
-			Account:               account,
-			Score:                 score,
-			PriorityFactor:        priorityFactor,
-			LoadFactor:            loadFactor,
-			QueueFactor:           queueFactor,
-			ErrorFactor:           errorFactor,
-			TTFTFactor:            ttftFactor,
-			ResetFactor:           resetFactor,
-			QuotaHeadroomFactor:   quotaFactor,
-			StickyFactor:          stickyFactor,
+			Account:             account,
+			Score:               score,
+			PriorityFactor:      priorityFactor,
+			LoadFactor:          loadFactor,
+			QueueFactor:         queueFactor,
+			ErrorFactor:         errorFactor,
+			TTFTFactor:          ttftFactor,
+			ResetFactor:         resetFactor,
+			QuotaHeadroomFactor: quotaFactor,
+			StickyFactor:        stickyFactor,
 		})
 	}
 	return out
