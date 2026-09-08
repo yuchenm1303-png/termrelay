@@ -514,7 +514,11 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
 }
 
 func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccountInput) (*Account, error) {
-	accountExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
+	accountExtra, err := NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
+	if err != nil {
+		return nil, err
+	}
+	accountExtra, err = NormalizeAccountPoolSchedulingWeight(accountExtra, input.SchedulingWeight)
 	if err != nil {
 		return nil, err
 	}
@@ -608,14 +612,22 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 		return nil, err
 	}
 
-	var schedulingWeightPatch map[string]any
+	var accountPoolExtraPatch map[string]any
 	if input.Extra != nil {
+		input.Extra, err = NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
+		if err != nil {
+			return nil, err
+		}
 		input.Extra, err = NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
 		if err != nil {
 			return nil, err
 		}
-	} else if input.SchedulingWeight != nil {
-		schedulingWeightPatch, err = NormalizeAccountPoolSchedulingWeight(nil, input.SchedulingWeight)
+	} else if input.ProviderID != nil || input.SchedulingWeight != nil {
+		accountPoolExtraPatch, err = NormalizeAccountPoolProviderID(nil, input.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		accountPoolExtraPatch, err = NormalizeAccountPoolSchedulingWeight(accountPoolExtraPatch, input.SchedulingWeight)
 		if err != nil {
 			return nil, err
 		}
@@ -845,8 +857,8 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 			}
 		}
 	}
-	if len(schedulingWeightPatch) > 0 {
-		if err := s.accountRepo.UpdateExtra(ctx, account.ID, schedulingWeightPatch); err != nil {
+	if len(accountPoolExtraPatch) > 0 {
+		if err := s.accountRepo.UpdateExtra(ctx, account.ID, accountPoolExtraPatch); err != nil {
 			return nil, err
 		}
 	}
@@ -877,7 +889,11 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 // UpdateAccountExtra 仅对 Extra JSONB 做 key 级合并，避免覆盖其它运行态键
 // （如 model_rate_limits / passive_usage_* 等）。
 func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, updates map[string]any) error {
-	normalizedUpdates, err := NormalizeAccountPoolSchedulingWeight(updates, nil)
+	normalizedUpdates, err := NormalizeAccountPoolProviderID(updates, nil)
+	if err != nil {
+		return err
+	}
+	normalizedUpdates, err = NormalizeAccountPoolSchedulingWeight(normalizedUpdates, nil)
 	if err != nil {
 		return err
 	}
@@ -904,11 +920,15 @@ func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, upd
 // BulkUpdateAccounts updates multiple accounts in one request.
 // It merges credentials/extra keys instead of overwriting the whole object.
 func (s *adminServiceImpl) BulkUpdateAccounts(ctx context.Context, input *BulkUpdateAccountsInput) (*BulkUpdateAccountsResult, error) {
-	normalizedSchedulingExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
+	normalizedAccountPoolExtra, err := NormalizeAccountPoolProviderID(input.Extra, input.ProviderID)
 	if err != nil {
 		return nil, err
 	}
-	input.Extra = normalizedSchedulingExtra
+	normalizedAccountPoolExtra, err = NormalizeAccountPoolSchedulingWeight(normalizedAccountPoolExtra, input.SchedulingWeight)
+	if err != nil {
+		return nil, err
+	}
+	input.Extra = normalizedAccountPoolExtra
 
 	// Managed probe/session state may only enter through dedicated typed endpoints.
 	delete(input.Extra, UpstreamBillingProbeEnabledExtraKey)

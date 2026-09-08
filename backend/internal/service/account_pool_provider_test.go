@@ -58,3 +58,39 @@ func TestProviderIdentityExplicitProviderIDOverridesOrigin(t *testing.T) {
 		t.Fatalf("explicit provider id should group accounts: first=%+v second=%+v", first, second)
 	}
 }
+
+func TestNormalizeAccountPoolProviderID(t *testing.T) {
+	t.Run("explicit typed value wins and trims", func(t *testing.T) {
+		providerID := "  llmgw-primary  "
+		extra, err := NormalizeAccountPoolProviderID(map[string]any{
+			accountPoolProviderIDExtraKey: "legacy",
+			"keep":                        true,
+		}, &providerID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got := extra[accountPoolProviderIDExtraKey]; got != "llmgw-primary" {
+			t.Fatalf("provider_id=%v want=llmgw-primary", got)
+		}
+		if extra["keep"] != true {
+			t.Fatal("unrelated extra field was not preserved")
+		}
+	})
+
+	t.Run("empty explicit value clears to derived mode", func(t *testing.T) {
+		providerID := ""
+		extra, err := NormalizeAccountPoolProviderID(nil, &providerID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if value, ok := extra[accountPoolProviderIDExtraKey]; !ok || value != nil {
+			t.Fatalf("expected provider_id JSON null, got %#v", extra)
+		}
+	})
+
+	t.Run("rejects malformed raw value", func(t *testing.T) {
+		if _, err := NormalizeAccountPoolProviderID(map[string]any{accountPoolProviderIDExtraKey: 42}, nil); err == nil {
+			t.Fatal("expected non-string provider_id to be rejected")
+		}
+	})
+}

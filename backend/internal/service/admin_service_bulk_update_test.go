@@ -320,3 +320,35 @@ func TestAdminServiceBulkUpdateAccounts_RejectsInvalidSchedulingWeight(t *testin
 	require.Error(t, err)
 	require.Empty(t, repo.bulkUpdateIDs)
 }
+
+func TestAdminServiceCreateAccount_AppliesProviderID(t *testing.T) {
+	repo := &accountRepoStubForBulkUpdate{createID: 92}
+	svc := &adminServiceImpl{accountRepo: repo}
+	providerID := "llmgw"
+
+	account, err := svc.CreateAccount(context.Background(), &CreateAccountInput{
+		Name:                 "provider-bound",
+		Platform:             PlatformOpenAI,
+		Type:                 AccountTypeAPIKey,
+		ProviderID:           &providerID,
+		SkipDefaultGroupBind: true,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, account)
+	require.Equal(t, "llmgw", account.ExplicitProviderID())
+	require.Equal(t, "provider:llmgw", account.ProviderIdentity().Key)
+}
+
+func TestAdminServiceBulkUpdateAccounts_AppliesProviderIDAsExtraPatch(t *testing.T) {
+	repo := &accountRepoStubForBulkUpdate{}
+	svc := &adminServiceImpl{accountRepo: repo}
+	providerID := "swiftapi"
+
+	result, err := svc.BulkUpdateAccounts(context.Background(), &BulkUpdateAccountsInput{
+		AccountIDs: []int64{1, 2},
+		ProviderID: &providerID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 2, result.Success)
+	require.Equal(t, "swiftapi", repo.lastBulkUpdate.Extra[accountPoolProviderIDExtraKey])
+}

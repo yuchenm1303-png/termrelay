@@ -241,6 +241,8 @@ func AccountFromServiceShallow(a *service.Account) *Account {
 		Concurrency:             a.Concurrency,
 		LoadFactor:              a.LoadFactor,
 		Priority:                a.Priority,
+		ProviderID:              a.ExplicitProviderID(),
+		Provider:                a.ProviderIdentity(),
 		SchedulingWeight:        a.SchedulingWeight(),
 		RateMultiplier:          a.BillingRateMultiplier(),
 		Status:                  a.Status,

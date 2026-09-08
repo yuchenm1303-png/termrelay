@@ -121,6 +121,7 @@ type CreateAccountRequest struct {
 	ProxyID                 *int64         `json:"proxy_id"`
 	Concurrency             int            `json:"concurrency"`
 	Priority                int            `json:"priority"`
+	ProviderID              *string        `json:"provider_id"`
 	SchedulingWeight        *float64       `json:"scheduling_weight"`
 	RateMultiplier          *float64       `json:"rate_multiplier"`
 	LoadFactor              *int           `json:"load_factor"`
@@ -142,6 +143,7 @@ type UpdateAccountRequest struct {
 	ProxyID                 *int64         `json:"proxy_id"`
 	Concurrency             *int           `json:"concurrency"`
 	Priority                *int           `json:"priority"`
+	ProviderID              *string        `json:"provider_id"`
 	SchedulingWeight        *float64       `json:"scheduling_weight"`
 	RateMultiplier          *float64       `json:"rate_multiplier"`
 	LoadFactor              *int           `json:"load_factor"`
@@ -160,6 +162,7 @@ type BulkUpdateAccountsRequest struct {
 	ProxyID                 *int64                    `json:"proxy_id"`
 	Concurrency             *int                      `json:"concurrency"`
 	Priority                *int                      `json:"priority"`
+	ProviderID              *string                   `json:"provider_id"`
 	SchedulingWeight        *float64                  `json:"scheduling_weight"`
 	RateMultiplier          *float64                  `json:"rate_multiplier"`
 	LoadFactor              *int                      `json:"load_factor"`
@@ -857,6 +860,7 @@ func (h *AccountHandler) Create(c *gin.Context) {
 			ProxyID:               req.ProxyID,
 			Concurrency:           req.Concurrency,
 			Priority:              req.Priority,
+			ProviderID:            req.ProviderID,
 			SchedulingWeight:      req.SchedulingWeight,
 			RateMultiplier:        req.RateMultiplier,
 			LoadFactor:            req.LoadFactor,
@@ -985,6 +989,7 @@ func (h *AccountHandler) Update(c *gin.Context) {
 		ProxyID:               req.ProxyID,
 		Concurrency:           req.Concurrency, // 指针类型，nil 表示未提供
 		Priority:              req.Priority,    // 指针类型，nil 表示未提供
+		ProviderID:            req.ProviderID,
 		SchedulingWeight:      req.SchedulingWeight,
 		RateMultiplier:        req.RateMultiplier,
 		LoadFactor:            req.LoadFactor,
@@ -2073,6 +2078,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
 		req.ProxyID != nil ||
 		req.Concurrency != nil ||
 		req.Priority != nil ||
+		req.ProviderID != nil ||
 		req.SchedulingWeight != nil ||
 		req.RateMultiplier != nil ||
 		req.LoadFactor != nil ||
@@ -2095,6 +2101,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
 		ProxyID:               req.ProxyID,
 		Concurrency:           req.Concurrency,
 		Priority:              req.Priority,
+		ProviderID:            req.ProviderID,
 		SchedulingWeight:      req.SchedulingWeight,
 		RateMultiplier:        req.RateMultiplier,
 		LoadFactor:            req.LoadFactor,
