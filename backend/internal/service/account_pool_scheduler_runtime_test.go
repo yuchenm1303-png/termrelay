@@ -6,7 +6,7 @@ import (
 )
 
 func TestAccountPoolSchedulerRankAndFeedback(t *testing.T) {
-	scheduler := NewAccountPoolScheduler(2, AccountPoolScoreWeights{})
+	scheduler := NewAccountPoolScheduler(1, AccountPoolScoreWeights{})
 	now := time.Unix(1000, 0)
 	fast := 100
 	slow := 900
