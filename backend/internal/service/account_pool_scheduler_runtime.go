@@ -85,6 +85,17 @@ func (s *AccountPoolScheduler) Allow(accountID int64, now time.Time) bool {
 	return breaker.allow(accountID, now)
 }
 
+// Abandon releases a reserved half-open probe when no upstream attempt starts.
+// This prevents a concurrency/session race from leaving the circuit stuck in
+// half-open state indefinitely.
+func (s *AccountPoolScheduler) Abandon(accountID int64) {
+	if s == nil || accountID <= 0 {
+		return
+	}
+	_, breaker, _, _, _ := s.runtime()
+	breaker.abandonProbe(accountID)
+}
+
 // Report records the result of one actual upstream attempt. transient must only
 // be true for temporary transport/upstream failures; authentication, permanent
 // request errors and persistent provider rate-limit state stay owned by the
