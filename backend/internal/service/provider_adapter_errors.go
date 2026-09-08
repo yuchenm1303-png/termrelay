@@ -63,6 +63,9 @@ func normalizeAnthropicProviderError(resp *http.Response, body []byte) Normalize
 	case "authentication_error", "permission_error":
 		normalized.Type = "authentication_error"
 		normalized.AuthFailure = true
+		normalized.Retryable = false
+		normalized.Failover = true
+		normalized.Temporary = false
 	}
 	return normalized
 }
@@ -98,6 +101,9 @@ func normalizeOpenAIProviderError(resp *http.Response, body []byte) NormalizedPr
 	case "invalid_api_key", "invalid_authentication", "token_revoked", "token_invalidated":
 		normalized.Type = "authentication_error"
 		normalized.AuthFailure = true
+		normalized.Retryable = false
+		normalized.Failover = true
+		normalized.Temporary = false
 	case "context_length_exceeded", "model_not_found", "invalid_request_error":
 		normalized.Retryable = false
 		normalized.Temporary = false
@@ -132,6 +138,9 @@ func normalizeGeminiProviderError(resp *http.Response, body []byte) NormalizedPr
 	case "UNAUTHENTICATED", "PERMISSION_DENIED":
 		normalized.Type = "authentication_error"
 		normalized.AuthFailure = true
+		normalized.Retryable = false
+		normalized.Failover = true
+		normalized.Temporary = false
 	case "INVALID_ARGUMENT", "NOT_FOUND", "FAILED_PRECONDITION":
 		normalized.Retryable = false
 		normalized.Temporary = false
