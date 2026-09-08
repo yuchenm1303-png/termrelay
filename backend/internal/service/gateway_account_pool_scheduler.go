@@ -233,5 +233,12 @@ func classifyAccountPoolAttempt(err error) (report, success, transient bool) {
 	if errors.As(err, &netErr) {
 		return true, false, true
 	}
+	// Several existing forwarders intentionally sanitize transport errors before
+	// returning them, which removes the original net.Error cause. The stable
+	// prefix is only emitted after an upstream transport attempt, so preserve
+	// that signal for breaker health without weakening the sanitized client text.
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(err.Error())), "upstream request failed:") {
+		return true, false, true
+	}
 	return false, false, false
 }
