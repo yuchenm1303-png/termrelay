@@ -13,6 +13,7 @@ type AccountPoolScheduler struct {
 	mu      sync.Mutex
 	stats   *accountPoolRuntimeStats
 	breaker *accountPoolCircuitBreaker
+	health  *accountPoolHealthTracker
 	weights AccountPoolScoreWeights
 	topK    int
 }
@@ -26,12 +27,13 @@ func NewAccountPoolScheduler(topK int, weights AccountPoolScoreWeights) *Account
 	return &AccountPoolScheduler{
 		stats:   newAccountPoolRuntimeStats(),
 		breaker: &accountPoolCircuitBreaker{},
+		health:  &accountPoolHealthTracker{},
 		weights: weights,
 		topK:    topK,
 	}
 }
 
-func (s *AccountPoolScheduler) runtime() (*accountPoolRuntimeStats, *accountPoolCircuitBreaker, AccountPoolScoreWeights, int) {
+func (s *AccountPoolScheduler) runtime() (*accountPoolRuntimeStats, *accountPoolCircuitBreaker, *accountPoolHealthTracker, AccountPoolScoreWeights, int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.stats == nil {
@@ -40,10 +42,13 @@ func (s *AccountPoolScheduler) runtime() (*accountPoolRuntimeStats, *accountPool
 	if s.breaker == nil {
 		s.breaker = &accountPoolCircuitBreaker{}
 	}
+	if s.health == nil {
+		s.health = &accountPoolHealthTracker{}
+	}
 	if s.weights == (AccountPoolScoreWeights{}) {
 		s.weights = defaultAccountPoolScoreWeights()
 	}
-	return s.stats, s.breaker, s.weights, s.topK
+	return s.stats, s.breaker, s.health, s.weights, s.topK
 }
 
 // Rank scores candidates that have already passed the gateway's hard filters.
@@ -57,9 +62,10 @@ func (s *AccountPoolScheduler) Rank(inputs []accountPoolCandidateInput, seed str
 	if now.IsZero() {
 		now = time.Now()
 	}
-	stats, _, weights, topK := s.runtime()
+	stats, _, _, weights, topK := s.runtime()
+	scored := scoreAccountPoolCandidates(inputs, stats, weights, now)
 	return rankAccountPoolCandidates(
-		scoreAccountPoolCandidates(inputs, stats, weights, now),
+		applyAccountPoolStaticWeights(scored),
 		topK,
 		seed,
 	)
@@ -75,7 +81,7 @@ func (s *AccountPoolScheduler) Allow(accountID int64, now time.Time) bool {
 	if now.IsZero() {
 		now = time.Now()
 	}
-	_, breaker, _, _ := s.runtime()
+	_, breaker, _, _, _ := s.runtime()
 	return breaker.allow(accountID, now)
 }
 
@@ -90,8 +96,9 @@ func (s *AccountPoolScheduler) Report(accountID int64, success, transient bool, 
 	if now.IsZero() {
 		now = time.Now()
 	}
-	stats, breaker, _, _ := s.runtime()
+	stats, breaker, health, _, _ := s.runtime()
 	stats.report(accountID, success, firstTokenMs)
+	health.report(accountID, success, now)
 	breaker.report(accountID, success, transient, now)
 }
 
@@ -101,6 +108,37 @@ func (s *AccountPoolScheduler) Feedback(accountID int64) accountPoolFeedback {
 	if s == nil || accountID <= 0 {
 		return accountPoolFeedback{}
 	}
-	stats, _, _, _ := s.runtime()
+	stats, _, _, _, _ := s.runtime()
 	return stats.snapshot(accountID)
+}
+
+// Health returns an operator-facing snapshot combining EWMA quality signals,
+// consecutive failures and circuit-breaker state. It is intentionally read-only.
+func (s *AccountPoolScheduler) Health(accountID int64, now time.Time) AccountPoolHealthSnapshot {
+	if s == nil || accountID <= 0 {
+		return AccountPoolHealthSnapshot{CircuitState: "closed"}
+	}
+	if now.IsZero() {
+		now = time.Now()
+	}
+	stats, breaker, health, _, _ := s.runtime()
+	feedback := stats.snapshot(accountID)
+	outcome := health.snapshot(accountID)
+	circuit := breaker.snapshot(accountID, now)
+	out := AccountPoolHealthSnapshot{
+		ErrorRate:           feedback.ErrorRate,
+		TTFTMs:              feedback.TTFTMs,
+		HasTTFT:             feedback.HasTTFT,
+		Samples:             feedback.Samples,
+		ConsecutiveFailures: outcome.ConsecutiveFailures,
+		LastSuccessAt:       outcome.LastSuccessAt,
+		LastFailureAt:       outcome.LastFailureAt,
+		CircuitState:        circuit.State,
+		CooldownUntil:       circuit.CooldownUntil,
+	}
+	if !feedback.LastObserved.IsZero() {
+		observed := feedback.LastObserved
+		out.LastObservedAt = &observed
+	}
+	return out
 }
