@@ -7,9 +7,9 @@ import (
 
 func TestAccountSchedulingWeightFromExtra(t *testing.T) {
 	cases := []struct {
-		name string
+		name  string
 		extra map[string]any
-		want float64
+		want  float64
 	}{
 		{name: "default", extra: nil, want: 1},
 		{name: "float", extra: map[string]any{accountPoolWeightExtraKey: 3.5}, want: 3.5},
@@ -77,5 +77,43 @@ func TestAccountPoolSchedulerHealthSnapshot(t *testing.T) {
 	}
 	if health.CircuitState != "closed" {
 		t.Fatalf("success should close circuit, got %q", health.CircuitState)
+	}
+}
+
+func TestNormalizeAccountPoolSchedulingWeight(t *testing.T) {
+	t.Run("explicit typed value wins", func(t *testing.T) {
+		weight := 7.5
+		extra, err := NormalizeAccountPoolSchedulingWeight(map[string]any{
+			accountPoolWeightExtraKey: "2",
+			"keep":                    true,
+		}, &weight)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got := extra[accountPoolWeightExtraKey]; got != 7.5 {
+			t.Fatalf("weight=%v want=7.5", got)
+		}
+		if extra["keep"] != true {
+			t.Fatal("unrelated extra field was not preserved")
+		}
+	})
+
+	t.Run("legacy extra string normalized", func(t *testing.T) {
+		extra, err := NormalizeAccountPoolSchedulingWeight(map[string]any{accountPoolWeightExtraKey: "3.25"}, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got := extra[accountPoolWeightExtraKey]; got != 3.25 {
+			t.Fatalf("weight=%v want=3.25", got)
+		}
+	})
+
+	for _, invalid := range []float64{0, -1, 1000.1} {
+		invalid := invalid
+		t.Run("reject invalid typed weight", func(t *testing.T) {
+			if _, err := NormalizeAccountPoolSchedulingWeight(nil, &invalid); err == nil {
+				t.Fatalf("expected error for weight %v", invalid)
+			}
+		})
 	}
 }

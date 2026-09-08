@@ -7,9 +7,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 )
 
-const accountPoolWeightExtraKey = "scheduling_weight"
+const (
+	accountPoolWeightExtraKey      = "scheduling_weight"
+	maxAccountPoolSchedulingWeight = 1000.0
+)
 
 // SchedulingWeight returns the operator-configured traffic share for an
 // account. It is intentionally stored in Account.Extra during the migration
@@ -25,10 +30,43 @@ func (a *Account) SchedulingWeight() float64 {
 		return 1
 	}
 	// Keep one malformed or extreme admin value from monopolizing the pool.
-	if weight > 1000 {
-		return 1000
+	if weight > maxAccountPoolSchedulingWeight {
+		return maxAccountPoolSchedulingWeight
 	}
 	return weight
+}
+
+// NormalizeAccountPoolSchedulingWeight validates and normalizes the optional
+// operator-facing account traffic weight. An explicit typed value wins over the
+// legacy Extra value. The returned map is cloned when the key is present so
+// callers never mutate a request map owned by another layer.
+func NormalizeAccountPoolSchedulingWeight(extra map[string]any, explicit *float64) (map[string]any, error) {
+	raw, hasWeight := any(nil), false
+	if extra != nil {
+		raw, hasWeight = extra[accountPoolWeightExtraKey]
+	}
+	if explicit != nil {
+		raw = *explicit
+		hasWeight = true
+	}
+	if !hasWeight {
+		return extra, nil
+	}
+
+	weight, ok := accountPoolNumericValue(raw)
+	if !ok || math.IsNaN(weight) || math.IsInf(weight, 0) || weight <= 0 || weight > maxAccountPoolSchedulingWeight {
+		return nil, infraerrors.BadRequest(
+			"INVALID_ACCOUNT_SCHEDULING_WEIGHT",
+			"scheduling_weight must be greater than 0 and at most 1000",
+		)
+	}
+
+	normalized := make(map[string]any, len(extra)+1)
+	for key, value := range extra {
+		normalized[key] = value
+	}
+	normalized[accountPoolWeightExtraKey] = weight
+	return normalized, nil
 }
 
 func accountPoolNumericValue(value any) (float64, bool) {

@@ -100,3 +100,16 @@ func TestAccountFromServiceShallow_NilCredentialsOmitsStatus(t *testing.T) {
 	require.Nil(t, got.Credentials)
 	require.Nil(t, got.CredentialsStatus)
 }
+
+func TestAccountFromServiceShallow_ExposesSchedulingWeight(t *testing.T) {
+	src := &service.Account{
+		ID:       77,
+		Platform: service.PlatformOpenAI,
+		Type:     service.AccountTypeAPIKey,
+		Extra:    map[string]any{"scheduling_weight": 4.5},
+	}
+
+	got := AccountFromServiceShallow(src)
+	require.NotNil(t, got)
+	require.Equal(t, 4.5, got.SchedulingWeight)
+}

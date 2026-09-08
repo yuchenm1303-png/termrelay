@@ -196,6 +196,7 @@ type Account struct {
 	Concurrency             int                            `json:"concurrency"`
 	LoadFactor              *int                           `json:"load_factor,omitempty"`
 	Priority                int                            `json:"priority"`
+	SchedulingWeight        float64                        `json:"scheduling_weight"`
 	RateMultiplier          float64                        `json:"rate_multiplier"`
 	Status                  string                         `json:"status"`
 	ErrorMessage            string                         `json:"error_message"`
