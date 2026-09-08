@@ -95,6 +95,12 @@ func TestClassifyAccountPoolAttempt(t *testing.T) {
 			},
 			report: true,
 		},
+		{
+			name:      "sanitized transport error stays transient",
+			err:       errors.New("upstream request failed: connection reset"),
+			report:    true,
+			transient: true,
+		},
 		{name: "unknown internal error ignored", err: errors.New("internal parse error")},
 	}
 
