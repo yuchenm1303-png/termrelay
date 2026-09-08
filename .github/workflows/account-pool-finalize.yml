@@ -1,6 +1,5 @@
 name: Finalize account pool hardening
 
-# Retry after tightening admin base_url redaction.
 on:
   push:
     branches:
@@ -27,14 +26,10 @@ jobs:
           check-latest: false
           cache: true
           cache-dependency-path: backend/go.sum
-      - name: Download and verify final patch
+      - name: Apply final account pool patch
         run: |
-          curl --fail --silent --show-error --location --retry 3 \
-            https://relay.smirel.com/__account_pool_final_8d91.patch \
-            -o /tmp/account-pool-final.patch
-          echo 'e6837c86a576ffc849c605477471cc2ec25602cd0dac03706d7fffff070c3ea1  /tmp/account-pool-final.patch' | sha256sum -c -
-          git apply --check /tmp/account-pool-final.patch
-          git apply /tmp/account-pool-final.patch
+          git apply --check .github/patches/account-pool-provider-admin-api.patch
+          git apply .github/patches/account-pool-provider-admin-api.patch
           changed_go="$(git diff --name-only --diff-filter=ACM | grep '\.go$' || true)"
           if [ -n "$changed_go" ]; then
             gofmt -w $changed_go
@@ -49,6 +44,7 @@ jobs:
       - name: Commit final integration
         run: |
           rm .github/workflows/account-pool-finalize.yml
+          rm -f .github/patches/account-pool-provider-admin-api.patch
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
