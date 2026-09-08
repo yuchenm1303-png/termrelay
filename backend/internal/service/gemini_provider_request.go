@@ -51,6 +51,36 @@ func (a *geminiGatewayProviderAdapter) ResolveModel(account *Account, requestedM
 	}
 }
 
+func (a *geminiGatewayProviderAdapter) PrepareRequest(ctx context.Context, input ProviderRequestInput) (ProviderRequestInput, error) {
+	if a == nil || a.service == nil {
+		return input, errors.New("gemini provider adapter is not configured")
+	}
+	account := input.Account
+	if account == nil {
+		return input, errors.New("gemini account is required")
+	}
+	if !a.Supports(account) {
+		return input, errors.New("account is not supported by gemini provider adapter")
+	}
+
+	switch account.Type {
+	case AccountTypeAPIKey:
+		return input, nil
+	case AccountTypeOAuth, AccountTypeServiceAccount:
+		if a.service.tokenProvider == nil {
+			return input, errors.New("gemini token provider not configured")
+		}
+		accessToken, err := a.service.tokenProvider.GetAccessToken(ctx, account)
+		if err != nil {
+			return input, err
+		}
+		input.AuthToken = accessToken
+		return input, nil
+	default:
+		return input, fmt.Errorf("unsupported account type: %s", account.Type)
+	}
+}
+
 func (a *geminiGatewayProviderAdapter) NormalizeError(resp *http.Response, body []byte) NormalizedProviderError {
 	return normalizeGeminiProviderError(resp, body)
 }
@@ -196,12 +226,16 @@ func (a *geminiGatewayProviderAdapter) ApplyAuth(ctx context.Context, req *http.
 		return nil
 
 	case AccountTypeOAuth, AccountTypeServiceAccount:
-		if a.service.tokenProvider == nil {
-			return errors.New("gemini token provider not configured")
-		}
-		accessToken, err := a.service.tokenProvider.GetAccessToken(ctx, account)
-		if err != nil {
-			return err
+		accessToken := input.AuthToken
+		if strings.TrimSpace(accessToken) == "" {
+			if a.service.tokenProvider == nil {
+				return errors.New("gemini token provider not configured")
+			}
+			var err error
+			accessToken, err = a.service.tokenProvider.GetAccessToken(ctx, account)
+			if err != nil {
+				return err
+			}
 		}
 		req.Header.Set("Authorization", "Bearer "+accessToken)
 
@@ -247,11 +281,20 @@ func (s *GeminiMessagesCompatService) newGeminiProviderRequestFactory(input Prov
 	}
 
 	return func(ctx context.Context) (*http.Request, string, error) {
-		req, err := builder.BuildRequest(ctx, input)
+		preparedInput := input
+		if preparer, ok := adapter.(ProviderRequestPreparer); ok {
+			var prepareErr error
+			preparedInput, prepareErr = preparer.PrepareRequest(ctx, input)
+			if prepareErr != nil {
+				return nil, "", prepareErr
+			}
+		}
+
+		req, err := builder.BuildRequest(ctx, preparedInput)
 		if err != nil {
 			return nil, "", err
 		}
-		if err := auth.ApplyAuth(ctx, req, input); err != nil {
+		if err := auth.ApplyAuth(ctx, req, preparedInput); err != nil {
 			return nil, "", err
 		}
 		return req, geminiProviderRequestIDHeader, nil

@@ -726,6 +726,17 @@ func (s *GeminiMessagesCompatService) Forward(ctx context.Context, c *gin.Contex
 				if txErr == nil {
 					logger.LegacyPrintf("service.gemini_messages_compat", "Gemini account %d: detected signature-related 400, retrying with downgraded Claude blocks (%s)", account.ID, stageName)
 					geminiReq = retryGeminiReq
+					buildReq, requestIDHeader, buildFactoryErr = s.newGeminiProviderRequestFactory(ProviderRequestInput{
+						Account:  account,
+						Protocol: ProviderProtocolAnthropic,
+						Endpoint: action,
+						Model:    mappedModel,
+						Body:     geminiReq,
+						Stream:   useUpstreamStream,
+					})
+					if buildFactoryErr != nil {
+						return nil, s.writeClaudeError(c, http.StatusBadGateway, "upstream_error", buildFactoryErr.Error())
+					}
 					// Consume one retry budget attempt and continue with the updated request payload.
 					sleepGeminiBackoff(1)
 					continue

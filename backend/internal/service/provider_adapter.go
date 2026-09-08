@@ -48,6 +48,13 @@ type ProviderRequestInput struct {
 	ClientHeaders http.Header
 }
 
+// ProviderRequestPreparer resolves provider/account state that must be known
+// before endpoint construction. It may return a copied input with ephemeral
+// auth material, but must not perform scheduling, retries or billing.
+type ProviderRequestPreparer interface {
+	PrepareRequest(ctx context.Context, input ProviderRequestInput) (ProviderRequestInput, error)
+}
+
 // ProviderRequestBuilder builds the provider-native upstream request.
 type ProviderRequestBuilder interface {
 	BuildRequest(ctx context.Context, input ProviderRequestInput) (*http.Request, error)

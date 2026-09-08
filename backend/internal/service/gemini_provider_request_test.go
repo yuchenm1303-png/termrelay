@@ -163,6 +163,30 @@ func TestGeminiGatewayProviderAdapterExposesRequestAndAuthCapabilities(t *testin
 	svc := NewGeminiMessagesCompatService(nil, nil, nil, nil, &GeminiTokenProvider{}, nil, nil, nil, &config.Config{})
 	caps, err := svc.providerAdapters.Capabilities(PlatformGemini)
 	require.NoError(t, err)
+	require.Contains(t, caps, ProviderCapabilityRequestPreparer)
 	require.Contains(t, caps, ProviderCapabilityRequestBuilder)
 	require.Contains(t, caps, ProviderCapabilityAuthApplier)
+}
+
+func TestGeminiGatewayProviderAdapterPrepareRequestResolvesOAuthToken(t *testing.T) {
+	svc := newGeminiAdapterTestService()
+	adapter := newGeminiGatewayProviderAdapter(svc).(*geminiGatewayProviderAdapter)
+	account := &Account{
+		Platform: PlatformGemini,
+		Type:     AccountTypeOAuth,
+		Credentials: map[string]any{
+			"access_token": "ya29.prepared-token",
+		},
+	}
+	input := ProviderRequestInput{
+		Account:  account,
+		Protocol: ProviderProtocolGemini,
+		Endpoint: "generateContent",
+		Model:    "gemini-2.5-flash",
+		Body:     []byte(`{"contents":[]}`),
+	}
+
+	prepared, err := adapter.PrepareRequest(context.Background(), input)
+	require.NoError(t, err)
+	require.Equal(t, "ya29.prepared-token", prepared.AuthToken)
 }
