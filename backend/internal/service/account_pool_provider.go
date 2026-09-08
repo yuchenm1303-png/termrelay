@@ -55,11 +55,13 @@ func normalizeAccountPoolProviderOrigin(raw string) string {
 	}
 	parsed, err := url.Parse(raw)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return strings.ToLower(strings.TrimRight(raw, "/"))
+		return strings.TrimRight(raw, "/")
 	}
 	parsed.User = nil
 	parsed.RawQuery = ""
 	parsed.Fragment = ""
+	parsed.Scheme = strings.ToLower(parsed.Scheme)
+	parsed.Host = strings.ToLower(parsed.Host)
 	parsed.Path = strings.TrimRight(parsed.Path, "/")
-	return strings.ToLower(parsed.String())
+	return parsed.String()
 }
