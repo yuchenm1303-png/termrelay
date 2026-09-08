@@ -1,0 +1,401 @@
+diff --git a/backend/internal/handler/admin/account_handler.go b/backend/internal/handler/admin/account_handler.go
+index a97049722..123d23bd3 100644
+--- a/backend/internal/handler/admin/account_handler.go
++++ b/backend/internal/handler/admin/account_handler.go
+@@ -121,6 +121,7 @@ type CreateAccountRequest struct {
+ 	ProxyID                 *int64         `json:"proxy_id"`
+ 	Concurrency             int            `json:"concurrency"`
+ 	Priority                int            `json:"priority"`
++	SchedulingWeight        *float64       `json:"scheduling_weight"`
+ 	RateMultiplier          *float64       `json:"rate_multiplier"`
+ 	LoadFactor              *int           `json:"load_factor"`
+ 	GroupIDs                []int64        `json:"group_ids"`
+@@ -141,6 +142,7 @@ type UpdateAccountRequest struct {
+ 	ProxyID                 *int64         `json:"proxy_id"`
+ 	Concurrency             *int           `json:"concurrency"`
+ 	Priority                *int           `json:"priority"`
++	SchedulingWeight        *float64       `json:"scheduling_weight"`
+ 	RateMultiplier          *float64       `json:"rate_multiplier"`
+ 	LoadFactor              *int           `json:"load_factor"`
+ 	Status                  string         `json:"status" binding:"omitempty,oneof=active inactive error"`
+@@ -158,6 +160,7 @@ type BulkUpdateAccountsRequest struct {
+ 	ProxyID                 *int64                    `json:"proxy_id"`
+ 	Concurrency             *int                      `json:"concurrency"`
+ 	Priority                *int                      `json:"priority"`
++	SchedulingWeight        *float64                  `json:"scheduling_weight"`
+ 	RateMultiplier          *float64                  `json:"rate_multiplier"`
+ 	LoadFactor              *int                      `json:"load_factor"`
+ 	Status                  string                    `json:"status" binding:"omitempty,oneof=active inactive error"`
+@@ -854,6 +857,7 @@ func (h *AccountHandler) Create(c *gin.Context) {
+ 			ProxyID:               req.ProxyID,
+ 			Concurrency:           req.Concurrency,
+ 			Priority:              req.Priority,
++			SchedulingWeight:      req.SchedulingWeight,
+ 			RateMultiplier:        req.RateMultiplier,
+ 			LoadFactor:            req.LoadFactor,
+ 			GroupIDs:              req.GroupIDs,
+@@ -981,6 +985,7 @@ func (h *AccountHandler) Update(c *gin.Context) {
+ 		ProxyID:               req.ProxyID,
+ 		Concurrency:           req.Concurrency, // 指针类型，nil 表示未提供
+ 		Priority:              req.Priority,    // 指针类型，nil 表示未提供
++		SchedulingWeight:      req.SchedulingWeight,
+ 		RateMultiplier:        req.RateMultiplier,
+ 		LoadFactor:            req.LoadFactor,
+ 		Status:                req.Status,
+@@ -2068,6 +2073,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
+ 		req.ProxyID != nil ||
+ 		req.Concurrency != nil ||
+ 		req.Priority != nil ||
++		req.SchedulingWeight != nil ||
+ 		req.RateMultiplier != nil ||
+ 		req.LoadFactor != nil ||
+ 		req.Status != "" ||
+@@ -2089,6 +2095,7 @@ func (h *AccountHandler) BulkUpdate(c *gin.Context) {
+ 		ProxyID:               req.ProxyID,
+ 		Concurrency:           req.Concurrency,
+ 		Priority:              req.Priority,
++		SchedulingWeight:      req.SchedulingWeight,
+ 		RateMultiplier:        req.RateMultiplier,
+ 		LoadFactor:            req.LoadFactor,
+ 		Status:                req.Status,
+diff --git a/backend/internal/handler/dto/account_mapper_redact_test.go b/backend/internal/handler/dto/account_mapper_redact_test.go
+index 9a979a66b..5aa834a68 100644
+--- a/backend/internal/handler/dto/account_mapper_redact_test.go
++++ b/backend/internal/handler/dto/account_mapper_redact_test.go
+@@ -100,3 +100,16 @@ func TestAccountFromServiceShallow_NilCredentialsOmitsStatus(t *testing.T) {
+ 	require.Nil(t, got.Credentials)
+ 	require.Nil(t, got.CredentialsStatus)
+ }
++
++func TestAccountFromServiceShallow_ExposesSchedulingWeight(t *testing.T) {
++	src := &service.Account{
++		ID:       77,
++		Platform: service.PlatformOpenAI,
++		Type:     service.AccountTypeAPIKey,
++		Extra:    map[string]any{"scheduling_weight": 4.5},
++	}
++
++	got := AccountFromServiceShallow(src)
++	require.NotNil(t, got)
++	require.Equal(t, 4.5, got.SchedulingWeight)
++}
+diff --git a/backend/internal/handler/dto/mappers.go b/backend/internal/handler/dto/mappers.go
+index 04c811ced..163bb1c18 100644
+--- a/backend/internal/handler/dto/mappers.go
++++ b/backend/internal/handler/dto/mappers.go
+@@ -241,6 +241,7 @@ func AccountFromServiceShallow(a *service.Account) *Account {
+ 		Concurrency:             a.Concurrency,
+ 		LoadFactor:              a.LoadFactor,
+ 		Priority:                a.Priority,
++		SchedulingWeight:        a.SchedulingWeight(),
+ 		RateMultiplier:          a.BillingRateMultiplier(),
+ 		Status:                  a.Status,
+ 		ErrorMessage:            a.ErrorMessage,
+diff --git a/backend/internal/handler/dto/types.go b/backend/internal/handler/dto/types.go
+index d5ba4e9db..142f7540c 100644
+--- a/backend/internal/handler/dto/types.go
++++ b/backend/internal/handler/dto/types.go
+@@ -196,6 +196,7 @@ type Account struct {
+ 	Concurrency             int                            `json:"concurrency"`
+ 	LoadFactor              *int                           `json:"load_factor,omitempty"`
+ 	Priority                int                            `json:"priority"`
++	SchedulingWeight        float64                        `json:"scheduling_weight"`
+ 	RateMultiplier          float64                        `json:"rate_multiplier"`
+ 	Status                  string                         `json:"status"`
+ 	ErrorMessage            string                         `json:"error_message"`
+diff --git a/backend/internal/service/account_pool_policy.go b/backend/internal/service/account_pool_policy.go
+index 85a30918b..dd1718970 100644
+--- a/backend/internal/service/account_pool_policy.go
++++ b/backend/internal/service/account_pool_policy.go
+@@ -7,9 +7,14 @@ import (
+ 	"strings"
+ 	"sync"
+ 	"time"
++
++	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+ )
+ 
+-const accountPoolWeightExtraKey = "scheduling_weight"
++const (
++	accountPoolWeightExtraKey       = "scheduling_weight"
++	maxAccountPoolSchedulingWeight = 1000.0
++)
+ 
+ // SchedulingWeight returns the operator-configured traffic share for an
+ // account. It is intentionally stored in Account.Extra during the migration
+@@ -25,12 +30,45 @@ func (a *Account) SchedulingWeight() float64 {
+ 		return 1
+ 	}
+ 	// Keep one malformed or extreme admin value from monopolizing the pool.
+-	if weight > 1000 {
+-		return 1000
++	if weight > maxAccountPoolSchedulingWeight {
++		return maxAccountPoolSchedulingWeight
+ 	}
+ 	return weight
+ }
+ 
++// NormalizeAccountPoolSchedulingWeight validates and normalizes the optional
++// operator-facing account traffic weight. An explicit typed value wins over the
++// legacy Extra value. The returned map is cloned when the key is present so
++// callers never mutate a request map owned by another layer.
++func NormalizeAccountPoolSchedulingWeight(extra map[string]any, explicit *float64) (map[string]any, error) {
++	raw, hasWeight := any(nil), false
++	if extra != nil {
++		raw, hasWeight = extra[accountPoolWeightExtraKey]
++	}
++	if explicit != nil {
++		raw = *explicit
++		hasWeight = true
++	}
++	if !hasWeight {
++		return extra, nil
++	}
++
++	weight, ok := accountPoolNumericValue(raw)
++	if !ok || math.IsNaN(weight) || math.IsInf(weight, 0) || weight <= 0 || weight > maxAccountPoolSchedulingWeight {
++		return nil, infraerrors.BadRequest(
++			"INVALID_ACCOUNT_SCHEDULING_WEIGHT",
++			"scheduling_weight must be greater than 0 and at most 1000",
++		)
++	}
++
++	normalized := make(map[string]any, len(extra)+1)
++	for key, value := range extra {
++		normalized[key] = value
++	}
++	normalized[accountPoolWeightExtraKey] = weight
++	return normalized, nil
++}
++
+ func accountPoolNumericValue(value any) (float64, bool) {
+ 	switch typed := value.(type) {
+ 	case float64:
+diff --git a/backend/internal/service/account_pool_policy_test.go b/backend/internal/service/account_pool_policy_test.go
+index 36be2b882..597e3a5d0 100644
+--- a/backend/internal/service/account_pool_policy_test.go
++++ b/backend/internal/service/account_pool_policy_test.go
+@@ -79,3 +79,41 @@ func TestAccountPoolSchedulerHealthSnapshot(t *testing.T) {
+ 		t.Fatalf("success should close circuit, got %q", health.CircuitState)
+ 	}
+ }
++
++func TestNormalizeAccountPoolSchedulingWeight(t *testing.T) {
++	t.Run("explicit typed value wins", func(t *testing.T) {
++		weight := 7.5
++		extra, err := NormalizeAccountPoolSchedulingWeight(map[string]any{
++			accountPoolWeightExtraKey: "2",
++			"keep":                   true,
++		}, &weight)
++		if err != nil {
++			t.Fatalf("unexpected error: %v", err)
++		}
++		if got := extra[accountPoolWeightExtraKey]; got != 7.5 {
++			t.Fatalf("weight=%v want=7.5", got)
++		}
++		if extra["keep"] != true {
++			t.Fatal("unrelated extra field was not preserved")
++		}
++	})
++
++	t.Run("legacy extra string normalized", func(t *testing.T) {
++		extra, err := NormalizeAccountPoolSchedulingWeight(map[string]any{accountPoolWeightExtraKey: "3.25"}, nil)
++		if err != nil {
++			t.Fatalf("unexpected error: %v", err)
++		}
++		if got := extra[accountPoolWeightExtraKey]; got != 3.25 {
++			t.Fatalf("weight=%v want=3.25", got)
++		}
++	})
++
++	for _, invalid := range []float64{0, -1, 1000.1} {
++		invalid := invalid
++		t.Run("reject invalid typed weight", func(t *testing.T) {
++			if _, err := NormalizeAccountPoolSchedulingWeight(nil, &invalid); err == nil {
++				t.Fatalf("expected error for weight %v", invalid)
++			}
++		})
++	}
++}
+diff --git a/backend/internal/service/admin_account.go b/backend/internal/service/admin_account.go
+index 1238452ed..ce20b3503 100644
+--- a/backend/internal/service/admin_account.go
++++ b/backend/internal/service/admin_account.go
+@@ -514,7 +514,11 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
+ }
+ 
+ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccountInput) (*Account, error) {
+-	accountExtra, err := normalizeOpenAILongContextBillingExtra(input.Platform, input.Extra)
++	accountExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
++	if err != nil {
++		return nil, err
++	}
++	accountExtra, err = normalizeOpenAILongContextBillingExtra(input.Platform, accountExtra)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -603,6 +607,20 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ 	if err != nil {
+ 		return nil, err
+ 	}
++
++	var schedulingWeightPatch map[string]any
++	if input.Extra != nil {
++		input.Extra, err = NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
++		if err != nil {
++			return nil, err
++		}
++	} else if input.SchedulingWeight != nil {
++		schedulingWeightPatch, err = NormalizeAccountPoolSchedulingWeight(nil, input.SchedulingWeight)
++		if err != nil {
++			return nil, err
++		}
++	}
++
+ 	var normalizedExtra map[string]any
+ 	if input.Extra != nil {
+ 		normalizedExtra, err = normalizeOpenAILongContextBillingUpdateExtra(account, input)
+@@ -827,6 +845,11 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ 			}
+ 		}
+ 	}
++	if len(schedulingWeightPatch) > 0 {
++		if err := s.accountRepo.UpdateExtra(ctx, account.ID, schedulingWeightPatch); err != nil {
++			return nil, err
++		}
++	}
+ 
+ 	// 将 proxy 变更传播到 spark 影子账号（同步；Update 内部已触发调度快照）。
+ 	// 影子自身 proxy 不可独立编辑(见上),故对影子的更新不触发传播。
+@@ -854,6 +877,12 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
+ // UpdateAccountExtra 仅对 Extra JSONB 做 key 级合并，避免覆盖其它运行态键
+ // （如 model_rate_limits / passive_usage_* 等）。
+ func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, updates map[string]any) error {
++	normalizedUpdates, err := NormalizeAccountPoolSchedulingWeight(updates, nil)
++	if err != nil {
++		return err
++	}
++	updates = normalizedUpdates
++
+ 	delete(updates, OllamaCloudUsageSessionExtraKey)
+ 	delete(updates, OllamaCloudUsageAutoRefreshExtraKey)
+ 	delete(updates, OllamaCloudUsageSnapshotExtraKey)
+@@ -875,6 +904,12 @@ func (s *adminServiceImpl) UpdateAccountExtra(ctx context.Context, id int64, upd
+ // BulkUpdateAccounts updates multiple accounts in one request.
+ // It merges credentials/extra keys instead of overwriting the whole object.
+ func (s *adminServiceImpl) BulkUpdateAccounts(ctx context.Context, input *BulkUpdateAccountsInput) (*BulkUpdateAccountsResult, error) {
++	normalizedSchedulingExtra, err := NormalizeAccountPoolSchedulingWeight(input.Extra, input.SchedulingWeight)
++	if err != nil {
++		return nil, err
++	}
++	input.Extra = normalizedSchedulingExtra
++
+ 	// Managed probe/session state may only enter through dedicated typed endpoints.
+ 	delete(input.Extra, UpstreamBillingProbeEnabledExtraKey)
+ 	delete(input.Extra, UpstreamBillingProbeExtraKey)
+diff --git a/backend/internal/service/admin_service.go b/backend/internal/service/admin_service.go
+index bd907125a..978d25caf 100644
+--- a/backend/internal/service/admin_service.go
++++ b/backend/internal/service/admin_service.go
+@@ -339,6 +339,7 @@ type CreateAccountInput struct {
+ 	ProxyID            *int64
+ 	Concurrency        int
+ 	Priority           int
++	SchedulingWeight   *float64 // 账号池流量权重（>0 且 <=1000；nil=默认 1）
+ 	RateMultiplier     *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor         *int
+ 	GroupIDs           []int64
+@@ -370,6 +371,7 @@ type UpdateAccountInput struct {
+ 	ProxyID               *int64
+ 	Concurrency           *int     // 使用指针区分"未提供"和"设置为0"
+ 	Priority              *int     // 使用指针区分"未提供"和"设置为0"
++	SchedulingWeight      *float64 // 账号池流量权重；nil 表示不修改
+ 	RateMultiplier        *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor            *int
+ 	Status                string
+@@ -385,9 +387,10 @@ type BulkUpdateAccountsInput struct {
+ 	Filters        *BulkUpdateAccountFilters
+ 	Name           string
+ 	ProxyID        *int64
+-	Concurrency    *int
+-	Priority       *int
+-	RateMultiplier *float64 // 账号计费倍率（>=0，允许 0）
++	Concurrency      *int
++	Priority         *int
++	SchedulingWeight *float64 // 账号池流量权重；nil 表示不修改
++	RateMultiplier   *float64 // 账号计费倍率（>=0，允许 0）
+ 	LoadFactor     *int
+ 	Status         string
+ 	Schedulable    *bool
+diff --git a/backend/internal/service/admin_service_bulk_update_test.go b/backend/internal/service/admin_service_bulk_update_test.go
+index 63bf26fbd..411203cf2 100644
+--- a/backend/internal/service/admin_service_bulk_update_test.go
++++ b/backend/internal/service/admin_service_bulk_update_test.go
+@@ -16,6 +16,7 @@ type accountRepoStubForBulkUpdate struct {
+ 	accountRepoStub
+ 	bulkUpdateErr       error
+ 	bulkUpdateIDs       []int64
++	lastBulkUpdate      AccountBulkUpdate
+ 	bindGroupErrByID    map[int64]error
+ 	bindGroupsCalls     []int64
+ 	bindGroupsByAccount map[int64][]int64
+@@ -48,8 +49,9 @@ type accountRepoStubForBulkUpdate struct {
+ 	}
+ }
+ 
+-func (s *accountRepoStubForBulkUpdate) BulkUpdate(_ context.Context, ids []int64, _ AccountBulkUpdate) (int64, error) {
++func (s *accountRepoStubForBulkUpdate) BulkUpdate(_ context.Context, ids []int64, updates AccountBulkUpdate) (int64, error) {
+ 	s.bulkUpdateIDs = append([]int64{}, ids...)
++	s.lastBulkUpdate = updates
+ 	if s.bulkUpdateErr != nil {
+ 		return 0, s.bulkUpdateErr
+ 	}
+@@ -273,3 +275,48 @@ func TestAdminServiceBulkUpdateAccounts_ResolvesIDsFromFilters(t *testing.T) {
+ 	require.Equal(t, 0, result.Failed)
+ 	require.Equal(t, []int64{7, 11}, result.SuccessIDs)
+ }
++
++func TestAdminServiceCreateAccount_AppliesSchedulingWeight(t *testing.T) {
++	repo := &accountRepoStubForBulkUpdate{createID: 91}
++	svc := &adminServiceImpl{accountRepo: repo}
++	weight := 6.5
++
++	account, err := svc.CreateAccount(context.Background(), &CreateAccountInput{
++		Name:                 "weighted",
++		Platform:             PlatformOpenAI,
++		Type:                 AccountTypeAPIKey,
++		SchedulingWeight:     &weight,
++		SkipDefaultGroupBind: true,
++	})
++	require.NoError(t, err)
++	require.NotNil(t, account)
++	require.Equal(t, 6.5, account.SchedulingWeight())
++	require.Equal(t, 6.5, repo.createAccount.Extra[accountPoolWeightExtraKey])
++}
++
++func TestAdminServiceBulkUpdateAccounts_AppliesSchedulingWeightAsExtraPatch(t *testing.T) {
++	repo := &accountRepoStubForBulkUpdate{}
++	svc := &adminServiceImpl{accountRepo: repo}
++	weight := 8.0
++
++	result, err := svc.BulkUpdateAccounts(context.Background(), &BulkUpdateAccountsInput{
++		AccountIDs:        []int64{1, 2},
++		SchedulingWeight: &weight,
++	})
++	require.NoError(t, err)
++	require.Equal(t, 2, result.Success)
++	require.Equal(t, 8.0, repo.lastBulkUpdate.Extra[accountPoolWeightExtraKey])
++}
++
++func TestAdminServiceBulkUpdateAccounts_RejectsInvalidSchedulingWeight(t *testing.T) {
++	repo := &accountRepoStubForBulkUpdate{}
++	svc := &adminServiceImpl{accountRepo: repo}
++	weight := 0.0
++
++	_, err := svc.BulkUpdateAccounts(context.Background(), &BulkUpdateAccountsInput{
++		AccountIDs:        []int64{1},
++		SchedulingWeight: &weight,
++	})
++	require.Error(t, err)
++	require.Empty(t, repo.bulkUpdateIDs)
++}
