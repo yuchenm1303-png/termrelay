@@ -23,6 +23,7 @@ import './smirel/styles/model-card-readability.css'
 import './smirel/styles/api-keys-overview-readability.css'
 import './smirel/styles/api-key-modal-alignment.css'
 import './smirel/styles/workspace-account-alignment.css'
+import './smirel/styles/oauth-callback-polish.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
