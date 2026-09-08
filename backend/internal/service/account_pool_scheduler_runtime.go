@@ -1,12 +1,16 @@
 package service
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 // AccountPoolScheduler is the provider-neutral runtime facade used by gateway
 // orchestration. It deliberately owns only ranking feedback and the transient
 // circuit breaker; hard eligibility checks, concurrency acquisition, waiting,
 // failover and billing remain in the existing gateway lifecycle.
 type AccountPoolScheduler struct {
+	mu      sync.Mutex
 	stats   *accountPoolRuntimeStats
 	breaker *accountPoolCircuitBreaker
 	weights AccountPoolScoreWeights
@@ -27,6 +31,21 @@ func NewAccountPoolScheduler(topK int, weights AccountPoolScoreWeights) *Account
 	}
 }
 
+func (s *AccountPoolScheduler) runtime() (*accountPoolRuntimeStats, *accountPoolCircuitBreaker, AccountPoolScoreWeights, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.stats == nil {
+		s.stats = newAccountPoolRuntimeStats()
+	}
+	if s.breaker == nil {
+		s.breaker = &accountPoolCircuitBreaker{}
+	}
+	if s.weights == (AccountPoolScoreWeights{}) {
+		s.weights = defaultAccountPoolScoreWeights()
+	}
+	return s.stats, s.breaker, s.weights, s.topK
+}
+
 // Rank scores candidates that have already passed the gateway's hard filters.
 // It has no side effects: in particular it does not claim a half-open circuit
 // probe. Call Allow immediately before attempting to acquire/send on a ranked
@@ -38,18 +57,10 @@ func (s *AccountPoolScheduler) Rank(inputs []accountPoolCandidateInput, seed str
 	if now.IsZero() {
 		now = time.Now()
 	}
-	stats := s.stats
-	if stats == nil {
-		stats = newAccountPoolRuntimeStats()
-		s.stats = stats
-	}
-	weights := s.weights
-	if weights == (AccountPoolScoreWeights{}) {
-		weights = defaultAccountPoolScoreWeights()
-	}
+	stats, _, weights, topK := s.runtime()
 	return rankAccountPoolCandidates(
 		scoreAccountPoolCandidates(inputs, stats, weights, now),
-		s.topK,
+		topK,
 		seed,
 	)
 }
@@ -64,10 +75,8 @@ func (s *AccountPoolScheduler) Allow(accountID int64, now time.Time) bool {
 	if now.IsZero() {
 		now = time.Now()
 	}
-	if s.breaker == nil {
-		s.breaker = &accountPoolCircuitBreaker{}
-	}
-	return s.breaker.allow(accountID, now)
+	_, breaker, _, _ := s.runtime()
+	return breaker.allow(accountID, now)
 }
 
 // Report records the result of one actual upstream attempt. transient must only
@@ -81,21 +90,17 @@ func (s *AccountPoolScheduler) Report(accountID int64, success, transient bool, 
 	if now.IsZero() {
 		now = time.Now()
 	}
-	if s.stats == nil {
-		s.stats = newAccountPoolRuntimeStats()
-	}
-	if s.breaker == nil {
-		s.breaker = &accountPoolCircuitBreaker{}
-	}
-	s.stats.report(accountID, success, firstTokenMs)
-	s.breaker.report(accountID, success, transient, now)
+	stats, breaker, _, _ := s.runtime()
+	stats.report(accountID, success, firstTokenMs)
+	breaker.report(accountID, success, transient, now)
 }
 
 // Feedback returns scheduler-only health telemetry. It never exposes request
 // bodies, model payloads, API keys, OAuth tokens or other credentials.
 func (s *AccountPoolScheduler) Feedback(accountID int64) accountPoolFeedback {
-	if s == nil || s.stats == nil {
+	if s == nil || accountID <= 0 {
 		return accountPoolFeedback{}
 	}
-	return s.stats.snapshot(accountID)
+	stats, _, _, _ := s.runtime()
+	return stats.snapshot(accountID)
 }
