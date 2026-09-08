@@ -249,10 +249,25 @@ func (h *GatewayHandler) Responses(c *gin.Context) {
 		}
 
 		if err != nil {
+			// A disconnect can happen while Forward is blocked on the upstream. Never
+			// start a replacement generation after the caller has already gone away.
+			if requestCtx.Err() != nil {
+				reqLog.Info("gateway.responses.failover_aborted_client_disconnected",
+					zap.Int64("account_id", account.ID),
+					zap.Error(requestCtx.Err()),
+				)
+				return
+			}
+
 			var failoverErr *service.UpstreamFailoverError
 			if errors.As(err, &failoverErr) {
-				// Can't failover if streaming content already sent
-				if c.Writer.Size() != writerSizeBeforeForward {
+				// Response commitment, not body size, is the failover boundary. A
+				// header-only flush is already client-visible and cannot be replayed.
+				if gatewayResponseCommitted(c) {
+					reqLog.Warn("gateway.responses.failover_blocked_response_committed",
+						zap.Int64("account_id", account.ID),
+						zap.Int("upstream_status", failoverErr.StatusCode),
+					)
 					h.handleResponsesFailoverExhausted(c, failoverErr, true)
 					return
 				}
