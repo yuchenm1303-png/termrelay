@@ -188,18 +188,60 @@ func (s *GatewayService) tryAcquireByAccountPoolScheduler(
 // provider-wide credential failures are deliberately excluded so health scores
 // cannot be poisoned by events that changing accounts would not fix.
 func (s *GatewayService) ReportAccountPoolAttempt(accountID int64, result *ForwardResult, err error) {
-	if s == nil || accountID <= 0 {
-		return
-	}
-	report, success, transient := classifyAccountPoolAttempt(err)
-	if !report {
-		return
-	}
 	var firstTokenMs *int
 	if result != nil {
 		firstTokenMs = result.FirstTokenMs
 	}
-	s.accountPoolScheduler().Report(accountID, success, transient, firstTokenMs, time.Now())
+	s.ReportAccountPoolOutcome(accountID, firstTokenMs, err)
+}
+
+// BeginAccountPoolAttempt reserves the fast-breaker half-open probe immediately
+// before a real upstream attempt. Callers using the generic Gateway scheduler
+// already do this during selection; provider-specific OpenAI/Grok paths call it
+// after acquiring their existing Redis concurrency slot.
+func (s *GatewayService) BeginAccountPoolAttempt(accountID int64) bool {
+	if s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+		return true
+	}
+	scheduler := s.accountPoolScheduler()
+	if scheduler == nil {
+		return true
+	}
+	return scheduler.Allow(accountID, time.Now())
+}
+
+// AbandonAccountPoolAttempt releases a half-open reservation when no
+// account-attributable upstream outcome was observed (for example client
+// cancellation before the probe completes).
+func (s *GatewayService) AbandonAccountPoolAttempt(accountID int64) {
+	if s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+		return
+	}
+	if scheduler := s.accountPoolScheduler(); scheduler != nil {
+		scheduler.Abandon(accountID)
+	}
+}
+
+// ReportAccountPoolOutcome is the provider-neutral feedback boundary for
+// request paths that do not execute GatewayService.Forward directly (OpenAI,
+// Gemini native/compat, Grok and Antigravity adapters). Keeping classification
+// here guarantees every provider uses the same 429/5xx/transport/cancel rules.
+func (s *GatewayService) ReportAccountPoolOutcome(accountID int64, firstTokenMs *int, err error) {
+	if s == nil || accountID <= 0 || !s.AccountPoolSchedulerEnabled() {
+		return
+	}
+	scheduler := s.accountPoolScheduler()
+	if scheduler == nil {
+		return
+	}
+	report, success, transient := classifyAccountPoolAttempt(err)
+	if !report {
+		// Do not poison health for client/request-scoped failures, but release
+		// any reserved half-open probe so a later request can test the account.
+		scheduler.Abandon(accountID)
+		return
+	}
+	scheduler.Report(accountID, success, transient, firstTokenMs, time.Now())
 }
 
 func classifyAccountPoolAttempt(err error) (report, success, transient bool) {

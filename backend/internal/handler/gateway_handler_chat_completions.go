@@ -264,6 +264,7 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			result, err = h.gatewayService.ForwardAsChatCompletions(c.Request.Context(), c, account, forwardBody, parsedReq)
 		}
 
+		h.gatewayService.ReportAccountPoolAttempt(account.ID, result, err)
 		if accountReleaseFunc != nil {
 			accountReleaseFunc()
 		}
