@@ -1845,6 +1845,8 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 			reqLog.Debug("openai.websocket_account_pool_circuit_skipped", zap.Int64("account_id", account.ID))
 			continue
 		}
+		var accountPoolAttemptPending atomic.Bool
+		accountPoolAttemptPending.Store(true)
 		currentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
 		if err := h.gatewayService.BindStickySession(ctx, apiKey.GroupID, sessionHash, account.ID); err != nil {
 			reqLog.Warn("openai.websocket_bind_sticky_session_failed", zap.Int64("account_id", account.ID), zap.Error(err))
@@ -1852,7 +1854,9 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 
 		token, _, err := h.gatewayService.GetRequestCredential(ctx, c, account)
 		if err != nil {
-			h.reportAccountPoolAttempt(account, nil, err)
+			if accountPoolAttemptPending.Swap(false) {
+				h.reportAccountPoolAttempt(account, nil, err)
+			}
 			reqLog.Warn("openai.websocket_get_access_token_failed", zap.Int64("account_id", account.ID), zap.Error(err))
 			if ctx.Err() != nil {
 				return
@@ -1966,12 +1970,13 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 					}
 					return service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account temporarily unavailable", nil)
 				}
+				accountPoolAttemptPending.Store(true)
 				currentUserRelease = wrapReleaseOnDone(ctx, userReleaseFunc)
 				currentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
 				return nil
 			},
 			AfterTurn: func(turn int, result *service.OpenAIForwardResult, turnErr error) {
-				if turnErr != nil || result != nil {
+				if (turnErr != nil || result != nil) && accountPoolAttemptPending.Swap(false) {
 					h.reportAccountPoolAttempt(account, result, turnErr)
 				}
 				// F1: cyber 标记按 turn 生命周期清理——defer 保证任意早返回路径都执行；
@@ -2087,9 +2092,13 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 		requestPayloadHash = service.HashUsageRequestPayload(wsFirstMessage)
 
 		proxyErr := h.gatewayService.ProxyResponsesWebSocketFromClient(ctx, c, wsConn, account, token, wsFirstMessage, hooks)
-		// Release a possible half-open reservation if the proxy exits before
-		// any turn emitted an account-attributable outcome. No-op after Report.
-		h.abandonAccountPoolAttempt(account)
+		if accountPoolAttemptPending.Swap(false) {
+			if proxyErr != nil {
+				h.reportAccountPoolAttempt(account, nil, proxyErr)
+			} else {
+				h.abandonAccountPoolAttempt(account)
+			}
+		}
 		if proxyErr != nil {
 			err := proxyErr
 			var failoverErr *service.UpstreamFailoverError
