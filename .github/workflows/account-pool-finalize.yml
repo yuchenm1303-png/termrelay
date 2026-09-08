@@ -1,5 +1,6 @@
 name: Finalize account pool hardening
 
+# Retry after tightening admin base_url redaction.
 on:
   push:
     branches:
