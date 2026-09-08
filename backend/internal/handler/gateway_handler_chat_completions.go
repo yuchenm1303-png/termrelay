@@ -268,11 +268,24 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			accountReleaseFunc()
 		}
 
+		// A client disconnect is terminal for the whole request. Never reinterpret
+		// context cancellation as an upstream failure and never start another attempt.
+		if requestErr := c.Request.Context().Err(); requestErr != nil {
+			reqLog.Debug("gateway.cc.request_canceled", zap.Error(requestErr))
+			return
+		}
+
 		if err != nil {
 			var failoverErr *service.UpstreamFailoverError
 			if errors.As(err, &failoverErr) {
-				if c.Writer.Size() != writerSizeBeforeForward {
-					h.handleCCFailoverExhausted(c, failoverErr, true)
+				// HTTP commitment is the hard failover boundary. Writer.Written() also
+				// becomes true for header-only WriteHeader/Flush, even when Size() did
+				// not change, so this closes the header-only retry/double-generation gap.
+				if gatewayResponseCommitted(c) {
+					reqLog.Warn("gateway.cc.failover_blocked_committed_response",
+						zap.Int64("account_id", account.ID),
+						zap.Int("upstream_status", failoverErr.StatusCode),
+					)
 					return
 				}
 				action := fs.HandleFailoverError(c.Request.Context(), h.gatewayService, account.ID, account.Platform, account.GetPoolModeRetryCount(), failoverErr)
