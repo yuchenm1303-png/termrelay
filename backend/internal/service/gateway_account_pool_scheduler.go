@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,13 +14,47 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
 )
 
-const defaultGatewayAccountPoolTopK = 3
+const (
+	defaultGatewayAccountPoolTopK = 3
+	gatewayAccountPoolEnabledEnv   = "SUB2API_ACCOUNT_POOL_SCHEDULER"
+	gatewayAccountPoolTopKEnv      = "SUB2API_ACCOUNT_POOL_TOP_K"
+)
 
 // Keep the migration runtime outside GatewayService until the selection path is
 // switched on. Account IDs are process-global and GatewayService is effectively
 // singleton in production, so this preserves health feedback without forcing a
 // constructor signature change across unrelated workstreams.
 var gatewayAccountPoolRuntimes sync.Map // map[*GatewayService]*AccountPoolScheduler
+
+// AccountPoolSchedulerEnabled is the rollout gate used by the eventual Layer 2
+// integration. It defaults off, so merging the scheduler code cannot change
+// production routing until explicitly enabled.
+func (s *GatewayService) AccountPoolSchedulerEnabled() bool {
+	if s == nil {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(gatewayAccountPoolEnabledEnv))) {
+	case "1", "true", "yes", "on", "enabled":
+		return true
+	default:
+		return false
+	}
+}
+
+func gatewayAccountPoolTopK() int {
+	value := strings.TrimSpace(os.Getenv(gatewayAccountPoolTopKEnv))
+	if value == "" {
+		return defaultGatewayAccountPoolTopK
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
+		return defaultGatewayAccountPoolTopK
+	}
+	if parsed > 32 {
+		return 32
+	}
+	return parsed
+}
 
 func (s *GatewayService) accountPoolScheduler() *AccountPoolScheduler {
 	if s == nil {
@@ -30,7 +65,7 @@ func (s *GatewayService) accountPoolScheduler() *AccountPoolScheduler {
 			return scheduler
 		}
 	}
-	scheduler := NewAccountPoolScheduler(defaultGatewayAccountPoolTopK, AccountPoolScoreWeights{})
+	scheduler := NewAccountPoolScheduler(gatewayAccountPoolTopK(), AccountPoolScoreWeights{})
 	actual, _ := gatewayAccountPoolRuntimes.LoadOrStore(s, scheduler)
 	resolved, _ := actual.(*AccountPoolScheduler)
 	return resolved
