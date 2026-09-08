@@ -1,0 +1,38 @@
+name: Validate account pool service
+
+on:
+  push:
+    branches:
+      - chatgpt/account-pool-scheduler
+    paths:
+      - .github/workflows/validate-account-pool-service.yml
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: chatgpt/account-pool-scheduler
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          check-latest: false
+          cache: true
+          cache-dependency-path: backend/go.sum
+      - name: Run service tests
+        working-directory: backend
+        run: go test ./internal/service
+      - name: Remove validation workflow after success
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/validate-account-pool-service.yml
+          git add -A
+          git commit -m "chore: remove account pool validation workflow"
+          git push origin HEAD:chatgpt/account-pool-scheduler
