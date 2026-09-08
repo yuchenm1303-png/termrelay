@@ -22,10 +22,23 @@ type ProviderAdapter interface {
 	NormalizeError(resp *http.Response, body []byte) NormalizedProviderError
 }
 
+// ProviderProtocol is the client/wire protocol axis. Provider identity and
+// protocol are intentionally orthogonal: one provider may serve several client
+// protocols, and one protocol may be implemented by several providers.
+type ProviderProtocol string
+
+const (
+	ProviderProtocolAnthropic       ProviderProtocol = "anthropic"
+	ProviderProtocolChatCompletions ProviderProtocol = "chat_completions"
+	ProviderProtocolResponses       ProviderProtocol = "responses"
+	ProviderProtocolGemini          ProviderProtocol = "gemini"
+)
+
 // ProviderRequestInput contains only provider/request material. Scheduling,
 // failover orchestration, response commit and billing remain gateway concerns.
 type ProviderRequestInput struct {
 	Account       *Account
+	Protocol      ProviderProtocol
 	Method        string
 	Endpoint      string
 	Model         string
@@ -33,6 +46,13 @@ type ProviderRequestInput struct {
 	Stream        bool
 	AuthToken     string
 	ClientHeaders http.Header
+}
+
+// ProviderRequestPreparer resolves provider/account state that must be known
+// before endpoint construction. It may return a copied input with ephemeral
+// auth material, but must not perform scheduling, retries or billing.
+type ProviderRequestPreparer interface {
+	PrepareRequest(ctx context.Context, input ProviderRequestInput) (ProviderRequestInput, error)
 }
 
 // ProviderRequestBuilder builds the provider-native upstream request.
@@ -206,10 +226,25 @@ func (r *ProviderAdapterRegistry) Resolve(account *Account) (ProviderAdapter, er
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	var matched ProviderAdapter
 	for _, adapter := range r.adapters {
-		if adapter.Supports(account) {
-			return adapter, nil
+		if !adapter.Supports(account) {
+			continue
 		}
+		if matched != nil {
+			return nil, fmt.Errorf(
+				"ambiguous provider adapter match for platform=%s type=%s: %s, %s",
+				account.Platform,
+				account.Type,
+				matched.Name(),
+				adapter.Name(),
+			)
+		}
+		matched = adapter
+	}
+	if matched != nil {
+		return matched, nil
 	}
 	return nil, fmt.Errorf("no provider adapter for platform=%s type=%s", account.Platform, account.Type)
 }
@@ -248,6 +283,7 @@ func normalizeGenericProviderError(resp *http.Response, body []byte) NormalizedP
 
 	normalized := NormalizedProviderError{
 		StatusCode: status,
+		Code:       strings.TrimSpace(extractUpstreamErrorCode(body)),
 		Message:    message,
 		RequestID:  requestID,
 	}

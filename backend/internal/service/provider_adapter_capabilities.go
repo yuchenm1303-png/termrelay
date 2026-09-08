@@ -11,6 +11,7 @@ import (
 type ProviderCapability string
 
 const (
+	ProviderCapabilityRequestPreparer      ProviderCapability = "request_preparer"
 	ProviderCapabilityRequestBuilder       ProviderCapability = "request_builder"
 	ProviderCapabilityAuthApplier          ProviderCapability = "auth_applier"
 	ProviderCapabilityRequestSender        ProviderCapability = "request_sender"
@@ -34,7 +35,10 @@ func detectProviderAdapterCapabilities(adapter ProviderAdapter) []ProviderCapabi
 		return nil
 	}
 
-	capabilities := make([]ProviderCapability, 0, 9)
+	capabilities := make([]ProviderCapability, 0, 10)
+	if _, ok := adapter.(ProviderRequestPreparer); ok {
+		capabilities = append(capabilities, ProviderCapabilityRequestPreparer)
+	}
 	if _, ok := adapter.(ProviderRequestBuilder); ok {
 		capabilities = append(capabilities, ProviderCapabilityRequestBuilder)
 	}
