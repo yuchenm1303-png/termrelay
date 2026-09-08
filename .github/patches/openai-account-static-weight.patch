@@ -1,0 +1,63 @@
+diff --git a/backend/internal/service/openai_account_scheduler.go b/backend/internal/service/openai_account_scheduler.go
+index ceafdda40..7f7de50ef 100644
+--- a/backend/internal/service/openai_account_scheduler.go
++++ b/backend/internal/service/openai_account_scheduler.go
+@@ -753,6 +753,12 @@ func buildOpenAIWeightedSelectionOrder(
+ 	for i := range pool {
+ 		// 将 top-K 分值平移到正区间，避免“单一最高分账号”长期垄断。
+ 		weight := (pool[i].score - minScore) + 1.0
++		// Keep the existing dynamic score, but let the provider-neutral account
++		// pool traffic weight control the long-run share between otherwise
++		// eligible candidates. SchedulingWeight validates/caps operator input.
++		if pool[i].account != nil {
++			weight *= pool[i].account.SchedulingWeight()
++		}
+ 		if math.IsNaN(weight) || math.IsInf(weight, 0) || weight <= 0 {
+ 			weight = 1.0
+ 		}
+diff --git a/backend/internal/service/openai_account_scheduler_test.go b/backend/internal/service/openai_account_scheduler_test.go
+index a7c51f6fa..bf8313073 100644
+--- a/backend/internal/service/openai_account_scheduler_test.go
++++ b/backend/internal/service/openai_account_scheduler_test.go
+@@ -3261,6 +3261,41 @@ func TestBuildOpenAIWeightedSelectionOrder_DeterministicBySessionSeed(t *testing
+ 	}
+ }
+ 
++func TestBuildOpenAIWeightedSelectionOrder_HonorsAccountTrafficWeight(t *testing.T) {
++	candidates := []openAIAccountCandidateScore{
++		{
++			account: &Account{
++				ID:    201,
++				Extra: map[string]any{accountPoolWeightExtraKey: 1000.0},
++			},
++			loadInfo: &AccountLoadInfo{},
++			score:    5,
++		},
++		{
++			account: &Account{
++				ID:    202,
++				Extra: map[string]any{accountPoolWeightExtraKey: 1.0},
++			},
++			loadInfo: &AccountLoadInfo{},
++			score:    5,
++		},
++	}
++
++	heavyFirst := 0
++	for i := 0; i < 64; i++ {
++		order := buildOpenAIWeightedSelectionOrder(candidates, OpenAIAccountScheduleRequest{
++			SessionHash: fmt.Sprintf("weighted-account-%d", i),
++		})
++		require.Len(t, order, 2)
++		if order[0].account.ID == 201 {
++			heavyFirst++
++		}
++	}
++	// 1000:1 should dominate across deterministic session seeds without
++	// requiring a brittle assertion on one exact RNG draw.
++	require.GreaterOrEqual(t, heavyFirst, 60)
++}
++
+ func TestOpenAIGatewayService_SelectAccountWithScheduler_LoadBalanceDistributesAcrossSessions(t *testing.T) {
+ 	ctx := context.Background()
+ 	groupID := int64(15)
