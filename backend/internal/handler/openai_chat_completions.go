@@ -261,7 +261,11 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 						)
 						return
 					}
-					if c.Writer.Size() != writerSizeBeforeForward {
+					if gatewayResponseCommitted(c) {
+						reqLog.Warn("openai_chat_completions.failover_blocked_response_committed",
+							zap.Int64("account_id", account.ID),
+							zap.Int("upstream_status", failoverErr.StatusCode),
+						)
 						h.handleFailoverExhausted(c, failoverErr, true)
 						return
 					}
