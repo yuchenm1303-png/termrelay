@@ -14,7 +14,9 @@ const useWorkspace = computed(() => route.meta.shell === 'workspace')
       <WorkspaceShell>
         <component :is="Component" />
       </WorkspaceShell>
-      <HomeAccountMenu variant="workspace" />
+      <Teleport to=".workspace-topbar-actions">
+        <HomeAccountMenu variant="workspace" />
+      </Teleport>
     </template>
     <component :is="Component" v-else />
   </RouterView>
