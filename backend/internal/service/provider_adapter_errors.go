@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -29,7 +30,7 @@ func providerErrorCodeString(value any) string {
 		return strings.TrimSpace(v)
 	case float64:
 		if v == float64(int64(v)) {
-			return http.StatusText(int(v))
+			return strconv.FormatInt(int64(v), 10)
 		}
 	}
 	return ""
