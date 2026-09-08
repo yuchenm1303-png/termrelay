@@ -29,9 +29,7 @@ func providerErrorCodeString(value any) string {
 	case string:
 		return strings.TrimSpace(v)
 	case float64:
-		if v == float64(int64(v)) {
-			return strconv.FormatInt(int64(v), 10)
-		}
+		return strconv.FormatFloat(v, 'f', -1, 64)
 	}
 	return ""
 }
