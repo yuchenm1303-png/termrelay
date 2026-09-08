@@ -102,6 +102,7 @@ func TestGeminiMessagesCompatSignatureRetryRebuildsProviderRequestBody(t *testin
 	require.Len(t, httpStub.requestBodies, 2)
 	require.NotEqual(t, string(httpStub.requestBodies[0]), string(httpStub.requestBodies[1]), "signature fallback must rebuild the provider request with the downgraded payload")
 	require.Contains(t, string(httpStub.requestBodies[0]), "private-thought")
-	require.NotContains(t, string(httpStub.requestBodies[1]), "private-thought")
+	require.Contains(t, string(httpStub.requestBodies[1]), `"text":"private-thought"`, "thinking content must be downgraded to ordinary text")
+	require.NotContains(t, string(httpStub.requestBodies[1]), "thinkingConfig", "signature fallback must disable Gemini thinking")
 	require.Equal(t, "gemini-2.5-flash", result.UpstreamModel)
 }
