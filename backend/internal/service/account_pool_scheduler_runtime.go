@@ -64,11 +64,7 @@ func (s *AccountPoolScheduler) Rank(inputs []accountPoolCandidateInput, seed str
 	}
 	stats, _, _, weights, topK := s.runtime()
 	scored := scoreAccountPoolCandidates(inputs, stats, weights, now)
-	return rankAccountPoolCandidates(
-		applyAccountPoolStaticWeights(scored),
-		topK,
-		seed,
-	)
+	return rankAccountPoolCandidatesWithStaticWeight(scored, topK, seed)
 }
 
 // Allow checks the fast transient circuit immediately before the caller tries
