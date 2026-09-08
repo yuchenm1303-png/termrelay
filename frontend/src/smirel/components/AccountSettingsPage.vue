@@ -28,6 +28,10 @@ const savingProfile = ref(false)
 const savingPassword = ref(false)
 const savingNotifications = ref(false)
 const signingOut = ref(false)
+const showDeleteDialog = ref(false)
+const deletingAccount = ref(false)
+const deletionConfirmation = ref('')
+const deleteError = ref('')
 const profileError = ref('')
 const passwordError = ref('')
 const notificationError = ref('')
@@ -60,6 +64,11 @@ const statusLabel = computed(() => displayProfile.value.status === 'active' ? '�
 const joinedAt = computed(() => formatDate(displayProfile.value.created_at))
 const lastActiveAt = computed(() => formatDateTime(displayProfile.value.last_active_at))
 const balance = computed(() => Number(displayProfile.value.balance || 0))
+const isAdminAccount = computed(() => displayProfile.value.role === 'admin')
+const canDeleteAccount = computed(() => {
+  const expected = String(displayProfile.value.email || '').trim().toLowerCase()
+  return Boolean(expected) && deletionConfirmation.value.trim().toLowerCase() === expected && !deletingAccount.value
+})
 
 function formatDate(value?: string | null) {
   if (!value) return '—'
@@ -296,6 +305,50 @@ async function signOut() {
   }
 }
 
+function openDeleteAccountDialog() {
+  if (isAdminAccount.value) {
+    pushNotification({
+      title: '管理员账户不能直接注销',
+      message: '请先转移管理员权限，再使用账户注销功能。',
+      tone: 'info',
+    })
+    return
+  }
+  deletionConfirmation.value = ''
+  deleteError.value = ''
+  showDeleteDialog.value = true
+}
+
+function closeDeleteAccountDialog() {
+  if (deletingAccount.value) return
+  showDeleteDialog.value = false
+  deletionConfirmation.value = ''
+  deleteError.value = ''
+}
+
+async function deleteAccount() {
+  if (!canDeleteAccount.value) return
+  deleteError.value = ''
+  deletingAccount.value = true
+  try {
+    if (previewMode) {
+      showDeleteDialog.value = false
+      pushNotification({ title: '预览模式', message: '预览模式不会真正注销账户。', tone: 'info' })
+      return
+    }
+
+    await api.delete('/user/account', {
+      data: { confirmation: deletionConfirmation.value.trim() },
+    })
+    await logout()
+    await router.replace('/login')
+  } catch (caught) {
+    deleteError.value = getErrorMessage(caught)
+  } finally {
+    deletingAccount.value = false
+  }
+}
+
 onMounted(() => void loadProfile())
 </script>
 
@@ -492,6 +545,60 @@ onMounted(() => void loadProfile())
           <button class="account-button danger" type="button" :disabled="signingOut" @click="signOut">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.4 4H5.8A1.8 1.8 0 0 0 4 5.8v8.4A1.8 1.8 0 0 0 5.8 16h2.6M12.4 6.5 16 10l-3.6 3.5M8 10h8"/></svg>
             {{ signingOut ? '正在退出…' : '退出登录' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="account-card account-danger-card">
+        <header class="account-card-head compact">
+          <div>
+            <span class="account-card-kicker danger-kicker">DANGER ZONE</span>
+            <h3>注销账户</h3>
+            <p>永久停止使用当前 Smirel 账户。此操作与“退出登录”不同。</p>
+          </div>
+        </header>
+
+        <div class="delete-account-row">
+          <div>
+            <strong>注销当前账户</strong>
+            <span v-if="!isAdminAccount">注销后将无法再次登录，当前 API 密钥会立即失效；必要的计费与审计历史会按平台规则保留。</span>
+            <span v-else>管理员账户为避免误删不能直接注销，请先转移管理员权限。</span>
+          </div>
+          <button class="account-button delete-account-button" type="button" :disabled="isAdminAccount" @click="openDeleteAccountDialog">
+            注销账户
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div v-if="showDeleteDialog" class="delete-dialog-backdrop" role="presentation" @click.self="closeDeleteAccountDialog">
+      <section class="delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+        <div class="delete-dialog-icon" aria-hidden="true">!</div>
+        <h3 id="delete-account-title">确认注销账户</h3>
+        <p>注销后当前账户将立即失效，所有设备会话和 API 访问都会失去权限。此操作不能在前台撤销。</p>
+
+        <div class="delete-confirm-copy">
+          <span>请输入当前账户邮箱以确认：</span>
+          <strong>{{ displayProfile.email }}</strong>
+        </div>
+
+        <label class="account-field delete-confirm-field">
+          <span>确认邮箱</span>
+          <input
+            v-model="deletionConfirmation"
+            type="email"
+            autocomplete="off"
+            :placeholder="displayProfile.email"
+            @keydown.enter="deleteAccount"
+          />
+        </label>
+
+        <p v-if="deleteError" class="account-error">{{ deleteError }}</p>
+
+        <div class="delete-dialog-actions">
+          <button class="account-button secondary" type="button" :disabled="deletingAccount" @click="closeDeleteAccountDialog">取消</button>
+          <button class="account-button confirm-delete" type="button" :disabled="!canDeleteAccount" @click="deleteAccount">
+            {{ deletingAccount ? '正在注销…' : '确认注销账户' }}
           </button>
         </div>
       </section>
@@ -1128,6 +1235,141 @@ onMounted(() => void loadProfile())
   height: 15px;
 }
 
+.account-danger-card {
+  grid-column: 1 / -1;
+  border-color: #3d282e;
+  background: linear-gradient(180deg, rgba(28, 18, 21, .9), rgba(18, 15, 18, .96));
+}
+
+.danger-kicker {
+  color: #9d5f67;
+}
+
+.delete-account-row {
+  min-height: 78px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(108, 55, 64, .32);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.delete-account-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delete-account-row strong {
+  color: #e9d9dc;
+  font-size: .79rem;
+  font-weight: 650;
+}
+
+.delete-account-row span {
+  max-width: 760px;
+  color: #8e7378;
+  font-size: .71rem;
+  line-height: 1.55;
+}
+
+.account-button.delete-account-button,
+.account-button.confirm-delete {
+  flex: 0 0 auto;
+  border: 1px solid #7b3540;
+  background: #7d2935;
+  color: #fff4f5;
+}
+
+.account-button.delete-account-button:hover:not(:disabled),
+.account-button.confirm-delete:hover:not(:disabled) {
+  border-color: #a34654;
+  background: #933341;
+}
+
+.delete-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  padding: 20px;
+  background: rgba(3, 5, 8, .72);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+}
+
+.delete-dialog {
+  width: min(460px, 100%);
+  padding: 24px;
+  border: 1px solid #4e2b32;
+  border-radius: 13px;
+  background: #11151a;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .42);
+}
+
+.delete-dialog-icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #6d343e;
+  border-radius: 10px;
+  background: rgba(135, 45, 58, .15);
+  color: #f19aa2;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  font-weight: 760;
+}
+
+.delete-dialog h3 {
+  margin: 16px 0 0;
+  color: #f1e7e9;
+  font-size: 1.06rem;
+}
+
+.delete-dialog > p {
+  margin: 8px 0 0;
+  color: #987f84;
+  font-size: .75rem;
+  line-height: 1.65;
+}
+
+.delete-confirm-copy {
+  margin-top: 18px;
+  padding: 12px 13px;
+  border: 1px solid #31282b;
+  border-radius: 8px;
+  background: #0d1014;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.delete-confirm-copy span {
+  color: #786a6e;
+  font-size: .69rem;
+}
+
+.delete-confirm-copy strong {
+  color: #d9c7ca;
+  font-size: .76rem;
+  font-weight: 620;
+  overflow-wrap: anywhere;
+}
+
+.delete-confirm-field {
+  margin-top: 14px;
+}
+
+.delete-dialog-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 :global(html.smirel-app[data-theme='light']) .account-settings {
   --account-border: #dce2e8;
   --account-border-soft: #e5e9ee;
@@ -1174,6 +1416,30 @@ onMounted(() => void loadProfile())
   color: #37424d;
 }
 
+:global(html.smirel-app[data-theme='light']) .account-danger-card {
+  border-color: #edd4d8;
+  background: #fffafa;
+}
+
+:global(html.smirel-app[data-theme='light']) .delete-account-row strong,
+:global(html.smirel-app[data-theme='light']) .delete-dialog h3 {
+  color: #49282e;
+}
+
+:global(html.smirel-app[data-theme='light']) .delete-dialog {
+  border-color: #e4c9ce;
+  background: #ffffff;
+}
+
+:global(html.smirel-app[data-theme='light']) .delete-confirm-copy {
+  border-color: #eadde0;
+  background: #fffafa;
+}
+
+:global(html.smirel-app[data-theme='light']) .delete-confirm-copy strong {
+  color: #5b3c42;
+}
+
 @media (max-width: 1050px) {
   .account-hero {
     grid-template-columns: 1fr;
@@ -1217,13 +1483,23 @@ onMounted(() => void loadProfile())
   }
 
   .account-card-footer,
-  .signout-zone {
+  .signout-zone,
+  .delete-account-row {
     align-items: stretch;
     flex-direction: column;
   }
 
   .account-card-footer .account-button,
-  .signout-zone .account-button {
+  .signout-zone .account-button,
+  .delete-account-row .account-button {
+    width: 100%;
+  }
+
+  .delete-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .delete-dialog-actions .account-button {
     width: 100%;
   }
 }
