@@ -23,8 +23,10 @@ func newGeminiAdapterTestService() *GeminiMessagesCompatService {
 func TestGeminiGatewayProviderAdapterAPIKeyBuildsAIStudioRequestAndAuth(t *testing.T) {
 	svc := newGeminiAdapterTestService()
 	adapter := newGeminiGatewayProviderAdapter(svc)
-	builder := adapter.(ProviderRequestBuilder)
-	auth := adapter.(ProviderAuthApplier)
+	builder, ok := adapter.(ProviderRequestBuilder)
+	require.True(t, ok)
+	auth, ok := adapter.(ProviderAuthApplier)
+	require.True(t, ok)
 	account := &Account{
 		Platform: PlatformGemini,
 		Type:     AccountTypeAPIKey,
@@ -50,8 +52,11 @@ func TestGeminiGatewayProviderAdapterAPIKeyBuildsAIStudioRequestAndAuth(t *testi
 	require.NoError(t, err)
 	var payload map[string]any
 	require.NoError(t, json.Unmarshal(body, &payload))
-	tools := payload["tools"].([]any)
-	tool := tools[0].(map[string]any)
+	tools, ok := payload["tools"].([]any)
+	require.True(t, ok)
+	require.NotEmpty(t, tools)
+	tool, ok := tools[0].(map[string]any)
+	require.True(t, ok)
 	_, hasSnake := tool["google_search"]
 	_, hasCamel := tool["googleSearch"]
 	require.True(t, hasSnake)
@@ -65,8 +70,10 @@ func TestGeminiGatewayProviderAdapterAPIKeyBuildsAIStudioRequestAndAuth(t *testi
 func TestGeminiGatewayProviderAdapterOAuthCodeAssistWrapsAndAuthenticates(t *testing.T) {
 	svc := newGeminiAdapterTestService()
 	adapter := newGeminiGatewayProviderAdapter(svc)
-	builder := adapter.(ProviderRequestBuilder)
-	auth := adapter.(ProviderAuthApplier)
+	builder, ok := adapter.(ProviderRequestBuilder)
+	require.True(t, ok)
+	auth, ok := adapter.(ProviderAuthApplier)
+	require.True(t, ok)
 	account := &Account{
 		Platform: PlatformGemini,
 		Type:     AccountTypeOAuth,
@@ -104,8 +111,10 @@ func TestGeminiGatewayProviderAdapterOAuthCodeAssistWrapsAndAuthenticates(t *tes
 func TestGeminiGatewayProviderAdapterCountTokensForcesAIStudioForOAuth(t *testing.T) {
 	svc := newGeminiAdapterTestService()
 	adapter := newGeminiGatewayProviderAdapter(svc)
-	builder := adapter.(ProviderRequestBuilder)
-	auth := adapter.(ProviderAuthApplier)
+	builder, ok := adapter.(ProviderRequestBuilder)
+	require.True(t, ok)
+	auth, ok := adapter.(ProviderAuthApplier)
+	require.True(t, ok)
 	account := &Account{
 		Platform: PlatformGemini,
 		Type:     AccountTypeOAuth,
@@ -170,7 +179,8 @@ func TestGeminiGatewayProviderAdapterExposesRequestAndAuthCapabilities(t *testin
 
 func TestGeminiGatewayProviderAdapterPrepareRequestResolvesOAuthToken(t *testing.T) {
 	svc := newGeminiAdapterTestService()
-	adapter := newGeminiGatewayProviderAdapter(svc).(*geminiGatewayProviderAdapter)
+	adapter, ok := newGeminiGatewayProviderAdapter(svc).(*geminiGatewayProviderAdapter)
+	require.True(t, ok)
 	account := &Account{
 		Platform: PlatformGemini,
 		Type:     AccountTypeOAuth,
