@@ -226,10 +226,25 @@ func (r *ProviderAdapterRegistry) Resolve(account *Account) (ProviderAdapter, er
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	var matched ProviderAdapter
 	for _, adapter := range r.adapters {
-		if adapter.Supports(account) {
-			return adapter, nil
+		if !adapter.Supports(account) {
+			continue
 		}
+		if matched != nil {
+			return nil, fmt.Errorf(
+				"ambiguous provider adapter match for platform=%s type=%s: %s, %s",
+				account.Platform,
+				account.Type,
+				matched.Name(),
+				adapter.Name(),
+			)
+		}
+		matched = adapter
+	}
+	if matched != nil {
+		return matched, nil
 	}
 	return nil, fmt.Errorf("no provider adapter for platform=%s type=%s", account.Platform, account.Type)
 }
@@ -268,6 +283,7 @@ func normalizeGenericProviderError(resp *http.Response, body []byte) NormalizedP
 
 	normalized := NormalizedProviderError{
 		StatusCode: status,
+		Code:       strings.TrimSpace(extractUpstreamErrorCode(body)),
 		Message:    message,
 		RequestID:  requestID,
 	}
