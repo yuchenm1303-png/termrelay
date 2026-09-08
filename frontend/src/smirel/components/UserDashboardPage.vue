@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import '../styles/user-dashboard.css'
+import '../styles/user-dashboard-refresh.css'
 import '../styles/user-dashboard-lower.css'
 
 interface DashboardStats {
@@ -50,7 +51,10 @@ async function copyEndpoint() {
         <p>{{ t('workspace.descriptions.dashboard') }}</p>
       </div>
       <button class="user-console-refresh" type="button" :disabled="loading" @click="emit('refresh')">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 9A7 7 0 0 1 18.6 6M17.9 15A7 7 0 0 1 5.4 18"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 11a8 8 0 1 0 2 5.3" />
+          <path d="M20 4v7h-7" />
+        </svg>
         <span>{{ loading ? t('workspace.refreshing') : t('workspace.refresh') }}</span>
       </button>
     </header>
