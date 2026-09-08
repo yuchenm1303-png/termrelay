@@ -22,10 +22,23 @@ type ProviderAdapter interface {
 	NormalizeError(resp *http.Response, body []byte) NormalizedProviderError
 }
 
+// ProviderProtocol is the client/wire protocol axis. Provider identity and
+// protocol are intentionally orthogonal: one provider may serve several client
+// protocols, and one protocol may be implemented by several providers.
+type ProviderProtocol string
+
+const (
+	ProviderProtocolAnthropic       ProviderProtocol = "anthropic"
+	ProviderProtocolChatCompletions ProviderProtocol = "chat_completions"
+	ProviderProtocolResponses       ProviderProtocol = "responses"
+	ProviderProtocolGemini          ProviderProtocol = "gemini"
+)
+
 // ProviderRequestInput contains only provider/request material. Scheduling,
 // failover orchestration, response commit and billing remain gateway concerns.
 type ProviderRequestInput struct {
 	Account       *Account
+	Protocol      ProviderProtocol
 	Method        string
 	Endpoint      string
 	Model         string
