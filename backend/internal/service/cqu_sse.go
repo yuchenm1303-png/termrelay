@@ -3,6 +3,7 @@ package service
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,10 +42,40 @@ type CQUSSEEvent struct {
 	Raw   []byte
 }
 
+// CQUStreamIdentifiers are the server-side conversation handles CQU reports
+// while a run is in flight. They are routing identifiers, never credentials,
+// so they are safe to log and to reuse on the next turn.
+type CQUStreamIdentifiers struct {
+	ThreadID       string
+	ConversationID string
+	RunID          string
+	MessageID      string
+}
+
+// ConversationKey is the identifier CQU expects back in `conversation_id` on a
+// follow-up turn. CQU has used both `conversationId` and `threadId` for it, so
+// prefer the explicit one and fall back to the thread handle.
+func (ids CQUStreamIdentifiers) ConversationKey() string {
+	if value := strings.TrimSpace(ids.ConversationID); value != "" {
+		return value
+	}
+	return strings.TrimSpace(ids.ThreadID)
+}
+
 // ParseCQUSSE incrementally parses a CQU event stream. It deliberately does not
 // use bufio.Scanner so a large model/tool event is not capped by Scanner's token
 // limit.
 func ParseCQUSSE(r io.Reader, emit func(CQUSSEEvent) error) error {
+	return ParseCQUSSEContext(context.Background(), r, emit)
+}
+
+// ParseCQUSSEContext is ParseCQUSSE with cancellation. A client disconnect must
+// stop the parse immediately rather than draining the browser stream, so the
+// context is checked before every frame is read and before every dispatch.
+func ParseCQUSSEContext(ctx context.Context, r io.Reader, emit func(CQUSSEEvent) error) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if r == nil {
 		return errors.New("cqu sse reader is nil")
 	}
@@ -86,6 +117,10 @@ func ParseCQUSSE(r io.Reader, emit func(CQUSSEEvent) error) error {
 	}
 
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
 			raw.Write(line)
@@ -133,6 +168,62 @@ func cquEventTypeFromJSON(data []byte) string {
 	for _, key := range []string{"type", "event", "eventType", "event_type"} {
 		if value, ok := payload[key].(string); ok {
 			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+// cquApplyIdentifiers folds one event's routing handles into the running state.
+// RUN_STARTED carries the thread/conversation handle for the whole run,
+// RUN_FINISHED repeats it, and TEXT_MESSAGE_* carry the assistant message id.
+// Values are only ever overwritten by a non-empty replacement so a late event
+// without the field cannot erase a handle observed earlier.
+func cquApplyIdentifiers(event CQUSSEEvent, ids *CQUStreamIdentifiers) {
+	if ids == nil || len(bytes.TrimSpace(event.Data)) == 0 {
+		return
+	}
+	switch event.Type {
+	case CQUSSEEventRunStarted, CQUSSEEventRunFinished, CQUSSEEventRunError,
+		CQUSSEEventTextMessageStart, CQUSSEEventTextMessageContent, CQUSSEEventTextMessageEnd,
+		CQUSSEEventStepStarted, CQUSSEEventStepFinished, CQUSSEEventCustom:
+	default:
+		return
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(event.Data, &payload); err != nil {
+		return
+	}
+	assign := func(target *string, keys ...string) {
+		if value := cquLookupString(payload, keys...); value != "" {
+			*target = value
+		}
+	}
+	assign(&ids.ThreadID, "threadId", "thread_id")
+	assign(&ids.ConversationID, "conversationId", "conversation_id", "customConversationId", "custom_conversation_id")
+	assign(&ids.RunID, "runId", "run_id")
+	assign(&ids.MessageID, "messageId", "message_id")
+}
+
+// cquLookupString reads a string field from an event payload, also looking one
+// level into a `data` wrapper because CQU nests some events that way.
+func cquLookupString(payload map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := payload[key].(string); ok {
+			if trimmed := strings.TrimSpace(value); trimmed != "" {
+				return trimmed
+			}
+		}
+	}
+	nested, ok := payload["data"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	for _, key := range keys {
+		if value, ok := nested[key].(string); ok {
+			if trimmed := strings.TrimSpace(value); trimmed != "" {
+				return trimmed
+			}
 		}
 	}
 	return ""

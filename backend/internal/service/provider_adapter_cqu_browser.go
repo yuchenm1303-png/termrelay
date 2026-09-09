@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,45 +10,129 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+
+	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/tidwall/gjson"
 )
 
 const (
-	cquBrowserAdapterName    = "cqu_browser"
-	cquBrowserDefaultAgentID = "910020080887140352"
-	cquBrowserDefaultModelID = "910023701267746816"
-	cquBrowserSendChatPath   = "/api/chat-web/message-chat/send-chat"
+	cquBrowserAdapterName  = "cqu_browser"
+	cquBrowserSendChatPath = cquSendChatAPIPath
 )
 
-// CQUBrowserProviderAdapter bridges the authenticated CQU web chat transport
-// into the provider-adapter boundary. It intentionally owns only CQU-specific
-// request/auth/response translation; scheduling, retries, billing and client
-// response writes remain gateway concerns.
-type CQUBrowserProviderAdapter struct{}
+// CQUBrowserSender is the transport the adapter drives. It is satisfied by
+// *CQUWebBridge; the interface exists so the adapter can be tested without a
+// real browser, not so alternative HTTP transports can be plugged in.
+//
+// There is deliberately no Go-side HTTP client for CQU: the send-chat call must
+// originate from the authenticated page so CQU's own runtime supplies the
+// dynamic security parameter. TermRelay neither generates, stores, refreshes
+// nor logs that parameter.
+type CQUBrowserSender interface {
+	SendChat(ctx context.Context, request CQUChatRequest) (*http.Response, error)
+}
 
-func NewCQUBrowserProviderAdapter() *CQUBrowserProviderAdapter {
-	return &CQUBrowserProviderAdapter{}
+// CQUBrowserAdapterDeps wires the adapter to the browser bridge and to the
+// shared configuration. Bridge is resolved lazily so the process can start
+// (and every non-CQU provider keep working) while no browser is running.
+type CQUBrowserAdapterDeps struct {
+	Config        *config.Config
+	Bridge        func(ctx context.Context) (CQUBrowserSender, error)
+	Conversations *cquConversationStore
+}
+
+// CQUBrowserProviderAdapter bridges the authenticated CQU web chat transport
+// into the provider-adapter boundary. It owns only CQU-specific
+// request/response translation; scheduling, retries, billing, account failover
+// and client response writes remain gateway concerns.
+type CQUBrowserProviderAdapter struct {
+	deps          CQUBrowserAdapterDeps
+	conversations *cquConversationStore
+
+	bridgeOnce sync.Once
+	bridge     CQUBrowserSender
+	bridgeErr  error
+}
+
+func NewCQUBrowserProviderAdapter(deps CQUBrowserAdapterDeps) *CQUBrowserProviderAdapter {
+	conversations := deps.Conversations
+	if conversations == nil {
+		conversations = newCQUConversationStore(0, 0)
+	}
+	return &CQUBrowserProviderAdapter{deps: deps, conversations: conversations}
 }
 
 func (a *CQUBrowserProviderAdapter) Name() string {
 	return cquBrowserAdapterName
 }
 
+// Supports matches CQU browser accounts only. It intentionally never matches on
+// platform alone for the shared OpenAI platform: an OpenAI account becomes a
+// CQU account only when it is explicitly marked, so no existing provider's
+// routing changes.
 func (a *CQUBrowserProviderAdapter) Supports(account *Account) bool {
+	return IsCQUBrowserAccount(account)
+}
+
+// IsCQUBrowserAccount reports whether an account is served by the CQU browser
+// bridge.
+//
+// Two shapes are accepted. The canonical one is platform=cqu (type browser or
+// unset). The second is an openai-platform account carrying an explicit
+// cqu_browser marker, which lets a CQU account live in an existing OpenAI group
+// and reuse the scheduler, quota and billing paths unchanged.
+func IsCQUBrowserAccount(account *Account) bool {
 	if account == nil {
 		return false
 	}
 
 	platform := strings.ToLower(strings.TrimSpace(account.Platform))
 	accountType := strings.ToLower(strings.TrimSpace(account.Type))
-	if platform == cquBrowserAdapterName {
+
+	switch platform {
+	case cquBrowserAdapterName:
 		return true
+	case "cqu":
+		return accountType == "" || accountType == "browser" || accountType == cquBrowserAdapterName
 	}
-	if platform != "cqu" {
-		return false
-	}
-	return accountType == "" || accountType == "browser" || accountType == cquBrowserAdapterName
+
+	return cquBrowserAccountMarked(account)
 }
 
+// cquBrowserAccountMarked looks for the opt-in marker on a non-CQU platform.
+// Only an explicit truthy value counts, so an unrelated account can never be
+// captured by accident.
+func cquBrowserAccountMarked(account *Account) bool {
+	if account == nil {
+		return false
+	}
+	for _, source := range []map[string]any{account.Extra, account.Credentials} {
+		for _, key := range []string{"cqu_browser", "cquBrowser"} {
+			switch value := source[key].(type) {
+			case bool:
+				if value {
+					return true
+				}
+			case string:
+				switch strings.ToLower(strings.TrimSpace(value)) {
+				case "1", "true", "yes", "on":
+					return true
+				}
+			}
+		}
+		if provider, ok := source["provider"].(string); ok {
+			if strings.EqualFold(strings.TrimSpace(provider), cquBrowserAdapterName) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ResolveModel keeps the client-facing model name. CQU's numeric agent/model
+// ids are resolved separately when the native body is built, so "cqu-default"
+// is never sent upstream as a modelId.
 func (a *CQUBrowserProviderAdapter) ResolveModel(account *Account, requestedModel string) (string, error) {
 	if account == nil {
 		return "", errors.New("account is required")
@@ -57,14 +140,20 @@ func (a *CQUBrowserProviderAdapter) ResolveModel(account *Account, requestedMode
 	if !a.Supports(account) {
 		return "", errors.New("account is not supported by cqu browser adapter")
 	}
-
 	if model := strings.TrimSpace(requestedModel); model != "" {
 		return model, nil
 	}
-	if model := cquBrowserAccountString(account, "model_id", "modelId"); model != "" {
-		return model, nil
+	return CQUDefaultModelAlias, nil
+}
+
+// ListModels exposes the logical CQU models. The list is static for now; the
+// shape matches ProviderModelLister so a future sync from
+// /api/chat-web/chatAgent/list can replace the body without changing callers.
+func (a *CQUBrowserProviderAdapter) ListModels(_ context.Context, account *Account) ([]string, error) {
+	if !a.Supports(account) {
+		return nil, errors.New("account is not supported by cqu browser adapter")
 	}
-	return cquBrowserDefaultModelID, nil
+	return []string{CQUDefaultModelAlias}, nil
 }
 
 func (a *CQUBrowserProviderAdapter) NormalizeError(resp *http.Response, body []byte) NormalizedProviderError {
@@ -101,10 +190,27 @@ func (a *CQUBrowserProviderAdapter) PrepareRequest(_ context.Context, input Prov
 	}
 	input.Model = model
 	input.Method = http.MethodPost
-	input.Stream = true
+	// The client's own stream flag is preserved: CQU only streams upstream, but
+	// a non-streaming client must still receive a single JSON completion.
+	input.Stream = gjson.GetBytes(input.Body, "stream").Bool()
 	return input, nil
 }
 
+// cquRequestMeta travels with the descriptor request so SendRequest can render
+// the right client wire format without re-parsing the OpenAI body.
+type cquRequestMeta struct {
+	Stream          bool
+	Model           string
+	ConversationKey string
+}
+
+type cquRequestMetaKey struct{}
+
+// BuildRequest produces the CQU-native send-chat request.
+//
+// The result is a descriptor, not something this process sends: it carries no
+// Cookie, no Authorization and no CAqWHAeT, because the browser page supplies
+// all three. SendRequest hands the decoded body to the bridge.
 func (a *CQUBrowserProviderAdapter) BuildRequest(ctx context.Context, input ProviderRequestInput) (*http.Request, error) {
 	if input.Account == nil {
 		return nil, errors.New("account is required")
@@ -112,61 +218,55 @@ func (a *CQUBrowserProviderAdapter) BuildRequest(ctx context.Context, input Prov
 	if !a.Supports(input.Account) {
 		return nil, errors.New("account is not supported by cqu browser adapter")
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	endpoint, err := cquBrowserEndpoint(input.Account)
+	endpoint, err := a.sendChatEndpoint(input.Account)
 	if err != nil {
 		return nil, err
 	}
 
-	token := cquBrowserAccountString(input.Account, "caqwhaet", "CAqWHAeT")
-	if token == "" {
-		return nil, errors.New("cqu browser account is missing CAqWHAeT session token")
-	}
-
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, errors.New("cqu browser endpoint is invalid")
-	}
-	q := u.Query()
-	q.Set("CAqWHAeT", token)
-	u.RawQuery = q.Encode()
-
-	body, err := cquBrowserBuildNativeBody(input)
+	conversationKey := CQUConversationKey(input.Body)
+	routing := resolveCQURouting(input.Account, a.deps.Config, input.Model)
+	chatRequest, err := BuildCQUChatRequest(input.Body, routing, a.conversations.Get(conversationKey))
 	if err != nil {
 		return nil, err
 	}
+	payload, err := json.Marshal(chatRequest)
+	if err != nil {
+		return nil, fmt.Errorf("encode cqu chat request: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(body))
+	meta := cquRequestMeta{
+		Stream:          input.Stream || gjson.GetBytes(input.Body, "stream").Bool(),
+		Model:           strings.TrimSpace(input.Model),
+		ConversationKey: cquNextConversationKeySeed(input.Body),
+	}
+	if meta.Model == "" {
+		meta.Model = CQUDefaultModelAlias
+	}
+
+	req, err := http.NewRequestWithContext(
+		context.WithValue(ctx, cquRequestMetaKey{}, meta),
+		http.MethodPost,
+		endpoint,
+		bytes.NewReader(payload),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("build cqu browser request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
-	req.Header.Set("Cache-Control", "no-cache")
-
-	origin := cquBrowserAccountString(input.Account, "origin")
-	if origin == "" {
-		origin = u.Scheme + "://" + u.Host
-	}
-	if origin != "://" {
-		req.Header.Set("Origin", origin)
-	}
-
-	referer := cquBrowserAccountString(input.Account, "referer")
-	if referer == "" && origin != "" && origin != "://" {
-		referer = strings.TrimRight(origin, "/") + "/chat"
-	}
-	if referer != "" {
-		req.Header.Set("Referer", referer)
-	}
-
-	if ua := cquBrowserAccountString(input.Account, "user_agent", "userAgent"); ua != "" {
-		req.Header.Set("User-Agent", ua)
-	}
-
 	return req, nil
 }
 
+// ApplyAuth is intentionally a no-op.
+//
+// CQU authentication lives entirely in the signed-in browser profile: session
+// cookies, bearer/refresh tokens and the dynamic CAqWHAeT parameter are held
+// and rotated by the page. Attaching any of them here would mean persisting
+// credentials TermRelay must never hold.
 func (a *CQUBrowserProviderAdapter) ApplyAuth(_ context.Context, req *http.Request, input ProviderRequestInput) error {
 	if req == nil {
 		return errors.New("request is required")
@@ -174,10 +274,190 @@ func (a *CQUBrowserProviderAdapter) ApplyAuth(_ context.Context, req *http.Reque
 	if input.Account == nil {
 		return errors.New("account is required")
 	}
-	if cookie := cquBrowserAccountString(input.Account, "cookie"); cookie != "" {
-		req.Header.Set("Cookie", cookie)
-	}
 	return nil
+}
+
+// SendRequest performs the request through the browser bridge and returns a
+// response the gateway's existing Chat Completions lifecycle can consume: an
+// OpenAI SSE stream for streaming clients, a single chat.completion object
+// otherwise. Raw CQU frames never leave this function.
+func (a *CQUBrowserProviderAdapter) SendRequest(ctx context.Context, req *http.Request, account *Account) (*http.Response, error) {
+	if req == nil {
+		return nil, errors.New("request is required")
+	}
+	if !a.Supports(account) {
+		return nil, errors.New("account is not supported by cqu browser adapter")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	meta, _ := req.Context().Value(cquRequestMetaKey{}).(cquRequestMeta)
+	if strings.TrimSpace(meta.Model) == "" {
+		meta.Model = CQUDefaultModelAlias
+	}
+
+	chatRequest, err := cquChatRequestFromHTTP(req)
+	if err != nil {
+		return nil, err
+	}
+
+	sender, err := a.sender(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	upstream, err := sender.SendChat(ctx, chatRequest)
+	if err != nil {
+		return nil, err
+	}
+	if upstream.StatusCode >= 400 {
+		// Error bodies stay CQU-shaped on purpose: the gateway classifies them
+		// through NormalizeError and renders the client-facing error itself.
+		return upstream, nil
+	}
+
+	opts := cquOpenAIStreamOptions{Model: meta.Model}
+	if meta.Stream {
+		return a.streamingResponse(ctx, upstream, opts, meta), nil
+	}
+	return a.bufferedResponse(ctx, upstream, opts, meta)
+}
+
+// streamingResponse pipes the translated stream so the client starts receiving
+// tokens while the browser is still producing them.
+func (a *CQUBrowserProviderAdapter) streamingResponse(
+	ctx context.Context,
+	upstream *http.Response,
+	opts cquOpenAIStreamOptions,
+	meta cquRequestMeta,
+) *http.Response {
+	reader, writer := io.Pipe()
+	go func() {
+		defer func() { _ = upstream.Body.Close() }()
+		outcome, err := WriteCQUStreamAsOpenAISSE(ctx, upstream.Body, writer, nil, opts)
+		a.rememberConversation(meta, outcome)
+		_ = writer.CloseWithError(err)
+	}()
+
+	header := make(http.Header)
+	header.Set("Content-Type", "text/event-stream")
+	header.Set("Cache-Control", "no-cache")
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Status:     "200 OK",
+		Header:     header,
+		Body:       reader,
+		Request:    upstream.Request,
+	}
+}
+
+func (a *CQUBrowserProviderAdapter) bufferedResponse(
+	ctx context.Context,
+	upstream *http.Response,
+	opts cquOpenAIStreamOptions,
+	meta cquRequestMeta,
+) (*http.Response, error) {
+	defer func() { _ = upstream.Body.Close() }()
+
+	payload, outcome, err := AggregateCQUStreamAsOpenAIJSON(ctx, upstream.Body, opts)
+	if err != nil {
+		return nil, err
+	}
+	a.rememberConversation(meta, outcome)
+
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Status:     "200 OK",
+		Header:     header,
+		Body:       io.NopCloser(bytes.NewReader(payload)),
+		Request:    upstream.Request,
+	}, nil
+}
+
+// rememberConversation stores the CQU-side handle under the transcript the
+// client will replay next turn, so a follow-up question continues the same
+// upstream conversation instead of starting a new one.
+func (a *CQUBrowserProviderAdapter) rememberConversation(meta cquRequestMeta, outcome cquStreamOutcome) {
+	conversationID := outcome.Identifiers.ConversationKey()
+	if conversationID == "" || meta.ConversationKey == "" {
+		return
+	}
+	a.conversations.Put(cquFinalConversationKey(meta.ConversationKey, outcome.Text), conversationID)
+}
+
+func (a *CQUBrowserProviderAdapter) sender(ctx context.Context) (CQUBrowserSender, error) {
+	a.bridgeOnce.Do(func() {
+		if a.deps.Bridge != nil {
+			a.bridge, a.bridgeErr = a.deps.Bridge(ctx)
+			return
+		}
+		bridge, err := NewCQUWebBridgeFromConfig(a.deps.Config)
+		if err != nil {
+			a.bridgeErr = err
+			return
+		}
+		a.bridge = bridge
+	})
+	if a.bridgeErr != nil {
+		return nil, a.bridgeErr
+	}
+	if a.bridge == nil {
+		return nil, newCQUBridgeError(CQUErrorKindDisabled, "cqu browser bridge is not configured", nil)
+	}
+	return a.bridge, nil
+}
+
+// sendChatEndpoint resolves the absolute send-chat URL. The account may pin a
+// different CQU deployment; otherwise the configured base URL is used.
+func (a *CQUBrowserProviderAdapter) sendChatEndpoint(account *Account) (string, error) {
+	if endpoint := cquBrowserAccountString(account, "endpoint", "send_chat_url"); endpoint != "" {
+		u, err := url.Parse(endpoint)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return "", errors.New("cqu browser endpoint must be an absolute URL")
+		}
+		return u.String(), nil
+	}
+
+	baseURL := cquBrowserAccountString(account, "base_url", "baseUrl")
+	if baseURL == "" && a.deps.Config != nil {
+		baseURL = strings.TrimSpace(a.deps.Config.CQU.BaseURL)
+	}
+	if baseURL == "" {
+		baseURL = CQUDefaultOrigin
+	}
+	u, err := url.Parse(baseURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return "", errors.New("cqu browser base_url must be an absolute URL")
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + cquBrowserSendChatPath
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String(), nil
+}
+
+// cquChatRequestFromHTTP decodes the native body carried by a descriptor
+// request built by BuildRequest.
+func cquChatRequestFromHTTP(req *http.Request) (CQUChatRequest, error) {
+	if req.Body == nil {
+		return CQUChatRequest{}, errors.New("cqu browser request body is required")
+	}
+	defer func() { _ = req.Body.Close() }()
+
+	payload, err := io.ReadAll(io.LimitReader(req.Body, 8<<20))
+	if err != nil {
+		return CQUChatRequest{}, fmt.Errorf("read cqu browser request body: %w", err)
+	}
+	var chatRequest CQUChatRequest
+	if err := json.Unmarshal(payload, &chatRequest); err != nil {
+		return CQUChatRequest{}, errors.New("cqu browser request body must be a CQU send-chat object")
+	}
+	if strings.TrimSpace(chatRequest.Query) == "" {
+		return CQUChatRequest{}, errors.New("cqu query is required")
+	}
+	return chatRequest, nil
 }
 
 func (a *CQUBrowserProviderAdapter) ParseStreaming(ctx context.Context, resp *http.Response, emit func(ProviderStreamEvent) error) (ProviderUsage, error) {
@@ -188,74 +468,22 @@ func (a *CQUBrowserProviderAdapter) ParseStreaming(ctx context.Context, resp *ht
 		return ProviderUsage{}, errors.New("stream emitter is required")
 	}
 
-	reader := bufio.NewReader(resp.Body)
 	usage := ProviderUsage{Extra: map[string]int64{}}
-	var raw bytes.Buffer
-	var data bytes.Buffer
-	eventType := ""
-
-	emitFrame := func() error {
-		if raw.Len() == 0 && data.Len() == 0 && eventType == "" {
-			return nil
+	err := ParseCQUSSEContext(ctx, resp.Body, func(event CQUSSEEvent) error {
+		if len(event.Data) > 0 {
+			usage = mergeProviderUsage(usage, cquBrowserExtractUsage(event.Data))
 		}
-		payload := bytes.TrimSuffix(data.Bytes(), []byte("\n"))
-		if len(payload) > 0 {
-			usage = mergeProviderUsage(usage, cquBrowserExtractUsage(payload))
-		}
-		kind := strings.TrimSpace(eventType)
-		if kind == "" {
-			if bytes.Equal(bytes.TrimSpace(payload), []byte("[DONE]")) {
-				kind = "done"
+		eventType := event.Type
+		if eventType == "" {
+			if bytes.Equal(bytes.TrimSpace(event.Data), []byte("[DONE]")) {
+				eventType = "done"
 			} else {
-				kind = "message"
+				eventType = "message"
 			}
 		}
-		event := ProviderStreamEvent{
-			Type: kind,
-			Data: append([]byte(nil), payload...),
-			Raw:  append([]byte(nil), raw.Bytes()...),
-		}
-		raw.Reset()
-		data.Reset()
-		eventType = ""
-		return emit(event)
-	}
-
-	for {
-		if err := ctx.Err(); err != nil {
-			return usage, err
-		}
-
-		line, err := reader.ReadString('\n')
-		if len(line) > 0 {
-			raw.WriteString(line)
-			trimmed := strings.TrimRight(line, "\r\n")
-			if trimmed == "" {
-				if emitErr := emitFrame(); emitErr != nil {
-					return usage, emitErr
-				}
-			} else if strings.HasPrefix(trimmed, "event:") {
-				eventType = strings.TrimSpace(strings.TrimPrefix(trimmed, "event:"))
-			} else if strings.HasPrefix(trimmed, "data:") {
-				if data.Len() > 0 {
-					data.WriteByte('\n')
-				}
-				data.WriteString(strings.TrimSpace(strings.TrimPrefix(trimmed, "data:")))
-			}
-		}
-
-		if err != nil {
-			if err == io.EOF {
-				if raw.Len() > 0 || data.Len() > 0 || eventType != "" {
-					if emitErr := emitFrame(); emitErr != nil {
-						return usage, emitErr
-					}
-				}
-				return usage, nil
-			}
-			return usage, fmt.Errorf("read cqu browser stream: %w", err)
-		}
-	}
+		return emit(ProviderStreamEvent{Type: eventType, Data: event.Data, Raw: event.Raw})
+	})
+	return usage, err
 }
 
 func (a *CQUBrowserProviderAdapter) ParseNonStreaming(_ context.Context, resp *http.Response) (ProviderResponse, error) {
@@ -278,57 +506,8 @@ func (a *CQUBrowserProviderAdapter) ExtractUsage(payload []byte) (ProviderUsage,
 	return cquBrowserExtractUsage(payload), nil
 }
 
-func cquBrowserEndpoint(account *Account) (string, error) {
-	if endpoint := cquBrowserAccountString(account, "endpoint", "send_chat_url"); endpoint != "" {
-		u, err := url.Parse(endpoint)
-		if err != nil || u.Scheme == "" || u.Host == "" {
-			return "", errors.New("cqu browser endpoint must be an absolute URL")
-		}
-		return u.String(), nil
-	}
-
-	baseURL := cquBrowserAccountString(account, "base_url", "baseUrl")
-	if baseURL == "" {
-		return "", errors.New("cqu browser account is missing base_url")
-	}
-	u, err := url.Parse(baseURL)
-	if err != nil || u.Scheme == "" || u.Host == "" {
-		return "", errors.New("cqu browser base_url must be an absolute URL")
-	}
-	u.Path = strings.TrimRight(u.Path, "/") + cquBrowserSendChatPath
-	u.RawQuery = ""
-	u.Fragment = ""
-	return u.String(), nil
-}
-
-func cquBrowserBuildNativeBody(input ProviderRequestInput) ([]byte, error) {
-	payload := make(map[string]any)
-	if len(bytes.TrimSpace(input.Body)) > 0 {
-		if err := json.Unmarshal(input.Body, &payload); err != nil {
-			return nil, errors.New("cqu browser request body must be a JSON object")
-		}
-	}
-
-	agentID := cquBrowserAccountString(input.Account, "agent_id", "agentId")
-	if agentID == "" {
-		agentID = cquBrowserDefaultAgentID
-	}
-	modelID := cquBrowserAccountString(input.Account, "model_id", "modelId")
-	if modelID == "" {
-		modelID = cquBrowserDefaultModelID
-	}
-
-	payload["agentId"] = agentID
-	payload["modelId"] = modelID
-	payload["stream"] = true
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("encode cqu browser request body: %w", err)
-	}
-	return body, nil
-}
-
+// cquBrowserAccountString reads a non-secret routing value (agent id, model id,
+// base url) from an account. It is never used for credentials.
 func cquBrowserAccountString(account *Account, keys ...string) string {
 	if account == nil {
 		return ""

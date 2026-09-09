@@ -9,26 +9,96 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/coder/websocket"
 )
 
 const (
-	CQUDefaultOrigin   = "https://ai.cqu.edu.cn"
-	CQUDefaultAgentID  = "910020080887140352"
-	CQUDefaultModelID  = "910023701267746816"
+	CQUDefaultOrigin   = config.DefaultCQUBaseURL
+	CQUDefaultAgentID  = config.DefaultCQUAgentID
+	CQUDefaultModelID  = config.DefaultCQUModelID
 	cquSendChatAPIPath = "/api/chat-web/message-chat/send-chat"
 )
+
+// CQU bridge error kinds. They are the stable vocabulary the provider adapter
+// maps onto client-facing error types, so an operator can tell "the browser is
+// not running" apart from "the browser is running but signed out".
+const (
+	CQUErrorKindBrowserUnavailable = "cqu_browser_unavailable"
+	CQUErrorKindPageMissing        = "cqu_browser_page_missing"
+	CQUErrorKindDisabled           = "cqu_browser_disabled"
+	CQUErrorKindTransport          = "cqu_browser_transport_error"
+)
+
+// CQUBridgeError carries a bridge failure kind alongside the message. It never
+// wraps credential material: the browser owns cookies, bearer tokens and
+// CAqWHAeT, and none of them ever reach this process.
+type CQUBridgeError struct {
+	Kind    string
+	Message string
+	Err     error
+}
+
+func (e *CQUBridgeError) Error() string {
+	if e == nil {
+		return ""
+	}
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %s: %v", e.Kind, e.Message, e.Err)
+	}
+	return fmt.Sprintf("%s: %s", e.Kind, e.Message)
+}
+
+func (e *CQUBridgeError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
+func newCQUBridgeError(kind, message string, err error) *CQUBridgeError {
+	return &CQUBridgeError{Kind: kind, Message: message, Err: err}
+}
+
+// CQUBridgeErrorKind reports the bridge failure kind of err, or "" when err did
+// not originate from the bridge.
+func CQUBridgeErrorKind(err error) string {
+	var bridgeErr *CQUBridgeError
+	if errors.As(err, &bridgeErr) && bridgeErr != nil {
+		return bridgeErr.Kind
+	}
+	return ""
+}
 
 // CQUWebBridgeConfig describes an already-running persistent Chromium/Edge
 // instance. TermRelay attaches to it through CDP; it never owns, closes or
 // restarts the browser process or its user-data directory.
 type CQUWebBridgeConfig struct {
 	DebugURL        string
+	BaseURL         string
 	PageURLContains string
 	ConnectTimeout  time.Duration
+}
+
+// NewCQUWebBridgeFromConfig builds a bridge from the shared application config
+// (CQU_BROWSER_DEBUG_URL / CQU_BASE_URL). It returns a disabled-kind error when
+// the operator has not turned the bridge on, so CQU accounts fail closed rather
+// than silently attempting a plain HTTP call that could never authenticate.
+func NewCQUWebBridgeFromConfig(cfg *config.Config) (*CQUWebBridge, error) {
+	if cfg == nil {
+		return nil, newCQUBridgeError(CQUErrorKindDisabled, "cqu browser bridge is not configured", nil)
+	}
+	if !cfg.CQU.Enabled {
+		return nil, newCQUBridgeError(CQUErrorKindDisabled, "cqu browser bridge is disabled (set CQU_ENABLED=true)", nil)
+	}
+	return NewCQUWebBridge(CQUWebBridgeConfig{
+		DebugURL: cfg.CQU.BrowserDebugURL,
+		BaseURL:  cfg.CQU.BaseURL,
+	})
 }
 
 // CQUChatRequest is the browser-page request understood by CQU's send-chat API.
@@ -64,6 +134,7 @@ func (r CQUChatRequest) withDefaults() CQUChatRequest {
 // persisted or hard-coded by TermRelay.
 type CQUWebBridge struct {
 	debugURL        string
+	baseURL         string
 	pageURLContains string
 	connectTimeout  time.Duration
 	httpClient      *http.Client
@@ -73,7 +144,7 @@ type CQUWebBridge struct {
 func NewCQUWebBridge(cfg CQUWebBridgeConfig) (*CQUWebBridge, error) {
 	debugURL := strings.TrimRight(strings.TrimSpace(cfg.DebugURL), "/")
 	if debugURL == "" {
-		debugURL = "http://127.0.0.1:9222"
+		debugURL = config.DefaultCQUBrowserDebugURL
 	}
 	parsed, err := url.Parse(debugURL)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
@@ -83,9 +154,20 @@ func NewCQUWebBridge(cfg CQUWebBridgeConfig) (*CQUWebBridge, error) {
 		return nil, fmt.Errorf("unsupported cqu browser debug url scheme: %s", parsed.Scheme)
 	}
 
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
+	if baseURL == "" {
+		baseURL = CQUDefaultOrigin
+	}
+	parsedBase, err := url.Parse(baseURL)
+	if err != nil || parsedBase.Scheme == "" || parsedBase.Host == "" {
+		return nil, fmt.Errorf("invalid cqu base url: %q", cfg.BaseURL)
+	}
+
+	// The page is matched by host, not by full URL, so an operator who is
+	// parked on /chat, /agent or the app root is all equally acceptable.
 	pageURLContains := strings.TrimSpace(cfg.PageURLContains)
 	if pageURLContains == "" {
-		pageURLContains = "ai.cqu.edu.cn"
+		pageURLContains = parsedBase.Host
 	}
 	connectTimeout := cfg.ConnectTimeout
 	if connectTimeout <= 0 {
@@ -94,17 +176,28 @@ func NewCQUWebBridge(cfg CQUWebBridgeConfig) (*CQUWebBridge, error) {
 
 	return &CQUWebBridge{
 		debugURL:        debugURL,
+		baseURL:         baseURL,
 		pageURLContains: pageURLContains,
 		connectTimeout:  connectTimeout,
 		httpClient:      &http.Client{Timeout: connectTimeout},
 	}, nil
 }
 
-// Ready verifies that CDP is reachable and that an authenticated CQU page is
-// present. It does not navigate or mutate the page.
+// BaseURL is the CQU origin this bridge drives.
+func (b *CQUWebBridge) BaseURL() string {
+	if b == nil {
+		return CQUDefaultOrigin
+	}
+	return b.baseURL
+}
+
+// Ready verifies that CDP is reachable and that a CQU page is present. It does
+// not navigate or mutate the page, and it cannot verify the login state on its
+// own — an expired session only surfaces as an upstream 401/403 once a request
+// is actually made by the page.
 func (b *CQUWebBridge) Ready(ctx context.Context) error {
 	if b == nil {
-		return errors.New("cqu browser bridge is nil")
+		return newCQUBridgeError(CQUErrorKindDisabled, "cqu browser bridge is not configured", nil)
 	}
 	_, err := b.findPageTarget(ctx)
 	return err
@@ -115,7 +208,7 @@ func (b *CQUWebBridge) Ready(ctx context.Context) error {
 // Gateway streaming lifecycle can consume it without special client writes.
 func (b *CQUWebBridge) SendChat(ctx context.Context, request CQUChatRequest) (*http.Response, error) {
 	if b == nil {
-		return nil, errors.New("cqu browser bridge is nil")
+		return nil, newCQUBridgeError(CQUErrorKindDisabled, "cqu browser bridge is not configured", nil)
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -134,7 +227,10 @@ func (b *CQUWebBridge) SendChat(ctx context.Context, request CQUChatRequest) (*h
 	conn, _, err := websocket.Dial(connectCtx, target.WebSocketDebuggerURL, nil)
 	cancel()
 	if err != nil {
-		return nil, fmt.Errorf("connect cqu page cdp: %w", err)
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		return nil, newCQUBridgeError(CQUErrorKindBrowserUnavailable, "connect cqu page cdp", err)
 	}
 	conn.SetReadLimit(16 << 20)
 
@@ -198,21 +294,32 @@ type cquCDPTarget struct {
 func (b *CQUWebBridge) findPageTarget(ctx context.Context) (cquCDPTarget, error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, b.debugURL+"/json/list", nil)
 	if err != nil {
-		return cquCDPTarget{}, fmt.Errorf("build cqu cdp target request: %w", err)
+		return cquCDPTarget{}, newCQUBridgeError(CQUErrorKindTransport, "build cqu cdp target request", err)
 	}
 	response, err := b.httpClient.Do(request)
 	if err != nil {
-		return cquCDPTarget{}, fmt.Errorf("reach cqu browser cdp at %s: %w", b.debugURL, err)
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return cquCDPTarget{}, ctxErr
+		}
+		return cquCDPTarget{}, newCQUBridgeError(
+			CQUErrorKindBrowserUnavailable,
+			fmt.Sprintf("cannot reach the CQU browser via CDP at %s; start Edge/Chromium with --remote-debugging-port", b.debugURL),
+			err,
+		)
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return cquCDPTarget{}, fmt.Errorf("cqu browser cdp returned status %d", response.StatusCode)
+		return cquCDPTarget{}, newCQUBridgeError(
+			CQUErrorKindBrowserUnavailable,
+			fmt.Sprintf("cqu browser cdp returned status %d", response.StatusCode),
+			nil,
+		)
 	}
 
 	var targets []cquCDPTarget
 	decoder := json.NewDecoder(io.LimitReader(response.Body, 4<<20))
 	if err := decoder.Decode(&targets); err != nil {
-		return cquCDPTarget{}, fmt.Errorf("decode cqu cdp targets: %w", err)
+		return cquCDPTarget{}, newCQUBridgeError(CQUErrorKindBrowserUnavailable, "decode cqu cdp targets", err)
 	}
 
 	needle := strings.ToLower(b.pageURLContains)
@@ -236,11 +343,15 @@ func (b *CQUWebBridge) findPageTarget(ctx context.Context) (cquCDPTarget, error)
 	if fallback != nil {
 		return *fallback, nil
 	}
-	return cquCDPTarget{}, fmt.Errorf("no CQU browser page found via CDP; open and sign in to %s in the persistent browser", CQUDefaultOrigin)
+	return cquCDPTarget{}, newCQUBridgeError(
+		CQUErrorKindPageMissing,
+		fmt.Sprintf("no CQU browser page found via CDP; open and sign in to %s in the persistent browser", b.baseURL),
+		nil,
+	)
 }
 
 type cdpCommand struct {
-	ID     int64 `json:"id"`
+	ID     int64  `json:"id"`
 	Method string `json:"method"`
 	Params any    `json:"params,omitempty"`
 }
@@ -327,6 +438,21 @@ func (b *CQUWebBridge) runBrowserFetch(
 ) {
 	defer conn.Close(websocket.StatusNormalClosure, "cqu request finished")
 
+	// The read loop deliberately does not use the request context. Cancelling a
+	// websocket read tears the connection down, and the page's fetch would then
+	// keep running in the browser with no way left to reach it. Instead a
+	// watcher fires the page's AbortController first, and only then stops the
+	// read — so a client disconnect really does abort the CQU request.
+	readCtx, stopReading := context.WithCancel(context.Background())
+	defer stopReading()
+
+	var writeMu sync.Mutex
+	write := func(writeCtx context.Context, id int64, method string, params any) error {
+		writeMu.Lock()
+		defer writeMu.Unlock()
+		return cdpWriteCommand(writeCtx, conn, id, method, params)
+	}
+
 	metaSent := false
 	finishWithError := func(err error) {
 		if err == nil {
@@ -341,7 +467,7 @@ func (b *CQUWebBridge) runBrowserFetch(
 		}
 	}
 
-	if err := cdpWriteCommand(ctx, conn, 3, "Runtime.evaluate", map[string]any{
+	if err := write(ctx, 3, "Runtime.evaluate", map[string]any{
 		"expression":    expression,
 		"awaitPromise":  false,
 		"returnByValue": true,
@@ -350,16 +476,24 @@ func (b *CQUWebBridge) runBrowserFetch(
 		return
 	}
 
+	go func() {
+		select {
+		case <-ctx.Done():
+			abortCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			_ = write(abortCtx, 99, "Runtime.evaluate", map[string]any{
+				"expression": "globalThis.__termrelayCQUAbort?.()",
+			})
+			cancel()
+			stopReading()
+		case <-readCtx.Done():
+		}
+	}()
+
 	for {
-		messageType, data, err := conn.Read(ctx)
+		messageType, data, err := conn.Read(readCtx)
 		if err != nil {
-			if ctx.Err() != nil {
-				abortCtx, cancel := context.WithTimeout(context.Background(), time.Second)
-				_ = cdpWriteCommand(abortCtx, conn, 99, "Runtime.evaluate", map[string]any{
-					"expression": "globalThis.__termrelayCQUAbort?.()",
-				})
-				cancel()
-				finishWithError(ctx.Err())
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				finishWithError(ctxErr)
 				return
 			}
 			finishWithError(fmt.Errorf("read cqu browser stream: %w", err))

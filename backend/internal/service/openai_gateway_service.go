@@ -414,6 +414,12 @@ type OpenAIGatewayService struct {
 	liveAttestation       liveattestation.Provider
 	liveAttestationCipher SecretEncryptor
 
+	// CQU browser bridge (重庆大学 AI). Built lazily so a deployment without a
+	// signed-in browser starts normally and every other provider is unaffected.
+	cquAdaptersOnce  sync.Once
+	cquAdapters      *ProviderAdapterRegistry
+	cquConversations *cquConversationStore
+
 	openaiWSPoolOnce               sync.Once
 	openaiWSStateStoreOnce         sync.Once
 	openaiSchedulerOnce            sync.Once
