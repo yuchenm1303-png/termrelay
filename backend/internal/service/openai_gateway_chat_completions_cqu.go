@@ -7,10 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
-	"go.uber.org/zap"
 )
 
 // This file wires the CQU browser bridge into the existing Chat Completions
@@ -90,13 +88,6 @@ func (s *OpenAIGatewayService) forwardCQUBrowserChatCompletions(
 	defer func() { _ = resp.Body.Close() }()
 
 	SetActualOpenAIUpstreamEndpoint(c, cquBrowserUpstreamEndpoint)
-	logger.L().Debug("cqu chat_completions: forwarded through browser bridge",
-		zap.String("adapter", cquBrowserAdapterName),
-		zap.Int64("account_id", account.ID),
-		zap.String("model", originalModel),
-		zap.Bool("stream", clientStream),
-		zap.Int("upstream_status", resp.StatusCode),
-	)
 
 	if resp.StatusCode >= 400 {
 		respBody, upstreamMsg := s.readOpenAIUpstreamError(resp)
