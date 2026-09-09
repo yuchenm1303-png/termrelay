@@ -172,11 +172,19 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			status, errorType = "canceled", "client_canceled"
 		}
 		h.gatewayService.RecordTerminalUsage(c.Request.Context(), &service.TerminalUsageInput{
-			APIKey: apiKey, User: apiKey.User, Account: terminalAccount,
-			Model: reqModel, RequestedModel: reqModel, InboundEndpoint: GetInboundEndpoint(c),
-			UpstreamEndpoint: GetUpstreamEndpoint(c, terminalAccount.Platform),
-			RequestPayloadHash: service.HashUsageRequestPayload(body), DurationMs: int(time.Since(requestStart).Milliseconds()),
-			RetryCount: fs.SwitchCount, Stream: reqStream, Status: status, ErrorType: errorType,
+			APIKey:             apiKey,
+			User:               apiKey.User,
+			Account:            terminalAccount,
+			Model:              reqModel,
+			RequestedModel:     reqModel,
+			InboundEndpoint:    GetInboundEndpoint(c),
+			UpstreamEndpoint:   GetUpstreamEndpoint(c, terminalAccount.Platform),
+			RequestPayloadHash: service.HashUsageRequestPayload(body),
+			DurationMs:         int(time.Since(requestStart).Milliseconds()),
+			RetryCount:         fs.SwitchCount,
+			Stream:             reqStream,
+			Status:             status,
+			ErrorType:          errorType,
 			ChannelUsageFields: clientRequestedUsageFields(c, channelMapping, reqModel, ""),
 		})
 	}()

@@ -173,15 +173,25 @@ func (r *usageLogRepository) createTerminalSingle(ctx context.Context, log *serv
 		return false, service.MarkUsageLogCreateNotPersisted(ctx.Err())
 	}
 	createdAt := log.CreatedAt
-	if createdAt.IsZero() { createdAt = time.Now() }
+	if createdAt.IsZero() {
+		createdAt = time.Now()
+	}
 	endedAt := log.EndedAt
-	if endedAt == nil { endedAt = &createdAt }
+	if endedAt == nil {
+		endedAt = &createdAt
+	}
 	requestID := strings.TrimSpace(log.RequestID)
-	if requestID == "" { return false, service.MarkUsageLogCreateNotPersisted(errors.New("terminal usage request_id is empty")) }
+	if requestID == "" {
+		return false, service.MarkUsageLogCreateNotPersisted(errors.New("terminal usage request_id is empty"))
+	}
 	model := strings.TrimSpace(log.Model)
-	if model == "" { return false, service.MarkUsageLogCreateNotPersisted(errors.New("terminal usage model is empty")) }
+	if model == "" {
+		return false, service.MarkUsageLogCreateNotPersisted(errors.New("terminal usage model is empty"))
+	}
 	requestedModel := strings.TrimSpace(log.RequestedModel)
-	if requestedModel == "" { requestedModel = model }
+	if requestedModel == "" {
+		requestedModel = model
+	}
 	result, err := r.sql.ExecContext(ctx, `
 		INSERT INTO usage_logs (
 			user_id, api_key_id, account_id, request_id, model, requested_model,
@@ -193,9 +203,13 @@ func (r *usageLogRepository) createTerminalSingle(ctx context.Context, log *serv
 		nullString(log.UpstreamModel), nullInt64(log.GroupID), log.Stream, int16(log.EffectiveRequestType()),
 		nullInt(log.DurationMs), nullInt64(log.ChannelID), log.Status, nullString(log.ErrorType), endedAt, createdAt,
 	)
-	if err != nil { return false, err }
+	if err != nil {
+		return false, err
+	}
 	rows, err := result.RowsAffected()
-	if err != nil { return false, err }
+	if err != nil {
+		return false, err
+	}
 	return rows > 0, nil
 }
 
