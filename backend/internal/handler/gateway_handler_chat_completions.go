@@ -157,12 +157,39 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 	if groupPlatform == service.PlatformGemini && selectionSessionHash != "" {
 		selectionSessionHash = "gemini:" + selectionSessionHash
 	}
-
-	// 3. Account selection + failover loop
 	fs := NewFailoverState(h.maxAccountSwitches, false)
 	if groupPlatform == service.PlatformGemini {
 		fs = NewFailoverState(h.maxAccountSwitchesGemini, false)
 	}
+	var terminalAccount *service.Account
+	terminalCompleted := false
+	defer func() {
+		if terminalCompleted || terminalAccount == nil {
+			return
+		}
+		status, errorType := "failed", "upstream_exhausted"
+		if c.Request.Context().Err() != nil {
+			status, errorType = "canceled", "client_canceled"
+		}
+		h.gatewayService.RecordTerminalUsage(c.Request.Context(), &service.TerminalUsageInput{
+			APIKey:             apiKey,
+			User:               apiKey.User,
+			Account:            terminalAccount,
+			Model:              reqModel,
+			RequestedModel:     reqModel,
+			InboundEndpoint:    GetInboundEndpoint(c),
+			UpstreamEndpoint:   GetUpstreamEndpoint(c, terminalAccount.Platform),
+			RequestPayloadHash: service.HashUsageRequestPayload(body),
+			DurationMs:         int(time.Since(requestStart).Milliseconds()),
+			RetryCount:         fs.SwitchCount,
+			Stream:             reqStream,
+			Status:             status,
+			ErrorType:          errorType,
+			ChannelUsageFields: clientRequestedUsageFields(c, channelMapping, reqModel, ""),
+		})
+	}()
+
+	// 3. Account selection + failover loop
 
 	for {
 		if c.Request.Context().Err() != nil {
@@ -199,6 +226,7 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			}
 		}
 		account := selection.Account
+		terminalAccount = account
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
 		// 4. Acquire account concurrency slot
@@ -316,6 +344,7 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 		}
 
 		// 6. Record usage
+		terminalCompleted = true
 		userAgent := c.GetHeader("User-Agent")
 		clientIP := ip.GetClientIP(c)
 		requestPayloadHash := service.HashUsageRequestPayload(body)
