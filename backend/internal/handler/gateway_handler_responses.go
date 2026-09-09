@@ -143,6 +143,25 @@ func (h *GatewayHandler) Responses(c *gin.Context) {
 	}
 	sessionHash := h.gatewayService.GenerateSessionHash(parsedReq)
 	fs := NewFailoverState(h.maxAccountSwitches, false)
+	var terminalAccount *service.Account
+	terminalCompleted := false
+	defer func() {
+		if terminalCompleted || terminalAccount == nil {
+			return
+		}
+		status, errorType := "failed", "upstream_exhausted"
+		if requestCtx.Err() != nil {
+			status, errorType = "canceled", "client_canceled"
+		}
+		h.gatewayService.RecordTerminalUsage(requestCtx, &service.TerminalUsageInput{
+			APIKey: apiKey, User: apiKey.User, Account: terminalAccount,
+			Model: reqModel, RequestedModel: reqModel, InboundEndpoint: GetInboundEndpoint(c),
+			UpstreamEndpoint: GetUpstreamEndpoint(c, terminalAccount.Platform),
+			RequestPayloadHash: service.HashUsageRequestPayload(body), DurationMs: int(time.Since(requestStart).Milliseconds()),
+			RetryCount: fs.SwitchCount, Stream: reqStream, Status: status, ErrorType: errorType,
+			ChannelUsageFields: clientRequestedUsageFields(c, channelMapping, reqModel, ""),
+		})
+	}()
 
 	for {
 		if requestCtx.Err() != nil {
@@ -179,6 +198,7 @@ func (h *GatewayHandler) Responses(c *gin.Context) {
 			}
 		}
 		account := selection.Account
+		terminalAccount = account
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
 		accountReleaseFunc := selection.ReleaseFunc
@@ -281,6 +301,7 @@ func (h *GatewayHandler) Responses(c *gin.Context) {
 			return
 		}
 
+		terminalCompleted = true
 		userAgent := c.GetHeader("User-Agent")
 		clientIP := ip.GetClientIP(c)
 		requestPayloadHash := service.HashUsageRequestPayload(body)
