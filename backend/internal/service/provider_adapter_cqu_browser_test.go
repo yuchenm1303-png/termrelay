@@ -51,15 +51,19 @@ func TestCQUBrowserProviderAdapterBuildRequest(t *testing.T) {
 			"user_agent": "TermRelay-CQU-Test/1.0",
 		},
 	}
+	originalBody, err := json.Marshal(map[string]any{
+		"messages": []any{map[string]any{"role": "user", "content": "hello"}},
+		"stream":   false,
+	})
+	if err != nil {
+		t.Fatalf("json.Marshal(originalBody) error = %v", err)
+	}
 	input := ProviderRequestInput{
 		Account:  account,
 		Protocol: ProviderProtocolChatCompletions,
 		Model:    "logical-model",
-		Body:     []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`),
+		Body:     originalBody,
 	}
-	// Raw string fixtures must contain real JSON, not escaped quote bytes.
-	input.Body = []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`)
-	input.Body = []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`)
 
 	prepared, err := adapter.PrepareRequest(context.Background(), input)
 	if err != nil {
@@ -134,7 +138,7 @@ func TestCQUBrowserProviderAdapterBuildRequestUsesExplicitEndpoint(t *testing.T)
 		},
 	}
 
-	req, err := adapter.BuildRequest(context.Background(), ProviderRequestInput{Account: account, Body: []byte(`{}`)})
+	req, err := adapter.BuildRequest(context.Background(), ProviderRequestInput{Account: account, Body: []byte("{}")})
 	if err != nil {
 		t.Fatalf("BuildRequest() error = %v", err)
 	}
@@ -154,7 +158,7 @@ func TestCQUBrowserProviderAdapterBuildRequestDoesNotLeakSecretInErrors(t *testi
 		},
 	}
 
-	_, err := adapter.BuildRequest(context.Background(), ProviderRequestInput{Account: account, Body: []byte(`{}`)})
+	_, err := adapter.BuildRequest(context.Background(), ProviderRequestInput{Account: account, Body: []byte("{}")})
 	if err == nil {
 		t.Fatal("BuildRequest() error = nil, want error")
 	}
@@ -165,12 +169,26 @@ func TestCQUBrowserProviderAdapterBuildRequestDoesNotLeakSecretInErrors(t *testi
 
 func TestCQUBrowserProviderAdapterParseStreaming(t *testing.T) {
 	adapter := NewCQUBrowserProviderAdapter()
+	event1, err := json.Marshal(map[string]any{
+		"delta": "hello",
+		"usage": map[string]any{"prompt_tokens": 12},
+	})
+	if err != nil {
+		t.Fatalf("json.Marshal(event1) error = %v", err)
+	}
+	event2, err := json.Marshal(map[string]any{
+		"delta": " world",
+		"usage": map[string]any{"completion_tokens": 7, "cached_tokens": 3},
+	})
+	if err != nil {
+		t.Fatalf("json.Marshal(event2) error = %v", err)
+	}
 	stream := strings.Join([]string{
 		"event: message",
-		`data: {"delta":"hello","usage":{"prompt_tokens":12}}`,
+		"data: " + string(event1),
 		"",
 		"event: message",
-		`data: {"delta":" world","usage":{"completion_tokens":7,"cached_tokens":3}}`,
+		"data: " + string(event2),
 		"",
 		"data: [DONE]",
 		"",
@@ -229,7 +247,11 @@ func TestCQUBrowserProviderAdapterParseStreamingPropagatesEmitterError(t *testin
 func TestCQUBrowserProviderAdapterNormalizeError(t *testing.T) {
 	adapter := NewCQUBrowserProviderAdapter()
 	resp := &http.Response{StatusCode: http.StatusBadRequest, Header: make(http.Header)}
-	got := adapter.NormalizeError(resp, []byte(`{"message":"登录失效，请重新登录"}`))
+	body, err := json.Marshal(map[string]any{"message": "登录失效，请重新登录"})
+	if err != nil {
+		t.Fatalf("json.Marshal(error body) error = %v", err)
+	}
+	got := adapter.NormalizeError(resp, body)
 	if !got.AuthFailure || got.Type != "authentication_error" {
 		t.Fatalf("NormalizeError() = %#v", got)
 	}
@@ -240,7 +262,19 @@ func TestCQUBrowserProviderAdapterNormalizeError(t *testing.T) {
 
 func TestCQUBrowserProviderAdapterExtractUsage(t *testing.T) {
 	adapter := NewCQUBrowserProviderAdapter()
-	usage, err := adapter.ExtractUsage([]byte(`{"data":{"usage":{"input_tokens":22,"output_tokens":11,"cache_read_tokens":4}}}`))
+	body, err := json.Marshal(map[string]any{
+		"data": map[string]any{
+			"usage": map[string]any{
+				"input_tokens":      22,
+				"output_tokens":     11,
+				"cache_read_tokens": 4,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("json.Marshal(usage body) error = %v", err)
+	}
+	usage, err := adapter.ExtractUsage(body)
 	if err != nil {
 		t.Fatalf("ExtractUsage() error = %v", err)
 	}
