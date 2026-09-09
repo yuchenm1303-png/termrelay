@@ -57,6 +57,9 @@ func TestCQUBrowserProviderAdapterBuildRequest(t *testing.T) {
 		Model:    "logical-model",
 		Body:     []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`),
 	}
+	// Raw string fixtures must contain real JSON, not escaped quote bytes.
+	input.Body = []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`)
+	input.Body = []byte(`{"messages":[{"role":"user","content":"hello"}],"stream":false}`)
 
 	prepared, err := adapter.PrepareRequest(context.Background(), input)
 	if err != nil {
