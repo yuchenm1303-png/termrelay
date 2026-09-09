@@ -47,7 +47,7 @@ func newFakeCDP(t *testing.T, pageURL string) *fakeCDP {
 		if err != nil {
 			return
 		}
-		defer conn.Close(websocket.StatusNormalClosure, "done")
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "done") }()
 
 		ctx := r.Context()
 		for {

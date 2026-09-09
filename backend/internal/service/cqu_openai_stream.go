@@ -79,7 +79,7 @@ func consumeCQUStream(ctx context.Context, r io.Reader, onDelta func(string) err
 			if event.Delta == "" {
 				return nil
 			}
-			text.WriteString(event.Delta)
+			_, _ = text.WriteString(event.Delta)
 			if onDelta != nil {
 				return onDelta(event.Delta)
 			}

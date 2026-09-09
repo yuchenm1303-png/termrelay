@@ -239,11 +239,11 @@ func cquFinalConversationKey(seed, assistantText string) string {
 // cquRollKey folds one turn into a running transcript key.
 func cquRollKey(previous string, turn cquTurn) string {
 	digest := sha256.New()
-	digest.Write([]byte(previous))
-	digest.Write([]byte{0})
-	digest.Write([]byte(turn.Role))
-	digest.Write([]byte{0})
-	digest.Write([]byte(strings.TrimSpace(turn.Text)))
+	_, _ = digest.Write([]byte(previous))
+	_, _ = digest.Write([]byte{0})
+	_, _ = digest.Write([]byte(turn.Role))
+	_, _ = digest.Write([]byte{0})
+	_, _ = digest.Write([]byte(strings.TrimSpace(turn.Text)))
 	return hex.EncodeToString(digest.Sum(nil))
 }
 

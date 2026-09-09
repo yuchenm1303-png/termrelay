@@ -307,7 +307,7 @@ func (b *CQUWebBridge) findPageTarget(ctx context.Context) (cquCDPTarget, error)
 			err,
 		)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		return cquCDPTarget{}, newCQUBridgeError(
 			CQUErrorKindBrowserUnavailable,
@@ -436,7 +436,7 @@ func (b *CQUWebBridge) runBrowserFetch(
 	metaCh chan<- cquBridgeMeta,
 	errCh chan<- error,
 ) {
-	defer conn.Close(websocket.StatusNormalClosure, "cqu request finished")
+	defer func() { _ = conn.Close(websocket.StatusNormalClosure, "cqu request finished") }()
 
 	// The read loop deliberately does not use the request context. Cancelling a
 	// websocket read tears the connection down, and the page's fetch would then

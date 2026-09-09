@@ -187,9 +187,11 @@ func TestAggregateCQUStreamAsOpenAIJSON(t *testing.T) {
 	choices, ok := completion["choices"].([]any)
 	require.True(t, ok)
 	require.Len(t, choices, 1)
-	choice := choices[0].(map[string]any)
+	choice, ok := choices[0].(map[string]any)
+	require.True(t, ok)
 	require.Equal(t, "stop", choice["finish_reason"])
-	message := choice["message"].(map[string]any)
+	message, ok := choice["message"].(map[string]any)
+	require.True(t, ok)
 	require.Equal(t, "assistant", message["role"])
 	require.Equal(t, "你好，世界", message["content"])
 }

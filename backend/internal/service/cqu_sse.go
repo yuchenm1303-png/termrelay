@@ -123,7 +123,7 @@ func ParseCQUSSEContext(ctx context.Context, r io.Reader, emit func(CQUSSEEvent)
 
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
-			raw.Write(line)
+			_, _ = raw.Write(line)
 			trimmed := bytes.TrimRight(line, "\r\n")
 			if len(trimmed) == 0 {
 				if dispatchErr := dispatch(); dispatchErr != nil {
