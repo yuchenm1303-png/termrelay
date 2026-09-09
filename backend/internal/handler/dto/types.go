@@ -535,6 +535,9 @@ type UsageLog struct {
 
 	// BillingMode 计费模式：token/image
 	BillingMode *string `json:"billing_mode,omitempty"`
+	Status      string  `json:"status"`
+	ErrorType   *string `json:"error_type,omitempty"`
+	EndedAt     *time.Time `json:"ended_at,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 
