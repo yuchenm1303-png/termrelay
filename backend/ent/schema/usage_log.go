@@ -170,21 +170,7 @@ func (UsageLog) Fields() []ent.Field {
 		field.Bool("cache_ttl_overridden").
 			Default(false),
 
-		// Terminal outcome. Existing rows are successful by definition because the
-		// pre-terminal-record implementation only persisted completed forwards.
-		field.String("status").
-			MaxLen(20).
-			Default("success"),
-		field.String("error_type").
-			MaxLen(64).
-			Optional().
-			Nillable(),
-		field.Time("ended_at").
-			Optional().
-			Nillable().
-			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
-
-		// 记录创建时间；ended_at 表示请求终态时刻。
+		// 时间戳（只有 created_at，日志不可修改）
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable().
