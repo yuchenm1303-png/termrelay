@@ -99,16 +99,24 @@ func (s *GatewayService) RecordTerminalUsage(ctx context.Context, input *Termina
 	}
 	duration := input.DurationMs
 	log := &UsageLog{
-		UserID: input.User.ID, APIKeyID: input.APIKey.ID, AccountID: input.Account.ID,
-		RequestID: requestID, Model: input.Model, RequestedModel: requestedModel,
-		UpstreamModel: optionalTrimmedStringPtr(input.UpstreamModel),
-		InboundEndpoint: optionalTrimmedStringPtr(input.InboundEndpoint),
-		UpstreamEndpoint: optionalTrimmedStringPtr(input.UpstreamEndpoint),
-		ChannelID: optionalInt64Ptr(input.ChannelID),
+		UserID:            input.User.ID,
+		APIKeyID:          input.APIKey.ID,
+		AccountID:         input.Account.ID,
+		RequestID:         requestID,
+		Model:             input.Model,
+		RequestedModel:    requestedModel,
+		UpstreamModel:     optionalTrimmedStringPtr(input.UpstreamModel),
+		InboundEndpoint:   optionalTrimmedStringPtr(input.InboundEndpoint),
+		UpstreamEndpoint:  optionalTrimmedStringPtr(input.UpstreamEndpoint),
+		ChannelID:         optionalInt64Ptr(input.ChannelID),
 		ModelMappingChain: optionalTrimmedStringPtr(input.ModelMappingChain),
-		Stream: input.Stream, RequestType: RequestTypeFromLegacy(input.Stream, false),
-		DurationMs: &duration, Status: status, ErrorType: optionalTrimmedStringPtr(input.ErrorType),
-		EndedAt: &now, CreatedAt: now,
+		Stream:            input.Stream,
+		RequestType:       RequestTypeFromLegacy(input.Stream, false),
+		DurationMs:        &duration,
+		Status:            status,
+		ErrorType:         optionalTrimmedStringPtr(input.ErrorType),
+		EndedAt:           &now,
+		CreatedAt:         now,
 	}
 	if input.APIKey.GroupID != nil {
 		log.GroupID = input.APIKey.GroupID
