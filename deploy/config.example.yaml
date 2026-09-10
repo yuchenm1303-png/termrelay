@@ -1295,3 +1295,27 @@ image_storage:
   presign_expiry_hours: 24
   # 当上游返回的是图片 url 时，下载该图片再转存的字节上限（默认 32MB）
   max_download_bytes: 33554432
+
+# ===========================================
+# CQU 浏览器桥（重庆大学 AI, ai.cqu.edu.cn）
+# ===========================================
+# TermRelay 不持有任何 CQU 凭据。请求由一个"你自己正常启动、正常登录"的
+# Edge/Chromium 页面通过 CDP 发出，动态安全参数 CAqWHAeT、会话 Cookie 与
+# token 全部由该页面自己生成与刷新，网关既不生成、不存储、不刷新、也不记录。
+#
+# 准备工作（示例，Windows Edge）：
+#   msedge.exe --remote-debugging-port=9222 --user-data-dir="C:\cqu-browser-profile"
+# 然后在该浏览器里正常登录 https://ai.cqu.edu.cn 并保持页面打开。
+# 该 profile 目录含真实登录态，切勿提交到仓库。
+cqu:
+  # 总开关。关闭时 CQU 账号直接失败，不会退化成明文 HTTP 直连。
+  # 环境变量：CQU_ENABLED
+  enabled: false
+  # 已登录浏览器的 CDP 地址。环境变量：CQU_BROWSER_DEBUG_URL
+  browser_debug_url: "http://127.0.0.1:9222"
+  # CQU 站点来源。环境变量：CQU_BASE_URL
+  base_url: "https://ai.cqu.edu.cn"
+  # 逻辑模型 cqu-default 对应的 Agent / Model。环境变量：
+  # CQU_DEFAULT_AGENT_ID / CQU_DEFAULT_MODEL_ID
+  default_agent_id: "910020080887140352"
+  default_model_id: "910023701267746816"

@@ -1219,6 +1219,13 @@ func (s *GatewayService) GetAvailableModels(ctx context.Context, groupID *int64,
 				modelSet[model] = struct{}{}
 			}
 		}
+		// A CQU browser account always advertises its logical model. Its real
+		// routing target is a numeric CQU agent/model pair that clients must
+		// never have to type, so there is no upstream list to fall back to.
+		if IsCQUBrowserAccount(&acc) {
+			hasAnyMapping = true
+			modelSet[CQUDefaultModelAlias] = struct{}{}
+		}
 	}
 
 	// If no account has model_mapping, return nil (use default)
