@@ -325,6 +325,68 @@ func TestBuildSchedulerMetadataAccount_KeepsOpenAIWSFlags(t *testing.T) {
 	require.Nil(t, got.Extra["unused_large_field"])
 }
 
+func TestSchedulerMetadataRoundTrip_KeepsCQUBrowserMarker(t *testing.T) {
+	cases := []struct {
+		name        string
+		credentials map[string]any
+		extra       map[string]any
+	}{
+		{
+			name: "marker in extra",
+			credentials: map[string]any{
+				"model_mapping": map[string]any{"cqu-default": "cqu-default"},
+				"secret":        "drop-me",
+			},
+			extra: map[string]any{
+				"cqu_browser": true,
+				"large_value": "drop-me",
+			},
+		},
+		{
+			name: "marker in credentials",
+			credentials: map[string]any{
+				"model_mapping": map[string]any{"cqu-default": "cqu-default"},
+				"cqu_browser":   true,
+				"secret":        "drop-me",
+			},
+			extra: map[string]any{
+				"large_value": "drop-me",
+			},
+		},
+	}
+
+	for i, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			account := service.Account{
+				ID:          int64(4500 + i),
+				Name:        "cqu-browser-default",
+				Platform:    service.PlatformOpenAI,
+				Type:        service.AccountTypeAPIKey,
+				Status:      service.StatusActive,
+				Schedulable: true,
+				Concurrency: 1,
+				Credentials: tc.credentials,
+				Extra:       tc.extra,
+			}
+			cache := newSchedulerCacheUnit(t)
+			ctx := context.Background()
+			bucket := service.SchedulerBucket{GroupID: int64(4500 + i), Platform: service.PlatformOpenAI, Mode: service.SchedulerModeSingle}
+			token, err := cache.CaptureBucketWriteToken(ctx, bucket)
+			require.NoError(t, err)
+			require.NoError(t, cache.SetSnapshot(ctx, bucket, token, []service.Account{account}))
+
+			snapshot, hit, err := cache.GetSnapshot(ctx, bucket)
+			require.NoError(t, err)
+			require.True(t, hit)
+			require.Len(t, snapshot, 1)
+			require.True(t, service.IsCQUBrowserAccount(snapshot[0]))
+			require.Equal(t, map[string]any{"cqu-default": "cqu-default"}, snapshot[0].Credentials["model_mapping"])
+			require.NotContains(t, snapshot[0].Credentials, "secret")
+			require.NotContains(t, snapshot[0].Extra, "large_value")
+		})
+	}
+}
+
 func TestBuildSchedulerMetadataAccount_KeepsGrokMediaEligibility(t *testing.T) {
 	t.Run("explicit override", func(t *testing.T) {
 		account := service.Account{
