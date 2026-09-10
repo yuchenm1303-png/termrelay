@@ -71,6 +71,13 @@ func (s *OpenAIGatewayService) ForwardAsChatCompletions(
 		return nil, errors.New("codex_cli_only restriction: only codex official clients are allowed")
 	}
 
+	// CQU accounts have no Go-side transport: the request must originate from
+	// the authenticated browser page. Branch before any credential/Responses
+	// routing so no other provider's path changes.
+	if IsCQUBrowserAccount(account) {
+		return s.forwardCQUBrowserChatCompletions(ctx, c, account, body, defaultMappedModel)
+	}
+
 	if account.Platform == PlatformGrok {
 		if account.IsGrokOAuth() {
 			if eligible, reason := grokChatResponsesBridgeEligibility(body); eligible {

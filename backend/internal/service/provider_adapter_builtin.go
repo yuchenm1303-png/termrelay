@@ -25,6 +25,13 @@ func (a *builtinProviderAdapter) Supports(account *Account) bool {
 	if a == nil || account == nil {
 		return false
 	}
+	// An account explicitly marked as CQU browser belongs to the CQU adapter
+	// even though it sits on a shared platform. Excluding it here keeps a
+	// registry that holds both adapters unambiguous; unmarked accounts of every
+	// platform are unaffected.
+	if IsCQUBrowserAccount(account) {
+		return false
+	}
 	return strings.EqualFold(strings.TrimSpace(account.Platform), a.platform)
 }
 

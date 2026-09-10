@@ -253,6 +253,27 @@ func openAICompactSupportTier(account *Account) int {
 	return 0
 }
 
+// isOpenAICompatibleAccountModelSupported isolates the CQU logical model from
+// ordinary OpenAI-compatible accounts. A CQU browser account can serve the
+// logical alias and its raw numeric upstream model id, but never normal GPT
+// models. Ordinary OpenAI accounts can never receive cqu-default.
+func isOpenAICompatibleAccountModelSupported(account *Account, requestedModel string) bool {
+	if account == nil {
+		return false
+	}
+	model := strings.TrimSpace(requestedModel)
+	if model == "" {
+		return true
+	}
+	if strings.EqualFold(model, CQUDefaultModelAlias) {
+		return IsCQUBrowserAccount(account)
+	}
+	if IsCQUBrowserAccount(account) {
+		return isCQUUpstreamModelID(model) && account.IsModelSupported(model)
+	}
+	return account.IsModelSupported(model)
+}
+
 // isOpenAICompatibleAccountEligibleForRequest 判断 OpenAI 兼容账号是否满足本次请求的调度条件。
 // 检查内容包括：平台匹配、账号可用性、quota 自动暂停、spark 路由限制、模型支持及端点能力。
 //
@@ -287,7 +308,7 @@ func isOpenAICompatibleAccountEligibleForRequest(ctx context.Context, account *A
 			return false
 		}
 	}
-	if requestedModel != "" && !account.IsModelSupported(requestedModel) {
+	if !isOpenAICompatibleAccountModelSupported(account, requestedModel) {
 		return false
 	}
 	if !account.SupportsOpenAIEndpointCapability(requiredCapability) {

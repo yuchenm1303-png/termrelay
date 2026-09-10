@@ -414,6 +414,12 @@ type OpenAIGatewayService struct {
 	liveAttestation       liveattestation.Provider
 	liveAttestationCipher SecretEncryptor
 
+	// CQU browser bridge (重庆大学 AI). Built lazily so a deployment without a
+	// signed-in browser starts normally and every other provider is unaffected.
+	cquAdaptersOnce  sync.Once
+	cquAdapters      *ProviderAdapterRegistry
+	cquConversations *cquConversationStore
+
 	openaiWSPoolOnce               sync.Once
 	openaiWSStateStoreOnce         sync.Once
 	openaiSchedulerOnce            sync.Once
@@ -561,6 +567,9 @@ func (s *OpenAIGatewayService) isCodexImageGenerationBridgeEnabled(ctx context.C
 
 func (s *OpenAIGatewayService) checkChannelPricingRestriction(ctx context.Context, groupID *int64, requestedModel string) bool {
 	if groupID == nil || s.channelService == nil || requestedModel == "" {
+		return false
+	}
+	if s.cfg != nil && s.cfg.CQU.Enabled && strings.EqualFold(strings.TrimSpace(requestedModel), CQUDefaultModelAlias) {
 		return false
 	}
 	mapping := s.channelService.ResolveChannelMapping(ctx, *groupID, requestedModel)

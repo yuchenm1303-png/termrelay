@@ -61,6 +61,15 @@ const (
 // 可通过 gateway.upstream_response_read_max_bytes 配置项覆盖。
 const DefaultUpstreamResponseReadMaxBytes int64 = 128 * 1024 * 1024
 
+// CQU browser-bridge defaults. These are public routing identifiers of the
+// 重庆大学 AI web app, not credentials.
+const (
+	DefaultCQUBrowserDebugURL = "http://127.0.0.1:9222"
+	DefaultCQUBaseURL         = "https://ai.cqu.edu.cn"
+	DefaultCQUAgentID         = "910020080887140352"
+	DefaultCQUModelID         = "910023701267746816"
+)
+
 type Config struct {
 	Server                  ServerConfig                  `mapstructure:"server"`
 	Log                     LogConfig                     `mapstructure:"log"`
@@ -99,6 +108,7 @@ type Config struct {
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
 	BatchImage              BatchImageConfig              `mapstructure:"batch_image"`
 	ImageStorage            ImageStorageConfig            `mapstructure:"image_storage"`
+	CQU                     CQUConfig                     `mapstructure:"cqu"`
 }
 
 type LogConfig struct {
@@ -131,6 +141,28 @@ type LogSamplingConfig struct {
 	Enabled    bool `mapstructure:"enabled"`
 	Initial    int  `mapstructure:"initial"`
 	Thereafter int  `mapstructure:"thereafter"`
+}
+
+// CQUConfig configures the 重庆大学 AI (ai.cqu.edu.cn) browser bridge.
+//
+// The bridge never holds CQU credentials. It attaches to an already running,
+// already signed-in Chromium/Edge instance over CDP and lets that page's own
+// runtime perform the request, so the dynamic security parameter CAqWHAeT is
+// generated, refreshed and consumed entirely inside the browser. Nothing here
+// stores a cookie, a bearer token or CAqWHAeT.
+type CQUConfig struct {
+	// Enabled gates the whole browser-bridge transport. When false, CQU
+	// accounts fail closed instead of silently falling back to plain HTTP.
+	Enabled bool `mapstructure:"enabled"`
+	// BrowserDebugURL is the CDP endpoint of the persistent browser, e.g.
+	// http://127.0.0.1:9222. TermRelay only attaches; it never launches,
+	// closes or reconfigures the browser.
+	BrowserDebugURL string `mapstructure:"browser_debug_url"`
+	// BaseURL is the CQU origin whose page is driven, e.g. https://ai.cqu.edu.cn.
+	BaseURL string `mapstructure:"base_url"`
+	// DefaultAgentID / DefaultModelID back the `cqu-default` logical model.
+	DefaultAgentID string `mapstructure:"default_agent_id"`
+	DefaultModelID string `mapstructure:"default_model_id"`
 }
 
 type GeminiConfig struct {
@@ -2386,6 +2418,16 @@ func setDefaults() {
 	viper.SetDefault("gemini.oauth.client_secret", "")
 	viper.SetDefault("gemini.oauth.scopes", "")
 	viper.SetDefault("gemini.quota.policy", "")
+
+	// CQU browser bridge (重庆大学 AI). Disabled by default: it requires an
+	// operator-run browser that is already signed in to ai.cqu.edu.cn.
+	// Overridable via CQU_ENABLED / CQU_BROWSER_DEBUG_URL / CQU_BASE_URL /
+	// CQU_DEFAULT_AGENT_ID / CQU_DEFAULT_MODEL_ID.
+	viper.SetDefault("cqu.enabled", false)
+	viper.SetDefault("cqu.browser_debug_url", DefaultCQUBrowserDebugURL)
+	viper.SetDefault("cqu.base_url", DefaultCQUBaseURL)
+	viper.SetDefault("cqu.default_agent_id", DefaultCQUAgentID)
+	viper.SetDefault("cqu.default_model_id", DefaultCQUModelID)
 
 	// Subscription Maintenance (bounded queue + worker pool)
 	viper.SetDefault("subscription_maintenance.worker_count", 2)
