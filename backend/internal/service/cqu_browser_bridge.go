@@ -560,24 +560,53 @@ func cquBrowserFetchExpression(binding string, payload []byte) (string, error) {
 		return "", err
 	}
 
-	// Use window.fetch from the live application realm rather than a Go HTTP
-	// client. CQU's page/security runtime owns CAqWHAeT and may wrap fetch; going
-	// through that realm preserves the live browser/session behavior.
+	// Execute the same internal request path used by the live CQU chat page.
+	// The bootstrap module owns login refresh, while the page's wrapped fetch
+	// owns dynamic browser/session security. Access credentials are read and
+	// consumed only inside this browser realm and are never returned to Go.
 	return fmt.Sprintf(`(() => {
   const bindingName = %s;
-  const endpoint = %s;
+  const endpointPath = %s;
   const requestBody = %s;
   const emit = (value) => globalThis[bindingName](JSON.stringify(value));
   (async () => {
     const controller = new AbortController();
     globalThis.__termrelayCQUAbort = () => controller.abort();
     try {
-      const response = await globalThis.fetch(endpoint, {
+      const candidates = [
+        ...Array.from(document.querySelectorAll('link[rel="modulepreload"][href]')).map((node) => node.href),
+        ...Array.from(document.querySelectorAll('script[type="module"][src]')).map((node) => node.src)
+      ];
+      let bootstrapURL = candidates.find((value) => /\/assets\/bootstrap-[^/]+\.js(?:\?|$)/.test(value));
+      if (!bootstrapURL) {
+        const entryURL = Array.from(document.querySelectorAll('script[type="module"][src]'))
+          .map((node) => node.src)
+          .find(Boolean);
+        if (!entryURL) throw new Error("CQU application entry module not found");
+        const entryResponse = await globalThis.fetch(entryURL, {cache: "no-store"});
+        if (!entryResponse.ok) throw new Error("CQU application entry module is unavailable");
+        const entrySource = await entryResponse.text();
+        const match = entrySource.match(/["'](\.\/bootstrap-[^"']+\.js)["']/);
+        if (!match) throw new Error("CQU bootstrap module not found");
+        bootstrapURL = new URL(match[1], entryURL).href;
+      }
+
+      const runtime = await import(bootstrapURL);
+      if (typeof runtime.N !== "function" || typeof runtime.d !== "function") {
+        throw new Error("CQU bootstrap request exports are unavailable");
+      }
+      const authStore = runtime.d();
+      const accessToken = authStore && authStore.accessToken;
+      if (!accessToken) throw new Error("CQU browser session is not signed in");
+
+      const endpoint = new URL(endpointPath, globalThis.location.origin).href;
+      const response = await runtime.N(endpoint, {
         method: "POST",
         credentials: "include",
         headers: {
-          "accept": "text/event-stream",
-          "content-type": "application/json"
+          "accept": "application/json,text/event-stream",
+          "content-type": "application/json",
+          "authorization": "Bearer " + accessToken
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal

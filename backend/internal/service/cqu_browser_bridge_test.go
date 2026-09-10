@@ -172,9 +172,10 @@ func TestCQUWebBridgeSendChatRequiresQuery(t *testing.T) {
 	require.Error(t, err)
 }
 
-// The browser-page expression must carry the CQU body and the abort hook, and
-// must never carry credentials — the page supplies those itself.
-func TestCQUBrowserFetchExpressionCarriesNoCredentials(t *testing.T) {
+// The browser-page expression must use the live application's request wrapper.
+// Authentication is consumed only inside the browser realm and is never passed
+// into the expression from Go or emitted through the CDP binding.
+func TestCQUBrowserFetchExpressionUsesLiveApplicationRequestLayer(t *testing.T) {
 	payload, err := json.Marshal(CQUChatRequest{
 		Query:        "你好",
 		ModelID:      config.DefaultCQUModelID,
@@ -187,11 +188,14 @@ func TestCQUBrowserFetchExpressionCarriesNoCredentials(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, expression, cquSendChatAPIPath)
 	require.Contains(t, expression, "credentials: \"include\"")
+	require.Contains(t, expression, "await import(bootstrapURL)")
+	require.Contains(t, expression, "runtime.N(endpoint")
+	require.Contains(t, expression, "runtime.d()")
+	require.Contains(t, expression, "accessToken")
 	require.Contains(t, expression, "__termrelayCQUAbort")
 	require.Contains(t, expression, "AbortController")
 	require.NotContains(t, expression, "CAqWHAeT")
 	require.NotContains(t, strings.ToLower(expression), "cookie")
-	require.NotContains(t, strings.ToLower(expression), "authorization")
 }
 
 func TestNewCQUWebBridgeFromConfigFailsClosedWhenDisabled(t *testing.T) {

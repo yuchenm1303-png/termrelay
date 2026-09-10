@@ -580,3 +580,23 @@ func mapKeys(m map[string]any) []string {
 	}
 	return keys
 }
+
+func TestCQUDefaultModelIsIsolatedToBrowserAccounts(t *testing.T) {
+	t.Parallel()
+
+	cquAccount := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+		Extra:    map[string]any{"cqu_browser": true},
+	}
+	ordinaryOpenAI := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+	}
+
+	require.True(t, isOpenAICompatibleAccountModelSupported(cquAccount, CQUDefaultModelAlias))
+	require.True(t, isOpenAICompatibleAccountModelSupported(cquAccount, CQUDefaultModelID))
+	require.False(t, isOpenAICompatibleAccountModelSupported(cquAccount, "gpt-5"))
+	require.False(t, isOpenAICompatibleAccountModelSupported(ordinaryOpenAI, CQUDefaultModelAlias))
+	require.True(t, isOpenAICompatibleAccountModelSupported(ordinaryOpenAI, "gpt-5"))
+}

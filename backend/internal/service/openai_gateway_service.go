@@ -569,6 +569,9 @@ func (s *OpenAIGatewayService) checkChannelPricingRestriction(ctx context.Contex
 	if groupID == nil || s.channelService == nil || requestedModel == "" {
 		return false
 	}
+	if s.cfg != nil && s.cfg.CQU.Enabled && strings.EqualFold(strings.TrimSpace(requestedModel), CQUDefaultModelAlias) {
+		return false
+	}
 	mapping := s.channelService.ResolveChannelMapping(ctx, *groupID, requestedModel)
 	billingModel := billingModelForRestriction(mapping.BillingModelSource, requestedModel, mapping.MappedModel)
 	if billingModel == "" {
