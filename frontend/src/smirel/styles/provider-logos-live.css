@@ -220,3 +220,19 @@
 .workspace-root .provider-mark[data-provider=antigravity],
 .workspace-root .provider-mini-mark[data-provider=antigravity],
 .workspace-root .provider-filter button[data-provider=antigravity]::before { color: #d8dde5; }
+
+
+/* Chongqing University. The emblem is vendored from the official CQU site. */
+.workspace-root .provider-mark[data-provider="cqu"]::before,
+.workspace-root .provider-mini-mark[data-provider="cqu"]::before,
+.workspace-root .provider-filter button[data-provider="cqu"]::before {
+  background: transparent url('../assets/providers/cqu.png') center / contain no-repeat;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.workspace-root .provider-mark[data-provider="cqu"],
+.workspace-root .provider-mini-mark[data-provider="cqu"] {
+  background: rgba(10, 87, 167, 0.08);
+  border-color: rgba(10, 87, 167, 0.24);
+}

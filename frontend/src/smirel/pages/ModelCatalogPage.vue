@@ -92,6 +92,7 @@ function providerFromPlatform(platform: string): ProviderInfo {
 
 function family(model: string, offers: Offer[]): ProviderInfo {
   const id = model.toLowerCase()
+  if (id === 'cqu-default' || id.startsWith('cqu-')) return { key: 'cqu', name: 'CQU', mark: 'CQ' }
   if (id.startsWith('claude')) return { key: 'anthropic', name: 'Anthropic', mark: 'A' }
   if (id.startsWith('gemini')) return { key: 'google', name: 'Google', mark: 'G' }
   if (id.startsWith('grok')) return { key: 'xai', name: 'xAI', mark: 'X' }
@@ -184,7 +185,7 @@ const models = computed<CatalogModel[]>(() => {
   })
 })
 
-const providerOrder = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'qwen', 'zhipu', 'moonshot', 'minimax', 'xiaomimimo', 'hunyuan', 'mistral', 'meta', 'antigravity']
+const providerOrder = ['cqu', 'openai', 'anthropic', 'google', 'xai', 'deepseek', 'qwen', 'zhipu', 'moonshot', 'minimax', 'xiaomimimo', 'hunyuan', 'mistral', 'meta', 'antigravity']
 const providers = computed(() => {
   const map = new Map<string, { key: string; name: string; count: number }>()
   for (const model of models.value) {
@@ -272,7 +273,11 @@ function protocol(platform: string) {
 }
 
 function providerInfoForGroup(group: PlazaGroup): ProviderInfo {
-  if (String(group.name || '').toLowerCase().startsWith('smirel')) {
+  const groupName = String(group.name || '').trim().toLowerCase()
+  if (groupName.startsWith('cqu') || group.models?.some((model) => String(model.name || '').toLowerCase().startsWith('cqu-'))) {
+    return { key: 'cqu', name: 'CQU', mark: 'CQ' }
+  }
+  if (groupName.startsWith('smirel')) {
     return { key: 'composite', name: 'Smirel', mark: 'S' }
   }
   const firstModel = group.models?.[0]
