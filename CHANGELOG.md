@@ -1,23 +1,23 @@
-# Change Log
+# 更新日志
 
 ## 2026-09-12
 
-### Administrator balance allocation
+### 管理员分配用户额度
 
-- Added an administrator-facing balance allocation action to the user management page.
-- Added add, subtract, and set operations with amount validation, post-adjustment preview, optional notes, and success/error notifications.
-- Reused `POST /api/v1/admin/users/:id/balance`, preserving atomic balance updates, non-negative balance protection, idempotency, cache invalidation, and adjustment history records.
-- Added preview-mode behavior so balance changes can be exercised without modifying the database.
+- 在用户管理页面增加管理员额度调整入口。
+- 支持增加额度、扣减额度和设置指定余额，并提供金额校验、调整后余额预览、备注及成功/失败提示。
+- 复用 `POST /api/v1/admin/users/:id/balance` 接口，保留原子余额更新、余额非负保护、幂等处理、缓存失效和调整流水记录。
+- 增加预览模式下的额度调整模拟，不会修改数据库。
 
-### Deployment
+### 部署
 
-- Rebuilt `termrelay-commercial-dark:local` from the `release/smirel-commercial-dark` source baseline.
-- Verified the frontend type check and production build.
-- Recreated only the application container; PostgreSQL, Redis, and persistent volumes were preserved.
+- 基于 `release/smirel-commercial-dark` 分支重新构建 `termrelay-commercial-dark:local` 镜像。
+- 已通过前端类型检查和生产构建验证。
+- 仅重建应用容器，PostgreSQL、Redis 及持久化数据卷均已保留。
 
-### Branch alignment and cleanup
+### 分支同步与清理
 
-- Kept the implementation aligned with `release/smirel-commercial-dark` and removed inactive CQU browser-bridge routing, configuration, tests, and provider assets.
-- Added editing for existing upstream accounts in the administrator console.
-- Kept the model plaza and group views focused on the active commercial provider set.
-- Preserved the local build adjustments required for Apple Container deployment, including the npm mirror argument and frontend memory limit.
+- 按 `release/smirel-commercial-dark` 分支内容对齐实现，并移除不活跃的 CQU 浏览器桥接路由、配置、测试和供应商资源。
+- 管理后台增加已有上游账户的编辑功能。
+- 模型广场和分组页面仅保留当前启用的商业供应商范围。
+- 保留 Apple Container 部署所需的本地构建调整，包括 npm 镜像参数和前端内存限制。
