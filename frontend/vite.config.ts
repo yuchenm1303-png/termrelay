@@ -77,83 +77,112 @@ function injectPublicSettings(backendUrl: string): Plugin {
   }
 }
 
+/**
+ * GitHub Pages 没有 Go 后端来执行生产环境的 index.html 品牌注入。
+ * 仅在明确的 Smirel standalone 构建中写入静态壳品牌，生产默认构建不受影响。
+ */
+function injectStandaloneSmirelBranding(publicBase: string, enabled: boolean): Plugin {
+  return {
+    name: 'inject-standalone-smirel-branding',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        if (!enabled) return html
+        const normalizedBase = publicBase.endsWith('/') ? publicBase : `${publicBase}/`
+        return injectBranding(html, {
+          site_name: 'Smirel API',
+          site_logo: `${normalizedBase}smirel-logo.png`,
+        })
+      },
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080'
   const devPort = Number(env.VITE_DEV_PORT || 3000)
+  const publicBase = env.VITE_PUBLIC_BASE?.trim() || '/'
+  const smirelStandaloneBuild = env.VITE_SMIREL_STANDALONE === 'true'
+  // TermRelay release builds keep embedding the frontend into the Go binary.
+  // Vercel/standalone builds emit a normal frontend/dist directory instead.
+  const standaloneBuild = process.env.VERCEL === '1' || env.VITE_STANDALONE === 'true'
 
   return {
+    base: publicBase,
     plugins: [
       vue(),
       checker({
         vueTsc: true
       }),
-      injectPublicSettings(backendUrl)
+      injectPublicSettings(backendUrl),
+      injectStandaloneSmirelBranding(publicBase, smirelStandaloneBuild)
     ],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      // 使用 vue-i18n 运行时版本，避免 CSP unsafe-eval 问题
-      'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
-    }
-  },
-  define: {
-    // 启用 vue-i18n JIT 编译，在 CSP 环境下处理消息插值
-    // JIT 编译器生成 AST 对象而非 JS 代码，无需 unsafe-eval
-    __INTLIFY_JIT_COMPILATION__: true
-  },
-  build: {
-    outDir: '../backend/internal/web/dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        /**
-         * 手动分包配置
-         * 分离第三方库并按功能合并应用代码，避免循环依赖
-         */
-        manualChunks(id: string) {
-          if (id.includes('node_modules')) {
-            // Vue 核心库
-            if (
-              id.includes('/vue/') ||
-              id.includes('/vue-router/') ||
-              id.includes('/pinia/') ||
-              id.includes('/@vue/')
-            ) {
-              return 'vendor-vue'
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
+        // 使用 vue-i18n 运行时版本，避免 CSP unsafe-eval 问题
+        'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
+      }
+    },
+    define: {
+      // 启用 vue-i18n JIT 编译，在 CSP 环境下处理消息插值
+      // JIT 编译器生成 AST 对象而非 JS 代码，无需 unsafe-eval
+      __INTLIFY_JIT_COMPILATION__: true
+    },
+    build: {
+      outDir: standaloneBuild ? 'dist' : '../backend/internal/web/dist',
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          /**
+           * 手动分包配置
+           * 分离第三方库并按功能合并应用代码，避免循环依赖
+           */
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              // Vue 核心库
+              if (
+                id.includes('/vue/') ||
+                id.includes('/vue-router/') ||
+                id.includes('/pinia/') ||
+                id.includes('/@vue/')
+              ) {
+                return 'vendor-vue'
+              }
+
+              // UI 工具库（较大，单独分离）
+              if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
+                return 'vendor-ui'
+              }
+
+              // 图表库
+              if (id.includes('/chart.js/') || id.includes('/vue-chartjs/')) {
+                return 'vendor-chart'
+              }
+
+              // 国际化
+              if (id.includes('/vue-i18n/') || id.includes('/@intlify/')) {
+                return 'vendor-i18n'
+              }
+
+              // Stripe 仅在支付流程中按需加载，避免进入首页公共依赖。
+              if (id.includes('/@stripe/stripe-js/')) {
+                return 'vendor-stripe'
+              }
+
+              // 其他小型第三方库合并
+              return 'vendor-misc'
             }
 
-            // UI 工具库（较大，单独分离）
-            if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
-              return 'vendor-ui'
-            }
-
-            // 图表库
-            if (id.includes('/chart.js/') || id.includes('/vue-chartjs/')) {
-              return 'vendor-chart'
-            }
-
-            // 国际化
-            if (id.includes('/vue-i18n/') || id.includes('/@intlify/')) {
-              return 'vendor-i18n'
-            }
-
-            // Stripe 仅在支付流程中按需加载，避免进入首页公共依赖。
-            if (id.includes('/@stripe/stripe-js/')) {
-              return 'vendor-stripe'
-            }
-
-            // 其他小型第三方库合并
-            return 'vendor-misc'
+            // 应用代码：按入口点自动分包，不手动干预
+            // 这样可以避免循环依赖，同时保持合理的 chunk 数量
           }
-
-          // 应用代码：按入口点自动分包，不手动干预
-          // 这样可以避免循环依赖，同时保持合理的 chunk 数量
         }
       }
-    }
-  },
+    },
     server: {
       host: '0.0.0.0',
       port: devPort,

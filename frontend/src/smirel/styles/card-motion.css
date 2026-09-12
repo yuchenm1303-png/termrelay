@@ -1,0 +1,54 @@
+/*
+ * Smirel clickable-card press contract.
+ *
+ * Click feedback is intentionally restrained: no bounce, blur, or dramatic
+ * scaling. Hover styling remains owned by the component itself; this file only
+ * caps the pressed state for clickable glass surfaces.
+ */
+:root {
+  --smirel-card-press-scale: .9985;
+  --smirel-card-press-duration: 110ms;
+  --smirel-card-press-ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+:is(
+  a.glass,
+  button.glass,
+  .glass[role='button'],
+  .glass[tabindex]
+) {
+  transform-origin: center;
+  transition-property: transform, background-color, border-color, box-shadow;
+  transition-duration: var(--smirel-card-press-duration);
+  transition-timing-function: var(--smirel-card-press-ease);
+}
+
+:is(
+  a.glass,
+  button.glass,
+  .glass[role='button'],
+  .glass[tabindex]
+):active {
+  transform: scale(var(--smirel-card-press-scale)) !important;
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    a.glass,
+    button.glass,
+    .glass[role='button'],
+    .glass[tabindex]
+  ) {
+    transition: none !important;
+  }
+
+  :is(
+    a.glass,
+    button.glass,
+    .glass[role='button'],
+    .glass[tabindex]
+  ):active {
+    transform: none !important;
+  }
+}

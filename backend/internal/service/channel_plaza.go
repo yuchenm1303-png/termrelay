@@ -112,7 +112,7 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 			}
 			for j := range supported {
 				m := supported[j]
-				if m.Platform != pg.Platform {
+				if !isPlatformPricingMatch(pg.Platform, m.Platform) {
 					continue
 				}
 				if at, seen := idx[m.Name]; seen {
