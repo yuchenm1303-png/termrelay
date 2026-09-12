@@ -143,3 +143,9 @@ docs/*
 frontend/coverage/
 aicodex
 output/
+
+# CQU browser bridge: the persistent Edge/Chromium profile holds the operator's
+# real ai.cqu.edu.cn login (cookies, tokens, localStorage). Never commit it.
+cqu-browser-profile/
+*-cqu-browser-profile/
+.cqu-browser-profile/
