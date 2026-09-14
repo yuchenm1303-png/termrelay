@@ -67,6 +67,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/legal/:documentId', name: 'LegalDocument', component: PublicPage, meta: { title: '法律文档', publicKind: 'legal' } },
   { path: '/setup', name: 'Setup', component: PublicPage, meta: { title: '初始化', publicKind: 'setup' } },
   { path: '/payment/result', name: 'PaymentResult', component: PublicPage, meta: { title: '支付结果', publicKind: 'payment' } },
+  { path: '/payment/redirect', name: 'PaymentRedirect', component: PublicPage, meta: { title: '支付跳转', publicKind: 'payment' } },
+  { path: '/payment/wechat-oauth', name: 'PaymentWechatOAuth', component: PublicPage, meta: { title: '微信授权', publicKind: 'payment' } },
   { path: '/payment/qrcode', name: 'PaymentQRCode', component: PublicPage, meta: { title: '支付', publicKind: 'payment', requiresAuth: true } },
   { path: '/payment/stripe', name: 'StripePayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
   { path: '/payment/stripe-popup', name: 'StripePayment', component: PublicPage, meta: { title: '支付', publicKind: 'payment' } },
