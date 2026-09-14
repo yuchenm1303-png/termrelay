@@ -45,6 +45,18 @@ grep -Fq 'pg_restore' "$restore" || {
   exit 1
 }
 
+# The recovered application must come back through the TermRelay overlay rather
+# than silently falling back to the upstream mutable image in the base compose.
+grep -Fq 'Starting application with TermRelay production overlay' "$restore" || {
+  echo "restore script must restart through the TermRelay production overlay" >&2
+  exit 1
+}
+
+grep -Fq -- '-f "$OVERLAY_FILE" up -d sub2api' "$restore" || {
+  echo "restore script must use the production overlay when starting the application" >&2
+  exit 1
+}
+
 # Recovery tooling must never casually delete Docker volumes or the whole
 # deployment directory. Those actions would turn disaster recovery into data
 # destruction.
