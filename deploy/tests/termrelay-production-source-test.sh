@@ -14,7 +14,9 @@ if ! grep -Fq 'image: ${TERMRELAY_IMAGE_REF:?' "$overlay"; then
   exit 1
 fi
 
-if grep -Eq 'weishaw/sub2api:(latest|main)' "$overlay"; then
+# Inspect actual Compose image directives only. Documentation comments may name
+# unsafe examples such as an upstream :latest tag in order to warn against it.
+if grep -Eq '^[[:space:]]*image:[[:space:]]*.*weishaw/sub2api:(latest|main)([[:space:]]|$)' "$overlay"; then
   echo "TermRelay production overlay must not pin production to a mutable upstream image" >&2
   exit 1
 fi
