@@ -22,9 +22,11 @@ fi
 backup="$1"
 ENV_FILE="${ENV_FILE:-.env}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+OVERLAY_FILE="${OVERLAY_FILE:-docker-compose.termrelay.yml}"
 
 [[ -f "$backup" ]] || { echo "ERROR: backup not found: $backup" >&2; exit 1; }
 [[ -f "$ENV_FILE" ]] || { echo "ERROR: missing environment file: $ENV_FILE" >&2; exit 1; }
+[[ -f "$OVERLAY_FILE" ]] || { echo "ERROR: missing TermRelay production overlay: $OVERLAY_FILE" >&2; exit 1; }
 
 if [[ -f .backup.env ]]; then
   # shellcheck disable=SC1091
@@ -39,6 +41,10 @@ done
 
 docker compose version >/dev/null 2>&1 || { echo "ERROR: Docker Compose plugin is not available" >&2; exit 1; }
 
+# Validate secrets, immutable image source and backup checksum before touching state.
+ENV_FILE="$ENV_FILE" COMPOSE_FILE="$COMPOSE_FILE" OVERLAY_FILE="$OVERLAY_FILE" \
+  "$SCRIPT_DIR/recovery-preflight.sh" "$backup"
+
 # PostgreSQL must already be running so the archive can be verified and restored.
 if ! docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps --status running postgres 2>/dev/null | grep -q postgres; then
   echo "ERROR: PostgreSQL compose service is not running." >&2
@@ -46,7 +52,7 @@ if ! docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps --status runnin
   exit 1
 fi
 
-# Verify checksum/archive structure before touching the target database.
+# Verify archive structure before touching the target database.
 ENV_FILE="$ENV_FILE" COMPOSE_FILE="$COMPOSE_FILE" "$SCRIPT_DIR/verify-postgres-backup.sh" "$backup"
 
 db_user="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T postgres sh -ec 'printf "%s" "$POSTGRES_USER"')"
@@ -68,7 +74,7 @@ on_error() {
 trap on_error ERR
 
 echo "Stopping application service before database restore..."
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" stop sub2api
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$OVERLAY_FILE" stop sub2api
 app_stopped=true
 
 echo "Recreating PostgreSQL database: $db_name"
@@ -92,10 +98,10 @@ else
     pg_restore "${restore_args[@]}" < "$backup"
 fi
 
-echo "Database restore completed. Starting application..."
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d sub2api
+echo "Database restore completed. Starting application with TermRelay production overlay..."
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$OVERLAY_FILE" up -d sub2api
 app_stopped=false
 trap - ERR
 
 echo "Restore complete. Review service health before changing DNS or accepting traffic."
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps sub2api postgres redis
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$OVERLAY_FILE" ps sub2api postgres redis
