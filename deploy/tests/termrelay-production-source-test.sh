@@ -5,15 +5,16 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 overlay="$repo_root/deploy/docker-compose.termrelay.yml"
 goreleaser="$repo_root/.goreleaser.yaml"
 goreleaser_simple="$repo_root/.goreleaser.simple.yaml"
+release_workflow="$repo_root/.github/workflows/release.yml"
 
 if [ ! -f "$overlay" ]; then
   echo "missing TermRelay production compose overlay" >&2
   exit 1
 fi
 
-for config in "$goreleaser" "$goreleaser_simple"; do
+for config in "$goreleaser" "$goreleaser_simple" "$release_workflow"; do
   if [ ! -f "$config" ]; then
-    echo "missing GoReleaser configuration: $config" >&2
+    echo "missing production/release control file: $config" >&2
     exit 1
   fi
 done
@@ -45,4 +46,22 @@ for config in "$goreleaser" "$goreleaser_simple"; do
   fi
 done
 
-printf 'TermRelay production image source test passed\n'
+# A protected main branch must remain authoritative. Release automation may
+# create Releases/packages with its scoped token, but it must not push commits
+# straight back into main or rely on an administrator bypass token.
+if grep -Eq '^[[:space:]]*git[[:space:]]+push([[:space:]]|$)' "$release_workflow"; then
+  echo "Release workflow must not git-push directly to the repository" >&2
+  exit 1
+fi
+
+if grep -Fq 'sync-version-file:' "$release_workflow"; then
+  echo "Release workflow must not reintroduce direct VERSION syncing to main" >&2
+  exit 1
+fi
+
+if ! grep -Fq 'GHCR_IMAGE="ghcr.io/${{ steps.lowercase.outputs.owner }}/sub2api"' "$release_workflow"; then
+  echo "Release notification must use the same owner-controlled GHCR image path as GoReleaser" >&2
+  exit 1
+fi
+
+printf 'TermRelay production and release control test passed\n'
