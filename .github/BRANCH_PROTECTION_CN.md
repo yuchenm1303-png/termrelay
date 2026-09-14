@@ -29,6 +29,16 @@
 - Require review from Code Owners
 - Dismiss stale approvals when new commits are pushed
 
+## Release 工作流兼容性
+
+开启“所有 `main` 变更必须经过 Pull Request”之前，必须同时检查 Release 工作流。
+
+当前上游式 Release 流程在发布成功后会尝试把 `backend/cmd/server/VERSION` 直接 push 回默认分支。严格分支保护启用后，这种直接 push 应当被禁止，而不是给发布机器人仓库管理员级绕过权限。
+
+TermRelay 的目标做法是：正式 tag / Release / GHCR 镜像负责记录已发布版本；如需同步 `VERSION` 文件，应通过普通 Pull Request 完成。生产服务器不需要、Release 机器人也不应获得绕过仓库治理所需的长期高权限凭据。
+
+在这一兼容性调整合并前，不要为了让 Release 继续工作而给 GitHub Actions 配置可任意绕过 `main` 保护的管理权限。
+
 ## 不建议
 
 不要为了控制权：
