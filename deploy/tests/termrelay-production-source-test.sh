@@ -3,9 +3,15 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 overlay="$repo_root/deploy/docker-compose.termrelay.yml"
+goreleaser="$repo_root/.goreleaser.yaml"
 
 if [ ! -f "$overlay" ]; then
   echo "missing TermRelay production compose overlay" >&2
+  exit 1
+fi
+
+if [ ! -f "$goreleaser" ]; then
+  echo "missing GoReleaser configuration" >&2
   exit 1
 fi
 
@@ -23,6 +29,14 @@ fi
 
 if ! grep -Fq 'ghcr.io/yuchenm1303-png/sub2api' "$overlay"; then
   echo "TermRelay production overlay should document the repository-owner GHCR image source" >&2
+  exit 1
+fi
+
+# The deployment overlay and the publisher must agree on the same image path.
+# This catches a future rename that changes only one side and would make a
+# documented production release impossible to pull.
+if ! grep -Fq 'ghcr.io/{{ .Env.GITHUB_REPO_OWNER_LOWER }}/sub2api:{{ .Version }}' "$goreleaser"; then
+  echo "GoReleaser must publish the versioned owner-controlled GHCR image used by production" >&2
   exit 1
 fi
 
