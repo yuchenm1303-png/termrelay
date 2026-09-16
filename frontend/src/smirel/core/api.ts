@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type AxiosResponse } from 'axios'
 
 interface ApiEnvelope<T> {
-  code?: number
+  code?: number | string
   message?: string
   data?: T
 }
@@ -39,14 +39,28 @@ api.interceptors.response.use((response: AxiosResponse) => {
   return response
 })
 
+function friendlyApiError(code: unknown, fallback: string): string {
+  if (code === 'ADMIN_COMPLIANCE_ACK_REQUIRED') return '请先完成管理员部署与运营确认'
+  if (code === 'ADMIN_COMPLIANCE_INVALID_PHRASE') return '确认短语不匹配，请按页面提示完整输入'
+  return fallback
+}
+
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiEnvelope<unknown> | Record<string, unknown>>
     const body = axiosError.response?.data
-    if (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string') return body.message
+    if (body && typeof body === 'object') {
+      const code = 'code' in body ? body.code : undefined
+      if ('message' in body && typeof body.message === 'string') return friendlyApiError(code, body.message)
+    }
     if (!axiosError.response) return '无法连接到服务，请稍后重试'
   }
-  return error instanceof Error ? error.message : '请求失败，请稍后重试'
+  if (error instanceof Error) {
+    if (error.message === 'administrator compliance acknowledgement is required') return '请先完成管理员部署与运营确认'
+    if (error.message === 'confirmation phrase does not match') return '确认短语不匹配，请按页面提示完整输入'
+    return error.message
+  }
+  return '请求失败，请稍后重试'
 }
 
 export function sanitizeOAuthRedirect(value: unknown, fallback = '/dashboard'): string {
