@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -63,6 +64,8 @@ func TestAdminComplianceStatusRequiresAckWhenMissing(t *testing.T) {
 	require.Equal(t, AdminComplianceVersion, status.Version)
 	require.Equal(t, AdminComplianceAckPhraseZH, status.AckPhraseZH)
 	require.Equal(t, AdminComplianceDocumentPathZH, status.DocumentPathZH)
+	require.Contains(t, status.AckPhraseZH, "Muxway")
+	require.Contains(t, status.DocumentURLZH, "yuchenm1303-png/termrelay")
 }
 
 func TestAcceptAdminComplianceRejectsWrongPhrase(t *testing.T) {
@@ -130,4 +133,8 @@ func TestAdminComplianceStatusIsPerAdminUser(t *testing.T) {
 	statusForUserTwo, err := svc.GetAdminComplianceStatus(context.Background(), 2)
 	require.NoError(t, err)
 	require.True(t, statusForUserTwo.Required)
+}
+
+func TestAdminComplianceEnglishPhraseIsMuxwayScoped(t *testing.T) {
+	require.True(t, strings.Contains(AdminComplianceAckPhraseEN, "Muxway"))
 }
