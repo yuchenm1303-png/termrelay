@@ -1,5 +1,6 @@
 import { computed, readonly, reactive } from 'vue'
 import { api, previewMode } from './api'
+import { resetAdminComplianceCache } from './adminCompliance'
 
 export interface SmirelUser {
   id: number
@@ -48,6 +49,7 @@ function previewUser(): SmirelUser {
 
 function persist(result: AuthResult) {
   if (!result.access_token || !result.user) throw new Error('登录响应缺少账户信息')
+  resetAdminComplianceCache()
   state.token = result.access_token
   state.user = result.user
   localStorage.setItem('auth_token', result.access_token)
@@ -59,6 +61,7 @@ function persist(result: AuthResult) {
 }
 
 function clear() {
+  resetAdminComplianceCache()
   state.token = ''
   state.user = null
   localStorage.removeItem('auth_token')

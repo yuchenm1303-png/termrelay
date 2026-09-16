@@ -17,9 +17,12 @@ import AdminPaymentPlansPage from '../smirel/pages/AdminPaymentPlansPage.vue'
 import AdminPaymentConfigPage from '../smirel/pages/AdminPaymentConfigPage.vue'
 import AdminRevenueSplitPage from '../smirel/pages/AdminRevenueSplitPage.vue'
 import AdminOrdersPage from '../smirel/pages/AdminOrdersPage.vue'
+import AdminCompliancePage from '../smirel/pages/AdminCompliancePage.vue'
 import ModelCatalogPage from '../smirel/pages/ModelCatalogPage.vue'
 import PublicPage from '../smirel/pages/PublicPage.vue'
 import NotFoundPage from '../smirel/pages/NotFoundPage.vue'
+import { getAdminComplianceStatus } from '../smirel/core/adminCompliance'
+import { previewMode } from '../smirel/core/api'
 import { isAuthenticated, isAdmin } from '../smirel/core/session'
 import { adminNavigation, userNavigation, userSecondaryRoutes } from '../smirel/core/navigation'
 
@@ -92,6 +95,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/auth/dingtalk/email-completion', name: 'DingTalkEmailCompletion', component: PublicPage, meta: { title: '完成登录', publicKind: 'callback' } },
   { path: '/docs/batch-image', redirect: '/batch-image' },
   { path: '/custom/:id', name: 'CustomPage', component: WorkspacePage, meta: { shell: 'workspace', requiresAuth: true, title: '自定义页面', feature: 'custom' } },
+  { path: '/admin/compliance', name: 'AdminCompliance', component: AdminCompliancePage, meta: { requiresAuth: true, requiresAdmin: true, title: '管理员确认' } },
   ...workspaceRoutes,
   { path: '/admin', redirect: '/admin/dashboard' },
   { path: '/admin/channels', redirect: '/admin/channels/pricing' },
@@ -105,7 +109,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   document.title = `${String(to.meta.title || 'Smirel')} · Smirel API`
 
   if (to.meta.requiresAuth && !isAuthenticated.value) {
@@ -114,6 +118,23 @@ router.beforeEach((to) => {
   if (to.meta.requiresAdmin && !isAdmin.value) {
     return '/dashboard'
   }
+
+  const enteringProtectedAdminRoute = isAdmin.value
+    && !previewMode
+    && to.path.startsWith('/admin')
+    && to.path !== '/admin/compliance'
+
+  if (enteringProtectedAdminRoute) {
+    try {
+      const compliance = await getAdminComplianceStatus()
+      if (compliance.required) {
+        return { path: '/admin/compliance', query: { redirect: to.fullPath } }
+      }
+    } catch {
+      return { path: '/admin/compliance', query: { redirect: to.fullPath, check: 'failed' } }
+    }
+  }
+
   if ((to.path === '/login' || to.path === '/register') && isAuthenticated.value) {
     return isAdmin.value ? '/admin/dashboard' : '/dashboard'
   }
