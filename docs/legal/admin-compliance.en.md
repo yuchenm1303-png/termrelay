@@ -1,49 +1,55 @@
-# Sub2API Deployment and Operation Compliance Commitment
+# Muxway Administrator Deployment and Operation Acknowledgement
 
-Version: v2026.06.10
+Version: v2026.09.16
 
-This document applies to any individual, organization, or authorized representative that deploys, configures, manages, operates, or effectively controls a Sub2API instance. Before continuing to access or use console functions, the acknowledging party must read, understand, and accept this document in full.
+This document applies to administrators, operators, and authorized representatives who deploy, configure, manage, operate, or effectively control a Muxway (TermRelay) instance. An administrator must review and acknowledge this document before first entering the administration console and again when this document is updated.
 
-## 1. Scope
+The purpose of this acknowledgement is to make clear that the actual operator is responsible for service operation, upstream API usage, user and data handling, charging and settlement, security, and risk controls. It does not replace applicable law, regulatory requirements, upstream terms, commercial contracts, privacy policies, or other documents and procedures that may be required.
 
-Sub2API is open-source software. Any self-hosted deployment, modification, hosted operation, external service, commercial use, user management, content processing, data processing, payment settlement, customer support, or upstream account/API usage based on Sub2API is the sole responsibility of the party that deploys, operates, or controls the relevant instance.
+## 1. Operator and responsibility
 
-This document does not replace the open-source license, upstream terms of service, user agreements, privacy policies, data processing agreements, commercial contracts, regulatory filings, administrative permits, security assessments, or any other documents, procedures, or obligations required by applicable law or contract.
+1. The administrator confirms that they act for the actual operator or controlling party of the current Muxway instance and are authorized to perform administrative and configuration actions.
+2. Deployment, operation, promotion, charging, user management, content processing, data processing, account usage, and API calls for the current instance remain the independent responsibility of the actual operator.
+3. The operator must independently assess the laws, regulatory requirements, contractual duties, and platform rules that may apply based on server location, place of business, target-user location, and the requirements of upstream service providers.
 
-## 2. Responsibility of the Deploying or Operating Party
+## 2. Upstream services and authorization
 
-The acknowledging party must independently assess and continuously comply with the laws, regulations, regulatory requirements, industry rules, contractual obligations, and platform policies that may apply in its location, server location, target-user location, place of actual business operation, and the locations of upstream service providers.
+1. The operator must review and continuously comply with the terms of service, acceptable-use policies, account/API-key rules, commercial-use requirements, supported regions, resale restrictions, risk controls, and technical restrictions of OpenAI, Anthropic, Google, and any other upstream provider actually used by the instance.
+2. Muxway must not be used to bypass, or assist others in bypassing, upstream regional restrictions, access restrictions, account restrictions, identity verification, billing restrictions, risk controls, usage restrictions, or terms of service.
+3. If the business model involves API relay, model-call resale, quota distribution, team sharing, paid calls, or similar services, the operator must ensure that required authorization, contracts, qualifications, or permits are in place.
 
-The acknowledging party must ensure that it has all authorizations, qualifications, filings, permits, assessments, contracts, risk-control capabilities, content-safety capabilities, data-protection capabilities, complaint-handling mechanisms, and emergency-response capabilities required for deploying and operating the relevant instance. Such obligations are not transferred, waived, or reduced by the use of open-source software.
+## 3. Users, content, and data
 
-## 3. No Affiliation and Allocation of Responsibility
+1. The operator should maintain user-management, access-control, abuse-handling, content-safety, complaint-handling, and incident-response mechanisms appropriate to the scale and risk of the service.
+2. Reasonable safeguards should be applied to user data, request content, logs, account information, and other personal or commercially sensitive information that is collected, stored, processed, or transmitted, in accordance with applicable privacy and data-protection requirements.
+3. Sensitive content should not be retained indefinitely merely for debugging, operations, or analytics. Log retention, access permissions, and deletion practices should be proportionate to legitimate operational needs.
 
-Any third-party instance, commercial service, paid plan, user solicitation, content processing, data processing, account usage, API call, payment settlement, customer support, or promotional activity is independently carried out by the corresponding deploying, operating, or controlling party. The open-source nature of this project, code contributions, issue discussions, documentation maintenance, version releases, bug fixes, community communications, or general technical explanations do not create participation in, authorization of, approval of, warranty for, joint operation, agency, partnership, employment, authorized operation, joint control, revenue sharing, joint tort, or any other joint-and-several liability relationship between the open-source project, copyright holders, contributors, or maintainers and such activities.
+## 4. Charging, payments, and refunds
 
-The acknowledging party must not use the project name, marks, documentation, screenshots, community content, or open-source repository information to state or imply that its third-party instance, commercial service, paid plan, or operation is participated in, authorized, approved, warranted, or endorsed by the open-source project, copyright holders, contributors, maintainers, or community.
+1. If users are charged, the operator should clearly disclose prices, billing methods, plan rules, balance or subscription benefits, refund policies, and necessary customer-support information.
+2. Payments, refunds, reconciliation, taxes, invoicing, consumer-protection obligations, and handling of funds must comply with applicable law and the rules of the payment providers in use.
+3. Revenue sharing, channel settlement, and other third-party allocations should maintain clear and auditable records. Where financial, payment, or fund-clearing rules apply, the operator must use a compliant handling model.
 
-The acknowledging party is independently responsible for consequences arising from its deployment, configuration, operation, promotion, charging, user-behavior management, content processing, data processing, account usage, API calls, or violations of laws, regulations, regulatory requirements, contractual obligations, or upstream rules.
+## 5. Security, risk control, and continuity
 
-Any mandatory liability that cannot be excluded or limited by agreement shall be handled according to applicable law. Such statutory exception does not constitute participation in, authorization of, approval of, warranty for, or endorsement of any third-party deployment, operation, or commercial activity.
+1. Administrators must protect administrator accounts, servers, databases, API keys, OAuth credentials, payment secrets, and other sensitive credentials, and must not hard-code secrets into public repositories or disclose them to unauthorized persons.
+2. Rate limiting, anomaly detection, access control, backups, recovery, audit logging, and security-incident response should be maintained at a level appropriate to the scale and risk of the service.
+3. When account abuse, abnormal traffic, data exposure, payment anomalies, security vulnerabilities, or upstream-service risks are discovered, the operator should promptly restrict, suspend, remediate, notify, or take other necessary action.
 
-## 4. Compliance Commitments
+## 6. Prohibited-use principle
 
-By continuing to use console functions, the acknowledging party makes the following commitments:
+The administrator confirms that the instance will not be knowingly used to carry out or facilitate clearly unlawful, harmful, fraudulent, infringing, malicious security-bypass, credential theft, account theft, or unauthorized-access activity.
 
-1. It has independently reviewed and will continuously comply with the terms of service, acceptable use policies, supported countries and regions, account/API key rules, commercial-use requirements, resale restrictions, risk-control requirements, and technical restrictions of OpenAI, Anthropic, Google, and any other upstream service providers.
-2. It will not use this project to bypass, or assist others in bypassing, upstream regional restrictions, access restrictions, account restrictions, risk controls, billing restrictions, identity verification, usage limits, or terms of service.
-3. It will not provide API relay, model-call resale, account quota distribution, shared subscriptions, paid calls, top-up/payment agency, or similar services to the public or an indefinite group of users unless all necessary authorizations, qualifications, filings, permits, assessments, or contractual arrangements have been obtained.
-4. If it provides generative AI services, deep synthesis services, algorithm-related services, API relay, paid calls, or other potentially regulated services within Mainland China or to the Mainland China public, it will independently complete all potentially applicable obligations regarding internet information services, generative AI services, deep synthesis, algorithm filing, security assessment, cybersecurity, data security, personal information protection, content safety, payment settlement, taxes, and upstream authorization.
-5. It will maintain user management, access control, content review, abuse handling, log retention, privacy protection, data deletion, complaint handling, emergency takedown, and security incident response mechanisms appropriate to the scale and risk of its business.
-6. It will not make any statement, commitment, marketing representation, or warranty to any user, customer, partner, channel, regulator, or third party that conflicts with Section 3 of this document.
-7. It will be independently responsible for consequences arising from its deployment, operation, promotion, charging, user-behavior management, content processing, data processing, account usage, API calls, or violations of laws, regulations, regulatory requirements, contractual obligations, or upstream rules.
+## 7. Acknowledgement record
 
-## 5. Risk and Responsibility Notice
+After acknowledgement, the system records the current document version, administrator account identifier, acknowledgement time, IP address, and User-Agent as necessary evidence that the administrator reviewed and accepted the current version.
 
-Using Sub2API for public API services, commercial relay, quota distribution, team sharing, paid calls, or similar purposes may involve risks relating to terms of service, contractual breach, data protection, content safety, consumer protection, payment settlement, taxes, export controls, sanctions compliance, cybersecurity, industry access, and administrative regulation. Requirements vary by jurisdiction and business model and may change over time.
+When this document is updated, the system may require acknowledgement again so that new operational requirements and risk notices are expressly brought to the administrator's attention.
 
-The mandatory notice, document link, exact-phrase acknowledgment, and local acknowledgment record in the console are intended to provide clear, conspicuous, and reproducible notice of deployment and operation risks, confirm that the console user has read the current version of this document, and create a clear responsibility-separation record between the open-source project, copyright holders, contributors, maintainers and any third-party deploying, operating, or controlling party.
+## 8. How to acknowledge
 
-## 6. Electronic Acknowledgment
+By reviewing this document in the administration experience, selecting the reading acknowledgement, and typing the following confirmation phrase exactly, the administrator confirms that they have read, understood, and agreed to this document:
 
-By continuing to use the console, opening the document link, reading this document, and typing the required confirmation phrase exactly as displayed, the acknowledging party electronically confirms that it has read, understood, and agreed to this document, and agrees that the system may record necessary evidence including the acknowledged version, acknowledgment time, console account identifier, IP address, and User-Agent.
+> I have read, understood, and agree to the Muxway Administrator Deployment and Operation Acknowledgement
+
+If there is uncertainty about licensing, filing, taxation, payments, privacy, or other legal obligations in a particular jurisdiction or business model, advice should be obtained from a suitably qualified professional. This document itself is not legal advice.
