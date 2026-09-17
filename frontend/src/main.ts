@@ -28,6 +28,7 @@ import './smirel/styles/oauth-callback-polish.css'
 import './smirel/styles/light-theme-hardening.css'
 import './smirel/styles/admin-payment-light.css'
 import './smirel/styles/admin-resource-light.css'
+import './smirel/styles/workspace-light-tail.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
