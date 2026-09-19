@@ -10,6 +10,7 @@ import {
   type OAuthProvider,
 } from '../core/api'
 import { useSession } from '../core/session'
+import { interfacePreferences } from '../core/preferences'
 
 const route = useRoute()
 const router = useRouter()
@@ -267,7 +268,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-page">
+  <div class="auth-page" :class="{ 'is-light': interfacePreferences.resolvedTheme === 'light' }">
     <RouterLink to="/home" class="auth-brand brand-link">
       <img :src="logoUrl" alt="Smirel" />
       <span>
@@ -925,11 +926,10 @@ async function submit() {
   letter-spacing: .04em;
 }
 
-/* The auth surface intentionally follows the OS color scheme instead of the
- * saved in-app theme. This keeps login/register neutral before a workspace
- * preference is chosen, and updates live when the system theme changes. */
-@media (prefers-color-scheme: light) {
-  .auth-page {
+/* Auth pages follow the app-wide interface theme. The root class is driven by
+ * interfacePreferences.resolvedTheme, so login/register stay in sync with the
+ * same light/dark state used by the rest of Smirel. */
+.auth-page.is-light {
     color-scheme: light;
     color: #202830;
     background:
@@ -938,58 +938,58 @@ async function submit() {
       #f4f7f9;
   }
 
-  .auth-page::before {
+.auth-page.is-light::before {
     background:
       linear-gradient(90deg, transparent 0 49.96%, rgba(40, 61, 78, .035) 50%, transparent 50.04%),
       linear-gradient(180deg, rgba(255,255,255,.72), transparent 18%);
     opacity: .75;
   }
 
-  .auth-brand strong {
+.auth-page.is-light .auth-brand strong {
     color: #202830;
   }
 
-  .auth-brand small {
+.auth-page.is-light .auth-brand small {
     color: #7a8793;
   }
 
-  .auth-kicker {
+.auth-page.is-light .auth-kicker {
     color: #6f7f8d;
   }
 
-  .auth-kicker::before {
+.auth-page.is-light .auth-kicker::before {
     background: #4b9bd3;
   }
 
-  .auth-intro h2 {
+.auth-page.is-light .auth-intro h2 {
     color: #202830;
   }
 
-  .auth-intro > p {
+.auth-page.is-light .auth-intro > p {
     color: #697783;
   }
 
-  .auth-capabilities {
+.auth-page.is-light .auth-capabilities {
     border-top-color: #dce4ea;
   }
 
-  .auth-capabilities > div {
+.auth-page.is-light .auth-capabilities > div {
     border-bottom-color: #dce4ea;
   }
 
-  .auth-capabilities b {
+.auth-page.is-light .auth-capabilities b {
     color: #7d8a96;
   }
 
-  .auth-capabilities strong {
+.auth-page.is-light .auth-capabilities strong {
     color: #34414c;
   }
 
-  .auth-capabilities small {
+.auth-page.is-light .auth-capabilities small {
     color: #7b8792;
   }
 
-  .auth-card {
+.auth-page.is-light .auth-card {
     border-color: #d7e0e7;
     background: rgba(255, 255, 255, .92);
     box-shadow:
@@ -999,134 +999,133 @@ async function submit() {
     -webkit-backdrop-filter: blur(16px);
   }
 
-  .auth-card-meta {
+.auth-page.is-light .auth-card-meta {
     color: #74828f;
   }
 
-  .auth-card-meta i {
+.auth-page.is-light .auth-card-meta i {
     color: #678676;
   }
 
-  .auth-card header h1 {
+.auth-page.is-light .auth-card header h1 {
     color: #202830;
   }
 
-  .auth-card header p {
+.auth-page.is-light .auth-card header p {
     color: #71808d;
   }
 
-  .oauth-button {
+.auth-page.is-light .oauth-button {
     border-color: #d8e1e8;
     color: #34414c;
     background: #fbfcfd;
   }
 
-  .oauth-button:hover {
+.auth-page.is-light .oauth-button:hover {
     border-color: #c5d2dc;
     background: #f4f8fb;
   }
 
-  .oauth-provider-mark {
+.auth-page.is-light .oauth-provider-mark {
     border-color: #d3dde5;
     color: #34414c;
     background: #ffffff;
   }
 
-  .oauth-divider {
+.auth-page.is-light .oauth-divider {
     color: #8a96a1;
   }
 
-  .oauth-divider::before,
-  .oauth-divider::after {
+.auth-page.is-light .oauth-divider::before,
+.auth-page.is-light .oauth-divider::after {
     background: #dfe6eb;
   }
 
-  .auth-card label {
+.auth-page.is-light .auth-card label {
     color: #52616e;
   }
 
-  .auth-card input {
+.auth-page.is-light .auth-card input {
     border-color: #d3dde5;
     background: #ffffff;
     color: #202830;
     box-shadow: inset 0 1px 0 rgba(28, 44, 57, .018);
   }
 
-  .auth-card input::placeholder {
+.auth-page.is-light .auth-card input::placeholder {
     color: #9aa4ad;
   }
 
-  .auth-card input:hover {
+.auth-page.is-light .auth-card input:hover {
     border-color: #becbd5;
   }
 
-  .auth-card input:focus {
+.auth-page.is-light .auth-card input:focus {
     border-color: #62a8d8;
     background: #ffffff;
     box-shadow: 0 0 0 3px rgba(38, 143, 216, .12);
   }
 
-  .turnstile-shell {
+.auth-page.is-light .turnstile-shell {
     border-color: #d5dfe6;
     background: #f8fafc;
   }
 
-  .turnstile-shell.ready {
+.auth-page.is-light .turnstile-shell.ready {
     border-color: #b9ddcd;
     background: #f3fbf7;
   }
 
-  .turnstile-shell.failed {
+.auth-page.is-light .turnstile-shell.failed {
     border-color: #e5c3c8;
     background: #fff7f8;
   }
 
-  .turnstile-meta,
-  .turnstile-meta > span,
-  .turnstile-meta small {
+.auth-page.is-light .turnstile-meta,
+.auth-page.is-light .turnstile-meta > span,
+.auth-page.is-light .turnstile-meta small {
     color: #788794;
   }
 
-  .turnstile-shell.ready .turnstile-meta small {
+.auth-page.is-light .turnstile-shell.ready .turnstile-meta small {
     color: #4c8c6d;
   }
 
-  .turnstile-shell.failed .turnstile-meta small {
+.auth-page.is-light .turnstile-shell.failed .turnstile-meta small {
     color: #b05d66;
   }
 
-  .auth-submit {
+.auth-page.is-light .auth-submit {
     border-color: #268fd8;
     background: #268fd8;
     color: #ffffff;
     box-shadow: 0 8px 18px rgba(38, 143, 216, .16);
   }
 
-  .auth-submit:hover:not(:disabled) {
+.auth-page.is-light .auth-submit:hover:not(:disabled) {
     border-color: #1d82c9;
     background: #1d82c9;
   }
 
-  .auth-card footer {
+.auth-page.is-light .auth-card footer {
     color: #7a8792;
   }
 
-  .auth-card footer a {
+.auth-page.is-light .auth-card footer a {
     color: #586976;
   }
 
-  .auth-card footer a:hover {
+.auth-page.is-light .auth-card footer a:hover {
     color: #202830;
   }
 
-  .auth-card footer span a {
+.auth-page.is-light .auth-card footer span a {
     color: #2c82bb;
   }
 
-  .auth-page-footer {
+.auth-page.is-light-footer {
     color: #8c98a2;
   }
-}
 
 @media (max-width: 980px) {
   .auth-layout {
