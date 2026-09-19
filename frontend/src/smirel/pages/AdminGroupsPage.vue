@@ -234,8 +234,8 @@ onMounted(() => void loadAll())
 
       <div class="group-list">
         <article v-for="g in visibleGroups" :key="g.id" class="group-card" :class="{ open: expandedId === g.id }">
-          <button class="group-main" @click="toggleGroup(g)">
-            <span class="mark">{{ platformMark(g.platform) }}</span>
+          <button class="group-main" :aria-expanded="expandedId === g.id" @click="toggleGroup(g)">
+            <span class="mark group-provider-mark" :data-platform="g.platform">{{ platformMark(g.platform) }}</span>
             <span class="identity"><strong>{{ g.name }}</strong><small>{{ platformLabel(g.platform) }} · #{{ g.id }}</small></span>
             <span class="state" :class="g.status"><i></i>{{ g.status === 'active' ? '启用' : '停用' }}</span>
             <span class="metric"><small>上游账号</small><b>{{ groupAccounts(g).length }}</b></span>
@@ -245,7 +245,9 @@ onMounted(() => void loadAll())
             <span class="chev">›</span>
           </button>
 
-          <div v-if="expandedId === g.id" class="detail">
+          <div class="detail-shell" :class="{ open: expandedId === g.id }" :aria-hidden="expandedId !== g.id">
+            <div class="detail-clip" :inert="expandedId !== g.id">
+              <div class="detail">
             <div class="detail-top">
               <div><span>分组说明</span><strong>{{ g.description || '暂无说明' }}</strong></div>
               <div class="detail-actions"><button @click="openEdit(g)">编辑分组</button><button @click="setGroupStatus(g)">{{ g.status === 'active' ? '停用' : '启用' }}</button><button class="accent" :disabled="busy === `sync-${g.id}`" @click="syncModelsAndPublish(g)">{{ busy === `sync-${g.id}` ? '同步中…' : '同步模型并发布' }}</button></div>
@@ -268,6 +270,8 @@ onMounted(() => void loadAll())
                 <div class="chips"><span v-for="m in (configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).slice(0, 18)" :key="m">{{ m }}</span><span v-if="(configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).length > 18">+{{ (configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).length - 18 }}</span></div>
                 <p class="model-hint">“同步模型并发布”会从已绑定 API Key 上游读取真实模型，安全合并保存 model_mapping，再更新分组模型列表与模型广场渠道。</p>
               </section>
+            </div>
+              </div>
             </div>
           </div>
         </article>
