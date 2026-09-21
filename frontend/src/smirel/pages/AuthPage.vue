@@ -57,6 +57,7 @@ const needsTurnstile = computed(() =>
   && ['login', 'register', 'forgot'].includes(kind.value),
 )
 const turnstilePending = computed(() => needsTurnstile.value && !turnstileToken.value && !turnstileLoadError.value)
+const turnstileTheme = computed(() => interfacePreferences.resolvedTheme === 'light' ? 'light' : 'dark')
 const titles: Record<string, string> = {
   login: '登录 Muxway 模枢',
   register: '创建 Muxway 账户',
@@ -150,8 +151,9 @@ async function renderTurnstile() {
 
     turnstileWidgetId = window.turnstile.render(container, {
       sitekey: turnstileSiteKey.value,
-      theme: 'auto',
-      appearance: 'interaction-only',
+      theme: turnstileTheme.value,
+      appearance: 'always',
+      size: 'flexible',
       callback: (value: unknown) => {
         turnstileToken.value = typeof value === 'string' ? value : ''
         turnstileLoadError.value = ''
@@ -190,7 +192,7 @@ async function loadPublicAuthSettings() {
 }
 
 watch(
-  () => [kind.value, turnstileEnabled.value, turnstileSiteKey.value],
+  () => [kind.value, turnstileEnabled.value, turnstileSiteKey.value, turnstileTheme.value],
   () => void renderTurnstile(),
 )
 
@@ -385,14 +387,15 @@ async function submit() {
             <input v-model="token" type="text" required placeholder="Reset token" />
           </label>
 
-          <div v-if="needsTurnstile" class="turnstile-shell" :class="{ ready: Boolean(turnstileToken), failed: Boolean(turnstileLoadError) }">
-            <div ref="turnstileContainer" class="turnstile-widget" aria-label="Cloudflare Turnstile 人机验证"></div>
-            <div class="turnstile-meta" aria-live="polite">
-              <span><i></i>Cloudflare Turnstile</span>
-              <small v-if="turnstileLoadError">{{ turnstileLoadError }}</small>
-              <small v-else-if="turnstileToken">安全验证已通过</small>
-              <small v-else>正在进行安全检查</small>
-            </div>
+          <div v-if="needsTurnstile" class="turnstile-official">
+            <div
+              ref="turnstileContainer"
+              class="turnstile-widget"
+              aria-label="Cloudflare Turnstile 人机验证"
+            ></div>
+            <p v-if="turnstileLoadError" class="turnstile-error" aria-live="polite">
+              {{ turnstileLoadError }}
+            </p>
           </div>
 
           <p v-if="error" class="form-error">{{ error }}</p>
@@ -762,88 +765,39 @@ async function submit() {
   box-shadow: 0 0 0 3px rgba(60,126,178,.10);
 }
 
-.turnstile-shell {
+.turnstile-official {
   width: 100%;
-  padding: 9px 10px;
-  border: 1px solid #27313a;
-  border-radius: 10px;
-  background: #090c10;
-  transition: border-color .16s ease, background-color .16s ease;
-}
-
-.turnstile-shell.ready {
-  border-color: #28503f;
-  background: #0a110e;
-}
-
-.turnstile-shell.failed {
-  border-color: #4b2a30;
-  background: #130c0e;
+  min-height: 65px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .turnstile-widget {
   width: 100%;
+  min-height: 65px;
   display: flex;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
 .turnstile-widget:empty {
-  display: none;
+  min-height: 65px;
 }
 
-.turnstile-meta {
-  min-height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #697783;
-  font-size: .65rem;
-  line-height: 1.35;
+.turnstile-widget :deep(iframe) {
+  display: block;
+  max-width: 100%;
 }
 
-.turnstile-meta > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex: 0 0 auto;
-  color: #788794;
-  font-weight: 650;
-}
-
-.turnstile-meta i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #6f7b86;
-  box-shadow: 0 0 0 3px rgba(111,123,134,.08);
-}
-
-.turnstile-shell.ready .turnstile-meta i {
-  background: #53bf8e;
-  box-shadow: 0 0 0 3px rgba(83,191,142,.09);
-}
-
-.turnstile-shell.failed .turnstile-meta i {
-  background: #d46e78;
-  box-shadow: 0 0 0 3px rgba(212,110,120,.08);
-}
-
-.turnstile-meta small {
-  min-width: 0;
-  color: #68737e;
-  font-size: .64rem;
-  text-align: right;
-}
-
-.turnstile-shell.ready .turnstile-meta small {
-  color: #6ea98f;
-}
-
-.turnstile-shell.failed .turnstile-meta small {
+.turnstile-error {
+  margin: 0;
   color: #cc7780;
+  font-size: .72rem;
+  line-height: 1.45;
 }
+
 
 .auth-submit {
   width: 100%;
