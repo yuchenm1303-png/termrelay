@@ -242,7 +242,10 @@ async function submit() {
       await router.push(redirect)
     } else if (kind.value === 'register') {
       await register(email.value.trim(), password.value, turnstileTokenForRequest)
-      await router.push('/dashboard')
+      const redirect = typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : (isAdmin.value ? '/admin/dashboard' : '/dashboard')
+      await router.push(redirect)
     } else if (kind.value === 'forgot') {
       await api.post('/auth/forgot-password', {
         email: email.value.trim(),
