@@ -15,7 +15,6 @@ import { interfacePreferences } from '../core/preferences'
 const route = useRoute()
 const router = useRouter()
 const { login, register, isAdmin } = useSession()
-
 interface PublicAuthSettings {
   turnstile_enabled?: boolean
   turnstile_site_key?: string
@@ -34,7 +33,7 @@ declare global {
 }
 
 const TURNSTILE_SCRIPT_ID = 'smirel-turnstile-script'
-const logoUrl = `${import.meta.env.BASE_URL}smirel-logo.png`
+const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -59,8 +58,8 @@ const needsTurnstile = computed(() =>
 )
 const turnstilePending = computed(() => needsTurnstile.value && !turnstileToken.value && !turnstileLoadError.value)
 const titles: Record<string, string> = {
-  login: '登录 Smirel',
-  register: '创建 Smirel 账户',
+  login: '登录 Muxway 模枢',
+  register: '创建 Muxway 账户',
   forgot: '找回密码',
   reset: '设置新密码',
 }
@@ -243,7 +242,10 @@ async function submit() {
       await router.push(redirect)
     } else if (kind.value === 'register') {
       await register(email.value.trim(), password.value, turnstileTokenForRequest)
-      await router.push('/dashboard')
+      const redirect = typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : (isAdmin.value ? '/admin/dashboard' : '/dashboard')
+      await router.push(redirect)
     } else if (kind.value === 'forgot') {
       await api.post('/auth/forgot-password', {
         email: email.value.trim(),
@@ -270,16 +272,16 @@ async function submit() {
 <template>
   <div class="auth-page" :class="{ 'is-light': interfacePreferences.resolvedTheme === 'light' }">
     <RouterLink to="/home" class="auth-brand brand-link">
-      <img :src="logoUrl" alt="Smirel" />
+      <img :src="logoUrl" alt="Muxway" />
       <span>
-        <strong>Smirel</strong>
-        <small>API SERVICE</small>
+        <strong>Muxway</strong>
+        <small>模枢 · API SERVICE</small>
       </span>
     </RouterLink>
 
     <main class="auth-layout">
-      <section class="auth-intro" aria-label="Smirel Console">
-        <span class="auth-kicker">SMIREL CONSOLE</span>
+      <section class="auth-intro" aria-label="Muxway Console">
+        <span class="auth-kicker">MUXWAY CONSOLE</span>
         <h2>统一管理你的<br />API 工作区。</h2>
         <p>密钥、模型、用量与账单，集中在一个清晰、稳定的控制台。</p>
 
@@ -310,7 +312,7 @@ async function submit() {
 
       <section class="auth-card">
         <div class="auth-card-meta">
-          <span>SMIREL ACCOUNT</span>
+          <span>MUXWAY ACCOUNT</span>
           <i><b></b>SECURE ACCESS</i>
         </div>
 
@@ -417,7 +419,7 @@ async function submit() {
     </main>
 
     <footer class="auth-page-footer">
-      <span>Smirel · API Service</span>
+      <span>Muxway 模枢 · One API. Every model.</span>
       <span>Console Access</span>
     </footer>
   </div>
