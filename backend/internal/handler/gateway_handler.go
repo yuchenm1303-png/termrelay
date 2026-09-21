@@ -1043,10 +1043,17 @@ func (h *GatewayHandler) Models(c *gin.Context) {
 		platform = forcedPlatform
 	}
 
+	var group *service.Group
+	if apiKey != nil {
+		group = apiKey.Group
+	}
+	// Image generation models are only advertised when the caller group allows them.
+	imageGenerationAllowed := service.GroupAllowsImageGeneration(group)
+
 	if platform == service.PlatformComposite {
-		availableModels := h.compositeAvailableModels(c.Request.Context(), groupID)
+		availableModels := filterImageGenerationModelIDs(h.compositeAvailableModels(c.Request.Context(), groupID), imageGenerationAllowed)
 		if apiKey != nil && apiKey.Group != nil && apiKey.Group.CustomModelsListEnabled() {
-			availableModels = filterModelsByCustomList(availableModels, defaultModelIDsForPlatform(service.PlatformComposite), apiKey.Group.ModelsListConfig.Models)
+			availableModels = filterModelsByCustomList(availableModels, filterImageGenerationModelIDs(defaultModelIDsForPlatform(service.PlatformComposite), imageGenerationAllowed), apiKey.Group.ModelsListConfig.Models)
 			writeCustomModelsList(c, service.PlatformComposite, availableModels)
 			return
 		}
@@ -1054,14 +1061,14 @@ func (h *GatewayHandler) Models(c *gin.Context) {
 			writeModelsList(c, service.PlatformComposite, availableModels)
 			return
 		}
-		writeModelsList(c, service.PlatformComposite, defaultModelIDsForPlatform(service.PlatformComposite))
+		writeModelsList(c, service.PlatformComposite, filterImageGenerationModelIDs(defaultModelIDsForPlatform(service.PlatformComposite), imageGenerationAllowed))
 		return
 	}
 
 	// Get available models from account configurations for the selected group platform.
-	availableModels := h.gatewayService.GetAvailableModels(c.Request.Context(), groupID, platform)
+	availableModels := filterImageGenerationModelIDs(h.gatewayService.GetAvailableModels(c.Request.Context(), groupID, platform), imageGenerationAllowed)
 	if apiKey != nil && apiKey.Group != nil && apiKey.Group.CustomModelsListEnabled() {
-		fallbackModels := defaultModelIDsForPlatform(platform)
+		fallbackModels := filterImageGenerationModelIDs(defaultModelIDsForPlatform(platform), imageGenerationAllowed)
 		availableModels = filterModelsByCustomList(customModelsListSource(platform, availableModels, fallbackModels), fallbackModels, apiKey.Group.ModelsListConfig.Models)
 		writeCustomModelsList(c, platform, availableModels)
 		return
@@ -1076,7 +1083,7 @@ func (h *GatewayHandler) Models(c *gin.Context) {
 	if platform == service.PlatformOpenAI {
 		c.JSON(http.StatusOK, gin.H{
 			"object": "list",
-			"data":   openai.DefaultModels,
+			"data":   filterOpenAIDefaultModels(openai.DefaultModels, imageGenerationAllowed),
 		})
 		return
 	}
@@ -1084,12 +1091,12 @@ func (h *GatewayHandler) Models(c *gin.Context) {
 	if platform == service.PlatformGemini {
 		c.JSON(http.StatusOK, gin.H{
 			"object": "list",
-			"data":   geminicli.DefaultModels,
+			"data":   filterGeminiDefaultModels(geminicli.DefaultModels, imageGenerationAllowed),
 		})
 		return
 	}
 	if platform == service.PlatformGrok {
-		writeGrokModelsList(c, xai.DefaultModelIDs())
+		writeGrokModelsList(c, filterImageGenerationModelIDs(xai.DefaultModelIDs(), imageGenerationAllowed))
 		return
 	}
 
@@ -2394,4 +2401,50 @@ func (h *GatewayHandler) getUserMsgQueueMode(account *service.Account, parsed *s
 		mode = h.cfg.Gateway.UserMessageQueue.GetEffectiveMode()
 	}
 	return mode
+}
+
+// filterImageGenerationModelIDs removes image generation models from a model ID list when the
+// caller group does not allow image generation.
+func filterImageGenerationModelIDs(modelIDs []string, imageGenerationAllowed bool) []string {
+	if imageGenerationAllowed {
+		return modelIDs
+	}
+	filtered := make([]string, 0, len(modelIDs))
+	for _, modelID := range modelIDs {
+		if service.IsImageGenerationModelID(modelID) {
+			continue
+		}
+		filtered = append(filtered, modelID)
+	}
+	return filtered
+}
+
+// filterOpenAIDefaultModels removes image generation entries from the OpenAI default model list.
+func filterOpenAIDefaultModels(models []openai.Model, imageGenerationAllowed bool) []openai.Model {
+	if imageGenerationAllowed {
+		return models
+	}
+	filtered := make([]openai.Model, 0, len(models))
+	for _, model := range models {
+		if service.IsImageGenerationModelID(model.ID) {
+			continue
+		}
+		filtered = append(filtered, model)
+	}
+	return filtered
+}
+
+// filterGeminiDefaultModels removes image generation entries from the Gemini default model list.
+func filterGeminiDefaultModels(models []geminicli.Model, imageGenerationAllowed bool) []geminicli.Model {
+	if imageGenerationAllowed {
+		return models
+	}
+	filtered := make([]geminicli.Model, 0, len(models))
+	for _, model := range models {
+		if service.IsImageGenerationModelID(model.ID) {
+			continue
+		}
+		filtered = append(filtered, model)
+	}
+	return filtered
 }

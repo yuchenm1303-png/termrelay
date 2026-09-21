@@ -100,6 +100,19 @@ type channelCache struct {
 
 	// 冷路径（CRUD 操作）
 	byID     map[int64]*Channel
+	// pricingEntryCount counts usable pricing rows seen for a channel, any platform.
+	// A channel with restrict_models=true and zero entries anywhere has an
+	// allow-list that resolves to the empty set, so restriction must fail open for
+	// that channel instead of rejecting every model (Bug 1 regression test). The
+	// count is deliberately per channel rather than per (groupID, platform): a
+	// channel that does carry pricing rows keeps the existing cross-platform
+	// isolation semantics, so a missing row for one platform still restricts.
+	pricingEntryCount map[int64]int
+	// pricingIndexLoaded records that expandPricingToCache ran for this cache.
+	// Hand-built test caches keep it false and therefore keep the legacy strict
+	// semantics, because their pricing index was never loaded.
+	pricingIndexLoaded bool
+
 	loadedAt time.Time
 }
 
@@ -210,6 +223,7 @@ func newEmptyChannelCache() *channelCache {
 		channelByGroupID:        make(map[int64]*Channel),
 		groupPlatform:           make(map[int64]string),
 		byID:                    make(map[int64]*Channel),
+		pricingEntryCount:       make(map[int64]int),
 	}
 }
 
@@ -217,10 +231,22 @@ func newEmptyChannelCache() *channelCache {
 // 各平台严格独立：antigravity 分组只匹配 antigravity 定价，不会匹配 anthropic/gemini 的定价。
 // 查找时通过 lookupPricingAcrossPlatforms() 在本平台内查找。
 func expandPricingToCache(cache *channelCache, ch *Channel, gid int64, platform string) {
+	cache.pricingIndexLoaded = true
+	if cache.pricingEntryCount == nil {
+		cache.pricingEntryCount = make(map[int64]int)
+	}
 	for j := range ch.ModelPricing {
 		pricing := &ch.ModelPricing[j]
+		// Count usable pricing rows of the whole channel before the platform
+		// filter runs: a row that belongs to another platform still proves
+		// that the channel has a configured allow-list, so the strict
+		// cross-platform isolation semantics must be kept instead of failing
+		// open. Only a channel with no usable pricing row may fail open (Bug 1).
+		if len(pricing.Models) > 0 {
+			cache.pricingEntryCount[ch.ID]++
+		}
 		if !isPlatformPricingMatch(platform, pricing.Platform) {
-			continue // 跳过非本平台的定价
+			continue // skip pricing rows of other platforms
 		}
 		// 使用定价条目的原始平台作为缓存 key，防止跨平台同名模型冲突
 		pricingPlatform := pricing.Platform
@@ -577,10 +603,30 @@ func resolveMapping(lk *channelLookup, groupID int64, model string) ChannelMappi
 	return result
 }
 
+// hasAnyPricingEntries reports whether the cache expanded at least one usable
+// pricing entry for the given channel. Restriction may fail open only when the
+// whole channel carries no pricing entries: then the restrict_models allow-list
+// resolves to the empty set and would otherwise reject every model (Bug 1).
+// A cache that never ran expandPricingToCache (hand-built test fixtures) keeps
+// the legacy strict semantics and reports true.
+func (c *channelCache) hasAnyPricingEntries(channelID int64) bool {
+	if c == nil || !c.pricingIndexLoaded {
+		return true
+	}
+	return c.pricingEntryCount[channelID] > 0
+}
+
 // checkRestricted 基于已查找的渠道信息检查模型是否被限制。
 // 只在本平台的定价列表中查找。
 func checkRestricted(lk *channelLookup, groupID int64, model string) bool {
 	if !lk.channel.RestrictModels {
+		return false
+	}
+	// Fail open only when the whole channel carries no pricing entry at all: an
+	// allow-list that resolves to the empty set must not reject every model.
+	// A channel that has pricing rows keeps the cross-platform isolation
+	// semantics, so a missing row for the requested platform still restricts.
+	if !lk.cache.hasAnyPricingEntries(lk.channel.ID) {
 		return false
 	}
 	modelLower := strings.ToLower(model)
