@@ -36,6 +36,19 @@ func GroupAllowsImageGeneration(group *Group) bool {
 	return group == nil || group.AllowImageGeneration
 }
 
+// IsImageGenerationModelID reports whether the given model ID is an image-generation
+// model. It is the public counterpart of the unexported isOpenAIImageGenerationModel
+// (gpt-image-* / grok-imagine-*) and isImageGenerationModel (gemini-*-image-*) so
+// that customer-facing model listings can hide these IDs when a group disallows
+// image generation.
+func IsImageGenerationModelID(modelID string) bool {
+	modelID = strings.TrimSpace(modelID)
+	if modelID == "" {
+		return false
+	}
+	return isOpenAIImageGenerationModel(modelID) || isImageGenerationModel(modelID)
+}
+
 // IsImageGenerationIntent classifies requests that can produce generated images.
 func IsImageGenerationIntent(endpoint string, requestedModel string, body []byte) bool {
 	if IsImageGenerationEndpoint(endpoint) {
