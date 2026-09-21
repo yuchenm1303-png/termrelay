@@ -166,10 +166,15 @@ func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscripti
 		ctx := context.WithValue(c.Request.Context(), ctxkey.UserID, apiKey.User.ID)
 		c.Request = c.Request.WithContext(ctx)
 		billingInfoRequest := c.Request.URL.Path == "/v1/sub2api/billing"
-		// Async image task polling only reads data that already belongs to the
-		// authenticated key and must remain available after the completed
-		// generation consumes the key's remaining balance.
-		skipBilling := c.Request.URL.Path == "/v1/usage" || billingInfoRequest || isAsyncImageTaskRead(c.Request.Method, c.Request.URL.Path)
+		modelCatalogRequest := c.Request.Method == http.MethodGet && c.Request.URL.Path == "/v1/models"
+		// Catalog/usage endpoints only expose metadata already scoped to the
+		// authenticated key's group. They must remain available when a key is
+		// quota-exhausted or lacks an active subscription so clients can still
+		// discover the exact model IDs they are entitled to configure. Real
+		// inference endpoints continue through the normal billing checks.
+		// Async image task polling likewise only reads data that already belongs
+		// to the authenticated key.
+		skipBilling := c.Request.URL.Path == "/v1/usage" || billingInfoRequest || modelCatalogRequest || isAsyncImageTaskRead(c.Request.Method, c.Request.URL.Path)
 
 		// ── 4. SimpleMode → early return ─────────────────────────────
 
