@@ -36,6 +36,23 @@ var cursorResponsesUnsupportedFields = []string{
 	"stream_options",
 }
 
+func buildChatCompletionsKeepaliveSSE(model string) string {
+	payload, err := json.Marshal(gin.H{
+		"id":      "chatcmpl-keepalive",
+		"object":  "chat.completion.chunk",
+		"created": time.Now().Unix(),
+		"model":   strings.TrimSpace(model),
+		"choices": []any{},
+	})
+	if err != nil {
+		// The payload above contains only primitive values, so this is a
+		// defensive fallback. A plain SSE comment still keeps the transport
+		// alive even though SDKs may not surface it as a parsed chunk.
+		return ":\n\n"
+	}
+	return "data: " + string(payload) + "\n\n"
+}
+
 // ForwardAsChatCompletions accepts a Chat Completions request body, converts it
 // to OpenAI Responses API format, forwards to the OpenAI upstream, and converts
 // the response back to Chat Completions format.
@@ -940,9 +957,13 @@ func (s *OpenAIGatewayService) handleChatStreamingResponse(
 			if time.Since(lastDataAt) < keepaliveInterval {
 				continue
 			}
-			// Send SSE comment as keepalive
+			// Send an OpenAI-compatible empty chunk rather than a bare SSE
+			// comment. SDKs discard comments before yielding stream objects, so
+			// downstream watchdogs cannot tell a healthy idle stream from a dead
+			// connection. An empty choices list carries no user-visible content
+			// or usage but is still surfaced as a real ChatCompletionChunk.
 			writeStreamHeaders()
-			if _, err := fmt.Fprint(c.Writer, ":\n\n"); err != nil {
+			if _, err := fmt.Fprint(c.Writer, buildChatCompletionsKeepaliveSSE(originalModel)); err != nil {
 				logger.L().Info("openai chat_completions stream: client disconnected during keepalive",
 					zap.String("request_id", requestID),
 				)
