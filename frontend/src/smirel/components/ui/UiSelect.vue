@@ -340,6 +340,7 @@ onBeforeUnmount(() => {
 .ui-select {
   --ui-select-height: 40px;
   --ui-select-radius: 9px;
+  --ui-select-optical-y: 1px;
   --ui-select-bg: #0b0d11;
   --ui-select-bg-hover: #101319;
   --ui-select-bg-open: #10151b;
@@ -379,9 +380,9 @@ onBeforeUnmount(() => {
   background: var(--ui-select-bg);
   color: var(--ui-select-text);
   box-shadow: inset 0 1px rgba(255, 255, 255, .015);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 18px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   text-align: left;
   outline: none;
@@ -406,6 +407,7 @@ onBeforeUnmount(() => {
 }
 
 .ui-select__value {
+  flex: 1 1 auto;
   min-width: 0;
   height: 100%;
   display: flex;
@@ -418,6 +420,7 @@ onBeforeUnmount(() => {
   letter-spacing: -.006em;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transform: translateY(var(--ui-select-optical-y));
 }
 
 .ui-select__value.is-placeholder {
@@ -427,9 +430,12 @@ onBeforeUnmount(() => {
 .ui-select__chevron {
   width: 18px;
   height: 18px;
-  display: grid;
-  place-items: center;
+  flex: 0 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--ui-select-muted);
+  transform: translateY(var(--ui-select-optical-y));
   transform-origin: 50% 50%;
   transition: transform .2s cubic-bezier(.2, .78, .2, 1), color .16s ease;
 }
@@ -451,7 +457,7 @@ onBeforeUnmount(() => {
 }
 
 .is-open .ui-select__chevron {
-  transform: rotate(180deg);
+  transform: translateY(var(--ui-select-optical-y)) rotate(180deg);
 }
 
 .is-disabled {
@@ -553,6 +559,7 @@ onBeforeUnmount(() => {
   line-height: 1.2;
   white-space: nowrap;
   text-overflow: ellipsis;
+  transform: translateY(.5px);
 }
 
 .ui-select__option-copy small {
