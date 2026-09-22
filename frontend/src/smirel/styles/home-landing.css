@@ -310,13 +310,41 @@ html.smirel-app[data-theme='dark'] .home-page .home-model-chip img {
   width: 28px;
   height: 28px;
   padding: 3px;
-  filter: none;
-  opacity: .92;
+  opacity: 1;
+  /* Provider SVG assets are monochrome currentColor icons loaded through <img>,
+     so they otherwise render near-black in dark mode. Normalize them to one
+     bright ice-blue mark for consistent readability across every provider. */
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(84%)
+    sepia(35%)
+    saturate(903%)
+    hue-rotate(174deg)
+    brightness(105%)
+    contrast(102%)
+    drop-shadow(0 0 7px rgba(105, 190, 242, .16));
+  transition: filter .18s ease, opacity .18s ease, transform .18s cubic-bezier(.2,.78,.2,1);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:hover img {
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(92%)
+    sepia(23%)
+    saturate(1021%)
+    hue-rotate(174deg)
+    brightness(108%)
+    contrast(104%)
+    drop-shadow(0 0 9px rgba(115, 202, 255, .25));
+  transform: scale(1.035);
 }
 
 html.smirel-app[data-theme='dark'] .home-page .home-model-chip small {
-  color: #c9d6df;
+  color: #e5edf4;
   font-size: .65rem;
+  font-weight: 680;
 }
 
 html.smirel-app[data-theme='dark'] .home-page .home-section {
