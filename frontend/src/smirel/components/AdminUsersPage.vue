@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from './ui/UiSelect.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, getErrorMessage, previewMode } from '../core/api'
@@ -627,16 +628,28 @@ onMounted(() => void refreshAll())
           <WorkspaceNavIcon name="search" />
           <input v-model="searchInput" :placeholder="copy.searchPlaceholder" autocomplete="off" />
         </form>
-        <select v-model="roleFilter" :aria-label="copy.role" @change="updateFilters">
-          <option value="">{{ copy.allRoles }}</option>
-          <option value="user">{{ copy.normalUser }}</option>
-          <option value="admin">{{ copy.administrator }}</option>
-        </select>
-        <select v-model="statusFilter" :aria-label="copy.status" @change="updateFilters">
-          <option value="">{{ copy.allStatuses }}</option>
-          <option value="active">{{ copy.active }}</option>
-          <option value="disabled">{{ copy.disabledStatus }}</option>
-        </select>
+        <UiSelect
+          v-model="roleFilter"
+          :options="[
+            { label: copy.allRoles, value: '' },
+            { label: copy.normalUser, value: 'user' },
+            { label: copy.administrator, value: 'admin' },
+          ]"
+          :aria-label="copy.role"
+          min-width="142px"
+          @change="updateFilters"
+        />
+        <UiSelect
+          v-model="statusFilter"
+          :options="[
+            { label: copy.allStatuses, value: '' },
+            { label: copy.active, value: 'active' },
+            { label: copy.disabledStatus, value: 'disabled' },
+          ]"
+          :aria-label="copy.status"
+          min-width="142px"
+          @change="updateFilters"
+        />
         <button v-if="search || roleFilter || statusFilter" class="admin-users-clear" type="button" @click="clearFilters">{{ copy.clear }}</button>
       </div>
 
@@ -713,10 +726,15 @@ onMounted(() => void refreshAll())
           </label>
           <label>
             <span>{{ copy.accountRole }}</span>
-            <select v-model="createForm.role">
-              <option value="user">{{ copy.normalUser }}</option>
-              <option value="admin">{{ copy.administrator }}</option>
-            </select>
+            <UiSelect
+              v-model="createForm.role"
+              :options="[
+                { label: copy.normalUser, value: 'user' },
+                { label: copy.administrator, value: 'admin' },
+              ]"
+              :aria-label="copy.accountRole"
+              fluid
+            />
           </label>
 
           <div class="admin-user-dialog-actions">
@@ -734,7 +752,19 @@ onMounted(() => void refreshAll())
           <div class="admin-user-balance-target"><strong>{{ userName(balanceUser) }}</strong><span>{{ balanceUser.email }}</span></div>
           <p v-if="balanceError" class="admin-user-dialog-error">{{ balanceError }}</p>
           <div class="admin-user-balance-preview"><span>{{ copy.currentBalance }} <strong>{{ formatCurrency(balanceUser.balance) }}</strong></span><span>{{ copy.afterBalance }} <strong>{{ formatCurrency(balanceAfterAdjustment()) }}</strong></span></div>
-          <label><span>{{ copy.operation }}</span><select v-model="balanceForm.operation"><option value="add">{{ copy.addBalance }}</option><option value="subtract">{{ copy.subtractBalance }}</option><option value="set">{{ copy.setBalance }}</option></select></label>
+          <label>
+            <span>{{ copy.operation }}</span>
+            <UiSelect
+              v-model="balanceForm.operation"
+              :options="[
+                { label: copy.addBalance, value: 'add' },
+                { label: copy.subtractBalance, value: 'subtract' },
+                { label: copy.setBalance, value: 'set' },
+              ]"
+              :aria-label="copy.operation"
+              fluid
+            />
+          </label>
           <label><span>{{ copy.amount }}</span><input v-model="balanceForm.amount" type="number" :min="balanceForm.operation === 'set' ? 0 : 0.01" step="0.01" :placeholder="copy.amountPlaceholder" required /></label>
           <label><span>{{ copy.notes }}</span><input v-model="balanceForm.notes" :placeholder="copy.notesPlaceholder" maxlength="500" /></label>
           <div class="admin-user-dialog-actions"><button class="admin-users-secondary-button" type="button" :disabled="allocating" @click="closeBalanceDialog">{{ copy.cancel }}</button><button class="admin-users-primary-button" type="submit" :disabled="allocating">{{ allocating ? copy.allocating : copy.allocateSubmit }}</button></div>
