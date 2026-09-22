@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 // Admin Revenue Split —— 共建者分成（多受益人固定比例分账）
 //
 // 页面职责：配比例 → 看汇总 → 查明细 → 生成结算单 → 登记线下打款。
@@ -550,18 +551,22 @@ onMounted(loadAll)
         <div class="form-grid">
           <label class="field">
             <span>{{ t('payment.adminRevenueSplit.enableLabel') }}</span>
-            <select v-model="config.enabled">
-              <option :value="true">{{ t('payment.adminRevenueSplit.enabledOn') }}</option>
-              <option :value="false">{{ t('payment.adminRevenueSplit.enabledOff') }}</option>
-            </select>
+            <UiSelect
+              v-model="config.enabled"
+              :options="[{ label: t('payment.adminRevenueSplit.enabledOn'), value: true }, { label: t('payment.adminRevenueSplit.enabledOff'), value: false }]"
+              :aria-label="t('payment.adminRevenueSplit.enableLabel')"
+              fluid
+            />
             <em class="hint">{{ t('payment.adminRevenueSplit.enableHint') }}</em>
           </label>
           <label class="field">
             <span>{{ t('payment.adminRevenueSplit.baseModeLabel') }}</span>
-            <select v-model="config.base_mode">
-              <option value="gross_after_fee">{{ t('payment.adminRevenueSplit.baseModeGrossAfterFee') }}</option>
-              <option value="gross">{{ t('payment.adminRevenueSplit.baseModeGross') }}</option>
-            </select>
+            <UiSelect
+              v-model="config.base_mode"
+              :options="[{ label: t('payment.adminRevenueSplit.baseModeGrossAfterFee'), value: 'gross_after_fee' }, { label: t('payment.adminRevenueSplit.baseModeGross'), value: 'gross' }]"
+              :aria-label="t('payment.adminRevenueSplit.baseModeLabel')"
+              fluid
+            />
             <em class="hint">{{ t('payment.adminRevenueSplit.baseModeHint') }}</em>
           </label>
           <label class="field">
@@ -785,12 +790,17 @@ onMounted(loadAll)
           </label>
           <label class="field">
             <span>{{ t('payment.adminRevenueSplit.filterStatus') }}</span>
-            <select v-model="entryFilters.status">
-              <option value="">{{ t('payment.adminRevenueSplit.colStatus') }}</option>
-              <option value="pending">{{ t('payment.adminRevenueSplit.statusPending') }}</option>
-              <option value="settled">{{ t('payment.adminRevenueSplit.statusSettled') }}</option>
-              <option value="reversed">{{ t('payment.adminRevenueSplit.statusReversed') }}</option>
-            </select>
+            <UiSelect
+              v-model="entryFilters.status"
+              :options="[
+                { label: t('payment.adminRevenueSplit.colStatus'), value: '' },
+                { label: t('payment.adminRevenueSplit.statusPending'), value: 'pending' },
+                { label: t('payment.adminRevenueSplit.statusSettled'), value: 'settled' },
+                { label: t('payment.adminRevenueSplit.statusReversed'), value: 'reversed' },
+              ]"
+              :aria-label="t('payment.adminRevenueSplit.filterStatus')"
+              fluid
+            />
           </label>
           <label class="field">
             <span>{{ t('payment.adminRevenueSplit.filterStart') }}</span>
@@ -871,12 +881,18 @@ onMounted(loadAll)
         <div class="card-head">
           <h2>{{ t('payment.adminRevenueSplit.settlementsTitle') }}</h2>
           <label class="field inline">
-            <select v-model="settlementStatus" @change="loadSettlements(true)">
-              <option value="">{{ t('payment.adminRevenueSplit.colStatus') }}</option>
-              <option value="draft">{{ t('payment.adminRevenueSplit.statusDraft') }}</option>
-              <option value="paid">{{ t('payment.adminRevenueSplit.statusPaid') }}</option>
-              <option value="cancelled">{{ t('payment.adminRevenueSplit.statusCancelled') }}</option>
-            </select>
+            <UiSelect
+              v-model="settlementStatus"
+              :options="[
+                { label: t('payment.adminRevenueSplit.colStatus'), value: '' },
+                { label: t('payment.adminRevenueSplit.statusDraft'), value: 'draft' },
+                { label: t('payment.adminRevenueSplit.statusPaid'), value: 'paid' },
+                { label: t('payment.adminRevenueSplit.statusCancelled'), value: 'cancelled' },
+              ]"
+              :aria-label="t('payment.adminRevenueSplit.filterStatus')"
+              min-width="148px"
+              @change="loadSettlements(true)"
+            />
           </label>
         </div>
         <p class="card-hint">{{ t('payment.adminRevenueSplit.settlementsHint') }}</p>
