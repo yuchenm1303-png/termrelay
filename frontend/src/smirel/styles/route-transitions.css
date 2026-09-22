@@ -1,3 +1,5 @@
+@import './select-controls.css';
+
 /* Shared route motion language.
  *
  * The shell stays anchored while page content gets a short "depth handoff":
