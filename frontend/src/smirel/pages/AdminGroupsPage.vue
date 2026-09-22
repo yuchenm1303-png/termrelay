@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api, getErrorMessage } from '../core/api'
 
@@ -257,7 +258,7 @@ onMounted(() => void loadAll())
     <section class="panel">
       <header class="toolbar">
         <div><strong>逻辑调度分组</strong><span>{{ visibleGroups.length }} / {{ groups.length }}</span></div>
-        <div class="filters"><input v-model="search" placeholder="搜索分组、平台或 ID" /><label class="select-control"><span>平台</span><select v-model="platform" aria-label="筛选平台"><option value="">全部平台</option><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="antigravity">Antigravity</option><option value="grok">xAI / Grok</option><option value="composite">Composite</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></label></div>
+        <div class="filters"><input v-model="search" placeholder="搜索分组、平台或 ID" /><UiSelect v-model="platform" :options="[{ label: '全部平台', value: '' }, { label: 'OpenAI Compatible', value: 'openai' }, { label: 'Anthropic', value: 'anthropic' }, { label: 'Gemini', value: 'gemini' }, { label: 'Antigravity', value: 'antigravity' }, { label: 'xAI / Grok', value: 'grok' }, { label: 'Composite', value: 'composite' }]" aria-label="筛选平台" min-width="168px" /></div>
       </header>
 
       <div class="group-list">
@@ -306,7 +307,7 @@ onMounted(() => void loadAll())
     <div v-if="showEditor" class="overlay" @click.self="showEditor = false">
       <form class="dialog" @submit.prevent="saveGroup">
         <header><div><span>GROUP CONFIGURATION</span><h2>{{ editingId ? '编辑分组' : '新建分组' }}</h2></div><button type="button" @click="showEditor = false">×</button></header>
-        <div class="form-grid"><label class="wide"><span>分组名称</span><input v-model="form.name" required placeholder="例如 swiftapi-default" /></label><label><span>平台协议</span><select v-model="form.platform"><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="antigravity">Antigravity</option><option value="grok">xAI / Grok</option><option value="composite">Composite</option></select></label><label><span>计费模式</span><select v-model="form.subscription_type"><option value="standard">余额计费</option><option value="subscription">订阅计费</option></select></label><label><span>结算倍率</span><input v-model.number="form.rate_multiplier" type="number" min="0" step="0.01" /></label><label v-if="editingId"><span>状态</span><select v-model="form.status"><option value="active">启用</option><option value="inactive">停用</option></select></label><label class="wide"><span>说明</span><textarea v-model="form.description" rows="3" placeholder="说明此分组对应的上游与用途"></textarea></label></div>
+        <div class="form-grid"><label class="wide"><span>分组名称</span><input v-model="form.name" required placeholder="例如 swiftapi-default" /></label><label><span>平台协议</span><UiSelect v-model="form.platform" :options="[{ label: 'OpenAI Compatible', value: 'openai' }, { label: 'Anthropic', value: 'anthropic' }, { label: 'Gemini', value: 'gemini' }, { label: 'Antigravity', value: 'antigravity' }, { label: 'xAI / Grok', value: 'grok' }, { label: 'Composite', value: 'composite' }]" aria-label="平台协议" fluid /></label><label><span>计费模式</span><UiSelect v-model="form.subscription_type" :options="[{ label: '余额计费', value: 'standard' }, { label: '订阅计费', value: 'subscription' }]" aria-label="计费模式" fluid /></label><label><span>结算倍率</span><input v-model.number="form.rate_multiplier" type="number" min="0" step="0.01" /></label><label v-if="editingId"><span>状态</span><UiSelect v-model="form.status" :options="[{ label: '启用', value: 'active' }, { label: '停用', value: 'inactive' }]" aria-label="状态" fluid /></label><label class="wide"><span>说明</span><textarea v-model="form.description" rows="3" placeholder="说明此分组对应的上游与用途"></textarea></label></div>
         <footer><button type="button" class="ghost" @click="showEditor = false">取消</button><button class="primary" :disabled="busy === 'group'">{{ busy === 'group' ? '保存中…' : '保存分组' }}</button></footer>
       </form>
     </div>
