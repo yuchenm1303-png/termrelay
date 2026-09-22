@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import CreateUpstreamAccountModal from '../components/CreateUpstreamAccountModal.vue'
@@ -530,40 +531,39 @@ onMounted(() => {
             <input v-model="search" type="search" placeholder="搜索名称、平台或 ID" aria-label="搜索上游账户" />
           </label>
 
-          <label class="select-control">
-            <span>平台</span>
-            <select v-model="platform" aria-label="筛选平台">
-              <option value="">全部</option>
-              <option v-for="item in platformOptions" :key="item" :value="item">{{ platformLabel(item) }}</option>
-            </select>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
-          </label>
+          <UiSelect
+            v-model="platform"
+            :options="[{ label: '全部平台', value: '' }, ...platformOptions.map((item) => ({ label: platformLabel(item), value: item }))]"
+            aria-label="筛选平台"
+            min-width="138px"
+          />
 
-          <label class="select-control">
-            <span>类型</span>
-            <select v-model="accountType" aria-label="筛选账户类型">
-              <option value="">全部</option>
-              <option value="oauth">OAuth</option>
-              <option value="setup-token">Setup Token</option>
-              <option value="apikey">API Key</option>
-              <option value="upstream">Upstream</option>
-              <option value="bedrock">Bedrock</option>
-              <option value="service_account">Service Account</option>
-            </select>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
-          </label>
+          <UiSelect
+            v-model="accountType"
+            :options="[
+              { label: '全部类型', value: '' },
+              { label: 'OAuth', value: 'oauth' },
+              { label: 'Setup Token', value: 'setup-token' },
+              { label: 'API Key', value: 'apikey' },
+              { label: 'Upstream', value: 'upstream' },
+              { label: 'Bedrock', value: 'bedrock' },
+              { label: 'Service Account', value: 'service_account' },
+            ]"
+            aria-label="筛选账户类型"
+            min-width="142px"
+          />
 
-          <label class="select-control">
-            <span>状态</span>
-            <select v-model="status" aria-label="筛选状态">
-              <option value="">全部</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="disabled">Disabled</option>
-              <option value="error">Error</option>
-            </select>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
-          </label>
+          <UiSelect
+            v-model="status"
+            :options="[
+              { label: '全部状态', value: '' },
+              { label: 'Active', value: 'active' },
+              { label: 'Inactive', value: 'inactive' },
+              { label: 'Error', value: 'error' },
+            ]"
+            aria-label="筛选状态"
+            min-width="132px"
+          />
 
           <button v-if="hasFilters" class="clear-button" type="button" @click="resetFilters">清除筛选</button>
         </div>
