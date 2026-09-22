@@ -1,0 +1,132 @@
+/* Existing hero aurora motion ----------------------------------------------
+ * This animates the hero's original ::before / ::after cloud layers directly.
+ * No extra page-level background layer is created.
+ */
+.home-page .home-hero {
+  --hero-aurora-x: 0px;
+  --hero-aurora-y: 0px;
+  --hero-aurora-rx: 0px;
+  --hero-aurora-ry: 0px;
+  --hero-aurora-rotate: 0deg;
+  --hero-aurora-scale: 1;
+  --hero-aurora-tail-scale: 1;
+  --hero-aurora-opacity: .98;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 58% 42% at 8% 79%, rgba(50, 154, 255, .29), transparent 70%),
+    radial-gradient(ellipse 52% 44% at 50% 71%, rgba(98, 101, 255, .25), transparent 72%),
+    radial-gradient(ellipse 48% 42% at 91% 60%, rgba(224, 103, 199, .23), transparent 71%),
+    linear-gradient(180deg, #f9fcff 0%, #f7f9ff 45%, #f0f3ff 100%);
+}
+
+.home-page .home-hero::before {
+  width: min(1540px, 126vw);
+  height: 540px;
+  top: 156px;
+  left: 50%;
+  border-radius: 45% 55% 48% 52% / 52% 44% 56% 48%;
+  background:
+    radial-gradient(ellipse 39% 62% at 14% 62%, rgba(48, 168, 255, .43), transparent 67%),
+    radial-gradient(ellipse 44% 66% at 50% 53%, rgba(90, 103, 255, .37), transparent 69%),
+    radial-gradient(ellipse 38% 60% at 84% 44%, rgba(229, 103, 206, .32), transparent 67%);
+  filter: blur(48px) saturate(1.10);
+  opacity: var(--hero-aurora-opacity);
+  transform:
+    translate3d(
+      calc(-50% + var(--hero-aurora-x)),
+      var(--hero-aurora-y),
+      0
+    )
+    rotate(var(--hero-aurora-rotate))
+    scale(var(--hero-aurora-scale));
+  transform-origin: 50% 58%;
+  will-change: transform, opacity, filter;
+  animation: hero-existing-aurora-breathe 7.8s ease-in-out infinite alternate;
+}
+
+.home-page .home-hero::after {
+  width: min(1320px, 112vw);
+  height: 245px;
+  top: auto;
+  bottom: -14px;
+  left: 50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 36% 72% at 18% 52%, rgba(62, 153, 255, .23), transparent 72%),
+    radial-gradient(ellipse 48% 78% at 51% 48%, rgba(94, 109, 255, .28), transparent 72%),
+    radial-gradient(ellipse 34% 70% at 83% 43%, rgba(216, 106, 218, .20), transparent 72%);
+  filter: blur(38px) saturate(1.08);
+  opacity: calc(var(--hero-aurora-opacity) * .9);
+  transform:
+    translate3d(
+      calc(-50% + var(--hero-aurora-rx)),
+      var(--hero-aurora-ry),
+      0
+    )
+    rotate(calc(var(--hero-aurora-rotate) * -.45))
+    scale(var(--hero-aurora-tail-scale));
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, filter;
+  animation: hero-existing-aurora-tail-breathe 9.6s ease-in-out infinite alternate;
+}
+
+@keyframes hero-existing-aurora-breathe {
+  from {
+    filter: blur(45px) saturate(1.04);
+  }
+  to {
+    filter: blur(56px) saturate(1.22);
+  }
+}
+
+@keyframes hero-existing-aurora-tail-breathe {
+  from {
+    filter: blur(35px) saturate(1.02);
+  }
+  to {
+    filter: blur(44px) saturate(1.18);
+  }
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero {
+  background:
+    radial-gradient(ellipse 62% 46% at 7% 80%, rgba(29, 127, 211, .34), transparent 72%),
+    radial-gradient(ellipse 54% 46% at 51% 71%, rgba(78, 79, 201, .26), transparent 72%),
+    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .24), transparent 72%),
+    linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #090c12 100%);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::before {
+  background:
+    radial-gradient(ellipse 39% 62% at 14% 62%, rgba(38, 150, 231, .31), transparent 67%),
+    radial-gradient(ellipse 44% 66% at 50% 53%, rgba(87, 87, 224, .30), transparent 69%),
+    radial-gradient(ellipse 38% 60% at 84% 44%, rgba(192, 69, 160, .25), transparent 67%);
+  filter: blur(50px) saturate(1.18);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::after {
+  background:
+    radial-gradient(ellipse 36% 72% at 18% 52%, rgba(41, 134, 216, .18), transparent 72%),
+    radial-gradient(ellipse 48% 78% at 51% 48%, rgba(81, 94, 226, .23), transparent 72%),
+    radial-gradient(ellipse 34% 70% at 83% 43%, rgba(176, 70, 166, .17), transparent 72%);
+}
+
+@media (max-width: 820px) {
+  .home-page .home-hero::before {
+    width: 150vw;
+    height: 500px;
+    top: 148px;
+  }
+
+  .home-page .home-hero::after {
+    width: 132vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page .home-hero::before,
+  .home-page .home-hero::after {
+    animation: none;
+    will-change: auto;
+  }
+}
