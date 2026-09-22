@@ -14,7 +14,9 @@ HEALTH_URL="${TERMRELAY_HEALTH_URL:-http://127.0.0.1:8080/health}"
 PUBLIC_HEALTH_URL="${TERMRELAY_PUBLIC_HEALTH_URL:-https://muxway.dev/health}"
 GITHUB_REPO="${TERMRELAY_GITHUB_REPO:-yuchenm1303-png/termrelay}"
 REQUIRED_WORKFLOWS="${TERMRELAY_REQUIRED_WORKFLOWS:-CI,Security Scan,Production Control}"
-MIN_FREE_KB="${TERMRELAY_MIN_FREE_KB:-3145728}"
+MIN_FREE_KB="${TERMRELAY_MIN_FREE_KB:-2097152}"
+HARD_MIN_FREE_KB="${TERMRELAY_HARD_MIN_FREE_KB:-1048576}"
+IMAGE_RETENTION="${TERMRELAY_IMAGE_RETENTION:-4}"
 
 force=false
 check_only=false
@@ -49,6 +51,25 @@ log() {
 fail() {
   log "ERROR: $*"
   exit 1
+}
+
+prune_old_termrelay_images() {
+  local current_ref previous_ref ref kept=0
+  current_ref="$(docker inspect -f '{{.Config.Image}}' sub2api 2>/dev/null || true)"
+  previous_ref=""
+  [[ -f "$STATE_DIR/previous-image-ref" ]] && previous_ref="$(tr -d '[:space:]' < "$STATE_DIR/previous-image-ref")"
+
+  while IFS= read -r ref; do
+    [[ -n "$ref" ]] || continue
+    if [[ "$ref" == "$current_ref" || "$ref" == "$previous_ref" ]]; then
+      continue
+    fi
+    if (( kept < IMAGE_RETENTION )); then
+      kept=$((kept + 1))
+      continue
+    fi
+    docker image rm "$ref" >/dev/null 2>&1 || true
+  done < <(docker images --format '{{.Repository}}:{{.Tag}}' 'termrelay-local:git-*' 2>/dev/null || true)
 }
 
 for cmd in git docker curl python3 flock; do
@@ -141,6 +162,36 @@ PY
   fi
 fi
 
+deploy_mode="full"
+if [[ -n "$last_success" ]] && git -C "$REPO" cat-file -e "$last_success^{commit}" 2>/dev/null; then
+  frontend_changed=false
+  full_required=false
+  while IFS= read -r changed_path; do
+    [[ -n "$changed_path" ]] || continue
+    case "$changed_path" in
+      frontend/*|docs/legal/*)
+        frontend_changed=true
+        ;;
+      .github/*|docs/*|README*|CHANGELOG*|LICENSE|*.md)
+        # CI/docs-only changes do not alter the running application.
+        ;;
+      *)
+        full_required=true
+        break
+        ;;
+    esac
+  done < <(git -C "$REPO" diff --name-only "$last_success" "$target")
+
+  if [[ "$full_required" != true ]]; then
+    if [[ "$frontend_changed" == true ]]; then
+      deploy_mode="frontend"
+    else
+      deploy_mode="metadata"
+    fi
+  fi
+fi
+log "deployment mode=$deploy_mode"
+
 # Compose files are operational configuration, not application artifacts.
 # Refuse automatic deployment if main changes them without a manual production
 # review, instead of silently changing databases, ports, volumes or services.
@@ -151,14 +202,22 @@ if ! git -C "$REPO" show "$target:deploy/docker-compose.termrelay.yml" | cmp -s 
   fail "production compose overlay differs from target main; manual compose review required"
 fi
 
+if [[ "$deploy_mode" == "full" ]]; then
+  # Tagged historical images used to consume several GiB and force a complete
+  # BuildKit cache purge on nearly every deploy. Keep only a small rollback
+  # window so Go/pnpm caches stay hot between releases.
+  prune_old_termrelay_images
+fi
+
 free_kb="$(df -Pk "$ROOT" | awk 'NR==2 {print $4}')"
 if [[ "$free_kb" =~ ^[0-9]+$ ]] && (( free_kb < MIN_FREE_KB )); then
-  log "free disk below threshold (${free_kb} KiB); pruning Docker build cache"
-  docker builder prune -af >/dev/null 2>&1 || true
+  log "free disk below soft threshold (${free_kb} KiB); pruning unused Docker data without dropping all build cache"
+  docker image prune -f >/dev/null 2>&1 || true
+  docker builder prune -f --filter 'until=168h' >/dev/null 2>&1 || true
   free_kb="$(df -Pk "$ROOT" | awk 'NR==2 {print $4}')"
 fi
-if [[ "$free_kb" =~ ^[0-9]+$ ]] && (( free_kb < 2097152 )); then
-  fail "insufficient free disk after cache prune: ${free_kb} KiB"
+if [[ "$free_kb" =~ ^[0-9]+$ ]] && (( free_kb < HARD_MIN_FREE_KB )); then
+  fail "insufficient free disk after targeted prune: ${free_kb} KiB"
 fi
 
 worktree="$WORKTREE_ROOT/$target"
@@ -171,6 +230,88 @@ cleanup_worktree() {
   git -C "$REPO" worktree remove --force "$worktree" >/dev/null 2>&1 || rm -rf "$worktree"
 }
 trap 'cleanup_worktree' EXIT
+
+if [[ "$deploy_mode" == "metadata" ]]; then
+  git -C "$REPO" reset --hard "$target" >/dev/null
+  printf '%s\n' "$target" > "$STATE_DIR/last-successful-sha"
+  rm -f "$STATE_DIR/last-failed-sha"
+  log "metadata-only deployment completed: $target"
+  cleanup_worktree
+  trap - EXIT
+  exit 0
+fi
+
+if [[ "$deploy_mode" == "frontend" ]]; then
+  started_at="$(date +%s)"
+  frontend_image="termrelay-frontend:git-$short"
+  staging_frontend="$ROOT/data/.frontend-stage-$short"
+  runtime_frontend="$ROOT/data/frontend"
+  timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
+  snapshot_dir="$BACKUP_ROOT/$timestamp-$short-frontend"
+  mkdir -p "$snapshot_dir"
+  rm -rf "$staging_frontend"
+  mkdir -p "$staging_frontend"
+
+  log "fast frontend build $frontend_image"
+  docker build \
+    --target frontend-builder \
+    --build-arg FRONTEND_FAST_BUILD=true \
+    -f "$worktree/deploy/Dockerfile" \
+    -t "$frontend_image" \
+    "$worktree"
+
+  frontend_cid="$(docker create "$frontend_image")"
+  if ! docker cp "$frontend_cid:/app/backend/internal/web/dist/." "$staging_frontend"; then
+    docker rm -f "$frontend_cid" >/dev/null 2>&1 || true
+    fail "could not extract frontend bundle"
+  fi
+  docker rm -f "$frontend_cid" >/dev/null 2>&1 || true
+  [[ -s "$staging_frontend/index.html" ]] || fail "frontend bundle missing index.html"
+
+  mkdir -p "$runtime_frontend"
+  had_previous_index=false
+  if [[ -s "$runtime_frontend/index.html" ]]; then
+    had_previous_index=true
+    cp -p "$runtime_frontend/index.html" "$snapshot_dir/index.html.before"
+  fi
+
+  # Copy content-hashed assets first while the old index remains active. Old
+  # hashed files are intentionally retained so already-open browser tabs never
+  # see chunk 404s during rapid consecutive UI deployments.
+  staged_index="$snapshot_dir/index.html.next"
+  mv "$staging_frontend/index.html" "$staged_index"
+  cp -a "$staging_frontend/." "$runtime_frontend/"
+  install -m 0644 "$staged_index" "$runtime_frontend/.index.html.next"
+  mv -f "$runtime_frontend/.index.html.next" "$runtime_frontend/index.html"
+  printf '%s\n' "$target" > "$runtime_frontend/.termrelay-frontend-sha"
+  rm -rf "$staging_frontend"
+
+  if ! curl -fsS --max-time 12 "$HEALTH_URL" >/dev/null || \
+     ! curl -fsS --max-time 15 https://muxway.dev/ >/dev/null; then
+    log "frontend validation failed; restoring previous index"
+    if [[ "$had_previous_index" == true ]]; then
+      cp -p "$snapshot_dir/index.html.before" "$runtime_frontend/index.html"
+    else
+      rm -f "$runtime_frontend/index.html"
+    fi
+    printf '%s\n' "$target" > "$STATE_DIR/last-failed-sha"
+    exit 1
+  fi
+
+  git -C "$REPO" reset --hard "$target" >/dev/null
+  printf '%s\n' "$target" > "$STATE_DIR/last-successful-sha"
+  rm -f "$STATE_DIR/last-failed-sha"
+
+  elapsed="$(( $(date +%s) - started_at ))"
+  log "fast frontend deployment succeeded in ${elapsed}s: $target"
+  cleanup_worktree
+  trap - EXIT
+
+  # The frontend image tag is only an extraction vehicle. Removing the tag
+  # leaves reusable BuildKit cache intact but keeps image storage bounded.
+  docker image rm "$frontend_image" >/dev/null 2>&1 || true
+  exit 0
+fi
 
 image="termrelay-local:git-$short"
 build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
