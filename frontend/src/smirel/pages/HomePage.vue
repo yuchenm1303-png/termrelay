@@ -166,19 +166,19 @@ function initAmbientMotion() {
     current.hero += (target.hero - current.hero) * smoothing
     current.page += (target.page - current.page) * smoothing
 
-    const phase = Math.sin(current.page * Math.PI * 1.7)
-    const x = current.x * 46 + phase * 24
-    const y = current.y * 22 - current.hero * 112
-    const reverseX = current.x * -32 - phase * 16
-    const reverseY = current.y * -16 + current.hero * 54
-    const rotate = current.x * 3.2 + current.page * 7
-    const scale = 1 + current.hero * .075 + Math.abs(current.x) * .018
-    const opacity = Math.max(.28, .96 - current.hero * .42 - current.page * .22)
-    const wash = Math.max(.18, .84 - current.hero * .44 - current.page * .18)
-    const centerX = x * .32
-    const centerY = reverseY * .42
-    const washX = x * .24
-    const washY = y * .18
+    const phase = Math.sin(current.page * Math.PI * 1.9)
+    const x = current.x * 112 + phase * 52
+    const y = current.y * 58 - current.hero * 176
+    const reverseX = current.x * -86 - phase * 42
+    const reverseY = current.y * -44 + current.hero * 118
+    const rotate = current.x * 8.5 + current.page * 15
+    const scale = 1 + current.hero * .14 + Math.abs(current.x) * .055
+    const opacity = Math.max(.58, 1.02 - current.hero * .18 - current.page * .08)
+    const wash = Math.max(.42, .96 - current.hero * .20 - current.page * .08)
+    const centerX = x * .58
+    const centerY = reverseY * .66
+    const washX = x * .42
+    const washY = y * .34
 
     root.style.setProperty('--home-ambient-x', `${x.toFixed(2)}px`)
     root.style.setProperty('--home-ambient-y', `${y.toFixed(2)}px`)
