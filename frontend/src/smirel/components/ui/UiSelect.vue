@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { interfacePreferences } from '../../core/preferences'
 
 export type UiSelectValue = any
 
@@ -50,6 +51,8 @@ const selectedIndex = computed(() =>
 const selectedOption = computed(() =>
   selectedIndex.value >= 0 ? props.options[selectedIndex.value] : null,
 )
+
+const isLightTheme = computed(() => interfacePreferences.resolvedTheme === 'light')
 
 const triggerLabel = computed(() => selectedOption.value?.label || props.placeholder)
 
@@ -265,7 +268,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="ui-select"
-    :class="{ 'is-open': open, 'is-disabled': disabled, 'is-fluid': fluid }"
+    :class="{ 'is-open': open, 'is-disabled': disabled, 'is-fluid': fluid, 'is-light': isLightTheme }"
     :style="{ minWidth: fluid ? undefined : minWidth }"
   >
     <button
@@ -298,7 +301,7 @@ onBeforeUnmount(() => {
           :id="`${uid}-menu`"
           ref="menuRef"
           class="ui-select__menu"
-          :class="{ 'opens-top': placement === 'top' }"
+          :class="{ 'opens-top': placement === 'top', 'is-light': isLightTheme }"
           :style="menuStyle"
           role="listbox"
           :aria-labelledby="`${uid}-trigger`"
@@ -634,54 +637,91 @@ onBeforeUnmount(() => {
   filter: blur(1px);
 }
 
-:global(html.smirel-app[data-theme='light']) .ui-select {
+/* Theme follows the resolved preference directly instead of depending on an
+ * ancestor selector. This is important because the popup is teleported to body,
+ * and it also prevents dark defaults from leaking into light workspace pages. */
+.ui-select.is-light {
   --ui-select-bg: #ffffff;
-  --ui-select-bg-hover: #f8fafc;
+  --ui-select-bg-hover: #f7f9fb;
   --ui-select-bg-open: #ffffff;
-  --ui-select-border: #d8e0e7;
-  --ui-select-border-hover: #becbd6;
-  --ui-select-border-open: #7fb1d2;
-  --ui-select-text: #33414e;
-  --ui-select-muted: #7b8996;
+  --ui-select-border: #d8e1e8;
+  --ui-select-border-hover: #bdcad4;
+  --ui-select-border-open: #78acd0;
+  --ui-select-text: #2f3b46;
+  --ui-select-muted: #7c8995;
   --ui-select-ring: rgba(54, 135, 192, .10);
-  --ui-select-menu-bg: rgba(255, 255, 255, .985);
-  --ui-select-menu-border: #d8e1e8;
-  --ui-select-menu-shadow: 0 20px 46px rgba(29, 45, 59, .14), 0 4px 12px rgba(29, 45, 59, .06), inset 0 1px rgba(255, 255, 255, .95);
-  --ui-select-option: #52606d;
-  --ui-select-option-hover: #f4f7fa;
-  --ui-select-option-selected: #eaf4fb;
-  --ui-select-option-selected-hover: #e1eff8;
+  --ui-select-menu-bg: rgba(255, 255, 255, .992);
+  --ui-select-menu-border: #d7e0e7;
+  --ui-select-menu-shadow: 0 20px 46px rgba(29, 45, 59, .14), 0 4px 12px rgba(29, 45, 59, .06), inset 0 1px rgba(255, 255, 255, .98);
+  --ui-select-option: #53616d;
+  --ui-select-option-hover: #f3f6f9;
+  --ui-select-option-selected: #e8f3fa;
+  --ui-select-option-selected-hover: #ddecf6;
   --ui-select-check: #2f91cf;
 }
 
-:global(html.smirel-app[data-theme='light']) .ui-select__menu {
-  --ui-select-menu-bg: rgba(255, 255, 255, .985);
-  --ui-select-menu-border: #d8e1e8;
-  --ui-select-menu-shadow: 0 20px 46px rgba(29, 45, 59, .14), 0 4px 12px rgba(29, 45, 59, .06), inset 0 1px rgba(255, 255, 255, .95);
-  --ui-select-option: #52606d;
-  --ui-select-option-hover: #f4f7fa;
-  --ui-select-option-selected: #eaf4fb;
-  --ui-select-option-selected-hover: #e1eff8;
+.ui-select.is-light .ui-select__trigger {
+  background: var(--ui-select-bg) !important;
+  border-color: var(--ui-select-border) !important;
+  color: var(--ui-select-text) !important;
+  box-shadow: 0 1px 2px rgba(36, 52, 66, .025), inset 0 1px rgba(255,255,255,.98);
+}
+
+.ui-select.is-light .ui-select__trigger:hover:not(:disabled) {
+  background: var(--ui-select-bg-hover) !important;
+  border-color: var(--ui-select-border-hover) !important;
+}
+
+.ui-select.is-light.is-open .ui-select__trigger,
+.ui-select.is-light .ui-select__trigger:focus-visible {
+  background: var(--ui-select-bg-open) !important;
+  border-color: var(--ui-select-border-open) !important;
+  box-shadow: 0 0 0 3px var(--ui-select-ring), 0 1px 2px rgba(36, 52, 66, .025) !important;
+}
+
+.ui-select__menu.is-light {
+  --ui-select-menu-bg: rgba(255, 255, 255, .992);
+  --ui-select-menu-border: #d7e0e7;
+  --ui-select-menu-shadow: 0 20px 46px rgba(29, 45, 59, .14), 0 4px 12px rgba(29, 45, 59, .06), inset 0 1px rgba(255, 255, 255, .98);
+  --ui-select-option: #53616d;
+  --ui-select-option-hover: #f3f6f9;
+  --ui-select-option-selected: #e8f3fa;
+  --ui-select-option-selected-hover: #ddecf6;
   --ui-select-check: #2f91cf;
+  background: var(--ui-select-menu-bg) !important;
+  border-color: var(--ui-select-menu-border) !important;
+  color: var(--ui-select-option) !important;
+  box-shadow: var(--ui-select-menu-shadow) !important;
   scrollbar-color: #c3ced7 transparent;
 }
 
-:global(html.smirel-app[data-theme='light']) .ui-select__menu::-webkit-scrollbar-thumb {
+.ui-select__menu.is-light .ui-select__option {
+  color: var(--ui-select-option) !important;
+}
+
+.ui-select__menu.is-light .ui-select__option:hover:not(:disabled),
+.ui-select__menu.is-light .ui-select__option.is-highlighted:not(:disabled) {
+  background: var(--ui-select-option-hover) !important;
+  color: #202b35 !important;
+}
+
+.ui-select__menu.is-light .ui-select__option.is-selected {
+  background: var(--ui-select-option-selected) !important;
+  color: #236f9f !important;
+}
+
+.ui-select__menu.is-light .ui-select__option.is-selected:hover,
+.ui-select__menu.is-light .ui-select__option.is-selected.is-highlighted {
+  background: var(--ui-select-option-selected-hover) !important;
+}
+
+.ui-select__menu.is-light::-webkit-scrollbar-thumb {
   background: #c3ced7;
 }
 
-:global(html.smirel-app[data-theme='light']) .ui-select__trigger:hover .ui-select__chevron,
-:global(html.smirel-app[data-theme='light']) .ui-select.is-open .ui-select__chevron {
+.ui-select.is-light .ui-select__trigger:hover .ui-select__chevron,
+.ui-select.is-light.is-open .ui-select__chevron {
   color: #536b7e;
-}
-
-:global(html.smirel-app[data-theme='light']) .ui-select__option:hover:not(:disabled),
-:global(html.smirel-app[data-theme='light']) .ui-select__option.is-highlighted:not(:disabled) {
-  color: #202b35;
-}
-
-:global(html.smirel-app[data-theme='light']) .ui-select__option.is-selected {
-  color: #236f9f;
 }
 
 @media (prefers-reduced-motion: reduce) {
