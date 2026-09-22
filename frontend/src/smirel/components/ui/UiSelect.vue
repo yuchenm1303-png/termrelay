@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
-export type UiSelectValue = string | number | boolean | null
+export type UiSelectValue = any
 
 export type UiSelectOption = {
   label: string
