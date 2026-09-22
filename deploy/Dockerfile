@@ -17,6 +17,7 @@ ARG GOSUMDB=sum.golang.google.cn
 # -----------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS frontend-builder
 
+ARG FRONTEND_FAST_BUILD=false
 WORKDIR /app/frontend
 ENV NODE_OPTIONS=--max-old-space-size=1536
 
@@ -26,7 +27,8 @@ RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 # Install dependencies first (better caching)
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
 
 # Copy frontend source and build.
 # LegalDocumentView.vue (admin-compliance gate) build-time imports
@@ -35,7 +37,11 @@ RUN pnpm install --frozen-lockfile
 # Copy only that subtree to keep the build dependency minimal.
 COPY frontend/ ./
 COPY docs/legal/ /app/docs/legal/
-RUN pnpm run build
+RUN if [ "${FRONTEND_FAST_BUILD}" = "true" ]; then \
+      pnpm exec vite build; \
+    else \
+      pnpm run build; \
+    fi
 
 # -----------------------------------------------------------------------------
 # Stage 2: Backend Builder
