@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
 import {
   clearNotifications,
@@ -21,15 +20,12 @@ import { useSession } from '../core/session'
 type UtilityPanel = 'notifications' | 'theme'
 type WorkspaceMode = 'user' | 'admin'
 
-const router = useRouter()
 const { t } = useI18n()
 const { isAdmin } = useSession()
 const root = ref<HTMLElement | null>(null)
 const openUtility = ref<UtilityPanel | null>(null)
 
 const MODE_STORAGE_KEY = 'smirel.workspace.mode'
-const LAST_ADMIN_ROUTE_KEY = 'smirel.workspace.last-admin-route'
-const LAST_USER_ROUTE_KEY = 'smirel.workspace.last-user-route'
 
 function readSessionValue(key: string, fallback: string) {
   if (typeof window === 'undefined') return fallback
@@ -69,15 +65,6 @@ function toggleLocale() { setLocale(interfacePreferences.locale === 'zh-CN' ? 'e
 function chooseTheme(theme: ThemePreference) {
   setTheme(theme)
   openUtility.value = null
-}
-
-function enterWorkspace(mode: WorkspaceMode) {
-  homeMode.value = mode
-  if (typeof window !== 'undefined') window.sessionStorage.setItem(MODE_STORAGE_KEY, mode)
-
-  const fallback = mode === 'admin' ? '/admin/dashboard' : '/dashboard'
-  const target = readSessionValue(mode === 'admin' ? LAST_ADMIN_ROUTE_KEY : LAST_USER_ROUTE_KEY, fallback)
-  void router.push(target)
 }
 
 function formatNotificationTime(value: string) {
@@ -124,22 +111,6 @@ onBeforeUnmount(() => {
       <WorkspaceNavIcon :name="item.icon" />
       <span>{{ item.label }}</span>
     </RouterLink>
-
-    <div v-if="isAdmin" class="home-mode-switch" role="group" :aria-label="interfacePreferences.locale === 'zh-CN' ? '切换工作区' : 'Switch workspace'">
-      <span class="home-mode-indicator" :class="{ 'is-admin': homeMode === 'admin' }" aria-hidden="true"></span>
-      <button
-        type="button"
-        :class="{ active: homeMode === 'user' }"
-        :aria-pressed="homeMode === 'user'"
-        @click="enterWorkspace('user')"
-      >{{ interfacePreferences.locale === 'zh-CN' ? '用户端' : 'User' }}</button>
-      <button
-        type="button"
-        :class="{ active: homeMode === 'admin' }"
-        :aria-pressed="homeMode === 'admin'"
-        @click="enterWorkspace('admin')"
-      >{{ interfacePreferences.locale === 'zh-CN' ? '管理端' : 'Admin' }}</button>
-    </div>
 
     <span class="home-control-divider" aria-hidden="true"></span>
 
