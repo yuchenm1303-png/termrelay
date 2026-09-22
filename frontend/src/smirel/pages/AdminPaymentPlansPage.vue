@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 // Admin Payment Plans —— 订阅计划 CRUD
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -388,10 +389,13 @@ function formatValidity(p: AdminSubscriptionPlan): string {
           <label class="field"><span>{{ t('payment.adminPlans.formName') }}</span><input v-model="draft.name" type="text" /></label>
           <label v-if="!isEdit" class="field">
             <span>{{ t('payment.adminPlans.formGroup') }}</span>
-            <select v-if="groups.length" v-model.number="draft.group_id">
-              <option :value="0" disabled>{{ t('payment.adminPlans.groupPlaceholder') }}</option>
-              <option v-for="g in sortedGroups" :key="g.id" :value="g.id">{{ groupOptionLabel(g) }}</option>
-            </select>
+            <UiSelect
+              v-if="groups.length"
+              v-model="draft.group_id"
+              :options="[{ label: t('payment.adminPlans.groupPlaceholder'), value: 0, disabled: true }, ...sortedGroups.map((g) => ({ label: groupOptionLabel(g), value: g.id }))]"
+              :aria-label="t('payment.adminPlans.formGroup')"
+              fluid
+            />
             <input v-else v-model.number="draft.group_id" type="number" />
             <small class="field-hint">{{ text('创建后可在套餐列表中单独更换或解除关联。', 'After creation, manage the group relationship separately from the plan list.') }}</small>
           </label>
@@ -405,11 +409,12 @@ function formatValidity(p: AdminSubscriptionPlan): string {
           <label class="field"><span>{{ t('payment.adminPlans.formCurrency') }}</span><input v-model="draft.currency" type="text" maxlength="8" /></label>
           <label class="field"><span>{{ t('payment.adminPlans.formValidityDays') }}</span><input v-model.number="draft.validity_days" type="number" min="1" /></label>
           <label class="field"><span>{{ t('payment.adminPlans.formValidityUnit') }}</span>
-            <select v-model="draft.validity_unit">
-              <option value="day">day</option>
-              <option value="month">month</option>
-              <option value="year">year</option>
-            </select>
+            <UiSelect
+              v-model="draft.validity_unit"
+              :options="[{ label: 'day', value: 'day' }, { label: 'month', value: 'month' }, { label: 'year', value: 'year' }]"
+              :aria-label="t('payment.adminPlans.formValidityUnit')"
+              fluid
+            />
           </label>
           <label class="field"><span>{{ t('payment.adminPlans.formProductName') }}</span><input v-model="draft.product_name" type="text" /></label>
           <label class="field full"><span>{{ t('payment.adminPlans.formFeatures') }}</span><textarea v-model="draft.features" rows="4" /></label>
