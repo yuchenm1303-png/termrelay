@@ -16,7 +16,6 @@ import qwenLogo from '../assets/providers/qwen.svg'
 import minimaxLogo from '../assets/providers/minimax.svg'
 import '../styles/home-landing.css'
 import '../styles/home-light.css'
-import '../styles/home-provider-capsules.css'
 import '../styles/home-hero-aurora-motion.css'
 
 const { isAuthenticated, isAdmin } = useSession()
