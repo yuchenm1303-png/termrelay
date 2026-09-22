@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { interfacePreferences } from '../core/preferences'
@@ -536,15 +537,20 @@ onBeforeUnmount(() => {
           <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" /></svg>
           <input v-model="search" type="search" :placeholder="isZh ? '搜索模型、品牌、分组或映射 ID' : 'Search model, provider, group or mapped ID'" />
         </label>
-        <label class="market-sort">
+        <div class="market-sort">
           <span>{{ isZh ? '排序' : 'Sort' }}</span>
-          <select v-model="sortBy">
-            <option value="recommended">{{ isZh ? '推荐' : 'Recommended' }}</option>
-            <option value="name">{{ isZh ? '名称' : 'Name' }}</option>
-            <option value="price">{{ isZh ? '输入价格' : 'Input price' }}</option>
-            <option value="routes">{{ isZh ? '路由数量' : 'Routes' }}</option>
-          </select>
-        </label>
+          <UiSelect
+            v-model="sortBy"
+            :options="[
+              { label: isZh ? '推荐' : 'Recommended', value: 'recommended' },
+              { label: isZh ? '名称' : 'Name', value: 'name' },
+              { label: isZh ? '输入价格' : 'Input price', value: 'price' },
+              { label: isZh ? '路由数量' : 'Routes', value: 'routes' },
+            ]"
+            :aria-label="isZh ? '排序' : 'Sort'"
+            min-width="150px"
+          />
+        </div>
       </div>
     </header>
 
