@@ -109,21 +109,72 @@ if [[ "$force" != true && "$target" == "$last_failed" ]]; then
   exit 0
 fi
 
+deploy_mode="full"
+if [[ -n "$last_success" ]] && git -C "$REPO" cat-file -e "$last_success^{commit}" 2>/dev/null; then
+  frontend_changed=false
+  frontend_code_changed=false
+  full_required=false
+  while IFS= read -r changed_path; do
+    [[ -n "$changed_path" ]] || continue
+    case "$changed_path" in
+      frontend/*.css|frontend/**/*.css|frontend/*.scss|frontend/**/*.scss|frontend/*.svg|frontend/**/*.svg|frontend/*.png|frontend/**/*.png|frontend/*.jpg|frontend/**/*.jpg|frontend/*.jpeg|frontend/**/*.jpeg|frontend/*.webp|frontend/**/*.webp|frontend/public/*|frontend/public/**/*|docs/legal/*|docs/legal/**/*)
+        frontend_changed=true
+        ;;
+      frontend/*)
+        frontend_changed=true
+        frontend_code_changed=true
+        ;;
+      .github/*|docs/*|README*|CHANGELOG*|LICENSE|*.md)
+        # CI/docs-only changes do not alter the running application.
+        ;;
+      *)
+        full_required=true
+        break
+        ;;
+    esac
+  done < <(git -C "$REPO" diff --name-only "$last_success" "$target")
+
+  if [[ "$full_required" != true ]]; then
+    if [[ "$frontend_changed" == true && "$frontend_code_changed" == true ]]; then
+      deploy_mode="frontend"
+    elif [[ "$frontend_changed" == true ]]; then
+      deploy_mode="frontend-style"
+    else
+      deploy_mode="metadata"
+    fi
+  fi
+fi
+log "deployment mode=$deploy_mode"
+
 if [[ "$check_only" == true ]]; then
   exit 0
 fi
 
-# Do not deploy a main commit until the repository's required workflows have
-# completed successfully. This keeps the server from racing ahead of GitHub CI.
-if [[ -z "$target_override" ]]; then
+# Gate only the change classes that benefit from remote CI. Style/static-only
+# frontend releases are already atomic and are validated by Vite before the
+# index switch, so they should not sit in a GitHub runner queue.
+required_workflows="$REQUIRED_WORKFLOWS"
+case "$deploy_mode" in
+  metadata|frontend-style)
+    required_workflows=""
+    ;;
+  frontend)
+    required_workflows="CI,Security Scan"
+    ;;
+esac
+
+if [[ -z "$target_override" && -n "$required_workflows" ]]; then
   actions_json="$(mktemp)"
   trap 'rm -f "$actions_json"' EXIT
   api="https://api.github.com/repos/$GITHUB_REPO/actions/runs?branch=main&head_sha=$target&per_page=100"
-  if ! curl -fsSL --max-time 20       -H 'Accept: application/vnd.github+json'       -H 'X-GitHub-Api-Version: 2022-11-28'       "$api" -o "$actions_json"; then
+  if ! curl -fsSL --max-time 20 \
+      -H 'Accept: application/vnd.github+json' \
+      -H 'X-GitHub-Api-Version: 2022-11-28' \
+      "$api" -o "$actions_json"; then
     log "GitHub Actions status unavailable; deferring deployment"
     exit 0
   fi
-  if ! python3 - "$actions_json" "$REQUIRED_WORKFLOWS" <<'PY'
+  if ! python3 - "$actions_json" "$required_workflows" <<'PY'
 import json, sys
 data=json.load(open(sys.argv[1], encoding='utf-8'))
 required=[x.strip() for x in sys.argv[2].split(',') if x.strip()]
@@ -135,8 +186,6 @@ by_name={}
 for run in runs:
     name=str(run.get('name') or '')
     old=by_name.get(name)
-    # Keep the newest push run for each workflow. Never let an older completed
-    # run hide a newer in-progress or failed run for the same commit.
     if old is None or int(run.get('run_number') or 0) > int(old.get('run_number') or 0):
         by_name[name]=run
 missing=[]
@@ -161,36 +210,6 @@ PY
     exit 0
   fi
 fi
-
-deploy_mode="full"
-if [[ -n "$last_success" ]] && git -C "$REPO" cat-file -e "$last_success^{commit}" 2>/dev/null; then
-  frontend_changed=false
-  full_required=false
-  while IFS= read -r changed_path; do
-    [[ -n "$changed_path" ]] || continue
-    case "$changed_path" in
-      frontend/*|docs/legal/*)
-        frontend_changed=true
-        ;;
-      .github/*|docs/*|README*|CHANGELOG*|LICENSE|*.md)
-        # CI/docs-only changes do not alter the running application.
-        ;;
-      *)
-        full_required=true
-        break
-        ;;
-    esac
-  done < <(git -C "$REPO" diff --name-only "$last_success" "$target")
-
-  if [[ "$full_required" != true ]]; then
-    if [[ "$frontend_changed" == true ]]; then
-      deploy_mode="frontend"
-    else
-      deploy_mode="metadata"
-    fi
-  fi
-fi
-log "deployment mode=$deploy_mode"
 
 # Compose files are operational configuration, not application artifacts.
 # Refuse automatic deployment if main changes them without a manual production
@@ -241,7 +260,7 @@ if [[ "$deploy_mode" == "metadata" ]]; then
   exit 0
 fi
 
-if [[ "$deploy_mode" == "frontend" ]]; then
+if [[ "$deploy_mode" == "frontend" || "$deploy_mode" == "frontend-style" ]]; then
   started_at="$(date +%s)"
   frontend_image="termrelay-frontend:git-$short"
   staging_frontend="$ROOT/data/.frontend-stage-$short"
