@@ -2672,3 +2672,294 @@ html.smirel-app[data-theme='dark'] .home-page .home-hero-actions .home-secondary
     0 0 24px rgba(107,97,182,.045),
     inset 0 1px 0 rgba(255,255,255,.075) !important;
 }
+
+
+/* --------------------------------------------------------------------------
+ * Pointer-following spectral surfaces
+ * The glow follows the cursor across premium cards. Dark mode uses only
+ * low-luminance color — no broad white bloom.
+ * -------------------------------------------------------------------------- */
+@property --pointer-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --pointer-y {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+
+.home-page :is(
+  .home-card-grid article,
+  .home-tool-grid a,
+  .home-plan,
+  .home-closing
+) {
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+}
+
+/* Eight problem/capability cards. */
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article {
+  --card-glow: 72, 170, 225;
+  --card-glow-2: 92, 112, 210;
+  --pointer-glow-alpha: .13;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article:nth-child(1) {
+  --card-glow: 58, 169, 231;
+  --card-glow-2: 87, 118, 218;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article:nth-child(2) {
+  --card-glow: 105, 104, 235;
+  --card-glow-2: 151, 99, 220;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article:nth-child(3) {
+  --card-glow: 55, 192, 148;
+  --card-glow-2: 61, 148, 179;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article:nth-child(4) {
+  --card-glow: 145, 89, 211;
+  --card-glow-2: 222, 91, 171;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0 !important;
+  pointer-events: none;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(
+      circle 230px at var(--pointer-x) var(--pointer-y),
+      rgba(var(--card-glow), var(--pointer-glow-alpha)) 0%,
+      rgba(var(--card-glow-2), calc(var(--pointer-glow-alpha) * .62)) 34%,
+      transparent 72%
+    ) !important;
+  opacity: 0 !important;
+  translate: 0 0 !important;
+  scale: 1 !important;
+  filter: none !important;
+  transition:
+    opacity 340ms ease,
+    --pointer-x 110ms linear,
+    --pointer-y 110ms linear !important;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article.has-pointer-glow::before,
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article:hover::before {
+  opacity: 1 !important;
+  translate: 0 0 !important;
+  scale: 1 !important;
+}
+
+.home-page :is(.home-pain, .home-capabilities) .home-card-grid article::after {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--card-glow), .025) 0%,
+      transparent 30%,
+      transparent 72%,
+      rgba(var(--card-glow-2), .022) 100%
+    ) !important;
+  opacity: 1 !important;
+}
+
+/* Dark eight-card material: graphite first, spectral color second. */
+html.smirel-app[data-theme='dark'] .home-page :is(.home-pain, .home-capabilities) .home-card-grid article {
+  --pointer-glow-alpha: .16;
+  border: 0 !important;
+  background:
+    radial-gradient(ellipse 86% 92% at -8% -10%, rgba(var(--card-glow), .060), transparent 66%),
+    radial-gradient(ellipse 72% 82% at 108% 112%, rgba(var(--card-glow-2), .040), transparent 72%),
+    linear-gradient(150deg, #10161d 0%, #0c1218 58%, #0a1016 100%) !important;
+  box-shadow:
+    0 20px 46px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.016),
+    inset 0 -1px 0 rgba(0,0,0,.22) !important;
+}
+
+html.smirel-app[data-theme='dark'] .home-page :is(.home-pain, .home-capabilities) .home-card-grid article.is-emphasis {
+  background:
+    radial-gradient(ellipse 88% 92% at -8% -10%, rgba(var(--card-glow), .078), transparent 66%),
+    radial-gradient(ellipse 78% 88% at 108% 112%, rgba(var(--card-glow-2), .055), transparent 72%),
+    linear-gradient(145deg, #111821 0%, #10131b 55%, #111018 100%) !important;
+}
+
+html.smirel-app[data-theme='dark'] .home-page :is(.home-pain, .home-capabilities) .home-card-grid article:hover {
+  filter: saturate(1.035) brightness(1.012);
+  box-shadow:
+    0 25px 56px rgba(0,0,0,.285),
+    0 0 30px rgba(var(--card-glow), .025),
+    inset 0 1px 0 rgba(255,255,255,.022) !important;
+}
+
+html.smirel-app[data-theme='dark'] .home-page :is(.home-pain, .home-capabilities) .home-card-grid article > span:first-child {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(var(--card-glow), .17),
+      rgba(var(--card-glow-2), .09)
+    ) !important;
+  color: rgb(var(--card-glow)) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--card-glow), .12),
+    0 8px 20px rgba(0,0,0,.15) !important;
+}
+
+/* SDK/document cards share the cursor-following color field. */
+.home-page .home-tool-grid a {
+  --card-glow: 77, 172, 229;
+  --card-glow-2: 102, 105, 222;
+  --pointer-glow-alpha: .11;
+}
+
+.home-page .home-tool-grid a:nth-child(3n + 2) {
+  --card-glow: 111, 107, 232;
+  --card-glow-2: 153, 94, 210;
+}
+
+.home-page .home-tool-grid a:nth-child(3n) {
+  --card-glow: 203, 102, 183;
+  --card-glow-2: 135, 102, 219;
+}
+
+.home-page .home-tool-grid a::before {
+  inset: 0 !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(
+      circle 220px at var(--pointer-x) var(--pointer-y),
+      rgba(var(--card-glow), var(--pointer-glow-alpha)) 0%,
+      rgba(var(--card-glow-2), calc(var(--pointer-glow-alpha) * .58)) 38%,
+      transparent 73%
+    ) !important;
+  opacity: 0 !important;
+  translate: 0 0 !important;
+  scale: 1 !important;
+  filter: none !important;
+  transition:
+    opacity 340ms ease,
+    --pointer-x 110ms linear,
+    --pointer-y 110ms linear !important;
+}
+
+.home-page .home-tool-grid a.has-pointer-glow::before,
+.home-page .home-tool-grid a:hover::before {
+  opacity: 1 !important;
+  translate: 0 0 !important;
+  scale: 1 !important;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-tool-grid a {
+  --pointer-glow-alpha: .125;
+}
+
+/* Pricing cards use the same pointer field, kept weaker so price remains the
+   visual priority. */
+.home-page .home-plan {
+  --card-glow: 72, 169, 225;
+  --card-glow-2: 125, 95, 216;
+  --pointer-glow-alpha: .09;
+}
+
+.home-page .home-plan::before {
+  inset: 0 !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(
+      circle 250px at var(--pointer-x) var(--pointer-y),
+      rgba(var(--card-glow), var(--pointer-glow-alpha)) 0%,
+      rgba(var(--card-glow-2), calc(var(--pointer-glow-alpha) * .55)) 38%,
+      transparent 74%
+    ) !important;
+  opacity: 0 !important;
+  translate: 0 0 !important;
+  filter: none !important;
+  transition:
+    opacity 360ms ease,
+    --pointer-x 120ms linear,
+    --pointer-y 120ms linear !important;
+}
+
+.home-page .home-plan.has-pointer-glow::before,
+.home-page .home-plan:hover::before {
+  opacity: 1 !important;
+  translate: 0 0 !important;
+}
+
+/* Closing CTA gets only a very broad, quiet pointer wash. */
+.home-page .home-closing::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 320px at var(--pointer-x) var(--pointer-y),
+      rgba(74, 169, 228, .085),
+      rgba(142, 96, 215, .045) 42%,
+      transparent 76%
+    );
+  opacity: 0;
+  transition:
+    opacity 380ms ease,
+    --pointer-x 120ms linear,
+    --pointer-y 120ms linear;
+}
+
+.home-page .home-closing > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page .home-closing.has-pointer-glow::before,
+.home-page .home-closing:hover::before {
+  opacity: 1;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-closing::before {
+  background:
+    radial-gradient(
+      circle 320px at var(--pointer-x) var(--pointer-y),
+      rgba(67, 158, 211, .095),
+      rgba(132, 88, 190, .055) 42%,
+      transparent 76%
+    );
+}
+
+@media (hover: none), (pointer: coarse) {
+  .home-page :is(
+    .home-card-grid article,
+    .home-tool-grid a,
+    .home-plan,
+    .home-closing
+  )::before {
+    --pointer-x: 50%;
+    --pointer-y: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page :is(
+    .home-card-grid article,
+    .home-tool-grid a,
+    .home-plan,
+    .home-closing
+  )::before {
+    transition: none !important;
+  }
+}
