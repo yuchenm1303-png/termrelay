@@ -174,8 +174,18 @@ trap 'cleanup_worktree' EXIT
 
 image="termrelay-local:git-$short"
 build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-log "building $image"
-docker build   -f "$worktree/deploy/Dockerfile"   --build-arg VERSION="main-$short"   --build-arg COMMIT="$target"   --build-arg DATE="$build_date"   -t "$image"   "$worktree"
+if docker image inspect "$image" >/dev/null 2>&1; then
+  log "reusing existing image $image"
+else
+  log "building $image"
+  docker build \
+    -f "$worktree/deploy/Dockerfile" \
+    --build-arg VERSION="main-$short" \
+    --build-arg COMMIT="$target" \
+    --build-arg DATE="$build_date" \
+    -t "$image" \
+    "$worktree"
+fi
 
 timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
 snapshot_dir="$BACKUP_ROOT/$timestamp-$short"
@@ -183,7 +193,10 @@ mkdir -p "$snapshot_dir"
 cp -p "$ENV_FILE" "$snapshot_dir/.env.before"
 
 log "creating pre-deploy PostgreSQL backup"
-COMPOSE_FILE="$COMPOSE_FILE" BACKUP_DIR="$snapshot_dir/postgres" BACKUP_RETENTION_DAYS=30   "$worktree/deploy/backup-postgres.sh"
+COMPOSE_FILE="$COMPOSE_FILE" \
+BACKUP_DIR="$snapshot_dir/postgres" \
+BACKUP_RETENTION_DAYS=30 \
+  /bin/bash "$worktree/deploy/backup-postgres.sh"
 
 previous_ref="$(awk -F= '$1=="TERMRELAY_IMAGE_REF"{sub(/^[^=]*=/,""); print; exit}' "$ENV_FILE")"
 if [[ -z "$previous_ref" ]]; then
