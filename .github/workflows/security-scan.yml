@@ -28,6 +28,9 @@ jobs:
           actual="${actual#go}"
           test -n "$expected"
           test "$actual" = "$expected"
+      - name: Generate Ent client
+        working-directory: backend
+        run: go generate ./ent
       - name: Run govulncheck
         working-directory: backend
         run: |
