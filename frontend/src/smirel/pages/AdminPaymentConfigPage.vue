@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 // Admin Payment Config —— 平台级支付参数 / 限额 / 展示策略
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -228,9 +229,12 @@ const dirty = computed(isDirty)
           <label class="field"><span>{{ t('payment.adminConfig.fieldRechargeFeeRate') }}</span><input v-model.number="draft.recharge_fee_rate" type="number" step="0.1" min="0" max="100" /></label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldSubscriptionRate') }}</span><input v-model.number="draft.subscription_usd_to_cny_rate" type="number" step="0.01" min="0" /></label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldLoadBalanceStrategy') }}</span>
-            <select v-model="draft.load_balance_strategy">
-              <option v-for="o in strategyOptions" :key="o.value || 'none'" :value="o.value">{{ o.label }}</option>
-            </select>
+            <UiSelect
+              v-model="draft.load_balance_strategy"
+              :options="strategyOptions.map((o) => ({ label: o.label, value: o.value }))"
+              :aria-label="t('payment.adminConfig.fieldLoadBalanceStrategy')"
+              fluid
+            />
           </label>
         </div>
         <label class="checkbox"><input v-model="draft.balance_disabled" type="checkbox" /><span>{{ t('payment.adminConfig.fieldBalanceDisabled') }}</span></label>
@@ -258,14 +262,20 @@ const dirty = computed(isDirty)
           <label class="field"><span>{{ t('payment.adminConfig.fieldCancelMax') }}</span><input v-model.number="draft.cancel_rate_limit_max" type="number" min="1" /></label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldCancelWindow') }}</span><input v-model.number="draft.cancel_rate_limit_window" type="number" min="1" /></label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldCancelUnit') }}</span>
-            <select v-model="draft.cancel_rate_limit_unit">
-              <option v-for="u in unitOptions" :key="u" :value="u">{{ u }}</option>
-            </select>
+            <UiSelect
+              v-model="draft.cancel_rate_limit_unit"
+              :options="unitOptions.map((u) => ({ label: u, value: u }))"
+              :aria-label="t('payment.adminConfig.fieldCancelUnit')"
+              fluid
+            />
           </label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldCancelMode') }}</span>
-            <select v-model="draft.cancel_rate_limit_window_mode">
-              <option v-for="m in modeOptions" :key="m" :value="m">{{ m }}</option>
-            </select>
+            <UiSelect
+              v-model="draft.cancel_rate_limit_window_mode"
+              :options="modeOptions.map((m) => ({ label: m, value: m }))"
+              :aria-label="t('payment.adminConfig.fieldCancelMode')"
+              fluid
+            />
           </label>
         </div>
       </section>
@@ -278,18 +288,20 @@ const dirty = computed(isDirty)
         </div>
         <div class="form-grid">
           <label class="field"><span>{{ t('payment.adminConfig.fieldAlipaySource') }}</span>
-            <select v-model="draft.payment_visible_method_alipay_source">
-              <option v-for="s in sourceOptions.filter((x) => x.includes('alipay'))" :key="s" :value="s">
-                {{ s === 'official_alipay' ? t('payment.adminConfig.sourceOfficial') : t('payment.adminConfig.sourceEasypay') }}
-              </option>
-            </select>
+            <UiSelect
+              v-model="draft.payment_visible_method_alipay_source"
+              :options="sourceOptions.filter((x) => x.includes('alipay')).map((s) => ({ label: s === 'official_alipay' ? t('payment.adminConfig.sourceOfficial') : t('payment.adminConfig.sourceEasypay'), value: s }))"
+              :aria-label="t('payment.adminConfig.fieldAlipaySource')"
+              fluid
+            />
           </label>
           <label class="field"><span>{{ t('payment.adminConfig.fieldWxpaySource') }}</span>
-            <select v-model="draft.payment_visible_method_wxpay_source">
-              <option v-for="s in sourceOptions.filter((x) => x.includes('wxpay'))" :key="s" :value="s">
-                {{ s === 'official_wxpay' ? t('payment.adminConfig.sourceOfficial') : t('payment.adminConfig.sourceEasypay') }}
-              </option>
-            </select>
+            <UiSelect
+              v-model="draft.payment_visible_method_wxpay_source"
+              :options="sourceOptions.filter((x) => x.includes('wxpay')).map((s) => ({ label: s === 'official_wxpay' ? t('payment.adminConfig.sourceOfficial') : t('payment.adminConfig.sourceEasypay'), value: s }))"
+              :aria-label="t('payment.adminConfig.fieldWxpaySource')"
+              fluid
+            />
           </label>
         </div>
       </section>
