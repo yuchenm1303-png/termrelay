@@ -35,28 +35,49 @@ const accountBalance = computed(() => Number(state.user?.balance || 0))
 
 <style scoped>
 .billing-route-page {
-  --billing-surface: #ffffff;
-  --billing-surface-raised: #ffffff;
-  --billing-surface-soft: #f7f9fb;
-  --billing-border: #e1e7ed;
-  --billing-border-strong: #9cc9e8;
-  --billing-text: #17212b;
-  --billing-text-soft: #4d5a67;
-  --billing-muted: #72808d;
-  --billing-subtle: #98a3ad;
-  --billing-accent: #1978bd;
-  --billing-accent-strong: #11649f;
-  --billing-accent-soft: #edf6fc;
-  --billing-success: #168c66;
-  --billing-danger: #b84e4e;
-  --billing-shadow: 0 16px 42px rgba(37, 54, 70, 0.07);
+  /* Dark is the workspace baseline. Keeping the default tokens dark prevents
+     the billing surface from flashing or falling back to a light card set
+     before the persisted theme preference is restored. */
+  --billing-surface: #101319;
+  --billing-surface-raised: #141920;
+  --billing-surface-soft: #151a21;
+  --billing-border: #252b33;
+  --billing-border-strong: #3f718f;
+  --billing-text: #eef3f7;
+  --billing-text-soft: #c4ced7;
+  --billing-muted: #7f8b97;
+  --billing-subtle: #626d78;
+  --billing-accent: #66bdf0;
+  --billing-accent-strong: #82ccf6;
+  --billing-accent-soft: rgba(69, 154, 211, 0.13);
+  --billing-success: #55cf9e;
+  --billing-danger: #ef8585;
+  --billing-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
 
   width: min(100%, 1240px);
   margin: 0 auto;
   padding: 4px 2px 52px;
 }
 
-:global(html.smirel-app[data-theme='light'] .billing-route-page ){
+:global(html.smirel-app[data-theme='dark'] .billing-route-page) {
+  --billing-surface: #101319;
+  --billing-surface-raised: #141920;
+  --billing-surface-soft: #151a21;
+  --billing-border: #252b33;
+  --billing-border-strong: #3f718f;
+  --billing-text: #eef3f7;
+  --billing-text-soft: #c4ced7;
+  --billing-muted: #7f8b97;
+  --billing-subtle: #626d78;
+  --billing-accent: #66bdf0;
+  --billing-accent-strong: #82ccf6;
+  --billing-accent-soft: rgba(69, 154, 211, 0.13);
+  --billing-success: #55cf9e;
+  --billing-danger: #ef8585;
+  --billing-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+:global(html.smirel-app[data-theme='light'] .billing-route-page) {
   --billing-surface: #ffffff;
   --billing-surface-raised: #ffffff;
   --billing-surface-soft: #f7f9fb;
@@ -72,24 +93,6 @@ const accountBalance = computed(() => Number(state.user?.balance || 0))
   --billing-success: #168c66;
   --billing-danger: #b84e4e;
   --billing-shadow: 0 16px 42px rgba(37, 54, 70, 0.07);
-}
-
-:global(html.smirel-app[data-theme='dark']) .billing-route-page {
-  --billing-surface: rgba(15, 19, 25, 0.94);
-  --billing-surface-raised: rgba(20, 25, 32, 0.96);
-  --billing-surface-soft: rgba(255, 255, 255, 0.035);
-  --billing-border: rgba(255, 255, 255, 0.08);
-  --billing-border-strong: rgba(121, 196, 245, 0.38);
-  --billing-text: #f4f7fa;
-  --billing-text-soft: rgba(226, 234, 241, 0.72);
-  --billing-muted: rgba(207, 218, 228, 0.5);
-  --billing-subtle: rgba(199, 212, 224, 0.36);
-  --billing-accent: #79c4f5;
-  --billing-accent-strong: #4ca7e0;
-  --billing-accent-soft: rgba(121, 196, 245, 0.1);
-  --billing-success: #61d9b1;
-  --billing-danger: #f48b8b;
-  --billing-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
 }
 
 .billing-heading {
