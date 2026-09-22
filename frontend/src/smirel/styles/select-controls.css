@@ -357,3 +357,62 @@ html.smirel-app[data-theme='light'] .select-control:has(select:open) > svg {
     transition: none !important;
   }
 }
+
+
+/* Light picker hardening -----------------------------------------------------
+ * Chromium renders customizable select popups in the top layer. Keep every
+ * piece of that surface explicitly light so the OS/UA dark palette cannot
+ * leak into a light workspace (the black menus seen on Model Marketplace,
+ * Billing and user filters all come through this shared path).
+ */
+html.smirel-app[data-theme='light'] select,
+html.smirel-app[data-theme='light'] select::picker(select) {
+  color-scheme: light !important;
+}
+
+@supports (appearance: base-select) {
+  html.smirel-app[data-theme='light'] select::picker(select) {
+    border-color: #d8e1e8 !important;
+    background: #ffffff !important;
+    color: #52606d !important;
+    box-shadow:
+      0 20px 50px rgba(29, 45, 59, .16),
+      0 5px 15px rgba(29, 45, 59, .07),
+      inset 0 1px rgba(255, 255, 255, .98) !important;
+  }
+
+  html.smirel-app[data-theme='light'] select option {
+    background: transparent !important;
+    color: #52606d !important;
+  }
+
+  html.smirel-app[data-theme='light'] select option:hover,
+  html.smirel-app[data-theme='light'] select option:focus {
+    background: #f3f7fa !important;
+    color: #1f2b36 !important;
+  }
+
+  html.smirel-app[data-theme='light'] select option:checked {
+    background: #e7f3fb !important;
+    color: #1f6f9f !important;
+  }
+
+  html.smirel-app[data-theme='light'] select option:checked:hover,
+  html.smirel-app[data-theme='light'] select option:checked:focus {
+    background: #dcecf7 !important;
+    color: #185f8b !important;
+  }
+
+  html.smirel-app[data-theme='light'] select option::checkmark {
+    color: #2f91cf !important;
+  }
+
+  html.smirel-app[data-theme='light'] select::picker-icon {
+    color: #7e8c99 !important;
+  }
+
+  html.smirel-app[data-theme='light'] select:hover::picker-icon,
+  html.smirel-app[data-theme='light'] select:open::picker-icon {
+    color: #4d6578 !important;
+  }
+}
