@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
@@ -551,12 +552,19 @@ onBeforeUnmount(() => {
 
               <label class="keys-form-field">
                 <span>{{ copy.group }} <b>{{ copy.required }}</b></span>
-                <select v-model="groupId" :disabled="!groups.length">
-                  <option value="" disabled>{{ copy.groupPlaceholder }}</option>
-                  <option v-for="group in groups" :key="group.id" :value="String(group.id)">
-                    {{ group.name }} · {{ group.platform || 'API' }} · {{ effectiveRate(group).toFixed(2) }}×
-                  </option>
-                </select>
+                <UiSelect
+                  v-model="groupId"
+                  :disabled="!groups.length"
+                  :options="[
+                    { label: copy.groupPlaceholder, value: '', disabled: true },
+                    ...groups.map((group) => ({
+                      label: `${group.name} · ${group.platform || 'API'} · ${effectiveRate(group).toFixed(2)}×`,
+                      value: String(group.id),
+                    })),
+                  ]"
+                  :aria-label="copy.group"
+                  fluid
+                />
               </label>
 
               <div v-if="selectedGroup" class="keys-selected-group">
@@ -574,14 +582,19 @@ onBeforeUnmount(() => {
 
               <label class="keys-form-field">
                 <span>{{ copy.expiry }}</span>
-                <select v-model="expiryDays">
-                  <option value="0">{{ copy.never }}</option>
-                  <option value="7">{{ copy.days7 }}</option>
-                  <option value="30">{{ copy.days30 }}</option>
-                  <option value="90">{{ copy.days90 }}</option>
-                  <option value="180">{{ copy.days180 }}</option>
-                  <option value="365">{{ copy.days365 }}</option>
-                </select>
+                <UiSelect
+                  v-model="expiryDays"
+                  :options="[
+                    { label: copy.never, value: '0' },
+                    { label: copy.days7, value: '7' },
+                    { label: copy.days30, value: '30' },
+                    { label: copy.days90, value: '90' },
+                    { label: copy.days180, value: '180' },
+                    { label: copy.days365, value: '365' },
+                  ]"
+                  :aria-label="copy.expiry"
+                  fluid
+                />
               </label>
             </div>
 
