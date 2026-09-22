@@ -389,3 +389,173 @@ html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
     min-height: 36px;
   }
 }
+
+
+/* Scroll-reveal motion system
+ * One restrained motion language across the landing page: short travel,
+ * soft opacity/blur, and small stagger groups. It runs once per element.
+ */
+.home-page.home-reveal-enabled [data-reveal] {
+  --reveal-delay: 0ms;
+  opacity: 0;
+  translate: 0 18px;
+  scale: 1;
+  filter: blur(0);
+  transition:
+    opacity 620ms cubic-bezier(.22, 1, .36, 1),
+    translate 720ms cubic-bezier(.22, 1, .36, 1),
+    scale 720ms cubic-bezier(.22, 1, .36, 1),
+    filter 680ms cubic-bezier(.22, 1, .36, 1);
+  transition-delay: var(--reveal-delay);
+}
+
+.home-page.home-reveal-enabled [data-reveal='hero-title'] {
+  translate: 0 24px;
+  filter: blur(7px);
+}
+
+.home-page.home-reveal-enabled [data-reveal='hero-soft'] {
+  translate: 0 14px;
+}
+
+.home-page.home-reveal-enabled [data-reveal='hero-actions'] {
+  translate: 0 16px;
+  scale: .992;
+}
+
+.home-page.home-reveal-enabled [data-reveal='card'] {
+  translate: 0 24px;
+  scale: .985;
+}
+
+.home-page.home-reveal-enabled [data-reveal='surface'] {
+  translate: 0 20px;
+  scale: .992;
+}
+
+.home-page.home-reveal-enabled [data-reveal='chip'] {
+  translate: 0 12px;
+  scale: .97;
+}
+
+.home-page.home-reveal-enabled [data-reveal='faq'] {
+  translate: 0 13px;
+}
+
+.home-page.home-reveal-enabled [data-reveal].is-revealed {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  filter: blur(0);
+}
+
+/* Section headings reveal internally so the eyebrow, title and copy form a
+ * deliberate three-beat sequence instead of moving as one flat block. */
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'] {
+  opacity: 1;
+  translate: none;
+  scale: 1;
+}
+
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'] > * {
+  opacity: 0;
+  translate: 0 14px;
+  transition:
+    opacity 560ms cubic-bezier(.22, 1, .36, 1),
+    translate 650ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'].is-revealed > * {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'] > :nth-child(1) { transition-delay: 0ms; }
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'] > :nth-child(2) { transition-delay: 65ms; }
+.home-page.home-reveal-enabled .home-heading[data-reveal='heading'] > :nth-child(3) { transition-delay: 125ms; }
+
+/* First viewport choreography. */
+.home-page.home-reveal-enabled .home-hero .home-eyebrow { --reveal-delay: 45ms; }
+.home-page.home-reveal-enabled .home-hero h1[data-reveal] { --reveal-delay: 110ms; }
+.home-page.home-reveal-enabled .home-hero .home-hero-lead { --reveal-delay: 180ms; }
+.home-page.home-reveal-enabled .home-hero .home-hero-copy { --reveal-delay: 245ms; }
+.home-page.home-reveal-enabled .home-hero .home-hero-actions { --reveal-delay: 315ms; }
+.home-page.home-reveal-enabled .home-model-rail > span[data-reveal] { --reveal-delay: 390ms; }
+
+/* Reusable stagger rhythm for repeated commercial UI groups. */
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(1),
+.home-page.home-reveal-enabled .home-card-grid > [data-reveal]:nth-child(1),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(1),
+.home-page.home-reveal-enabled .home-steps > [data-reveal]:nth-child(1),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(1),
+.home-page.home-reveal-enabled .home-faq > [data-reveal]:nth-child(1) { --reveal-delay: 45ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(2),
+.home-page.home-reveal-enabled .home-card-grid > [data-reveal]:nth-child(2),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(2),
+.home-page.home-reveal-enabled .home-steps > [data-reveal]:nth-child(2),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(2),
+.home-page.home-reveal-enabled .home-faq > [data-reveal]:nth-child(2) { --reveal-delay: 95ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(3),
+.home-page.home-reveal-enabled .home-card-grid > [data-reveal]:nth-child(3),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(3),
+.home-page.home-reveal-enabled .home-steps > [data-reveal]:nth-child(3),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(3),
+.home-page.home-reveal-enabled .home-faq > [data-reveal]:nth-child(3) { --reveal-delay: 145ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(4),
+.home-page.home-reveal-enabled .home-card-grid > [data-reveal]:nth-child(4),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(4),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(4),
+.home-page.home-reveal-enabled .home-faq > [data-reveal]:nth-child(4) { --reveal-delay: 195ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(5),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(5),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(5) { --reveal-delay: 245ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(6),
+.home-page.home-reveal-enabled .home-tool-grid > [data-reveal]:nth-child(6),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(6) { --reveal-delay: 295ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(7),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(7) { --reveal-delay: 345ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(8),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(8) { --reveal-delay: 395ms; }
+
+.home-page.home-reveal-enabled .home-model-list > [data-reveal]:nth-child(9),
+.home-page.home-reveal-enabled .home-plan-grid > [data-reveal]:nth-child(9) { --reveal-delay: 445ms; }
+
+/* Dynamic pricing-group headers use the same heading cadence. */
+.home-page.home-reveal-enabled .home-plan-groups > section > header[data-reveal='heading'] {
+  opacity: 0;
+  translate: 0 14px;
+  transition:
+    opacity 560ms cubic-bezier(.22, 1, .36, 1),
+    translate 650ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.home-page.home-reveal-enabled .home-plan-groups > section > header[data-reveal='heading'].is-revealed {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* A tiny settle after reveal keeps hover interactions feeling immediate. */
+.home-page.home-reveal-enabled .home-card-grid article.is-revealed:hover,
+.home-page.home-reveal-enabled .home-model-chip.is-revealed:hover {
+  transition-delay: 0ms;
+}
+
+/* Reduced-motion keeps all content immediately visible and interactive. */
+@media (prefers-reduced-motion: reduce) {
+  .home-page.home-reveal-enabled [data-reveal],
+  .home-page.home-reveal-enabled .home-heading[data-reveal='heading'] > *,
+  .home-page.home-reveal-enabled .home-plan-groups > section > header[data-reveal='heading'] {
+    opacity: 1 !important;
+    translate: none !important;
+    scale: 1 !important;
+    filter: none !important;
+    transition: none !important;
+  }
+}
