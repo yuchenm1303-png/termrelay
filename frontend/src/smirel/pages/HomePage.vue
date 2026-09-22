@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import HomeAccountMenu from '../components/HomeAccountMenu.vue'
 import HomeTopbarControls from '../components/HomeTopbarControls.vue'
 import { paymentApi, type PublicSubscriptionPlan } from '../api/payment'
@@ -22,6 +22,9 @@ const plans = ref<PublicSubscriptionPlan[]>([])
 const plansState = ref<'loading' | 'ready' | 'unavailable'>('loading')
 const mobileMenuOpen = ref(false)
 const copied = ref(false)
+const homeRoot = ref<HTMLElement | null>(null)
+let revealObserver: IntersectionObserver | null = null
+let revealMutationObserver: MutationObserver | null = null
 const apiBase = 'https://muxway.dev/v1'
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
@@ -68,13 +71,59 @@ async function copyBase() {
   copied.value = true
   window.setTimeout(() => { copied.value = false }, 1400)
 }
+function bindRevealTargets(root: HTMLElement) {
+  const targets = root.querySelectorAll<HTMLElement>('[data-reveal]:not([data-reveal-bound])')
+  targets.forEach((target) => {
+    target.dataset.revealBound = 'true'
+    revealObserver?.observe(target)
+  })
+}
+
+function initRevealMotion() {
+  const root = homeRoot.value
+  if (!root) return
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  root.classList.add('home-reveal-enabled')
+
+  if (reducedMotion || typeof IntersectionObserver === 'undefined') {
+    root.querySelectorAll<HTMLElement>('[data-reveal]').forEach((target) => {
+      target.classList.add('is-revealed')
+    })
+    return
+  }
+
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return
+      const target = entry.target as HTMLElement
+      target.classList.add('is-revealed')
+      revealObserver?.unobserve(target)
+    })
+  }, {
+    threshold: 0.13,
+    rootMargin: '0px 0px -7% 0px',
+  })
+
+  bindRevealTargets(root)
+  revealMutationObserver = new MutationObserver(() => bindRevealTargets(root))
+  revealMutationObserver.observe(root, { childList: true, subtree: true })
+}
+
 onMounted(async () => {
+  initRevealMotion()
+
   try {
     const response: unknown = await paymentApi.listPublicPlans()
     if (!Array.isArray(response)) throw new Error('Public plans response is not an array')
     plans.value = response
     plansState.value = 'ready'
   } catch { plansState.value = 'unavailable' }
+})
+
+onBeforeUnmount(() => {
+  revealObserver?.disconnect()
+  revealMutationObserver?.disconnect()
 })
 
 const zh = {
@@ -104,23 +153,23 @@ const en = {
 </script>
 
 <template>
-  <div class="home-page">
+  <div ref="homeRoot" class="home-page">
     <header class="home-topbar">
       <RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
       <nav class="home-nav" :class="{ 'is-open': mobileMenuOpen }"><a href="#capabilities">{{ copy.nav[0] }}</a><a href="#tools">{{ copy.nav[1] }}</a><a href="#pricing">{{ copy.nav[2] }}</a><a href="#faq">{{ copy.nav[3] }}</a></nav>
       <div class="home-actions"><template v-if="isAuthenticated"><HomeTopbarControls /><HomeAccountMenu variant="toolbar" /></template><template v-else><button class="home-language-toggle" type="button" :aria-label="isEnglish ? '切换至中文' : 'Switch to English'" :title="isEnglish ? '切换至中文' : 'Switch to English'" @click="toggleLocale">{{ isEnglish ? '中文' : 'EN' }}</button><button class="home-theme-toggle" type="button" :aria-label="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" :title="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" @click="toggleTheme"><svg v-if="interfacePreferences.resolvedTheme === 'dark'" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z" /></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button><RouterLink to="/login">{{ isEnglish ? 'Log in' : '登录' }}</RouterLink><RouterLink class="home-register" to="/register">{{ isEnglish ? 'Sign up' : '注册' }}</RouterLink></template><button class="home-menu" type="button" @click="mobileMenuOpen = !mobileMenuOpen">{{ isEnglish ? 'Menu' : '菜单' }}</button></div>
     </header>
     <main>
-      <section class="home-hero"><p class="home-eyebrow">{{ copy.hero[0] }}</p><h1>{{ copy.hero[1] }}</h1><p class="home-hero-lead">{{ copy.hero[2] }}</p><p class="home-hero-copy">{{ copy.hero[3] }}</p><div class="home-hero-actions"><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.hero[4] }}</RouterLink><RouterLink class="home-secondary" to="/model-plaza">{{ copy.hero[5] }}</RouterLink></div><div class="home-model-rail"><span>{{ copy.hero[6] }}</span><div class="home-model-list"><span v-for="provider in providers" :key="provider.name" class="home-model-chip"><img :src="provider.src" :alt="provider.name"><small>{{ provider.name }}</small></span></div></div></section>
-      <section class="home-section home-pain"><div class="home-heading"><span>{{ copy.pain[0] }}</span><h2>{{ copy.pain[1] }}</h2><p>{{ copy.pain[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.pain[3]" :key="title" :class="{ 'is-emphasis': index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
-      <section id="capabilities" class="home-section home-capabilities"><div class="home-heading"><span>{{ copy.cap[0] }}</span><h2>{{ copy.cap[1] }}</h2><p>{{ copy.cap[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.cap[3]" :key="title" :class="{ 'is-emphasis': index === 0 || index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
-      <section id="tools" class="home-section"><div class="home-heading"><span>{{ copy.tools[0] }}</span><h2>{{ copy.tools[1] }}</h2><p>{{ copy.tools[2] }}</p></div><div class="home-tool-grid"><a v-for="tool in tools" :key="tool[1]" href="https://muxway.dev" target="_blank" rel="noreferrer"><b>{{ tool[0] }}</b><span>{{ tool[1] }}</span><i>↗</i></a></div><a class="home-inline-link" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.tools[3] }} →</a></section>
-      <section class="home-section"><div class="home-heading"><span>{{ copy.compare[0] }}</span><h2>{{ copy.compare[1] }}</h2></div><div class="home-table"><div><b v-for="cell in copy.compare[2]" :key="cell">{{ cell }}</b></div><div v-for="row in copy.compare[3]" :key="row[0]"><span v-for="cell in row" :key="cell">{{ cell }}</span></div></div></section>
-      <section class="home-section"><div class="home-heading"><span>{{ copy.steps[0] }}</span><h2>{{ copy.steps[1] }}</h2><p>{{ copy.steps[2] }}</p></div><div class="home-steps"><article v-for="([number, title, text], index) in copy.steps[3]" :key="number"><span>{{ number }}</span><h3>{{ title }}</h3><p>{{ text }}</p><div v-if="index === 2" class="home-code"><code>{{ apiBase }}</code><button type="button" @click="copyBase">{{ copied ? copy.steps[5] : copy.steps[4] }}</button></div></article></div></section>
-      <section id="pricing" class="home-section"><div class="home-heading"><span>{{ copy.pricing[0] }}</span><h2>{{ copy.pricing[1] }}</h2><p>{{ copy.pricing[2] }}</p></div><p v-if="plansState === 'loading'" class="home-state">{{ copy.pricing[3] }}</p><div v-else-if="plansState === 'ready' && groups.length" class="home-plan-groups"><section v-for="group in groups" :key="group.name"><header><h3>{{ group.name }}</h3><span>{{ group.items.length }}</span></header><div class="home-plan-grid"><article v-for="plan in group.items" :key="plan.id" class="home-plan" :class="{ 'is-featured': plan.card_featured }"><div><span>{{ plan.card_badge || plan.card_tier || plan.platform || 'MUXWAY' }}</span><small v-if="plan.card_featured">FEATURED</small></div><h4>{{ plan.name }}</h4><p>{{ plan.description }}</p><strong>{{ formatPrice(plan) }}</strong><em>/ {{ validity(plan) }}</em><dl><div><dt>{{ copy.pricing[7] }}</dt><dd>{{ validity(plan) }}</dd></div><div v-if="plan.monthly_limit_usd"><dt>{{ copy.pricing[8] }}</dt><dd>${{ Number(plan.monthly_limit_usd).toLocaleString() }}</dd></div><div v-if="plan.seat_limit"><dt>{{ copy.pricing[9] }}</dt><dd>{{ plan.seat_limit }}</dd></div><div v-if="plan.concurrency_limit"><dt>{{ copy.pricing[10] }}</dt><dd>{{ plan.concurrency_limit }}</dd></div></dl><ul><li v-for="feature in plan.features.slice(0, 4)" :key="feature">{{ feature }}</li></ul><RouterLink :to="planTarget(plan)">{{ plan.purchase_policy === 'approval' ? copy.pricing[6] : copy.pricing[5] }} →</RouterLink></article></div></section></div><div v-else class="home-state"><p>{{ copy.pricing[4] }}</p><RouterLink class="home-secondary" :to="isAuthenticated ? '/subscriptions' : '/login'">{{ isEnglish ? 'View plans' : '查看套餐' }}</RouterLink></div></section>
-      <section id="faq" class="home-section"><div class="home-heading"><span>{{ copy.faq[0] }}</span><h2>{{ copy.faq[1] }}</h2><p>{{ copy.faq[2] }}</p></div><div class="home-faq"><details v-for="([question, answer], index) in copy.faq[3]" :key="question" :open="index === 0"><summary>{{ question }}<b>+</b></summary><p>{{ answer }}</p></details></div></section>
-      <section class="home-closing"><div><span>MUXWAY · 模枢</span><h2>{{ copy.closing[0] }}</h2><p>{{ copy.closing[1] }}</p></div><div><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.closing[2] }}</RouterLink><a class="home-secondary" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.closing[3] }}</a></div></section>
+      <section class="home-hero"><p class="home-eyebrow" data-reveal="hero-soft">{{ copy.hero[0] }}</p><h1 data-reveal="hero-title">{{ copy.hero[1] }}</h1><p class="home-hero-lead" data-reveal="hero-soft">{{ copy.hero[2] }}</p><p class="home-hero-copy" data-reveal="hero-soft">{{ copy.hero[3] }}</p><div class="home-hero-actions" data-reveal="hero-actions"><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.hero[4] }}</RouterLink><RouterLink class="home-secondary" to="/model-plaza">{{ copy.hero[5] }}</RouterLink></div><div class="home-model-rail"><span data-reveal="soft">{{ copy.hero[6] }}</span><div class="home-model-list"><span v-for="provider in providers" :key="provider.name" class="home-model-chip" data-reveal="chip"><img :src="provider.src" :alt="provider.name"><small>{{ provider.name }}</small></span></div></div></section>
+      <section class="home-section home-pain"><div class="home-heading" data-reveal="heading"><span>{{ copy.pain[0] }}</span><h2>{{ copy.pain[1] }}</h2><p>{{ copy.pain[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.pain[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
+      <section id="capabilities" class="home-section home-capabilities"><div class="home-heading" data-reveal="heading"><span>{{ copy.cap[0] }}</span><h2>{{ copy.cap[1] }}</h2><p>{{ copy.cap[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.cap[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 0 || index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
+      <section id="tools" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.tools[0] }}</span><h2>{{ copy.tools[1] }}</h2><p>{{ copy.tools[2] }}</p></div><div class="home-tool-grid"><a v-for="tool in tools" :key="tool[1]" data-reveal="card" href="https://muxway.dev" target="_blank" rel="noreferrer"><b>{{ tool[0] }}</b><span>{{ tool[1] }}</span><i>↗</i></a></div><a class="home-inline-link" data-reveal="soft" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.tools[3] }} →</a></section>
+      <section class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.compare[0] }}</span><h2>{{ copy.compare[1] }}</h2></div><div class="home-table" data-reveal="surface"><div><b v-for="cell in copy.compare[2]" :key="cell">{{ cell }}</b></div><div v-for="row in copy.compare[3]" :key="row[0]"><span v-for="cell in row" :key="cell">{{ cell }}</span></div></div></section>
+      <section class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.steps[0] }}</span><h2>{{ copy.steps[1] }}</h2><p>{{ copy.steps[2] }}</p></div><div class="home-steps"><article v-for="([number, title, text], index) in copy.steps[3]" :key="number" data-reveal="card"><span>{{ number }}</span><h3>{{ title }}</h3><p>{{ text }}</p><div v-if="index === 2" class="home-code"><code>{{ apiBase }}</code><button type="button" @click="copyBase">{{ copied ? copy.steps[5] : copy.steps[4] }}</button></div></article></div></section>
+      <section id="pricing" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.pricing[0] }}</span><h2>{{ copy.pricing[1] }}</h2><p>{{ copy.pricing[2] }}</p></div><p v-if="plansState === 'loading'" class="home-state" data-reveal="soft">{{ copy.pricing[3] }}</p><div v-else-if="plansState === 'ready' && groups.length" class="home-plan-groups"><section v-for="group in groups" :key="group.name"><header data-reveal="heading"><h3>{{ group.name }}</h3><span>{{ group.items.length }}</span></header><div class="home-plan-grid"><article v-for="plan in group.items" :key="plan.id" class="home-plan" data-reveal="card" :class="{ 'is-featured': plan.card_featured }"><div><span>{{ plan.card_badge || plan.card_tier || plan.platform || 'MUXWAY' }}</span><small v-if="plan.card_featured">FEATURED</small></div><h4>{{ plan.name }}</h4><p>{{ plan.description }}</p><strong>{{ formatPrice(plan) }}</strong><em>/ {{ validity(plan) }}</em><dl><div><dt>{{ copy.pricing[7] }}</dt><dd>{{ validity(plan) }}</dd></div><div v-if="plan.monthly_limit_usd"><dt>{{ copy.pricing[8] }}</dt><dd>${{ Number(plan.monthly_limit_usd).toLocaleString() }}</dd></div><div v-if="plan.seat_limit"><dt>{{ copy.pricing[9] }}</dt><dd>{{ plan.seat_limit }}</dd></div><div v-if="plan.concurrency_limit"><dt>{{ copy.pricing[10] }}</dt><dd>{{ plan.concurrency_limit }}</dd></div></dl><ul><li v-for="feature in plan.features.slice(0, 4)" :key="feature">{{ feature }}</li></ul><RouterLink :to="planTarget(plan)">{{ plan.purchase_policy === 'approval' ? copy.pricing[6] : copy.pricing[5] }} →</RouterLink></article></div></section></div><div v-else class="home-state" data-reveal="soft"><p>{{ copy.pricing[4] }}</p><RouterLink class="home-secondary" :to="isAuthenticated ? '/subscriptions' : '/login'">{{ isEnglish ? 'View plans' : '查看套餐' }}</RouterLink></div></section>
+      <section id="faq" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.faq[0] }}</span><h2>{{ copy.faq[1] }}</h2><p>{{ copy.faq[2] }}</p></div><div class="home-faq"><details v-for="([question, answer], index) in copy.faq[3]" data-reveal="faq" :key="question" :open="index === 0"><summary>{{ question }}<b>+</b></summary><p>{{ answer }}</p></details></div></section>
+      <section class="home-closing" data-reveal="surface"><div><span>MUXWAY · 模枢</span><h2>{{ copy.closing[0] }}</h2><p>{{ copy.closing[1] }}</p></div><div><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.closing[2] }}</RouterLink><a class="home-secondary" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.closing[3] }}</a></div></section>
     </main>
-    <footer class="home-footer"><div><RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink><p>{{ isEnglish ? 'Muxway unified AI API gateway.' : 'Muxway 模枢一站式 AI API 网关平台。' }}</p></div><div><RouterLink to="/model-plaza">{{ isEnglish ? 'Models and pricing' : '模型与价格' }}</RouterLink><RouterLink to="/key-usage">{{ isEnglish ? 'Usage lookup' : '用量查询' }}</RouterLink><a href="https://muxway.dev" target="_blank" rel="noreferrer">{{ isEnglish ? 'Integration docs' : '接入文档' }}</a></div><small>© {{ new Date().getFullYear() }} Muxway 模枢</small></footer>
+    <footer class="home-footer" data-reveal="soft"><div><RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink><p>{{ isEnglish ? 'Muxway unified AI API gateway.' : 'Muxway 模枢一站式 AI API 网关平台。' }}</p></div><div><RouterLink to="/model-plaza">{{ isEnglish ? 'Models and pricing' : '模型与价格' }}</RouterLink><RouterLink to="/key-usage">{{ isEnglish ? 'Usage lookup' : '用量查询' }}</RouterLink><a href="https://muxway.dev" target="_blank" rel="noreferrer">{{ isEnglish ? 'Integration docs' : '接入文档' }}</a></div><small>© {{ new Date().getFullYear() }} Muxway 模枢</small></footer>
   </div>
 </template>
