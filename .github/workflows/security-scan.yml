@@ -8,9 +8,54 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+
+# Security scans for superseded commits add no release value. Keep scheduled
+# weekly scans separate so a push cannot cancel the maintenance scan.
+concurrency:
+  group: security-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.decide.outputs.backend }}
+      frontend: ${{ steps.decide.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Detect affected areas
+        id: filter
+        if: github.event_name != 'schedule'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/security-scan.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/audit-exceptions.yml'
+              - 'tools/check_pnpm_audit_exceptions.py'
+              - '.github/workflows/security-scan.yml'
+      - name: Decide scan scope
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          FILTER_BACKEND: ${{ steps.filter.outputs.backend }}
+          FILTER_FRONTEND: ${{ steps.filter.outputs.frontend }}
+        run: |
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=${FILTER_BACKEND:-false}" >> "$GITHUB_OUTPUT"
+            echo "frontend=${FILTER_FRONTEND:-false}" >> "$GITHUB_OUTPUT"
+          fi
+
   backend-security:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -20,6 +65,7 @@ jobs:
         with:
           go-version-file: backend/go.mod
           check-latest: false
+          cache: true
           cache-dependency-path: backend/go.sum
       - name: Verify Go version
         run: |
@@ -38,6 +84,8 @@ jobs:
           govulncheck ./...
 
   frontend-security:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -53,13 +101,11 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install dependencies
         working-directory: frontend
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run pnpm audit
         working-directory: frontend
         run: |
           pnpm audit --prod --audit-level=high --json > audit.json || true
       - name: Check audit exceptions
         run: |
-          python tools/check_pnpm_audit_exceptions.py \
-            --audit frontend/audit.json \
-            --exceptions .github/audit-exceptions.yml
+          python tools/check_pnpm_audit_exceptions.py             --audit frontend/audit.json             --exceptions .github/audit-exceptions.yml
