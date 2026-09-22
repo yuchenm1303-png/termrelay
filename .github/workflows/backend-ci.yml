@@ -29,8 +29,20 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'frontend/**'
-              - 'docs/legal/**'
+              # Run the expensive TS/lint/vitest suite only when executable
+              # frontend code/config changes. CSS, images and other static
+              # assets are validated by the atomic production Vite build.
+              - 'frontend/**/*.vue'
+              - 'frontend/**/*.ts'
+              - 'frontend/**/*.tsx'
+              - 'frontend/**/*.js'
+              - 'frontend/**/*.mjs'
+              - 'frontend/**/*.cjs'
+              - 'frontend/package.json'
+              - 'frontend/pnpm-lock.yaml'
+              - 'frontend/tsconfig*.json'
+              - 'frontend/vite.config.*'
+              - 'frontend/eslint.config.*'
               - 'Makefile'
               - '.github/workflows/backend-ci.yml'
             backend:
