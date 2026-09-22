@@ -25,6 +25,11 @@ const copied = ref(false)
 const homeRoot = ref<HTMLElement | null>(null)
 let revealObserver: IntersectionObserver | null = null
 let revealMutationObserver: MutationObserver | null = null
+const pointerGlowSelector = '.home-card-grid article, .home-tool-grid a, .home-plan, .home-closing'
+let pointerGlowFrame = 0
+let pointerGlowTarget: HTMLElement | null = null
+let pointerGlowClientX = 0
+let pointerGlowClientY = 0
 const apiBase = 'https://muxway.dev/v1'
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
@@ -110,8 +115,63 @@ function initRevealMotion() {
   revealMutationObserver.observe(root, { childList: true, subtree: true })
 }
 
+function findPointerGlowTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return null
+  const card = target.closest<HTMLElement>(pointerGlowSelector)
+  const root = homeRoot.value
+  return card && root?.contains(card) ? card : null
+}
+
+function flushPointerGlow() {
+  pointerGlowFrame = 0
+  const target = pointerGlowTarget
+  if (!target) return
+
+  const rect = target.getBoundingClientRect()
+  if (!rect.width || !rect.height) return
+
+  const x = Math.max(0, Math.min(100, ((pointerGlowClientX - rect.left) / rect.width) * 100))
+  const y = Math.max(0, Math.min(100, ((pointerGlowClientY - rect.top) / rect.height) * 100))
+  target.style.setProperty('--pointer-x', `${x.toFixed(2)}%`)
+  target.style.setProperty('--pointer-y', `${y.toFixed(2)}%`)
+}
+
+function handlePointerGlowMove(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  const target = findPointerGlowTarget(event.target)
+  if (!target) return
+
+  pointerGlowTarget = target
+  pointerGlowClientX = event.clientX
+  pointerGlowClientY = event.clientY
+  target.classList.add('has-pointer-glow')
+
+  if (!pointerGlowFrame) pointerGlowFrame = window.requestAnimationFrame(flushPointerGlow)
+}
+
+function handlePointerGlowOut(event: PointerEvent) {
+  const target = findPointerGlowTarget(event.target)
+  if (!target) return
+
+  const next = findPointerGlowTarget(event.relatedTarget)
+  if (next === target) return
+
+  target.classList.remove('has-pointer-glow')
+  target.style.setProperty('--pointer-x', '50%')
+  target.style.setProperty('--pointer-y', '50%')
+  if (pointerGlowTarget === target) pointerGlowTarget = null
+}
+
+function initPointerGlow() {
+  const root = homeRoot.value
+  if (!root || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+  root.addEventListener('pointermove', handlePointerGlowMove, { passive: true })
+  root.addEventListener('pointerout', handlePointerGlowOut, { passive: true })
+}
+
 onMounted(async () => {
   initRevealMotion()
+  initPointerGlow()
 
   try {
     const response: unknown = await paymentApi.listPublicPlans()
@@ -124,6 +184,10 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   revealObserver?.disconnect()
   revealMutationObserver?.disconnect()
+  const root = homeRoot.value
+  root?.removeEventListener('pointermove', handlePointerGlowMove)
+  root?.removeEventListener('pointerout', handlePointerGlowOut)
+  if (pointerGlowFrame) window.cancelAnimationFrame(pointerGlowFrame)
 })
 
 const zh = {
