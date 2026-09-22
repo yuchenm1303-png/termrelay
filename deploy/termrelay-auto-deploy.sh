@@ -262,7 +262,6 @@ fi
 
 if [[ "$deploy_mode" == "frontend" || "$deploy_mode" == "frontend-style" ]]; then
   started_at="$(date +%s)"
-  frontend_image="termrelay-frontend:git-$short"
   staging_frontend="$ROOT/data/.frontend-stage-$short"
   runtime_frontend="$ROOT/data/frontend"
   timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
@@ -271,20 +270,14 @@ if [[ "$deploy_mode" == "frontend" || "$deploy_mode" == "frontend-style" ]]; the
   rm -rf "$staging_frontend"
   mkdir -p "$staging_frontend"
 
-  log "fast frontend build $frontend_image"
+  log "fast frontend build/export"
   docker build \
-    --target frontend-builder \
+    --target frontend-export \
     --build-arg FRONTEND_FAST_BUILD=true \
+    --output "type=local,dest=$staging_frontend" \
     -f "$worktree/deploy/Dockerfile" \
-    -t "$frontend_image" \
     "$worktree"
 
-  frontend_cid="$(docker create "$frontend_image")"
-  if ! docker cp "$frontend_cid:/app/backend/internal/web/dist/." "$staging_frontend"; then
-    docker rm -f "$frontend_cid" >/dev/null 2>&1 || true
-    fail "could not extract frontend bundle"
-  fi
-  docker rm -f "$frontend_cid" >/dev/null 2>&1 || true
   [[ -s "$staging_frontend/index.html" ]] || fail "frontend bundle missing index.html"
 
   mkdir -p "$runtime_frontend"
@@ -326,9 +319,6 @@ if [[ "$deploy_mode" == "frontend" || "$deploy_mode" == "frontend-style" ]]; the
   cleanup_worktree
   trap - EXIT
 
-  # The frontend image tag is only an extraction vehicle. Removing the tag
-  # leaves reusable BuildKit cache intact but keeps image storage bounded.
-  docker image rm "$frontend_image" >/dev/null 2>&1 || true
   exit 0
 fi
 
