@@ -34,7 +34,10 @@ jobs:
               - 'backend/**'
               - '.github/workflows/security-scan.yml'
             frontend:
-              - 'frontend/**'
+              # pnpm audit is dependency-based, so ordinary Vue/CSS edits do
+              # not need to reinstall and rescan the same dependency graph.
+              - 'frontend/package.json'
+              - 'frontend/pnpm-lock.yaml'
               - '.github/audit-exceptions.yml'
               - 'tools/check_pnpm_audit_exceptions.py'
               - '.github/workflows/security-scan.yml'
