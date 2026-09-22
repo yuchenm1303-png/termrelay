@@ -6,9 +6,47 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+
+# Only the newest commit for a branch/PR is useful. Cancel stale runs immediately
+# so a burst of UI commits does not queue minutes of obsolete backend tests.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      deploy: ${{ steps.filter.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Detect affected areas
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'docs/legal/**'
+              - 'Makefile'
+              - '.github/workflows/backend-ci.yml'
+            backend:
+              - 'backend/**'
+              - 'Makefile'
+              - '.github/workflows/backend-ci.yml'
+            deploy:
+              - 'deploy/**'
+              - 'Dockerfile'
+              - 'Dockerfile.*'
+              - '.dockerignore'
+              - '.github/workflows/backend-ci.yml'
+
   shell:
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
@@ -25,7 +63,11 @@ jobs:
           /bin/sh deploy/tests/recovery-safety-test.sh
           /bin/sh deploy/test-caddyfile-cache.sh
 
+  # Keep the historical "test" check name for compatibility, but run only the
+  # unit suite here. Integration tests run in parallel in the next job.
   test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -45,11 +87,26 @@ jobs:
       - name: Unit tests
         working-directory: backend
         run: make test-unit
+
+  integration-test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          check-latest: false
+          cache: true
+          cache-dependency-path: backend/go.sum
       - name: Integration tests
         working-directory: backend
         run: make test-integration
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -65,11 +122,13 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install frontend dependencies
         working-directory: frontend
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Frontend typecheck and critical vitest
         run: make test-frontend
 
   golangci-lint:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
