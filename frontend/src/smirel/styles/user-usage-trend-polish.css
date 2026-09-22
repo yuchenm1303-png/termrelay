@@ -382,3 +382,376 @@ html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .usage-row:
   color: #486779 !important;
   background: #eef4f7 !important;
 }
+
+
+/* Usage trend chart v2 ---------------------------------------------------
+ * Precise axis alignment + compact analytical detail + hover inspection.
+ */
+html.smirel-app .workspace-root .user-usage-page .trend-chart {
+  height: 326px;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta span {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta span + span {
+  padding-left: 14px;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta span + span::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 13px;
+  background: #2b333c;
+  transform: translateY(-50%);
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta em {
+  color: #667481;
+  font: 700 .55rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-style: normal;
+  letter-spacing: .11em;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-chart-meta strong {
+  color: #aebdca;
+  font-size: .67rem;
+  line-height: 1;
+  font-weight: 660;
+  font-variant-numeric: tabular-nums;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-line-svg,
+html.smirel-app .workspace-root .user-usage-page .trend-point-layer,
+html.smirel-app .workspace-root .user-usage-page .trend-y-axis {
+  inset: 48px 26px 42px;
+  width: calc(100% - 52px);
+  height: calc(100% - 90px);
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-grid-svg line {
+  stroke: #28313a;
+  stroke-width: 1;
+  stroke-dasharray: 4 7;
+  vector-effect: non-scaling-stroke;
+  opacity: .82;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-grid-svg line:first-child,
+html.smirel-app .workspace-root .user-usage-page .trend-grid-svg line:last-child {
+  opacity: .58;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-area {
+  animation: usage-trend-area-in .52s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-line {
+  stroke-width: 2.7;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: usage-trend-line-draw .7s cubic-bezier(.22, 1, .36, 1) forwards;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-crosshair {
+  stroke: #6caed7;
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  vector-effect: non-scaling-stroke;
+  opacity: .42;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-y-axis {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-y-axis small {
+  position: absolute;
+  right: 2px;
+  min-width: 34px;
+  padding-left: 8px;
+  color: #63717d;
+  background: linear-gradient(90deg, transparent 0%, rgba(13, 16, 20, .82) 24%, rgba(13, 16, 20, .94) 100%);
+  font: 570 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transform: translateY(-50%);
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-point-layer {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-dot {
+  width: 9px;
+  height: 9px;
+  animation: usage-trend-dot-in .34s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-dot::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-dot.is-latest::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(104, 179, 226, .24);
+  border-radius: 50%;
+  opacity: .7;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-dot.is-active {
+  width: 11px;
+  height: 11px;
+  background: #87c9ef;
+  box-shadow:
+    0 0 0 3px rgba(91, 170, 220, .13),
+    0 0 14px rgba(78, 162, 216, .24);
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-inspector {
+  position: absolute;
+  z-index: 7;
+  top: 10px;
+  right: 26px;
+  min-width: 150px;
+  padding: 9px 11px 8px;
+  border: 1px solid rgba(69, 84, 96, .72);
+  border-radius: 9px;
+  background: rgba(17, 22, 27, .91);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .16);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-inspector span,
+html.smirel-app .workspace-root .user-usage-page .trend-inspector small {
+  display: block;
+  color: #70808d;
+  font-size: .57rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-inspector strong {
+  display: block;
+  margin: 4px 0 3px;
+  color: #e4eef5;
+  font-size: .76rem;
+  line-height: 1.2;
+  font-weight: 690;
+  font-variant-numeric: tabular-nums;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-axis {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 17px;
+  height: 14px;
+  display: block;
+}
+
+html.smirel-app .workspace-root .user-usage-page .trend-axis small {
+  position: absolute;
+  top: 0;
+  min-width: 0;
+  color: #7a8793;
+  font-size: .67rem;
+  line-height: 1;
+  font-weight: 550;
+  letter-spacing: -.01em;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+
+/* The labels now use the exact same normalized x coordinate as the SVG points.
+ * This removes the old CSS-grid half-cell drift between labels and dots. */
+html.smirel-app .workspace-root .user-usage-page .trend-axis small.is-first,
+html.smirel-app .workspace-root .user-usage-page .trend-axis small.is-last {
+  transform: translateX(-50%);
+}
+
+.trend-inspector-enter-active,
+.trend-inspector-leave-active {
+  transition:
+    opacity .16s ease,
+    transform .18s cubic-bezier(.22, 1, .36, 1);
+}
+
+.trend-inspector-enter-from,
+.trend-inspector-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(.985);
+}
+
+@keyframes usage-trend-line-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes usage-trend-area-in {
+  from { opacity: 0; }
+  to { opacity: .72; }
+}
+
+@keyframes usage-trend-dot-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.68);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Light theme ----------------------------------------------------------- */
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-chart-meta span + span::before {
+  background: #dbe4ea;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-chart-meta em {
+  color: #81909c;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-chart-meta strong {
+  color: #536b7d;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-grid-svg line {
+  stroke: #dce5eb;
+  opacity: .92;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-grid-svg line:first-child,
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-grid-svg line:last-child {
+  opacity: .72;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-crosshair {
+  stroke: #4f8db5;
+  opacity: .4;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-y-axis small {
+  color: #7a8b98;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .84) 24%, rgba(255, 255, 255, .97) 100%);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-dot.is-latest::after {
+  border-color: rgba(67, 128, 168, .25);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-dot.is-active {
+  background: #397aa3;
+  box-shadow:
+    0 0 0 3px rgba(76, 135, 176, .11),
+    0 4px 12px rgba(43, 92, 124, .16);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-inspector {
+  border-color: rgba(196, 210, 220, .92);
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 10px 24px rgba(41, 69, 88, .09);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-inspector span,
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-inspector small {
+  color: #7c8b97;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-inspector strong {
+  color: #254155;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .user-usage-page .trend-axis small {
+  color: #6c7e8b;
+}
+
+@media (max-width: 760px) {
+  html.smirel-app .workspace-root .user-usage-page .trend-chart {
+    height: 282px;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-chart-meta {
+    top: 11px;
+    left: 16px;
+    gap: 10px;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-chart-meta span + span {
+    padding-left: 10px;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-line-svg,
+  html.smirel-app .workspace-root .user-usage-page .trend-point-layer,
+  html.smirel-app .workspace-root .user-usage-page .trend-y-axis {
+    inset: 42px 14px 37px;
+    width: calc(100% - 28px);
+    height: calc(100% - 79px);
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-axis {
+    left: 14px;
+    right: 14px;
+    bottom: 13px;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-axis small {
+    font-size: .61rem;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-y-axis small {
+    display: none;
+  }
+
+  html.smirel-app .workspace-root .user-usage-page .trend-inspector {
+    top: 8px;
+    right: 14px;
+    min-width: 126px;
+    padding: 7px 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.smirel-app .workspace-root .user-usage-page .trend-area,
+  html.smirel-app .workspace-root .user-usage-page .trend-line,
+  html.smirel-app .workspace-root .user-usage-page .trend-dot {
+    animation: none;
+  }
+
+  .trend-inspector-enter-active,
+  .trend-inspector-leave-active {
+    transition: none;
+  }
+}
