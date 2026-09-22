@@ -16,6 +16,8 @@ import qwenLogo from '../assets/providers/qwen.svg'
 import minimaxLogo from '../assets/providers/minimax.svg'
 import '../styles/home-landing.css'
 import '../styles/home-light.css'
+import '../styles/home-provider-capsules.css'
+import '../styles/home-ambient-motion.css'
 
 const { isAuthenticated, isAdmin } = useSession()
 const plans = ref<PublicSubscriptionPlan[]>([])
@@ -30,6 +32,7 @@ let pointerGlowFrame = 0
 let pointerGlowTarget: HTMLElement | null = null
 let pointerGlowClientX = 0
 let pointerGlowClientY = 0
+let ambientMotionCleanup: (() => void) | null = null
 const apiBase = 'https://muxway.dev/v1'
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
@@ -115,6 +118,144 @@ function initRevealMotion() {
   revealMutationObserver.observe(root, { childList: true, subtree: true })
 }
 
+function initAmbientMotion() {
+  const root = homeRoot.value
+  if (!root) return
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  if (reducedMotion.matches) {
+    root.dataset.ambientMotion = 'static'
+    root.style.setProperty('--home-ambient-x', '0px')
+    root.style.setProperty('--home-ambient-y', '0px')
+    root.style.setProperty('--home-ambient-rx', '0px')
+    root.style.setProperty('--home-ambient-ry', '0px')
+    root.style.setProperty('--home-ambient-rotate', '0deg')
+    root.style.setProperty('--home-ambient-violet-rotate', '0deg')
+    root.style.setProperty('--home-ambient-center-rotate', '0deg')
+    root.style.setProperty('--home-ambient-center-x', '0px')
+    root.style.setProperty('--home-ambient-center-y', '0px')
+    root.style.setProperty('--home-ambient-wash-x', '0px')
+    root.style.setProperty('--home-ambient-wash-y', '0px')
+    root.style.setProperty('--home-ambient-scale', '1')
+    root.style.setProperty('--home-ambient-violet-scale', '.98')
+    root.style.setProperty('--home-ambient-center-scale', '1.05')
+    root.style.setProperty('--home-ambient-wash-scale', '.98')
+    root.style.setProperty('--home-ambient-opacity', '.82')
+    root.style.setProperty('--home-ambient-wash', '.72')
+    return
+  }
+
+  root.dataset.ambientMotion = 'dynamic'
+
+  let frame = 0
+  const target = { x: 0, y: 0, hero: 0, page: 0 }
+  const current = { x: 0, y: 0, hero: 0, page: 0 }
+
+  const syncScrollTarget = () => {
+    const viewport = Math.max(window.innerHeight, 1)
+    const documentHeight = Math.max(document.documentElement.scrollHeight - viewport, 1)
+    target.hero = Math.min(Math.max(window.scrollY / (viewport * 1.25), 0), 1)
+    target.page = Math.min(Math.max(window.scrollY / documentHeight, 0), 1)
+  }
+
+  const writeFrame = () => {
+    frame = 0
+    const smoothing = .115
+    current.x += (target.x - current.x) * smoothing
+    current.y += (target.y - current.y) * smoothing
+    current.hero += (target.hero - current.hero) * smoothing
+    current.page += (target.page - current.page) * smoothing
+
+    const phase = Math.sin(current.page * Math.PI * 1.7)
+    const x = current.x * 46 + phase * 24
+    const y = current.y * 22 - current.hero * 112
+    const reverseX = current.x * -32 - phase * 16
+    const reverseY = current.y * -16 + current.hero * 54
+    const rotate = current.x * 3.2 + current.page * 7
+    const scale = 1 + current.hero * .075 + Math.abs(current.x) * .018
+    const opacity = Math.max(.28, .96 - current.hero * .42 - current.page * .22)
+    const wash = Math.max(.18, .84 - current.hero * .44 - current.page * .18)
+    const centerX = x * .32
+    const centerY = reverseY * .42
+    const washX = x * .24
+    const washY = y * .18
+
+    root.style.setProperty('--home-ambient-x', `${x.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-y', `${y.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-rx', `${reverseX.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-ry', `${reverseY.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-center-x', `${centerX.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-center-y', `${centerY.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-wash-x', `${washX.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-wash-y', `${washY.toFixed(2)}px`)
+    root.style.setProperty('--home-ambient-rotate', `${rotate.toFixed(2)}deg`)
+    root.style.setProperty('--home-ambient-violet-rotate', `${(-rotate * .72).toFixed(2)}deg`)
+    root.style.setProperty('--home-ambient-center-rotate', `${(rotate * .38).toFixed(2)}deg`)
+    root.style.setProperty('--home-ambient-scale', scale.toFixed(4))
+    root.style.setProperty('--home-ambient-violet-scale', (scale * .98).toFixed(4))
+    root.style.setProperty('--home-ambient-center-scale', (scale * 1.05).toFixed(4))
+    root.style.setProperty('--home-ambient-wash-scale', (.98 + (scale - 1) * .35).toFixed(4))
+    root.style.setProperty('--home-ambient-opacity', opacity.toFixed(4))
+    root.style.setProperty('--home-ambient-wash', wash.toFixed(4))
+
+    const unsettled =
+      Math.abs(target.x - current.x) > .001 ||
+      Math.abs(target.y - current.y) > .001 ||
+      Math.abs(target.hero - current.hero) > .001 ||
+      Math.abs(target.page - current.page) > .001
+
+    if (unsettled) frame = window.requestAnimationFrame(writeFrame)
+  }
+
+  const queueFrame = () => {
+    if (!frame) frame = window.requestAnimationFrame(writeFrame)
+  }
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerType === 'touch') return
+    const width = Math.max(window.innerWidth, 1)
+    const height = Math.max(window.innerHeight, 1)
+    target.x = Math.min(Math.max((event.clientX / width - .5) * 2, -1), 1)
+    target.y = Math.min(Math.max((event.clientY / height - .5) * 2, -1), 1)
+    queueFrame()
+  }
+
+  const onPointerLeave = () => {
+    target.x = 0
+    target.y = 0
+    queueFrame()
+  }
+
+  const onScroll = () => {
+    syncScrollTarget()
+    queueFrame()
+  }
+
+  const onResize = () => {
+    syncScrollTarget()
+    queueFrame()
+  }
+
+  syncScrollTarget()
+  current.hero = target.hero
+  current.page = target.page
+  writeFrame()
+
+  window.addEventListener('pointermove', onPointerMove, { passive: true })
+  document.documentElement.addEventListener('pointerleave', onPointerLeave)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onResize, { passive: true })
+
+  ambientMotionCleanup = () => {
+    if (frame) window.cancelAnimationFrame(frame)
+    window.removeEventListener('pointermove', onPointerMove)
+    document.documentElement.removeEventListener('pointerleave', onPointerLeave)
+    window.removeEventListener('scroll', onScroll)
+    window.removeEventListener('resize', onResize)
+    ambientMotionCleanup = null
+  }
+}
+
 function findPointerGlowTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return null
   const card = target.closest<HTMLElement>(pointerGlowSelector)
@@ -172,6 +313,7 @@ function initPointerGlow() {
 onMounted(async () => {
   initRevealMotion()
   initPointerGlow()
+  initAmbientMotion()
 
   try {
     const response: unknown = await paymentApi.listPublicPlans()
@@ -188,6 +330,7 @@ onBeforeUnmount(() => {
   root?.removeEventListener('pointermove', handlePointerGlowMove)
   root?.removeEventListener('pointerout', handlePointerGlowOut)
   if (pointerGlowFrame) window.cancelAnimationFrame(pointerGlowFrame)
+  ambientMotionCleanup?.()
 })
 
 const zh = {
@@ -218,6 +361,11 @@ const en = {
 
 <template>
   <div ref="homeRoot" class="home-page">
+    <div class="home-ambient-motion" aria-hidden="true">
+      <i class="home-ambient-orb home-ambient-orb-blue"></i>
+      <i class="home-ambient-orb home-ambient-orb-violet"></i>
+      <i class="home-ambient-orb home-ambient-orb-center"></i>
+    </div>
     <header class="home-topbar">
       <RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
       <nav class="home-nav" :class="{ 'is-open': mobileMenuOpen }"><a href="#capabilities">{{ copy.nav[0] }}</a><a href="#tools">{{ copy.nav[1] }}</a><a href="#pricing">{{ copy.nav[2] }}</a><a href="#faq">{{ copy.nav[3] }}</a></nav>

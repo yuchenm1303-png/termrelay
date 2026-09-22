@@ -1,0 +1,247 @@
+/* Homepage ambient motion --------------------------------------------------
+ * A compositor-friendly glow field that reacts to pointer position and scroll.
+ * JavaScript only updates CSS variables inside requestAnimationFrame; the
+ * expensive visual layers move via transforms rather than repainting gradients.
+ */
+.home-page {
+  --home-ambient-x: 0px;
+  --home-ambient-y: 0px;
+  --home-ambient-rx: 0px;
+  --home-ambient-ry: 0px;
+  --home-ambient-rotate: 0deg;
+  --home-ambient-violet-rotate: 0deg;
+  --home-ambient-center-rotate: 0deg;
+  --home-ambient-center-x: 0px;
+  --home-ambient-center-y: 0px;
+  --home-ambient-wash-x: 0px;
+  --home-ambient-wash-y: 0px;
+  --home-ambient-scale: 1;
+  --home-ambient-violet-scale: .98;
+  --home-ambient-center-scale: 1.05;
+  --home-ambient-wash-scale: .98;
+  --home-ambient-opacity: .96;
+  --home-ambient-wash: .84;
+  position: relative;
+  isolation: isolate;
+}
+
+.home-page > .home-ambient-motion {
+  position: fixed;
+  z-index: 0;
+  top: 64px;
+  right: 0;
+  left: 0;
+  height: min(760px, 82vh);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--home-ambient-opacity);
+  contain: layout paint style;
+  transition: opacity .18s linear;
+}
+
+.home-page > .home-topbar,
+.home-page > main,
+.home-page > .home-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page > .home-topbar {
+  z-index: 20;
+}
+
+.home-ambient-motion::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6% 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 54% 52% at 19% 68%, rgba(72, 143, 255, .15), transparent 70%),
+    radial-gradient(ellipse 46% 52% at 82% 47%, rgba(219, 129, 240, .11), transparent 72%),
+    radial-gradient(ellipse 34% 38% at 52% 56%, rgba(124, 105, 245, .08), transparent 74%);
+  opacity: var(--home-ambient-wash);
+  filter: blur(10px);
+  transform: translate3d(
+      var(--home-ambient-wash-x),
+      var(--home-ambient-wash-y),
+      0
+    )
+    scale(var(--home-ambient-wash-scale));
+  transform-origin: 50% 58%;
+  will-change: transform, opacity;
+}
+
+.home-ambient-orb {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(28px);
+  opacity: .7;
+  will-change: transform;
+  transform-origin: 50% 50%;
+}
+
+.home-ambient-orb-blue {
+  width: min(880px, 72vw);
+  height: min(470px, 46vw);
+  top: 59%;
+  left: 22%;
+  background:
+    radial-gradient(
+      ellipse at 48% 48%,
+      rgba(77, 151, 255, .30) 0%,
+      rgba(98, 129, 255, .17) 40%,
+      rgba(92, 122, 242, .045) 68%,
+      transparent 78%
+    );
+  transform:
+    translate3d(
+      calc(-50% + var(--home-ambient-x)),
+      calc(-50% + var(--home-ambient-y)),
+      0
+    )
+    rotate(var(--home-ambient-rotate))
+    scale(var(--home-ambient-scale));
+}
+
+.home-ambient-orb-violet {
+  width: min(760px, 62vw);
+  height: min(430px, 42vw);
+  top: 48%;
+  left: 79%;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(220, 139, 235, .24) 0%,
+      rgba(185, 119, 241, .13) 43%,
+      rgba(155, 110, 230, .035) 68%,
+      transparent 79%
+    );
+  opacity: .62;
+  transform:
+    translate3d(
+      calc(-50% + var(--home-ambient-rx)),
+      calc(-50% + var(--home-ambient-ry)),
+      0
+    )
+    rotate(var(--home-ambient-violet-rotate))
+    scale(var(--home-ambient-violet-scale));
+}
+
+.home-ambient-orb-center {
+  width: min(580px, 48vw);
+  height: min(350px, 35vw);
+  top: 56%;
+  left: 51%;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(129, 111, 244, .15) 0%,
+      rgba(121, 108, 236, .07) 46%,
+      transparent 75%
+    );
+  opacity: .54;
+  filter: blur(34px);
+  transform:
+    translate3d(
+      calc(-50% + var(--home-ambient-center-x)),
+      calc(-50% + var(--home-ambient-center-y)),
+      0
+    )
+    rotate(var(--home-ambient-center-rotate))
+    scale(var(--home-ambient-center-scale));
+}
+
+/* Let the moving field carry the hero ambience instead of stacking an equally
+ * strong static blob underneath it. The old pseudo-elements remain as a quiet
+ * structural wash and section separator. */
+.home-page .home-hero::before {
+  opacity: .38;
+}
+
+.home-page .home-hero::after {
+  opacity: .58;
+}
+
+html.smirel-app[data-theme='dark'] .home-page > .home-ambient-motion {
+  opacity: var(--home-ambient-opacity);
+}
+
+html.smirel-app[data-theme='dark'] .home-ambient-motion::before {
+  background:
+    radial-gradient(ellipse 54% 52% at 19% 68%, rgba(52, 126, 215, .15), transparent 70%),
+    radial-gradient(ellipse 46% 52% at 82% 47%, rgba(138, 78, 164, .11), transparent 72%),
+    radial-gradient(ellipse 34% 38% at 52% 56%, rgba(84, 98, 188, .08), transparent 74%);
+}
+
+html.smirel-app[data-theme='dark'] .home-ambient-orb-blue {
+  background:
+    radial-gradient(
+      ellipse at 48% 48%,
+      rgba(52, 135, 224, .25) 0%,
+      rgba(55, 107, 180, .13) 43%,
+      rgba(41, 85, 145, .035) 69%,
+      transparent 79%
+    );
+}
+
+html.smirel-app[data-theme='dark'] .home-ambient-orb-violet {
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(139, 79, 163, .20) 0%,
+      rgba(110, 66, 137, .10) 45%,
+      rgba(86, 53, 116, .028) 70%,
+      transparent 80%
+    );
+}
+
+html.smirel-app[data-theme='dark'] .home-ambient-orb-center {
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(83, 99, 186, .13) 0%,
+      rgba(73, 83, 158, .055) 48%,
+      transparent 76%
+    );
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::before {
+  opacity: .32;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::after {
+  opacity: .72;
+}
+
+@media (max-width: 820px) {
+  .home-page > .home-ambient-motion {
+    height: min(700px, 78vh);
+  }
+
+  .home-ambient-orb-blue {
+    width: 880px;
+    max-width: 118vw;
+    height: 460px;
+    left: 12%;
+  }
+
+  .home-ambient-orb-violet {
+    width: 720px;
+    max-width: 110vw;
+    height: 410px;
+    left: 92%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page > .home-ambient-motion {
+    transition: none;
+  }
+
+  .home-ambient-motion::before,
+  .home-ambient-orb {
+    will-change: auto;
+  }
+}

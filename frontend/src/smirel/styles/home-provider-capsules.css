@@ -1,0 +1,314 @@
+/* 2026-09 provider capsule interaction polish
+ * Keep the model rail informational, but give it the same tactile refinement as
+ * a premium segmented control: soft glass, a separate icon well, restrained
+ * provider-tinted hover energy, and a short press response.
+ */
+.home-page .home-model-rail > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  color: color-mix(in srgb, var(--home-muted) 88%, transparent);
+  font-size: .69rem;
+  font-weight: 620;
+  letter-spacing: .035em;
+}
+
+.home-page .home-model-list {
+  gap: 10px;
+  row-gap: 10px;
+  perspective: 900px;
+}
+
+.home-page .home-model-chip {
+  --provider-glow: #6d85d8;
+  position: relative;
+  isolation: isolate;
+  min-height: 44px;
+  padding: 5px 14px 5px 5px;
+  border: 1px solid color-mix(in srgb, var(--home-line) 86%, #ffffff 14%);
+  border-radius: 999px;
+  gap: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.84) 0%, rgba(255,255,255,.60) 100%);
+  box-shadow:
+    0 7px 18px rgba(72, 88, 126, .075),
+    0 1px 2px rgba(72, 88, 126, .045),
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 0 rgba(92, 108, 143, .045);
+  backdrop-filter: blur(16px) saturate(132%);
+  -webkit-backdrop-filter: blur(16px) saturate(132%);
+  transform-origin: 50% 70%;
+  will-change: transform, box-shadow;
+  transition:
+    transform .22s cubic-bezier(.2,.78,.22,1),
+    border-color .2s ease,
+    background .2s ease,
+    box-shadow .22s cubic-bezier(.2,.78,.22,1),
+    opacity .2s ease,
+    filter .2s ease;
+}
+
+.home-page .home-model-chip:nth-child(1) { --provider-glow: #4d9fea; }
+.home-page .home-model-chip:nth-child(2) { --provider-glow: #d77a52; }
+.home-page .home-model-chip:nth-child(3) { --provider-glow: #826bdf; }
+.home-page .home-model-chip:nth-child(4) { --provider-glow: #66717d; }
+.home-page .home-model-chip:nth-child(5) { --provider-glow: #626fd2; }
+.home-page .home-model-chip:nth-child(6) { --provider-glow: #3b9aa9; }
+.home-page .home-model-chip:nth-child(7) { --provider-glow: #5578d3; }
+.home-page .home-model-chip:nth-child(8) { --provider-glow: #725fc8; }
+.home-page .home-model-chip:nth-child(9) { --provider-glow: #b8689d; }
+
+.home-page .home-model-chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      82% 120% at 12% 8%,
+      color-mix(in srgb, var(--provider-glow) 11%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(255,255,255,.28), transparent 42%);
+  opacity: .42;
+  transition: opacity .2s ease, background .2s ease;
+}
+
+.home-page .home-model-chip::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  right: 16%;
+  left: 22%;
+  height: 1px;
+  z-index: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.78),
+    transparent
+  );
+  opacity: .55;
+  transition: opacity .2s ease;
+}
+
+.home-page .home-model-chip img {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border: 1px solid rgba(130, 148, 178, .17);
+  border-radius: 999px;
+  object-fit: contain;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,250,255,.72));
+  box-shadow:
+    0 2px 7px rgba(54, 68, 96, .075),
+    inset 0 1px 0 rgba(255,255,255,.98);
+  transform: translateZ(0);
+  transition:
+    transform .22s cubic-bezier(.2,.78,.22,1),
+    border-color .2s ease,
+    background .2s ease,
+    box-shadow .2s ease,
+    filter .2s ease;
+}
+
+.home-page .home-model-chip small {
+  position: relative;
+  z-index: 1;
+  color: color-mix(in srgb, var(--home-text) 94%, var(--home-muted));
+  font-size: .69rem;
+  font-weight: 690;
+  letter-spacing: -.008em;
+  transition: color .2s ease, transform .22s cubic-bezier(.2,.78,.22,1);
+}
+
+.home-page .home-model-chip:hover {
+  z-index: 2;
+  border-color: color-mix(in srgb, var(--provider-glow) 38%, var(--home-line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.72) 100%);
+  box-shadow:
+    0 13px 28px color-mix(in srgb, var(--provider-glow) 13%, transparent),
+    0 4px 10px rgba(72, 88, 126, .09),
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 color-mix(in srgb, var(--provider-glow) 9%, transparent);
+  transform: translateY(-3px) scale(1.018);
+}
+
+.home-page .home-model-chip:hover::before {
+  opacity: .94;
+  background:
+    radial-gradient(
+      90% 135% at 10% 0%,
+      color-mix(in srgb, var(--provider-glow) 20%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(255,255,255,.32), transparent 44%);
+}
+
+.home-page .home-model-chip:hover::after {
+  opacity: .9;
+}
+
+.home-page .home-model-chip:hover img {
+  border-color: color-mix(in srgb, var(--provider-glow) 26%, rgba(130,148,178,.17));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 92%, var(--provider-glow) 8%),
+      rgba(250,251,255,.82)
+    );
+  box-shadow:
+    0 5px 12px color-mix(in srgb, var(--provider-glow) 12%, transparent),
+    inset 0 1px 0 rgba(255,255,255,1);
+  transform: translateY(-1px) scale(1.055) rotate(-1deg);
+}
+
+.home-page .home-model-chip:hover small {
+  color: color-mix(in srgb, var(--home-text) 94%, var(--provider-glow) 6%);
+  transform: translateX(1px);
+}
+
+.home-page .home-model-chip:active {
+  transform: translateY(-1px) scale(.988);
+  box-shadow:
+    0 5px 12px rgba(72, 88, 126, .07),
+    inset 0 1px 0 rgba(255,255,255,.88),
+    inset 0 2px 5px rgba(73, 89, 120, .055);
+  transition-duration: .08s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-page .home-model-list:has(.home-model-chip:hover) .home-model-chip:not(:hover) {
+    opacity: .72;
+    filter: saturate(.88);
+    transform: translateY(1px) scale(.986);
+  }
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip {
+  min-height: 44px;
+  border-color: rgba(100, 130, 160, .22);
+  background:
+    linear-gradient(180deg, rgba(19, 27, 38, .82), rgba(10, 16, 24, .78));
+  box-shadow:
+    0 9px 22px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.055),
+    inset 0 -1px 0 rgba(255,255,255,.018);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip::before {
+  background:
+    radial-gradient(
+      82% 120% at 12% 8%,
+      color-mix(in srgb, var(--provider-glow) 14%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(255,255,255,.045), transparent 45%);
+  opacity: .48;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(202, 228, 248, .13),
+    transparent
+  );
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip img {
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  border-color: rgba(114, 155, 187, .18);
+  background:
+    linear-gradient(180deg, rgba(28, 40, 54, .9), rgba(13, 22, 32, .88));
+  box-shadow:
+    0 3px 10px rgba(0,0,0,.2),
+    inset 0 1px 0 rgba(255,255,255,.055);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip small {
+  color: #dce7ef;
+  font-size: .69rem;
+  font-weight: 680;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:hover {
+  border-color: color-mix(in srgb, var(--provider-glow) 48%, #31485b);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #172330 91%, var(--provider-glow) 9%),
+      #0d1822
+    );
+  box-shadow:
+    0 14px 30px color-mix(in srgb, var(--provider-glow) 14%, transparent),
+    0 8px 18px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.075);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:hover img {
+  border-color: color-mix(in srgb, var(--provider-glow) 38%, #38526a);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #213244 88%, var(--provider-glow) 12%),
+      #122230
+    );
+  box-shadow:
+    0 6px 15px color-mix(in srgb, var(--provider-glow) 16%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.075);
+}
+
+@media (max-width: 820px) {
+  .home-page .home-model-list {
+    width: min(100vw - 32px, 680px);
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-inline: auto;
+    padding: 2px 3px 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .home-page .home-model-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .home-model-chip {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding-right: 12px;
+    scroll-snap-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .home-page .home-model-chip {
+    min-height: 40px;
+  }
+
+  .home-page .home-model-chip img {
+    width: 31px;
+    height: 31px;
+    padding: 6px;
+  }
+
+  .home-page .home-model-chip small {
+    font-size: .66rem;
+  }
+}
