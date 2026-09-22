@@ -99,7 +99,7 @@ type channelCache struct {
 	groupPlatform           map[int64]string                                    // groupID → platform
 
 	// 冷路径（CRUD 操作）
-	byID     map[int64]*Channel
+	byID map[int64]*Channel
 	// pricingEntryCount counts usable pricing rows seen for a channel, any platform.
 	// A channel with restrict_models=true and zero entries anywhere has an
 	// allow-list that resolves to the empty set, so restriction must fail open for

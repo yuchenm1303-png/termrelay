@@ -339,6 +339,7 @@ func (h *PaymentHandler) ListPlans(c *gin.Context) {
 type AdminSubscriptionPlanResult struct {
 	ID               int64     `json:"id"`
 	GroupID          int64     `json:"group_id"`
+	GroupBound       bool      `json:"group_bound"`
 	GroupPlatform    string    `json:"group_platform,omitempty"`
 	GroupName        string    `json:"group_name,omitempty"`
 	RateMultiplier   float64   `json:"rate_multiplier,omitempty"`
@@ -379,6 +380,7 @@ func adminSubscriptionPlansForResponse(plans []*dbent.SubscriptionPlan, groupInf
 		result = append(result, AdminSubscriptionPlanResult{
 			ID:               int64(p.ID),
 			GroupID:          p.GroupID,
+			GroupBound:       p.GroupBound,
 			GroupPlatform:    gi.Platform,
 			GroupName:        gi.Name,
 			RateMultiplier:   gi.RateMultiplier,
@@ -446,6 +448,58 @@ func (h *PaymentHandler) UpdatePlan(c *gin.Context) {
 		return
 	}
 	plan, err := h.configService.UpdatePlan(c.Request.Context(), id, req)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	groupInfo := h.configService.GetGroupInfoMap(c.Request.Context(), []*dbent.SubscriptionPlan{plan})
+	items := adminSubscriptionPlansForResponse([]*dbent.SubscriptionPlan{plan}, groupInfo)
+	if len(items) == 0 {
+		response.Success(c, plan)
+		return
+	}
+	response.Success(c, items[0])
+}
+
+type BindPlanGroupRequest struct {
+	GroupID int64 `json:"group_id" binding:"required"`
+}
+
+// BindPlanGroup explicitly attaches a plan to a routing group.
+// POST /api/v1/admin/payment/plans/:id/bind-group
+func (h *PaymentHandler) BindPlanGroup(c *gin.Context) {
+	id, ok := parseIDParam(c, "id")
+	if !ok {
+		return
+	}
+	var req BindPlanGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	plan, err := h.configService.BindPlanGroup(c.Request.Context(), id, req.GroupID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	groupInfo := h.configService.GetGroupInfoMap(c.Request.Context(), []*dbent.SubscriptionPlan{plan})
+	items := adminSubscriptionPlansForResponse([]*dbent.SubscriptionPlan{plan}, groupInfo)
+	if len(items) == 0 {
+		response.Success(c, plan)
+		return
+	}
+	response.Success(c, items[0])
+}
+
+// UnbindPlanGroup explicitly detaches a plan from its routing group.
+// The plan is automatically taken off sale and existing subscriptions are untouched.
+// POST /api/v1/admin/payment/plans/:id/unbind-group
+func (h *PaymentHandler) UnbindPlanGroup(c *gin.Context) {
+	id, ok := parseIDParam(c, "id")
+	if !ok {
+		return
+	}
+	plan, err := h.configService.UnbindPlanGroup(c.Request.Context(), id)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

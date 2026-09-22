@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
+import { useSession } from '../core/session'
 import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
 
 interface AdminUserRow {
@@ -37,6 +38,8 @@ const PAGE_SIZE = 20
 const zh = {
   eyebrow: 'USER MANAGEMENT',
   addUser: '新增用户',
+  selfBalance: '我的测试余额',
+  selfBalanceHint: '管理员测试专用 · 不经过支付渠道',
   refresh: '刷新',
   refreshing: '刷新中',
   totalUsers: '总用户',
@@ -64,9 +67,11 @@ const zh = {
   concurrency: '并发',
   lastActive: '最近活跃',
   action: '操作',
-  allocate: '分配额度',
-  allocateTitle: '调整用户额度',
-  allocateText: '调整账户余额后，用户可立即使用新的额度。',
+  allocate: '调整余额',
+  adminTestBalance: '测试余额',
+  allocateTitle: '调整用户余额',
+  adminAllocateTitle: '设置管理员测试余额',
+  allocateText: '余额会立即生效，并记录本次管理员调整。无需创建充值订单。',
   operation: '调整方式',
   addBalance: '增加额度',
   subtractBalance: '扣减额度',
@@ -118,6 +123,8 @@ const zh = {
 const en = {
   eyebrow: 'USER MANAGEMENT',
   addUser: 'Add user',
+  selfBalance: 'My test balance',
+  selfBalanceHint: 'Admin testing only · no payment order is created',
   refresh: 'Refresh',
   refreshing: 'Refreshing',
   totalUsers: 'Total users',
@@ -146,8 +153,10 @@ const en = {
   lastActive: 'Last active',
   action: 'Action',
   allocate: 'Adjust balance',
+  adminTestBalance: 'Test balance',
   allocateTitle: 'Adjust user balance',
-  allocateText: 'The new balance is available to the user immediately.',
+  adminAllocateTitle: 'Set admin test balance',
+  allocateText: 'The balance takes effect immediately and the admin adjustment is recorded. No recharge order is created.',
   operation: 'Operation',
   addBalance: 'Add balance',
   subtractBalance: 'Subtract balance',
@@ -197,6 +206,7 @@ const en = {
 }
 
 const { t, locale } = useI18n()
+const { state } = useSession()
 const copy = computed(() => locale.value === 'en-US' ? en : zh)
 
 const users = ref<AdminUserRow[]>([])
@@ -216,6 +226,7 @@ const creating = ref(false)
 const showBalance = ref(false)
 const balanceError = ref('')
 const allocating = ref(false)
+const openingSelfBalance = ref(false)
 const balanceUser = ref<AdminUserRow | null>(null)
 const balanceForm = reactive({ operation: 'add', amount: '', notes: '' })
 const summary = reactive({ total: 0, active: 0, admins: 0, disabled: 0 })
@@ -294,7 +305,36 @@ function resetBalanceForm() {
 function openBalanceDialog(user: AdminUserRow) {
   resetBalanceForm()
   balanceUser.value = user
+  if (user.role === 'admin') balanceForm.operation = 'set'
   showBalance.value = true
+}
+
+async function openSelfBalanceDialog() {
+  const current = state.user
+  if (!current || openingSelfBalance.value) return
+
+  const loaded = users.value.find((user) => user.id === current.id)
+  if (loaded) {
+    openBalanceDialog(loaded)
+    return
+  }
+
+  openingSelfBalance.value = true
+  searchInput.value = current.email
+  search.value = current.email
+  roleFilter.value = 'admin'
+  page.value = 1
+  try {
+    await loadUsers()
+    const found = users.value.find((user) => user.id === current.id)
+    if (found) {
+      openBalanceDialog(found)
+    } else {
+      error.value = locale.value === 'en-US' ? 'Current administrator account was not found.' : '没有找到当前管理员账户。'
+    }
+  } finally {
+    openingSelfBalance.value = false
+  }
 }
 
 function closeBalanceDialog() {
@@ -316,8 +356,10 @@ function balanceAfterAdjustment() {
 async function updateUserBalance() {
   const user = balanceUser.value
   const amount = Number(balanceForm.amount)
-  if (!user || !Number.isFinite(amount) || amount <= 0) {
-    balanceError.value = copy.value.allocateRequired
+  if (!user || !Number.isFinite(amount) || amount < 0 || (balanceForm.operation !== 'set' && amount <= 0)) {
+    balanceError.value = balanceForm.operation === 'set'
+      ? (locale.value === 'en-US' ? 'Enter a valid balance greater than or equal to 0.' : '请输入大于或等于 0 的有效余额。')
+      : copy.value.allocateRequired
     return
   }
 
@@ -543,6 +585,10 @@ onMounted(() => void refreshAll())
         <p>{{ t('workspace.descriptions.adminUsers') }}</p>
       </div>
       <div class="admin-users-heading-actions">
+        <button class="admin-users-secondary-button admin-users-test-button" type="button" :disabled="openingSelfBalance" :title="copy.selfBalanceHint" @click="openSelfBalanceDialog">
+          <WorkspaceNavIcon name="wallet" />
+          <span>{{ copy.selfBalance }}</span>
+        </button>
         <button class="admin-users-secondary-button" type="button" :disabled="loading" @click="refreshAll">
           <WorkspaceNavIcon name="refresh" />
           <span>{{ loading ? copy.refreshing : copy.refresh }}</span>
@@ -621,7 +667,7 @@ onMounted(() => void refreshAll())
           <div class="admin-users-concurrency"><strong>{{ Number(user.current_concurrency || 0) }}</strong><span>/ {{ user.concurrency || '∞' }}</span></div>
           <div class="admin-users-activity"><strong>{{ formatDate(user.last_active_at || user.last_used_at) }}</strong><span v-if="user.rpm_limit">RPM {{ user.rpm_limit }}</span></div>
           <div class="admin-users-action-cell">
-            <button class="admin-users-balance-button" type="button" @click="openBalanceDialog(user)"><WorkspaceNavIcon name="wallet" />{{ copy.allocate }}</button>
+            <button class="admin-users-balance-button" type="button" @click="openBalanceDialog(user)"><WorkspaceNavIcon name="wallet" />{{ user.role === 'admin' ? copy.adminTestBalance : copy.allocate }}</button>
             <span v-if="user.role === 'admin'" class="admin-users-protected"><WorkspaceNavIcon name="shield" />{{ copy.adminProtected }}</span>
             <button v-else type="button" :class="{ 'is-enable': user.status === 'disabled' }" :disabled="mutatingId === user.id" @click="toggleUserStatus(user)">{{ user.status === 'disabled' ? copy.enable : copy.disable }}</button>
           </div>
@@ -683,13 +729,13 @@ onMounted(() => void refreshAll())
         <form class="admin-user-dialog" @submit.prevent="updateUserBalance">
           <div class="admin-user-dialog-header">
             <div class="admin-user-dialog-icon"><WorkspaceNavIcon name="wallet" /></div>
-            <div><h2>{{ copy.allocateTitle }}</h2><p>{{ copy.allocateText }}</p></div>
+            <div><h2>{{ balanceUser.role === 'admin' ? copy.adminAllocateTitle : copy.allocateTitle }}</h2><p>{{ copy.allocateText }}</p></div>
           </div>
           <div class="admin-user-balance-target"><strong>{{ userName(balanceUser) }}</strong><span>{{ balanceUser.email }}</span></div>
           <p v-if="balanceError" class="admin-user-dialog-error">{{ balanceError }}</p>
           <div class="admin-user-balance-preview"><span>{{ copy.currentBalance }} <strong>{{ formatCurrency(balanceUser.balance) }}</strong></span><span>{{ copy.afterBalance }} <strong>{{ formatCurrency(balanceAfterAdjustment()) }}</strong></span></div>
           <label><span>{{ copy.operation }}</span><select v-model="balanceForm.operation"><option value="add">{{ copy.addBalance }}</option><option value="subtract">{{ copy.subtractBalance }}</option><option value="set">{{ copy.setBalance }}</option></select></label>
-          <label><span>{{ copy.amount }}</span><input v-model="balanceForm.amount" type="number" min="0.01" step="0.01" :placeholder="copy.amountPlaceholder" required /></label>
+          <label><span>{{ copy.amount }}</span><input v-model="balanceForm.amount" type="number" :min="balanceForm.operation === 'set' ? 0 : 0.01" step="0.01" :placeholder="copy.amountPlaceholder" required /></label>
           <label><span>{{ copy.notes }}</span><input v-model="balanceForm.notes" :placeholder="copy.notesPlaceholder" maxlength="500" /></label>
           <div class="admin-user-dialog-actions"><button class="admin-users-secondary-button" type="button" :disabled="allocating" @click="closeBalanceDialog">{{ copy.cancel }}</button><button class="admin-users-primary-button" type="submit" :disabled="allocating">{{ allocating ? copy.allocating : copy.allocateSubmit }}</button></div>
         </form>

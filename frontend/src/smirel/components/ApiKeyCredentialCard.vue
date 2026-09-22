@@ -280,7 +280,7 @@ onBeforeUnmount(() => {
 
 /* The credential actions sit on a pale inset panel in light mode. Keep them
  * quiet and tactile instead of inheriting the dark-theme black button fill. */
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions button {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions button ){
   border-color: #d7e0e8;
   color: #5c6b79;
   background: #ffffff;
@@ -289,17 +289,17 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 255, 255, .82);
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions .api-key-reveal-button {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions .api-key-reveal-button ){
   background: #ffffff;
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions .api-key-copy-button {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions .api-key-copy-button ){
   border-color: #cfe1ee;
   color: #3179ad;
   background: #f1f8fc;
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions button:hover {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions button:hover ){
   border-color: #bfd1df;
   color: #2d6287;
   background: #f5f9fc;
@@ -308,19 +308,19 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 255, 255, .9);
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions .api-key-copy-button:hover {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions .api-key-copy-button:hover ){
   border-color: #a9cee7;
   color: #17689f;
   background: #eaf5fc;
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions .api-key-copy-button.copied {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions .api-key-copy-button.copied ){
   border-color: #bfe4d4;
   color: #21815e;
   background: #edf8f3;
 }
 
-:global(html.smirel-app[data-theme='light']) .api-key-secret-actions button:focus-visible {
+:global(html.smirel-app[data-theme='light'] .api-key-secret-actions button:focus-visible ){
   box-shadow: 0 0 0 3px rgba(53, 139, 199, .11);
 }
 

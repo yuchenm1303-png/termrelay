@@ -161,6 +161,9 @@ func (s *PaymentConfigService) GetGroupInfoMap(ctx context.Context, plans []*dbe
 	ids := make([]int64, 0, len(plans))
 	seen := make(map[int64]bool)
 	for _, p := range plans {
+		if p == nil || !p.GroupBound {
+			continue
+		}
 		if !seen[p.GroupID] {
 			seen[p.GroupID] = true
 			ids = append(ids, p.GroupID)
@@ -197,7 +200,10 @@ func (s *PaymentConfigService) ListPlans(ctx context.Context) ([]*dbent.Subscrip
 }
 
 func (s *PaymentConfigService) ListPlansForSale(ctx context.Context) ([]*dbent.SubscriptionPlan, error) {
-	return s.entClient.SubscriptionPlan.Query().Where(subscriptionplan.ForSaleEQ(true)).Order(subscriptionplan.BySortOrder()).All(ctx)
+	return s.entClient.SubscriptionPlan.Query().
+		Where(subscriptionplan.ForSaleEQ(true), subscriptionplan.GroupBoundEQ(true)).
+		Order(subscriptionplan.BySortOrder()).
+		All(ctx)
 }
 
 func (s *PaymentConfigService) CreatePlan(ctx context.Context, req CreatePlanRequest) (*dbent.SubscriptionPlan, error) {
@@ -211,9 +217,14 @@ func (s *PaymentConfigService) CreatePlan(ctx context.Context, req CreatePlanReq
 	if err := validatePlanCardConfig(planPositiveInt(req.SeatLimit, 1), planPositiveInt(req.ConcurrencyLimit, 5), req.PurchasePolicy); err != nil {
 		return nil, err
 	}
+	if req.ForSale {
+		if err := s.validatePlanSaleGroup(ctx, req.GroupID); err != nil {
+			return nil, err
+		}
+	}
 	features := EncodePlanFeatures(req.Features, PlanCardConfig{Tier: req.CardTier, Badge: req.CardBadge, Featured: req.CardFeatured, Footnote: req.CardFootnote, SeatLimit: planPositiveInt(req.SeatLimit, 1), ConcurrencyLimit: planPositiveInt(req.ConcurrencyLimit, 5), PurchasePolicy: normalizePurchasePolicy(req.PurchasePolicy)})
 	b := s.entClient.SubscriptionPlan.Create().
-		SetGroupID(req.GroupID).SetName(req.Name).SetDescription(req.Description).
+		SetGroupID(req.GroupID).SetGroupBound(true).SetName(req.Name).SetDescription(req.Description).
 		SetPrice(req.Price).SetCurrency(currency).SetValidityDays(req.ValidityDays).SetValidityUnit(req.ValidityUnit).
 		SetFeatures(features).SetProductName(req.ProductName).
 		SetForSale(req.ForSale).SetSortOrder(req.SortOrder)
@@ -235,8 +246,26 @@ func (s *PaymentConfigService) UpdatePlan(ctx context.Context, id int64, req Upd
 	if err != nil {
 		return nil, infraerrors.NotFound("PLAN_NOT_FOUND", "subscription plan not found")
 	}
+	targetForSale := existing.ForSale
+	if req.ForSale != nil {
+		targetForSale = *req.ForSale
+	}
+	if targetForSale {
+		targetGroupID := existing.GroupID
+		targetBound := existing.GroupBound
+		if req.GroupID != nil {
+			targetGroupID = *req.GroupID
+			targetBound = true
+		}
+		if !targetBound {
+			return nil, infraerrors.Conflict("PLAN_GROUP_UNBOUND", "bind a group before putting this plan on sale")
+		}
+		if err := s.validatePlanSaleGroup(ctx, targetGroupID); err != nil {
+			return nil, err
+		}
+	}
 	if req.GroupID != nil {
-		u.SetGroupID(*req.GroupID)
+		u.SetGroupID(*req.GroupID).SetGroupBound(true)
 	}
 	if req.Name != nil {
 		u.SetName(*req.Name)
@@ -323,6 +352,61 @@ func (s *PaymentConfigService) UpdatePlan(ctx context.Context, id int64, req Upd
 		u.SetSortOrder(*req.SortOrder)
 	}
 	return u.Save(ctx)
+}
+
+func (s *PaymentConfigService) validatePlanSaleGroup(ctx context.Context, groupID int64) error {
+	if groupID <= 0 {
+		return infraerrors.BadRequest("PLAN_GROUP_REQUIRED", "group is required")
+	}
+	g, err := s.entClient.Group.Get(ctx, groupID)
+	if err != nil {
+		return infraerrors.NotFound("PLAN_GROUP_NOT_FOUND", "subscription group not found")
+	}
+	if g.Status != StatusActive {
+		return infraerrors.Conflict("PLAN_GROUP_INACTIVE", "subscription group must be active before the plan can be sold")
+	}
+	if g.SubscriptionType != SubscriptionTypeSubscription {
+		return infraerrors.Conflict("PLAN_GROUP_TYPE_MISMATCH", "plan can only be sold when bound to a subscription group")
+	}
+	return nil
+}
+
+// BindPlanGroup activates the plan-to-group relationship. Binding itself is
+// allowed to an inactive/non-subscription group for staging, but such a plan
+// is forced off sale until the target group becomes eligible.
+func (s *PaymentConfigService) BindPlanGroup(ctx context.Context, id, groupID int64) (*dbent.SubscriptionPlan, error) {
+	if groupID <= 0 {
+		return nil, infraerrors.BadRequest("PLAN_GROUP_REQUIRED", "group is required")
+	}
+	plan, err := s.entClient.SubscriptionPlan.Get(ctx, id)
+	if err != nil {
+		return nil, infraerrors.NotFound("PLAN_NOT_FOUND", "subscription plan not found")
+	}
+	g, err := s.entClient.Group.Get(ctx, groupID)
+	if err != nil {
+		return nil, infraerrors.NotFound("PLAN_GROUP_NOT_FOUND", "subscription group not found")
+	}
+	u := s.entClient.SubscriptionPlan.UpdateOneID(plan.ID).
+		SetGroupID(groupID).
+		SetGroupBound(true)
+	if g.Status != StatusActive || g.SubscriptionType != SubscriptionTypeSubscription {
+		u.SetForSale(false)
+	}
+	return u.Save(ctx)
+}
+
+// UnbindPlanGroup detaches the plan from routing without deleting either side.
+// Detached plans are always taken off sale; existing user subscriptions keep
+// their own group snapshot and are not modified.
+func (s *PaymentConfigService) UnbindPlanGroup(ctx context.Context, id int64) (*dbent.SubscriptionPlan, error) {
+	plan, err := s.entClient.SubscriptionPlan.Get(ctx, id)
+	if err != nil {
+		return nil, infraerrors.NotFound("PLAN_NOT_FOUND", "subscription plan not found")
+	}
+	return s.entClient.SubscriptionPlan.UpdateOneID(plan.ID).
+		SetGroupBound(false).
+		SetForSale(false).
+		Save(ctx)
 }
 
 func planPositiveInt(value, fallback int) int {

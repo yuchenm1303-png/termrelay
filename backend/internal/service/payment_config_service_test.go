@@ -402,6 +402,37 @@ func newPaymentConfigServiceTestClient(t *testing.T) *dbent.Client {
 	drv := entsql.OpenDB(dialect.SQLite, db)
 	client := enttest.NewClient(t, enttest.WithOptions(dbent.Driver(drv)))
 	t.Cleanup(func() { _ = client.Close() })
+
+	// Migration 197 owns these team tables outside Ent. Tests using this shared
+	// payment client must mirror that production migration because subscription
+	// fulfillment writes the plan/team snapshot as part of the same transaction.
+	teamSchema := []string{
+		`CREATE TABLE IF NOT EXISTS subscription_teams (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			owner_user_id INTEGER NOT NULL,
+			group_id INTEGER NOT NULL,
+			plan_id INTEGER,
+			status TEXT NOT NULL DEFAULT 'active',
+			seat_limit INTEGER NOT NULL DEFAULT 1,
+			concurrency_limit INTEGER NOT NULL DEFAULT 1,
+			expires_at DATETIME NOT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE (owner_user_id, group_id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS subscription_team_members (
+			team_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			role TEXT NOT NULL DEFAULT 'member',
+			joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (team_id, user_id)
+		)`,
+	}
+	for _, stmt := range teamSchema {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("create subscription team test schema: %v", err)
+		}
+	}
 	return client
 }
 

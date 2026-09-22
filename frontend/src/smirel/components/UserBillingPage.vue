@@ -491,10 +491,18 @@ const ledgerGapHint = computed(() => {
     <template v-else>
       <section v-if="sortedPlans.length === 0" class="empty"><p>{{ t('payment.planHint') }}</p></section>
       <section v-else class="plan-list pricing-grid">
-        <article v-for="plan in sortedPlans" :key="plan.id" class="pricing-card" :class="{ selected: selectedPlanId === plan.id }" @click="onPlanCardClick(plan.id)">
+        <article
+          v-for="plan in sortedPlans"
+          :key="plan.id"
+          class="pricing-card"
+          :class="{ selected: selectedPlanId === plan.id && plan.for_sale !== false, unavailable: plan.for_sale === false }"
+          @click="plan.for_sale !== false && onPlanCardClick(plan.id)"
+        >
           <div class="pricing-topline">
             <span class="pricing-brand">{{ planBadge(plan) }}</span>
-            <span class="pricing-tier" :class="{ hot: /推荐|Recommended/.test(planTier(plan)) }">{{ planTier(plan) }}</span>
+            <span class="pricing-tier" :class="{ hot: plan.for_sale !== false && /推荐|Recommended/.test(planTier(plan)), paused: plan.for_sale === false }">
+              {{ plan.for_sale === false ? (isZh ? '暂未开放' : 'Unavailable') : planTier(plan) }}
+            </span>
           </div>
           <div class="pricing-title"><h3>{{ plan.name }}</h3><p v-if="plan.description">{{ plan.description }}</p></div>
           <div class="pricing-price">
@@ -521,10 +529,21 @@ const ledgerGapHint = computed(() => {
           <ul v-if="displayPlanFeatures(plan).length" class="pricing-benefits">
             <li v-for="(f, i) in displayPlanFeatures(plan)" :key="i"><b>✓</b><span>{{ f }}</span></li>
           </ul>
-          <button class="primary pricing-cta" type="button" :disabled="checkout.submitting.value || methodCount === 0" @click.stop="submitPlan(plan.id)">
-            {{ checkout.submitting.value && selectedPlanId === plan.id ? t('payment.submitting') : (isZh ? '立即开通 →' : 'Subscribe now →') }}
+          <button
+            class="primary pricing-cta"
+            type="button"
+            :disabled="plan.for_sale === false || checkout.submitting.value || methodCount === 0"
+            @click.stop="plan.for_sale !== false && submitPlan(plan.id)"
+          >
+            {{ plan.for_sale === false
+              ? (isZh ? '暂未开放' : 'Unavailable')
+              : (checkout.submitting.value && selectedPlanId === plan.id ? t('payment.submitting') : (isZh ? '立即开通 →' : 'Subscribe now →')) }}
           </button>
-          <small class="pricing-footnote">{{ isZh ? '即时开通 · 订单可追踪' : 'Instant activation · Trackable order' }}</small>
+          <small class="pricing-footnote">
+            {{ plan.for_sale === false
+              ? (isZh ? '套餐已配置，当前暂停销售' : 'Configured plan · Sales currently paused')
+              : (isZh ? '即时开通 · 订单可追踪' : 'Instant activation · Trackable order') }}
+          </small>
         </article>
       </section>
 
@@ -1062,9 +1081,23 @@ const ledgerGapHint = computed(() => {
   border-color: var(--billing-border-strong, rgba(121,196,245,.27));
 }
 
+.pricing-card.unavailable {
+  cursor: default;
+  opacity: .82;
+}
+
+.pricing-card.unavailable:hover {
+  transform: none;
+  border-color: var(--billing-border, rgba(255,255,255,.09));
+}
+
 .pricing-card:hover::before,
 .pricing-card.selected::before {
   opacity: 1;
+}
+
+.pricing-card.unavailable::before {
+  opacity: 0;
 }
 
 .pricing-card.selected {
@@ -1130,6 +1163,12 @@ const ledgerGapHint = computed(() => {
   border-color: color-mix(in srgb, var(--billing-success, #6ee2bf) 24%, transparent);
   background: color-mix(in srgb, var(--billing-success, #6ee2bf) 9%, transparent);
   color: var(--billing-success, #6ee2bf);
+}
+
+.pricing-tier.paused {
+  border-color: color-mix(in srgb, var(--billing-subtle, #98a3ad) 28%, transparent);
+  background: color-mix(in srgb, var(--billing-subtle, #98a3ad) 9%, transparent);
+  color: var(--billing-muted, #72808d);
 }
 
 .pricing-title {

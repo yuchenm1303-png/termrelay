@@ -1,23 +1,25 @@
-.PHONY: build generate test test-unit test-integration test-e2e
+.PHONY: build generate generate-ent test test-unit test-integration test-e2e
 
 VERSION ?= $(shell ./scripts/resolve-version.sh)
 LDFLAGS ?= -s -w -X main.Version=$(VERSION)
 
-build:
+generate-ent:
+	go generate ./ent
+
+build: generate-ent
 	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)" -trimpath -o bin/server ./cmd/server
 
-generate:
-	go generate ./ent
+generate: generate-ent
 	go generate ./cmd/server
 
-test:
+test: generate-ent
 	go test ./...
 	golangci-lint run ./...
 
-test-unit:
+test-unit: generate-ent
 	go test -tags=unit ./...
 
-test-integration:
+test-integration: generate-ent
 	go test -tags=integration ./...
 
 test-e2e:

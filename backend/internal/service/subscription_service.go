@@ -93,7 +93,7 @@ func (s *SubscriptionService) ListSubscriptionTeams(ctx context.Context, userID 
 	if err := s.entClient.Driver().Query(ctx, query, []any{userArg}, &rows); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []SubscriptionTeamSummary{}
 	for rows.Next() {
 		var item SubscriptionTeamSummary
@@ -181,7 +181,7 @@ func (s *SubscriptionService) ListPlanAccessRequests(ctx context.Context, userID
 	if err := s.entClient.Driver().Query(ctx, query, args, &rows); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []PlanAccessRequest{}
 	for rows.Next() {
 		var item PlanAccessRequest

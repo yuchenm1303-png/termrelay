@@ -119,6 +119,7 @@ const navIconByFeature: Record<string, string> = {
   'admin-ops': 'activity',
   'admin-payment-dashboard': 'credit-card',
   'admin-orders': 'receipt',
+  'admin-plans': 'credit-card',
   'admin-settings': 'settings',
 }
 
@@ -148,6 +149,7 @@ const navLabelKeyByFeature: Record<string, string> = {
   'admin-ops': 'nav.adminOps',
   'admin-payment-dashboard': 'nav.adminPayment',
   'admin-orders': 'nav.adminOrders',
+  'admin-plans': 'nav.adminPaymentPlans',
   'admin-settings': 'nav.adminSettings',
 }
 
@@ -177,7 +179,7 @@ const navigationGroups = computed<NavGroup[]>(() => {
     { label: t('groups.console'), items: take(items, ['admin-dashboard', 'keys', 'admin-users']) },
     { label: t('groups.resources'), items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog']) },
     { label: t('groups.operations'), items: take(items, ['admin-usage', 'admin-ops']) },
-    { label: t('groups.transactions'), items: take(items, ['admin-payment-dashboard', 'admin-orders']) },
+    { label: t('groups.transactions'), items: take(items, ['admin-payment-dashboard', 'admin-orders', 'admin-plans']) },
     { label: t('groups.system'), items: take(items, ['admin-settings']) },
   ].filter((group) => group.items.length)
 })
@@ -295,8 +297,18 @@ watch(() => route.path, () => {
     <aside class="workspace-sidebar glass" :class="{ open: mobileOpen }">
       <div class="workspace-brand-row">
         <RouterLink to="/home" class="brand-link" @click="mobileOpen = false">
-          <img :src="logoUrl" alt="Muxway" />
-          <span class="workspace-brand-copy"><strong>Muxway</strong><small>模枢 · API SERVICE</small></span>
+          <span class="workspace-brand-mark" aria-hidden="true">
+            <img :src="logoUrl" alt="" />
+          </span>
+          <span class="workspace-brand-divider" aria-hidden="true"></span>
+          <span class="workspace-brand-copy">
+            <strong>Muxway</strong>
+            <small>
+              <span class="workspace-brand-cn">模枢</span>
+              <span class="workspace-brand-dot" aria-hidden="true">·</span>
+              <span class="workspace-brand-service">API SERVICE</span>
+            </small>
+          </span>
         </RouterLink>
         <button class="mobile-close" type="button" :aria-label="t('shell.closeNav')" @click="mobileOpen = false">×</button>
       </div>
@@ -531,28 +543,52 @@ watch(() => route.path, () => {
 
 <style scoped>
 .workspace-brand-row {
-  height: 66px;
-  padding: 0 3px 14px;
+  height: 68px;
+  padding: 0 2px 14px;
 }
 
 .workspace-brand-row .brand-link {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  height: 50px;
-  padding: 0 9px;
-  gap: 12px;
+  height: 52px;
+  padding: 0 8px 0 5px;
+  gap: 0;
   border: 1px solid transparent;
   border-radius: 12px;
+  overflow: hidden;
   transition:
     background-color .18s ease,
     border-color .18s ease,
     box-shadow .18s ease;
 }
 
+.workspace-brand-row .brand-link::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 5px;
+  width: 68px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(63, 166, 255, .12) 0%, rgba(124, 82, 255, .055) 45%, transparent 72%);
+  filter: blur(8px);
+  opacity: .8;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .22s ease;
+}
+
 .workspace-brand-row .brand-link:hover {
-  border-color: var(--ws-border);
-  background: var(--ws-surface-soft);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .018);
+  border-color: #252a32;
+  background: linear-gradient(90deg, rgba(18, 22, 29, .96), rgba(14, 16, 21, .72));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .025),
+    0 8px 24px rgba(0, 0, 0, .08);
+}
+
+.workspace-brand-row .brand-link:hover::before {
+  opacity: 1;
+  transform: scale(1.06);
 }
 
 .workspace-brand-row .brand-link:focus-visible {
@@ -561,51 +597,115 @@ watch(() => route.path, () => {
   box-shadow: 0 0 0 3px rgba(47, 150, 232, .10);
 }
 
-.workspace-brand-row .brand-link img {
-  width: 82px;
+.workspace-brand-mark {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: 42px;
+  flex: 0 0 60px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.workspace-brand-row .brand-link .workspace-brand-mark img {
+  width: 80px;
+  max-width: none;
   height: auto;
-  max-height: 34px;
-  flex: 0 0 82px;
+  max-height: 38px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(47, 150, 232, .10));
+  filter: drop-shadow(0 5px 12px rgba(47, 150, 232, .16));
+  transform: translateY(.5px);
+  transition: transform .22s cubic-bezier(.2, .75, .25, 1), filter .18s ease;
+}
+
+.workspace-brand-row .brand-link:hover .workspace-brand-mark img {
+  filter: drop-shadow(0 6px 15px rgba(79, 149, 255, .22));
+  transform: translateY(.5px) scale(1.035);
+}
+
+.workspace-brand-divider {
+  width: 1px;
+  height: 34px;
+  flex: 0 0 1px;
+  margin: 0 11px 0 8px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, transparent 0%, #2d323b 18%, #2d323b 82%, transparent 100%);
+  opacity: .92;
 }
 
 .workspace-brand-copy {
-  position: relative;
   min-width: 0;
-  padding-left: 13px;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-}
-
-.workspace-brand-copy::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1px;
-  height: 30px;
-  border-radius: 999px;
-  background: var(--ws-border);
-  transform: translateY(-50%);
+  gap: 5px;
+  transform: translateY(-1px);
 }
 
 .workspace-brand-copy strong {
   color: var(--ws-text);
-  font-size: .98rem;
+  font-size: 1.04rem;
   line-height: 1;
-  font-weight: 720;
-  letter-spacing: -.025em;
+  font-weight: 740;
+  letter-spacing: -.032em;
+  text-shadow: 0 1px 12px rgba(255, 255, 255, .025);
 }
 
 .workspace-brand-copy small {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--ws-subtle);
-  font-size: .55rem;
+  font-size: .50rem;
   line-height: 1;
   font-weight: 720;
-  letter-spacing: .18em;
+  letter-spacing: .105em;
+  white-space: nowrap;
+}
+
+.workspace-brand-cn {
+  color: #7f9bb3;
+  letter-spacing: .12em;
+}
+
+.workspace-brand-dot {
+  color: #48515d;
+  font-size: .66rem;
+  line-height: .8;
+  letter-spacing: 0;
+  transform: translateY(-.25px);
+}
+
+.workspace-brand-service {
+  color: var(--ws-subtle);
+  letter-spacing: .105em;
+}
+
+:global(html.smirel-app[data-theme='light'] .workspace-brand-row .brand-link::before ){
+  opacity: .38;
+}
+
+:global(html.smirel-app[data-theme='light'] .workspace-brand-row .brand-link:hover ){
+  border-color: #dfe4ea;
+  background: linear-gradient(90deg, rgba(247, 250, 253, .98), rgba(255, 255, 255, .86));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .88),
+    0 8px 22px rgba(28, 42, 56, .045);
+}
+
+:global(html.smirel-app[data-theme='light'] .workspace-brand-copy strong ){
+  text-shadow: none;
+}
+
+:global(html.smirel-app[data-theme='light'] .workspace-brand-cn ){
+  color: #557d9a;
+}
+
+:global(html.smirel-app[data-theme='light'] .workspace-brand-divider ){
+  background: linear-gradient(to bottom, transparent 0%, #d4dbe3 18%, #d4dbe3 82%, transparent 100%);
 }
 
 .workspace-nav a {

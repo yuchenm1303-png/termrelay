@@ -803,11 +803,22 @@ func (r *groupRepository) DeleteCascade(ctx context.Context, id int64) ([]int64,
 	// group deletion to orphan fixed plan definitions; callers must explicitly
 	// reassign or remove the plans first.
 	var planCount int64
-	if err := scanSingleRow(ctx, exec, "SELECT COUNT(*) FROM subscription_plans WHERE group_id = $1", []any{id}, &planCount); err != nil {
+	if err := scanSingleRow(ctx, exec, "SELECT COUNT(*) FROM subscription_plans WHERE group_id = $1 AND group_bound = TRUE", []any{id}, &planCount); err != nil {
 		return nil, err
 	}
 	if planCount > 0 {
 		return nil, service.ErrGroupHasSubscriptionPlans
+	}
+
+	// Never silently terminate paid access as a side effect of deleting a
+	// routing group. Existing subscriptions are snapshots of already-granted
+	// access and must be migrated or allowed to expire explicitly.
+	var activeSubscriptionCount int64
+	if err := scanSingleRow(ctx, exec, "SELECT COUNT(*) FROM user_subscriptions WHERE group_id = $1 AND deleted_at IS NULL AND status = 'active' AND expires_at > NOW()", []any{id}, &activeSubscriptionCount); err != nil {
+		return nil, err
+	}
+	if activeSubscriptionCount > 0 {
+		return nil, service.ErrGroupHasActiveSubscriptions
 	}
 
 	var affectedUserIDs []int64
