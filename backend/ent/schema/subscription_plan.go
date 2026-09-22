@@ -31,6 +31,7 @@ func (SubscriptionPlan) Annotations() []schema.Annotation {
 func (SubscriptionPlan) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("group_id"),
+		field.Bool("group_bound").Default(true),
 		field.String("name").
 			MaxLen(100).
 			NotEmpty(),

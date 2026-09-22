@@ -190,15 +190,23 @@ func (h *PaymentHandler) GetCheckoutInfo(c *gin.Context) {
 		}
 	}
 
-	// Fetch plans with group info
-	plans, _ := h.configService.ListPlansForSale(ctx)
+	// Fetch all bound plans for display. Off-sale plans are returned as disabled
+	// cards so the user can see that a configured package exists without being
+	// allowed to purchase it. Unbound drafts stay private to the admin UI.
+	plans, _ := h.configService.ListPlans(ctx)
 	groupInfo := h.configService.GetGroupInfoMap(ctx, plans)
 	planList := make([]checkoutPlan, 0, len(plans))
 	for _, p := range plans {
+		if p == nil || !p.GroupBound {
+			continue
+		}
 		gi := groupInfo[p.GroupID]
+		if gi.Name == "" {
+			continue
+		}
 		decoded := service.DecodePlanFeatures(p.Features)
 		planList = append(planList, checkoutPlan{
-			ID: int64(p.ID), GroupID: p.GroupID,
+			ID: int64(p.ID), GroupID: p.GroupID, GroupBound: p.GroupBound, ForSale: p.ForSale,
 			GroupPlatform: gi.Platform, GroupName: gi.Name,
 			RateMultiplier:  gi.RateMultiplier,
 			PeakRateEnabled: gi.PeakRateEnabled, PeakStart: gi.PeakStart,
@@ -252,6 +260,8 @@ type checkoutInfoResponse struct {
 type checkoutPlan struct {
 	ID                 int64    `json:"id"`
 	GroupID            int64    `json:"group_id"`
+	GroupBound         bool     `json:"group_bound"`
+	ForSale            bool     `json:"for_sale"`
 	GroupPlatform      string   `json:"group_platform"`
 	GroupName          string   `json:"group_name"`
 	RateMultiplier     float64  `json:"rate_multiplier"`

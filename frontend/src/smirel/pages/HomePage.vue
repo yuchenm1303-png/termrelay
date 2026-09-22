@@ -15,6 +15,7 @@ import seedanceLogo from '../assets/providers/seedance.svg'
 import qwenLogo from '../assets/providers/qwen.svg'
 import minimaxLogo from '../assets/providers/minimax.svg'
 import '../styles/home-landing.css'
+import '../styles/home-light.css'
 
 const { isAuthenticated, isAdmin } = useSession()
 const plans = ref<PublicSubscriptionPlan[]>([])

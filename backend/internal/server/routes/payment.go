@@ -108,6 +108,8 @@ func RegisterPaymentRoutes(
 			plans.GET("", adminPaymentHandler.ListPlans)
 			plans.POST("", adminPaymentHandler.CreatePlan)
 			plans.PUT("/:id", adminPaymentHandler.UpdatePlan)
+			plans.POST("/:id/bind-group", adminPaymentHandler.BindPlanGroup)
+			plans.POST("/:id/unbind-group", adminPaymentHandler.UnbindPlanGroup)
 			plans.DELETE("/:id", adminPaymentHandler.DeletePlan)
 		}
 

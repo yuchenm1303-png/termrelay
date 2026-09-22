@@ -1394,7 +1394,7 @@ onMounted(() => void loadProfile())
   gap: 10px;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-settings {
+:global(html.smirel-app[data-theme='light'] .account-settings ){
   --account-border: #dce2e8;
   --account-border-soft: #e5e9ee;
   --account-input: #ffffff;
@@ -1403,64 +1403,64 @@ onMounted(() => void loadProfile())
   --account-subtle: #818b96;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-hero,
-:global(html.smirel-app[data-theme='light']) .account-card {
+:global(html.smirel-app[data-theme='light'] .account-hero),
+:global(html.smirel-app[data-theme='light'] .account-card ){
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(38, 50, 62, .05);
 }
 
-:global(html.smirel-app[data-theme='light']) .account-title-row h2,
-:global(html.smirel-app[data-theme='light']) .account-card-head h3 {
+:global(html.smirel-app[data-theme='light'] .account-title-row h2),
+:global(html.smirel-app[data-theme='light'] .account-card-head h3 ){
   color: #17202a;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-metrics dd,
-:global(html.smirel-app[data-theme='light']) .avatar-editor-copy strong,
-:global(html.smirel-app[data-theme='light']) .setting-row strong,
-:global(html.smirel-app[data-theme='light']) .session-copy strong,
-:global(html.smirel-app[data-theme='light']) .signout-zone strong {
+:global(html.smirel-app[data-theme='light'] .account-metrics dd),
+:global(html.smirel-app[data-theme='light'] .avatar-editor-copy strong),
+:global(html.smirel-app[data-theme='light'] .setting-row strong),
+:global(html.smirel-app[data-theme='light'] .session-copy strong),
+:global(html.smirel-app[data-theme='light'] .signout-zone strong ){
   color: #28323d;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-field input {
+:global(html.smirel-app[data-theme='light'] .account-field input ){
   border-color: #d9e0e6;
   background: #fbfcfd;
   color: #27313b;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-field input[readonly],
-:global(html.smirel-app[data-theme='light']) .account-field input:disabled {
+:global(html.smirel-app[data-theme='light'] .account-field input[readonly]),
+:global(html.smirel-app[data-theme='light'] .account-field input:disabled ){
   background: #f4f6f8;
   color: #7b8490;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-button.secondary {
+:global(html.smirel-app[data-theme='light'] .account-button.secondary ){
   border-color: #d7dde3;
   background: #f7f9fb;
   color: #37424d;
 }
 
-:global(html.smirel-app[data-theme='light']) .account-danger-card {
+:global(html.smirel-app[data-theme='light'] .account-danger-card ){
   border-color: #edd4d8;
   background: #fffafa;
 }
 
-:global(html.smirel-app[data-theme='light']) .delete-account-row strong,
-:global(html.smirel-app[data-theme='light']) .delete-dialog h3 {
+:global(html.smirel-app[data-theme='light'] .delete-account-row strong),
+:global(html.smirel-app[data-theme='light'] .delete-dialog h3 ){
   color: #49282e;
 }
 
-:global(html.smirel-app[data-theme='light']) .delete-dialog {
+:global(html.smirel-app[data-theme='light'] .delete-dialog ){
   border-color: #e4c9ce;
   background: #ffffff;
 }
 
-:global(html.smirel-app[data-theme='light']) .delete-confirm-copy {
+:global(html.smirel-app[data-theme='light'] .delete-confirm-copy ){
   border-color: #eadde0;
   background: #fffafa;
 }
 
-:global(html.smirel-app[data-theme='light']) .delete-confirm-copy strong {
+:global(html.smirel-app[data-theme='light'] .delete-confirm-copy strong ){
   color: #5b3c42;
 }
 

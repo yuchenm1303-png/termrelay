@@ -139,6 +139,8 @@ export interface MethodLimitsResponse {
 export interface CheckoutPlan {
   id: number
   group_id: number
+  group_bound?: boolean
+  for_sale?: boolean
   group_platform?: string
   group_name?: string
   rate_multiplier?: number
@@ -432,6 +434,7 @@ export interface PublicOrderResolveResult {
 export interface AdminSubscriptionPlan {
   id: number
   group_id: number
+  group_bound: boolean
   group_platform?: string
   group_name?: string
   rate_multiplier?: number
@@ -619,6 +622,10 @@ export const paymentAdminApi = {
   listPlans: () => ok(api.get('/admin/payment/plans')),
   createPlan: (body: CreatePlanRequest) => ok<AdminSubscriptionPlan>(api.post('/admin/payment/plans', body)),
   updatePlan: (id: string | number, body: UpdatePlanRequest) => ok<AdminSubscriptionPlan>(api.put('/admin/payment/plans/' + id, body)),
+  bindPlanGroup: (id: string | number, groupId: number) =>
+    ok<AdminSubscriptionPlan>(api.post('/admin/payment/plans/' + id + '/bind-group', { group_id: groupId })),
+  unbindPlanGroup: (id: string | number) =>
+    ok<AdminSubscriptionPlan>(api.post('/admin/payment/plans/' + id + '/unbind-group', {})),
   deletePlan: (id: string | number) => ok<{ success: boolean }>(api.delete('/admin/payment/plans/' + id)),
   listProviders: () => ok(api.get('/admin/payment/providers')),
   createProvider: (body: CreateProviderRequest) => ok<ProviderInstance>(api.post('/admin/payment/providers', body)),

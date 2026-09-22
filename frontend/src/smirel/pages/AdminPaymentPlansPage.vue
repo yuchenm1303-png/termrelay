@@ -6,10 +6,13 @@ import {
   paymentAdminApi,
   type AdminSubscriptionPlan,
   type CreatePlanRequest,
+  type UpdatePlanRequest,
 } from '../api/payment'
 import { api, getErrorMessage } from '../core/api'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const isZh = computed(() => String(locale.value || '').toLowerCase().startsWith('zh'))
+const text = (zh: string, en: string) => isZh.value ? zh : en
 
 const loading = ref(false)
 const error = ref('')
@@ -19,12 +22,19 @@ type ListResponse<T> = { items?: T[]; total?: number }
 type GroupOption = {
   id: number
   name: string
+  platform?: string
   subscription_type?: string
+  status?: string
 }
 const groups = ref<GroupOption[]>([])
 
 const sortedGroups = computed(() => {
-  const rank = (g: GroupOption): number => (g.subscription_type === 'subscription' ? 0 : 1)
+  const rank = (g: GroupOption): number => {
+    if (g.subscription_type === 'subscription' && g.status === 'active') return 0
+    if (g.subscription_type === 'subscription') return 1
+    if (g.status === 'active') return 2
+    return 3
+  }
   return [...groups.value].sort((a, b) => rank(a) - rank(b) || a.id - b.id)
 })
 
@@ -151,7 +161,9 @@ async function save(): Promise<void> {
     if (editorMode.value === 'create') {
       await paymentAdminApi.createPlan(payload)
     } else {
-      await paymentAdminApi.updatePlan(draft.value.id!, payload)
+      const editPayload: UpdatePlanRequest = { ...payload }
+      delete editPayload.group_id
+      await paymentAdminApi.updatePlan(draft.value.id!, editPayload)
     }
     closeEditor()
     await load()
@@ -159,6 +171,63 @@ async function save(): Promise<void> {
     error.value = getErrorMessage(e)
   } finally {
     saving.value = false
+  }
+}
+
+const relationOpen = ref(false)
+const relationPlan = ref<AdminSubscriptionPlan | null>(null)
+const relationGroupId = ref(0)
+const relationSaving = ref(false)
+
+function openRelation(p: AdminSubscriptionPlan): void {
+  relationPlan.value = p
+  relationGroupId.value = p.group_bound ? p.group_id : (sortedGroups.value.find((g) => g.subscription_type === 'subscription' && g.status === 'active')?.id || p.group_id || 0)
+  relationOpen.value = true
+}
+
+function closeRelation(): void {
+  if (relationSaving.value) return
+  relationOpen.value = false
+  relationPlan.value = null
+}
+
+function relationGroupHint(g: GroupOption): string {
+  const parts = [g.platform ? g.platform.toUpperCase() : '']
+  parts.push(g.subscription_type === 'subscription' ? text('订阅计费', 'Subscription') : text('余额计费', 'Balance'))
+  parts.push(g.status === 'active' ? text('启用', 'Active') : text('停用', 'Inactive'))
+  return parts.filter(Boolean).join(' · ')
+}
+
+async function saveRelation(): Promise<void> {
+  if (!relationPlan.value || !relationGroupId.value) return
+  relationSaving.value = true
+  error.value = ''
+  try {
+    await paymentAdminApi.bindPlanGroup(relationPlan.value.id, relationGroupId.value)
+    closeRelation()
+    relationOpen.value = false
+    relationPlan.value = null
+    await load()
+  } catch (e) {
+    error.value = getErrorMessage(e)
+  } finally {
+    relationSaving.value = false
+  }
+}
+
+async function unbind(p: AdminSubscriptionPlan): Promise<void> {
+  if (!p.group_bound) return
+  const ok = confirm(text(
+    `解除“${p.name}”与当前分组的关联？\n\n套餐会自动停止销售；已经购买的用户订阅不会被删除或迁移。`,
+    `Unbind “${p.name}” from its current group?\n\nThe plan will be taken off sale automatically. Existing subscriptions will not be deleted or migrated.`,
+  ))
+  if (!ok) return
+  error.value = ''
+  try {
+    await paymentAdminApi.unbindPlanGroup(p.id)
+    await load()
+  } catch (e) {
+    error.value = getErrorMessage(e)
   }
 }
 
@@ -227,7 +296,22 @@ function formatValidity(p: AdminSubscriptionPlan): string {
             <strong>{{ p.name }}</strong>
             <div class="plan-product">{{ p.product_name }}</div>
           </td>
-          <td>{{ p.group_name || `#${p.group_id}` }}</td>
+          <td>
+            <div v-if="p.group_bound" class="group-binding">
+              <span class="binding-dot"></span>
+              <div>
+                <strong>{{ p.group_name || `#${p.group_id}` }}</strong>
+                <small>{{ p.group_platform ? p.group_platform.toUpperCase() : text('已关联', 'Bound') }}</small>
+              </div>
+            </div>
+            <div v-else class="group-binding unbound">
+              <span class="binding-dot"></span>
+              <div>
+                <strong>{{ text('未关联分组', 'No group bound') }}</strong>
+                <small>{{ text('套餐已自动下架', 'Plan is automatically off sale') }}</small>
+              </div>
+            </div>
+          </td>
           <td>{{ formatPrice(p) }}<div v-if="p.original_price" class="plan-original">{{ formatPrice({ ...p, price: p.original_price }) }}</div></td>
           <td>{{ formatValidity(p) }}</td>
           <td>
@@ -237,6 +321,10 @@ function formatValidity(p: AdminSubscriptionPlan): string {
           </td>
           <td>{{ p.sort_order }}</td>
           <td class="action-cell">
+            <button type="button" class="action relation" @click="openRelation(p)">
+              {{ p.group_bound ? text('更换分组', 'Change group') : text('绑定分组', 'Bind group') }}
+            </button>
+            <button v-if="p.group_bound" type="button" class="action" @click="unbind(p)">{{ text('解除关联', 'Unbind') }}</button>
             <button type="button" class="action" @click="openEdit(p)">{{ t('payment.edit') }}</button>
             <button type="button" class="action danger" @click="remove(p)">{{ t('payment.delete') }}</button>
           </td>
@@ -244,21 +332,74 @@ function formatValidity(p: AdminSubscriptionPlan): string {
       </tbody>
     </table>
 
+    <div v-if="relationOpen && relationPlan" class="modal-mask" @click.self="closeRelation">
+      <div class="modal-card relation-modal">
+        <header class="relation-head">
+          <div>
+            <span class="modal-eyebrow">{{ text('套餐资源关系', 'PLAN ROUTING') }}</span>
+            <h3>{{ relationPlan.group_bound ? text('更换关联分组', 'Change group') : text('绑定分组', 'Bind group') }}</h3>
+            <p>{{ relationPlan.name }}</p>
+          </div>
+          <button type="button" class="modal-close" :disabled="relationSaving" @click="closeRelation">×</button>
+        </header>
+
+        <div v-if="relationPlan.group_bound" class="current-binding">
+          <span>{{ text('当前关联', 'Current group') }}</span>
+          <strong>{{ relationPlan.group_name || '#' + relationPlan.group_id }}</strong>
+        </div>
+
+        <div class="relation-options">
+          <button
+            v-for="g in sortedGroups"
+            :key="g.id"
+            type="button"
+            :class="['group-option', { selected: relationGroupId === g.id, risky: g.subscription_type !== 'subscription' || g.status !== 'active' }]"
+            @click="relationGroupId = g.id"
+          >
+            <span class="group-radio"></span>
+            <span class="group-option-copy">
+              <strong>{{ groupOptionLabel(g) }}</strong>
+              <small>{{ relationGroupHint(g) }}</small>
+            </span>
+            <span v-if="g.subscription_type !== 'subscription' || g.status !== 'active'" class="group-warning">
+              {{ text('绑定后保持下架', 'Stays off sale') }}
+            </span>
+          </button>
+        </div>
+
+        <div class="relation-note">
+          <strong>{{ text('更换关系不会迁移历史订阅', 'Existing subscriptions stay unchanged') }}</strong>
+          <span>{{ text('新关联只决定之后可销售套餐的路由目标；已经购买的用户继续保留其原订阅分组。', 'The new binding controls future purchases. Existing users keep the group stored on their current subscription.') }}</span>
+        </div>
+
+        <footer class="modal-actions">
+          <button type="button" class="btn ghost" :disabled="relationSaving" @click="closeRelation">{{ t('payment.cancel') }}</button>
+          <button type="button" class="btn primary" :disabled="relationSaving || !relationGroupId" @click="saveRelation">
+            {{ relationSaving ? t('payment.saving') : text('确认绑定', 'Confirm binding') }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
     <div v-if="editorOpen" class="modal-mask" @click.self="closeEditor">
       <div class="modal-card">
         <header><h3>{{ isEdit ? t('payment.adminPlans.editTitle') : t('payment.adminPlans.createTitle') }}</h3></header>
         <div class="form-grid">
           <label class="field"><span>{{ t('payment.adminPlans.formName') }}</span><input v-model="draft.name" type="text" /></label>
-          <label class="field">
+          <label v-if="!isEdit" class="field">
             <span>{{ t('payment.adminPlans.formGroup') }}</span>
             <select v-if="groups.length" v-model.number="draft.group_id">
+              <option :value="0" disabled>{{ t('payment.adminPlans.groupPlaceholder') }}</option>
               <option v-for="g in sortedGroups" :key="g.id" :value="g.id">{{ groupOptionLabel(g) }}</option>
-              <option v-if="!groups.some((g) => g.id === draft.group_id)" :value="draft.group_id" disabled>
-                {{ draft.group_id ? '#' + draft.group_id : t('payment.adminPlans.groupPlaceholder') }}
-              </option>
             </select>
             <input v-else v-model.number="draft.group_id" type="number" />
+            <small class="field-hint">{{ text('创建后可在套餐列表中单独更换或解除关联。', 'After creation, manage the group relationship separately from the plan list.') }}</small>
           </label>
+          <div v-else class="field binding-summary">
+            <span>{{ t('payment.adminPlans.formGroup') }}</span>
+            <strong>{{ plans.find((p) => p.id === draft.id)?.group_bound ? (plans.find((p) => p.id === draft.id)?.group_name || '#' + draft.group_id) : text('未关联分组', 'No group bound') }}</strong>
+            <small>{{ text('分组关系请使用套餐列表中的“更换分组 / 解除关联”。', 'Use Change group / Unbind in the plan list to manage this relationship.') }}</small>
+          </div>
           <label class="field"><span>{{ t('payment.adminPlans.formPrice') }}</span><input v-model.number="draft.price" type="number" step="0.01" /></label>
           <label class="field"><span>{{ t('payment.adminPlans.formOriginalPrice') }}</span><input v-model.number="draft.original_price" type="number" step="0.01" /></label>
           <label class="field"><span>{{ t('payment.adminPlans.formCurrency') }}</span><input v-model="draft.currency" type="text" maxlength="8" /></label>
@@ -330,5 +471,52 @@ function formatValidity(p: AdminSubscriptionPlan): string {
 .btn.primary { background: #4a93c5; color: #0d0f12; }
 .btn.primary:hover:not(:disabled) { background: #5fa3d5; }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
-@media (max-width: 720px) { .plans-heading { flex-direction: column; align-items: flex-start; } .form-grid { grid-template-columns: 1fr; } .plans-table th, .plans-table td { padding: 8px; font-size: .72rem; } }
+
+.group-binding { display: flex; align-items: center; gap: 9px; min-width: 170px; }
+.group-binding > div { min-width: 0; }
+.group-binding strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-binding small { display: block; margin-top: 3px; color: #6c727b; font-size: .67rem; }
+.binding-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #48bb99; box-shadow: 0 0 0 4px rgba(72,187,153,.08); }
+.group-binding.unbound strong { color: #9ca3ad; }
+.group-binding.unbound .binding-dot { background: #79818b; box-shadow: 0 0 0 4px rgba(121,129,139,.08); }
+.action.relation { color: #8fd0fb; border-color: rgba(74,147,197,.45); background: rgba(74,147,197,.08); }
+.field-hint, .binding-summary small { display: block; margin-top: 6px; color: #717a84; font-size: .68rem; line-height: 1.5; }
+.binding-summary { padding: 8px 0; }
+.binding-summary strong { color: #e8edf2; font-size: .86rem; }
+.relation-modal { width: min(640px, 100%); }
+.relation-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.relation-head h3 { margin: 5px 0 0; }
+.relation-head p { margin: 6px 0 0; color: #858d97; font-size: .78rem; }
+.modal-eyebrow { color: #6ec0f5; font: 700 .63rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
+.modal-close { width: 34px; height: 34px; border: 1px solid #2a2f37; border-radius: 9px; background: #16191f; color: #9ca3ad; font-size: 1.15rem; cursor: pointer; }
+.current-binding { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 18px 0 12px; padding: 12px 14px; border: 1px solid #242a32; border-radius: 10px; background: #0d1015; }
+.current-binding span { color: #737d88; font-size: .72rem; }
+.current-binding strong { color: #e8edf2; font-size: .82rem; }
+.relation-options { display: grid; gap: 8px; max-height: 330px; overflow-y: auto; padding: 2px; }
+.group-option { width: 100%; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 11px; min-height: 62px; padding: 11px 13px; border: 1px solid #262c34; border-radius: 11px; background: #101319; color: #dbe1e7; text-align: left; cursor: pointer; }
+.group-option:hover { border-color: #3a4652; background: #13171d; }
+.group-option.selected { border-color: #4a93c5; background: rgba(74,147,197,.09); box-shadow: inset 0 0 0 1px rgba(74,147,197,.08); }
+.group-radio { width: 14px; height: 14px; border: 1.5px solid #56616d; border-radius: 50%; }
+.group-option.selected .group-radio { border: 4px solid #65b1e3; background: #0f1217; }
+.group-option-copy { min-width: 0; }
+.group-option-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #eef2f5; font-size: .82rem; }
+.group-option-copy small { display: block; margin-top: 4px; color: #737d88; font-size: .68rem; }
+.group-warning { padding: 4px 7px; border-radius: 999px; background: rgba(245,158,11,.1); color: #f0b85a; font-size: .62rem; white-space: nowrap; }
+.relation-note { display: grid; gap: 5px; margin-top: 14px; padding: 12px 14px; border-left: 2px solid #4a93c5; background: rgba(74,147,197,.06); }
+.relation-note strong { color: #cbd4dc; font-size: .74rem; }
+.relation-note span { color: #75808b; font-size: .69rem; line-height: 1.55; }
+
+:global(html.smirel-app[data-theme='light']) .group-binding strong,
+:global(html.smirel-app[data-theme='light']) .binding-summary strong,
+:global(html.smirel-app[data-theme='light']) .current-binding strong,
+:global(html.smirel-app[data-theme='light']) .group-option-copy strong { color: #25313c; }
+:global(html.smirel-app[data-theme='light']) .modal-close,
+:global(html.smirel-app[data-theme='light']) .current-binding,
+:global(html.smirel-app[data-theme='light']) .group-option { border-color: #dce4eb; background: #fff; color: #374553; }
+:global(html.smirel-app[data-theme='light']) .group-option:hover { border-color: #bfd2e1; background: #f8fbfd; }
+:global(html.smirel-app[data-theme='light']) .group-option.selected { border-color: #6ba9d3; background: #f0f8fd; }
+:global(html.smirel-app[data-theme='light']) .group-option.selected .group-radio { background: #fff; }
+:global(html.smirel-app[data-theme='light']) .current-binding { background: #f8fafc; }
+
+@media (max-width: 720px) { .plans-heading { flex-direction: column; align-items: flex-start; } .form-grid { grid-template-columns: 1fr; } .plans-table th, .plans-table td { padding: 8px; font-size: .72rem; } .group-warning { display: none; } }
 </style>

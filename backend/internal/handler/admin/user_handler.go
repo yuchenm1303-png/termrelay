@@ -90,7 +90,7 @@ type UpdateUserRequest struct {
 
 // UpdateBalanceRequest represents balance update request
 type UpdateBalanceRequest struct {
-	Balance   float64 `json:"balance" binding:"required,gt=0"`
+	Balance   float64 `json:"balance"`
 	Operation string  `json:"operation" binding:"required,oneof=set add subtract"`
 	Notes     string  `json:"notes"`
 }
@@ -393,6 +393,14 @@ func (h *UserHandler) UpdateBalance(c *gin.Context) {
 	var req UpdateBalanceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if math.IsNaN(req.Balance) || math.IsInf(req.Balance, 0) || req.Balance < 0 {
+		response.BadRequest(c, "balance must be a finite non-negative number")
+		return
+	}
+	if req.Operation != "set" && req.Balance <= 0 {
+		response.BadRequest(c, "add/subtract balance must be greater than zero")
 		return
 	}
 

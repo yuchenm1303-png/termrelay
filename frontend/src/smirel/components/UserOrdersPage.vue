@@ -796,7 +796,7 @@ function viewOrder(o: PaymentOrder) {
 .stat-decoration--bars i:nth-child(2) { height: 27px; }
 .stat-decoration--bars i:nth-child(3) { height: 40px; }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat ){
   border-color: #dce3e9;
   background:
     radial-gradient(circle at 100% 0%, rgba(var(--stat-accent), 0.075), transparent 39%),
@@ -806,14 +806,14 @@ function viewOrder(o: PaymentOrder) {
     0 9px 24px rgba(40, 57, 73, 0.045);
 }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat:hover {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat:hover ){
   border-color: rgba(var(--stat-accent), 0.38);
   box-shadow:
     0 1px 2px rgba(26, 35, 44, 0.02),
     0 13px 30px rgba(40, 57, 73, 0.07);
 }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat-icon {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat-icon ){
   border-color: rgba(var(--stat-accent), 0.18);
   background:
     linear-gradient(145deg, rgba(var(--stat-accent), 0.115), rgba(var(--stat-accent), 0.055));
@@ -822,15 +822,15 @@ function viewOrder(o: PaymentOrder) {
     0 4px 12px rgba(var(--stat-accent), 0.055);
 }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat .eyebrow {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat .eyebrow ){
   color: #637180;
 }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat strong {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat strong ){
   color: #20262d;
 }
 
-:global(html.smirel-app[data-theme='light']) .orders-page .stat-value-group small {
+:global(html.smirel-app[data-theme='light'] .orders-page .stat-value-group small ){
   color: #7c8996;
 }
 .filter-bar {

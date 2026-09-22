@@ -485,7 +485,7 @@ func ensureSubscriptionTeamSnapshot(ctx context.Context, client *dbent.Client, u
 	if err := client.Driver().Query(ctx, `SELECT features FROM subscription_plans WHERE id=$1`, []any{planID}, &rows); err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	seat, concurrency := 1, 1
 	var features string
 	if rows.Next() {
@@ -501,8 +501,9 @@ func ensureSubscriptionTeamSnapshot(ctx context.Context, client *dbent.Client, u
 	if concurrency < 1 {
 		concurrency = 1
 	}
+	expiresAt := time.Now().UTC().AddDate(0, 0, days)
 	var result entsql.Result
-	if err := client.Driver().Exec(ctx, `INSERT INTO subscription_teams (owner_user_id,group_id,plan_id,status,seat_limit,concurrency_limit,expires_at) VALUES ($1,$2,$3,'active',$4,$5,NOW() + ($6 || ' days')::interval) ON CONFLICT (owner_user_id,group_id) DO UPDATE SET plan_id=EXCLUDED.plan_id,status='active',seat_limit=EXCLUDED.seat_limit,concurrency_limit=EXCLUDED.concurrency_limit,expires_at=GREATEST(subscription_teams.expires_at, EXCLUDED.expires_at),updated_at=NOW()`, []any{userID, groupID, planID, seat, concurrency, days}, &result); err != nil {
+	if err := client.Driver().Exec(ctx, `INSERT INTO subscription_teams (owner_user_id,group_id,plan_id,status,seat_limit,concurrency_limit,expires_at) VALUES ($1,$2,$3,'active',$4,$5,$6) ON CONFLICT (owner_user_id,group_id) DO UPDATE SET plan_id=EXCLUDED.plan_id,status='active',seat_limit=EXCLUDED.seat_limit,concurrency_limit=EXCLUDED.concurrency_limit,expires_at=CASE WHEN subscription_teams.expires_at > EXCLUDED.expires_at THEN subscription_teams.expires_at ELSE EXCLUDED.expires_at END,updated_at=CURRENT_TIMESTAMP`, []any{userID, groupID, planID, seat, concurrency, expiresAt}, &result); err != nil {
 		return err
 	}
 	if err := client.Driver().Exec(ctx, `INSERT INTO subscription_team_members (team_id,user_id,role) SELECT id,$1,'owner' FROM subscription_teams WHERE owner_user_id=$1 AND group_id=$2 ON CONFLICT DO NOTHING`, []any{userID, groupID}, &result); err != nil {

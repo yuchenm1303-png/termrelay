@@ -137,8 +137,8 @@ func (s *PaymentService) validateSubOrder(ctx context.Context, req CreateOrderRe
 		return nil, infraerrors.BadRequest("INVALID_INPUT", "subscription order requires a plan")
 	}
 	plan, err := s.configService.GetPlan(ctx, req.PlanID)
-	if err != nil || !plan.ForSale {
-		return nil, infraerrors.NotFound("PLAN_NOT_AVAILABLE", "plan not found or not for sale")
+	if err != nil || !plan.ForSale || !plan.GroupBound {
+		return nil, infraerrors.NotFound("PLAN_NOT_AVAILABLE", "plan not found, not for sale, or not bound to a group")
 	}
 	group, err := s.groupRepo.GetByID(ctx, plan.GroupID)
 	if err != nil || group.Status != payment.EntityStatusActive {
@@ -152,7 +152,7 @@ func (s *PaymentService) validateSubOrder(ctx context.Context, req CreateOrderRe
 		if err := s.entClient.Driver().Query(ctx, `SELECT COUNT(*) FROM subscription_access_requests WHERE user_id=$1 AND plan_id=$2 AND status='approved'`, []any{req.UserID, req.PlanID}, &rows); err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer func() { _ = rows.Close() }()
 		var count int
 		if rows.Next() {
 			_ = rows.Scan(&count)

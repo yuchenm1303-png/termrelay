@@ -8,6 +8,7 @@ import UserUsagePage from '../smirel/pages/UserUsagePage.vue'
 import UserBillingRoutePage from '../smirel/pages/UserBillingRoutePage.vue'
 import UserOrdersPage from '../smirel/components/UserOrdersPage.vue'
 import AdminOverviewPage from '../smirel/pages/AdminOverviewPage.vue'
+import AdminUsersPage from '../smirel/components/AdminUsersPage.vue'
 import AdminAccountsPage from '../smirel/pages/AdminAccountsPage.vue'
 import AdminGroupsPage from '../smirel/pages/AdminGroupsPage.vue'
 import AdminChannelsPage from '../smirel/pages/AdminChannelsPage.vue'
@@ -44,7 +45,9 @@ const workspaceRoutes: RouteRecordRaw[] = [
     name: item.name,
     component: item.path === '/admin/dashboard'
       ? AdminOverviewPage
-      : item.path === '/admin/accounts'
+      : item.path === '/admin/users'
+        ? AdminUsersPage
+        : item.path === '/admin/accounts'
         ? AdminAccountsPage
         : item.path === '/admin/groups'
           ? AdminGroupsPage

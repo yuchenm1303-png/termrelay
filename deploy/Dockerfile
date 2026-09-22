@@ -64,6 +64,10 @@ RUN go mod download
 # Copy backend source first
 COPY backend/ ./
 
+# Keep Ent's generated client in sync with the schema at build time. Production
+# images must not depend on a developer having committed generated artifacts.
+RUN go generate ./ent
+
 # Copy frontend dist from previous stage (must be after backend copy to avoid being overwritten)
 COPY --from=frontend-builder /app/backend/internal/web/dist ./internal/web/dist
 

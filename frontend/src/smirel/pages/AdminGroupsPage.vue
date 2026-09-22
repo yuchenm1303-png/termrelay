@@ -29,7 +29,7 @@ const modelCache = reactive<Record<number, string[]>>({})
 const selectedAccounts = reactive<Record<number, number[]>>({})
 const showEditor = ref(false)
 const editingId = ref<number | null>(null)
-const form = reactive({ name: '', description: '', platform: 'openai', rate_multiplier: 1, status: 'active' })
+const form = reactive({ name: '', description: '', platform: 'openai', rate_multiplier: 1, subscription_type: 'standard', status: 'active' })
 
 const visibleGroups = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -101,19 +101,19 @@ async function refreshCandidates(g: GroupRow) {
 }
 function openCreate() {
   editingId.value = null
-  Object.assign(form, { name: '', description: '', platform: 'openai', rate_multiplier: 1, status: 'active' })
+  Object.assign(form, { name: '', description: '', platform: 'openai', rate_multiplier: 1, subscription_type: 'standard', status: 'active' })
   showEditor.value = true
 }
 function openEdit(g: GroupRow) {
   editingId.value = g.id
-  Object.assign(form, { name: g.name, description: g.description || '', platform: g.platform, rate_multiplier: Number(g.rate_multiplier || 1), status: g.status || 'active' })
+  Object.assign(form, { name: g.name, description: g.description || '', platform: g.platform, rate_multiplier: Number(g.rate_multiplier || 1), subscription_type: g.subscription_type || 'standard', status: g.status || 'active' })
   showEditor.value = true
 }
 async function saveGroup() {
   if (!form.name.trim()) return
   busy.value = 'group'; error.value = ''
   try {
-    const payload = { name: form.name.trim(), description: form.description.trim(), platform: form.platform, rate_multiplier: Math.max(0, Number(form.rate_multiplier) || 0), subscription_type: 'standard', status: form.status }
+    const payload = { name: form.name.trim(), description: form.description.trim(), platform: form.platform, rate_multiplier: Math.max(0, Number(form.rate_multiplier) || 0), subscription_type: form.subscription_type, status: form.status }
     if (editingId.value) await api.put(`/admin/groups/${editingId.value}`, payload)
     else await api.post('/admin/groups', payload)
     showEditor.value = false; notice.value = editingId.value ? '分组已更新' : '分组已创建'
@@ -223,7 +223,14 @@ async function deleteGroup(g: GroupRow) {
     notice.value = `分组「${g.name}」已删除`
     await loadAll()
   } catch (e) {
-    error.value = getErrorMessage(e)
+    const message = getErrorMessage(e)
+    if (message.includes('still bound to subscription plans') || message.includes('referenced by subscription plans')) {
+      error.value = '该分组仍有关联套餐。请先在“订阅计划”中更换分组或解除关联，再删除此分组。'
+    } else if (message.includes('active user subscriptions')) {
+      error.value = '该分组仍有生效中的用户订阅。请先迁移订阅或等待订阅到期，再删除此分组。'
+    } else {
+      error.value = message
+    }
   } finally { busy.value = '' }
 }
 
@@ -299,7 +306,7 @@ onMounted(() => void loadAll())
     <div v-if="showEditor" class="overlay" @click.self="showEditor = false">
       <form class="dialog" @submit.prevent="saveGroup">
         <header><div><span>GROUP CONFIGURATION</span><h2>{{ editingId ? '编辑分组' : '新建分组' }}</h2></div><button type="button" @click="showEditor = false">×</button></header>
-        <div class="form-grid"><label class="wide"><span>分组名称</span><input v-model="form.name" required placeholder="例如 swiftapi-default" /></label><label><span>平台协议</span><select v-model="form.platform"><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="antigravity">Antigravity</option><option value="grok">xAI / Grok</option><option value="composite">Composite</option></select></label><label><span>结算倍率</span><input v-model.number="form.rate_multiplier" type="number" min="0" step="0.01" /></label><label v-if="editingId"><span>状态</span><select v-model="form.status"><option value="active">启用</option><option value="inactive">停用</option></select></label><label class="wide"><span>说明</span><textarea v-model="form.description" rows="3" placeholder="说明此分组对应的上游与用途"></textarea></label></div>
+        <div class="form-grid"><label class="wide"><span>分组名称</span><input v-model="form.name" required placeholder="例如 swiftapi-default" /></label><label><span>平台协议</span><select v-model="form.platform"><option value="openai">OpenAI Compatible</option><option value="anthropic">Anthropic</option><option value="gemini">Gemini</option><option value="antigravity">Antigravity</option><option value="grok">xAI / Grok</option><option value="composite">Composite</option></select></label><label><span>计费模式</span><select v-model="form.subscription_type"><option value="standard">余额计费</option><option value="subscription">订阅计费</option></select></label><label><span>结算倍率</span><input v-model.number="form.rate_multiplier" type="number" min="0" step="0.01" /></label><label v-if="editingId"><span>状态</span><select v-model="form.status"><option value="active">启用</option><option value="inactive">停用</option></select></label><label class="wide"><span>说明</span><textarea v-model="form.description" rows="3" placeholder="说明此分组对应的上游与用途"></textarea></label></div>
         <footer><button type="button" class="ghost" @click="showEditor = false">取消</button><button class="primary" :disabled="busy === 'group'">{{ busy === 'group' ? '保存中…' : '保存分组' }}</button></footer>
       </form>
     </div>
