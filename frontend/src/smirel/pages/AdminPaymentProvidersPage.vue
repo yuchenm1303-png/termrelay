@@ -114,6 +114,10 @@ function pickProvider(key: PaymentType): void {
   applySchemaDefaults()
 }
 
+function onProviderSelect(value: unknown): void {
+  pickProvider(String(value) as PaymentType)
+}
+
 function closeEditor(): void {
   editorOpen.value = false
 }
@@ -272,7 +276,7 @@ const modeOptions: { key: PaymentMode; label: string }[] = [
               :disabled="isEdit"
               :aria-label="t('payment.adminProviders.formProvider')"
               fluid
-              @change="(value) => pickProvider(String(value) as PaymentType)"
+              @change="onProviderSelect"
             />
           </label>
           <label class="field">
