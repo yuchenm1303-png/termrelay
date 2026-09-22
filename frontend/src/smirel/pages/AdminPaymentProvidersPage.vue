@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 // Admin Payment Providers —— CRUD + 动态字段表单
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -265,9 +266,14 @@ const modeOptions: { key: PaymentMode; label: string }[] = [
         <div class="form-grid">
           <label class="field">
             <span>{{ t('payment.adminProviders.formProvider') }}</span>
-            <select :value="draft.provider_key" :disabled="isEdit" @change="pickProvider(($event.target as HTMLSelectElement).value as PaymentType)">
-              <option v-for="o in providerKeyOptions" :key="o.key" :value="o.key">{{ o.label }}</option>
-            </select>
+            <UiSelect
+              :model-value="draft.provider_key"
+              :options="providerKeyOptions.map((o) => ({ label: o.label, value: o.key }))"
+              :disabled="isEdit"
+              :aria-label="t('payment.adminProviders.formProvider')"
+              fluid
+              @change="(value) => pickProvider(String(value) as PaymentType)"
+            />
           </label>
           <label class="field">
             <span>{{ t('payment.adminProviders.formName') }}</span>
@@ -275,9 +281,12 @@ const modeOptions: { key: PaymentMode; label: string }[] = [
           </label>
           <label class="field">
             <span>{{ t('payment.adminProviders.formMode') }}</span>
-            <select v-model="draft.payment_mode">
-              <option v-for="m in modeOptions" :key="m.key" :value="m.key">{{ t('payment.adminProviders.' + m.label) }}</option>
-            </select>
+            <UiSelect
+              v-model="draft.payment_mode"
+              :options="modeOptions.map((m) => ({ label: t('payment.adminProviders.' + m.label), value: m.key }))"
+              :aria-label="t('payment.adminProviders.formMode')"
+              fluid
+            />
           </label>
           <label class="field">
             <span>{{ t('payment.adminProviders.formSort') }}</span>
