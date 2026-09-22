@@ -10,12 +10,12 @@ import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import UserDashboardPage from '../components/UserDashboardPage.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
+import { usageEndpoint, usageTotalTokens, type UsageRecord } from '../core/usage'
 import { useSession } from '../core/session'
 import '../styles/api-keys.css'
 import '../styles/admin-users-commercial.css'
 
 interface ApiKeyRow { id: number; name?: string; key?: string; status?: string; created_at?: string; [key: string]: unknown }
-interface UsageRow { id?: number; model?: string; endpoint?: string; total_tokens?: number; actual_cost?: number; created_at?: string; [key: string]: unknown }
 interface DashboardStats { total_api_keys?: number; active_api_keys?: number; total_requests?: number; total_tokens?: number; total_actual_cost?: number; today_requests?: number; today_tokens?: number; today_actual_cost?: number; [key: string]: unknown }
 
 const route = useRoute()
@@ -26,7 +26,7 @@ const loading = ref(false)
 const error = ref('')
 const stats = ref<DashboardStats | null>(null)
 const keys = ref<ApiKeyRow[]>([])
-const usage = ref<UsageRow[]>([])
+const usage = ref<UsageRecord[]>([])
 const newKeyName = ref('')
 
 const isDashboard = computed(() => feature.value === 'dashboard')
@@ -37,7 +37,7 @@ const isAdminUsers = computed(() => feature.value === 'admin-users')
 const isAdminOps = computed(() => feature.value === 'admin-ops')
 const isAdminSettings = computed(() => feature.value === 'admin-settings')
 const accountBalance = computed(() => Number(state.user?.balance || 0))
-const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
+const visibleUsageTokens = computed(() => usage.value.reduce((sum, item) => sum + usageTotalTokens(item), 0))
 const visibleUsageCost = computed(() => usage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
 
 const featureTitleKeys: Record<string, string> = {
@@ -91,7 +91,7 @@ async function load() {
   if (previewMode) {
     if (isDashboard.value) stats.value = { total_api_keys: 4, active_api_keys: 3, total_requests: 12480, total_tokens: 8294000, total_actual_cost: 18.72, today_requests: 842, today_tokens: 612340, today_actual_cost: 1.94 }
     if (isKeys.value) keys.value = [{ id: 1, name: 'Production', key: 'sk-••••••••9F2A', status: 'active', created_at: '2026-09-01' }, { id: 2, name: 'Development', key: 'sk-••••••••71CD', status: 'active', created_at: '2026-08-28' }]
-    if (isUsage.value) usage.value = [{ id: 1, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 18420, actual_cost: 0.082, created_at: '2026-09-06 14:20' }, { id: 2, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 9820, actual_cost: 0.051, created_at: '2026-09-06 14:12' }]
+    if (isUsage.value) usage.value = [{ id: 1, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 12000, output_tokens: 6420, actual_cost: 0.082, created_at: '2026-09-06 14:20' }, { id: 2, model: 'claude-sonnet', inbound_endpoint: '/v1/messages', input_tokens: 6400, output_tokens: 3420, actual_cost: 0.051, created_at: '2026-09-06 14:12' }]
     return
   }
   if (!isDashboard.value && !isKeys.value && !isUsage.value) return
@@ -103,7 +103,7 @@ async function load() {
       keys.value = Array.isArray(data) ? data : (data.items || [])
     }
     if (isUsage.value) {
-      const data = (await api.get<{ items?: UsageRow[] } | UsageRow[]>('/usage', { params: { page: 1, page_size: 30 } })).data
+      const data = (await api.get<{ items?: UsageRecord[] } | UsageRecord[]>('/usage', { params: { page: 1, page_size: 30 } })).data
       usage.value = Array.isArray(data) ? data : (data.items || [])
     }
   } catch (caught) { error.value = getErrorMessage(caught) } finally { loading.value = false }
@@ -222,8 +222,8 @@ onMounted(() => void load())
           <div v-for="(item, index) in usage" :key="item.id || index" class="table-row">
             <span>{{ item.created_at || '—' }}</span>
             <strong>{{ item.model || '—' }}</strong>
-            <code>{{ item.endpoint || '—' }}</code>
-            <span>{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
+            <code>{{ usageEndpoint(item) || '—' }}</code>
+            <span>{{ usageTotalTokens(item).toLocaleString() }}</span>
             <span>${{ Number(item.actual_cost || 0).toFixed(4) }}</span>
           </div>
           <p v-if="!usage.length && !loading" class="empty-state">{{ t('workspace.noUsage') }}</p>

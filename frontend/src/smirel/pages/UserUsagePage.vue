@@ -2,23 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import WorkspaceNavIcon from '../components/WorkspaceNavIcon.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
-
-interface UsageRow {
-  id?: number
-  model?: string
-  endpoint?: string
-  total_tokens?: number
-  actual_cost?: number
-  created_at?: string
-  [key: string]: unknown
-}
+import { usageEndpoint, usageGroupLabel, usageTotalTokens, type UsageRecord } from '../core/usage'
 
 type Period = 'today' | '7d' | '30d' | '90d' | 'custom' | 'all'
 type Metric = 'tokens' | 'cost'
 
 const loading = ref(false)
 const error = ref('')
-const usage = ref<UsageRow[]>([])
+const usage = ref<UsageRecord[]>([])
 const search = ref('')
 const modelFilter = ref('all')
 const period = ref<Period>('7d')
@@ -26,17 +17,17 @@ const metric = ref<Metric>('tokens')
 const customStart = ref('')
 const customEnd = ref('')
 
-const previewRows: UsageRow[] = [
-  { id: 1, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 18420, actual_cost: 0.0820, created_at: '2026-09-07 10:18' },
-  { id: 2, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 9820, actual_cost: 0.0510, created_at: '2026-09-07 09:42' },
-  { id: 3, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 12680, actual_cost: 0.0564, created_at: '2026-09-06 21:54' },
-  { id: 4, model: 'gemini-2.5-pro', endpoint: '/v1/chat/completions', total_tokens: 7340, actual_cost: 0.0318, created_at: '2026-09-06 16:31' },
-  { id: 5, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 6210, actual_cost: 0.0287, created_at: '2026-09-05 18:48' },
-  { id: 6, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 15460, actual_cost: 0.0689, created_at: '2026-09-05 11:26' },
-  { id: 7, model: 'gpt-5.6-mini', endpoint: '/v1/chat/completions', total_tokens: 11320, actual_cost: 0.0241, created_at: '2026-09-04 20:08' },
-  { id: 8, model: 'claude-sonnet', endpoint: '/v1/messages', total_tokens: 13880, actual_cost: 0.0706, created_at: '2026-09-03 14:22' },
-  { id: 9, model: 'gemini-2.5-pro', endpoint: '/v1/chat/completions', total_tokens: 8640, actual_cost: 0.0384, created_at: '2026-09-02 17:05' },
-  { id: 10, model: 'gpt-5.6', endpoint: '/v1/responses', total_tokens: 19620, actual_cost: 0.0897, created_at: '2026-09-01 09:37' },
+const previewRows: UsageRecord[] = [
+  { id: 1, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 12000, output_tokens: 6420, actual_cost: 0.0820, created_at: '2026-09-07 10:18' },
+  { id: 2, model: 'claude-sonnet', inbound_endpoint: '/v1/messages', input_tokens: 6400, output_tokens: 3420, actual_cost: 0.0510, created_at: '2026-09-07 09:42' },
+  { id: 3, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 8200, output_tokens: 4480, actual_cost: 0.0564, created_at: '2026-09-06 21:54' },
+  { id: 4, model: 'gemini-2.5-pro', inbound_endpoint: '/v1/chat/completions', input_tokens: 4800, output_tokens: 2540, actual_cost: 0.0318, created_at: '2026-09-06 16:31' },
+  { id: 5, model: 'claude-sonnet', inbound_endpoint: '/v1/messages', input_tokens: 4000, output_tokens: 2210, actual_cost: 0.0287, created_at: '2026-09-05 18:48' },
+  { id: 6, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 10000, output_tokens: 5460, actual_cost: 0.0689, created_at: '2026-09-05 11:26' },
+  { id: 7, model: 'gpt-5.6-mini', inbound_endpoint: '/v1/chat/completions', input_tokens: 7400, output_tokens: 3920, actual_cost: 0.0241, created_at: '2026-09-04 20:08' },
+  { id: 8, model: 'claude-sonnet', inbound_endpoint: '/v1/messages', input_tokens: 9000, output_tokens: 4880, actual_cost: 0.0706, created_at: '2026-09-03 14:22' },
+  { id: 9, model: 'gemini-2.5-pro', inbound_endpoint: '/v1/chat/completions', input_tokens: 5600, output_tokens: 3040, actual_cost: 0.0384, created_at: '2026-09-02 17:05' },
+  { id: 10, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 12800, output_tokens: 6820, actual_cost: 0.0897, created_at: '2026-09-01 09:37' },
 ]
 
 function parseTime(value?: string) {
@@ -130,12 +121,12 @@ const filteredUsage = computed(() => {
   return periodUsage.value.filter((item) => {
     if (modelFilter.value !== 'all' && item.model !== modelFilter.value) return false
     if (!keyword) return true
-    return `${item.model || ''} ${item.endpoint || ''}`.toLowerCase().includes(keyword)
+    return `${item.model || ''} ${usageEndpoint(item)}`.toLowerCase().includes(keyword)
   })
 })
 
 const totalRequests = computed(() => periodUsage.value.length)
-const totalTokens = computed(() => periodUsage.value.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0))
+const totalTokens = computed(() => periodUsage.value.reduce((sum, item) => sum + usageTotalTokens(item), 0))
 const totalCost = computed(() => periodUsage.value.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0))
 const averageCost = computed(() => totalRequests.value ? totalCost.value / totalRequests.value : 0)
 const averageTokens = computed(() => totalRequests.value ? Math.round(totalTokens.value / totalRequests.value) : 0)
@@ -143,9 +134,9 @@ const averageTokens = computed(() => totalRequests.value ? Math.round(totalToken
 function distributionBy(key: 'model' | 'endpoint') {
   const totals = new Map<string, { tokens: number; cost: number; requests: number }>()
   periodUsage.value.forEach((item) => {
-    const label = String(item[key] || 'Unknown')
+    const label = usageGroupLabel(item, key)
     const current = totals.get(label) || { tokens: 0, cost: 0, requests: 0 }
-    current.tokens += Number(item.total_tokens || 0)
+    current.tokens += usageTotalTokens(item)
     current.cost += Number(item.actual_cost || 0)
     current.requests += 1
     totals.set(label, current)
@@ -186,7 +177,7 @@ const trendData = computed<TrendBucket[]>(() => {
         const timestamp = parseTime(item.created_at)
         return timestamp >= bucketStart && timestamp <= bucketEnd
       })
-      const tokens = items.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0)
+      const tokens = items.reduce((sum, item) => sum + usageTotalTokens(item), 0)
       const cost = items.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
       return {
         label: `${String(index * 4).padStart(2, '0')}:00`,
@@ -217,7 +208,7 @@ const trendData = computed<TrendBucket[]>(() => {
       const timestamp = parseTime(item.created_at)
       return timestamp >= bucketStart.getTime() && timestamp <= bucketEnd.getTime()
     })
-    const tokens = items.reduce((sum, item) => sum + Number(item.total_tokens || 0), 0)
+    const tokens = items.reduce((sum, item) => sum + usageTotalTokens(item), 0)
     const cost = items.reduce((sum, item) => sum + Number(item.actual_cost || 0), 0)
     const label = `${bucketStart.getMonth() + 1}/${bucketStart.getDate()}`
 
@@ -307,7 +298,7 @@ async function load() {
       usage.value = previewRows
       return
     }
-    const data = (await api.get<{ items?: UsageRow[] } | UsageRow[]>('/usage', { params: { page: 1, page_size: 100 } })).data
+    const data = (await api.get<{ items?: UsageRecord[] } | UsageRecord[]>('/usage', { params: { page: 1, page_size: 100 } })).data
     usage.value = Array.isArray(data) ? data : (data.items || [])
   } catch (caught) {
     error.value = getErrorMessage(caught)
@@ -554,8 +545,8 @@ onMounted(() => void load())
           <div v-for="(item, index) in filteredUsage" :key="item.id || index" class="usage-row">
             <time>{{ formatTime(item.created_at) }}</time>
             <div class="usage-model-cell"><i></i><strong>{{ item.model || '—' }}</strong></div>
-            <code>{{ item.endpoint || '—' }}</code>
-            <span class="usage-number">{{ Number(item.total_tokens || 0).toLocaleString() }}</span>
+            <code>{{ usageEndpoint(item) || '—' }}</code>
+            <span class="usage-number">{{ usageTotalTokens(item).toLocaleString() }}</span>
             <strong class="usage-cost">{{ money(Number(item.actual_cost || 0)) }}</strong>
           </div>
           <div v-if="!filteredUsage.length && !loading" class="usage-empty">没有匹配的用量记录</div>
