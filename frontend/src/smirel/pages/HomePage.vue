@@ -17,7 +17,7 @@ import minimaxLogo from '../assets/providers/minimax.svg'
 import '../styles/home-landing.css'
 import '../styles/home-light.css'
 import '../styles/home-provider-capsules.css'
-import '../styles/home-ambient-motion.css'
+import '../styles/home-hero-aurora-motion.css'
 
 const { isAuthenticated, isAdmin } = useSession()
 const plans = ref<PublicSubscriptionPlan[]>([])
@@ -32,7 +32,7 @@ let pointerGlowFrame = 0
 let pointerGlowTarget: HTMLElement | null = null
 let pointerGlowClientX = 0
 let pointerGlowClientY = 0
-let ambientMotionCleanup: (() => void) | null = null
+let heroAuroraCleanup: (() => void) | null = null
 const apiBase = 'https://muxway.dev/v1'
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
@@ -118,90 +118,71 @@ function initRevealMotion() {
   revealMutationObserver.observe(root, { childList: true, subtree: true })
 }
 
-function initAmbientMotion() {
+function initHeroAuroraMotion() {
   const root = homeRoot.value
-  if (!root) return
+  const hero = root?.querySelector<HTMLElement>('.home-hero')
+  if (!hero) return
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
   if (reducedMotion.matches) {
-    root.dataset.ambientMotion = 'static'
-    root.style.setProperty('--home-ambient-x', '0px')
-    root.style.setProperty('--home-ambient-y', '0px')
-    root.style.setProperty('--home-ambient-rx', '0px')
-    root.style.setProperty('--home-ambient-ry', '0px')
-    root.style.setProperty('--home-ambient-rotate', '0deg')
-    root.style.setProperty('--home-ambient-violet-rotate', '0deg')
-    root.style.setProperty('--home-ambient-center-rotate', '0deg')
-    root.style.setProperty('--home-ambient-center-x', '0px')
-    root.style.setProperty('--home-ambient-center-y', '0px')
-    root.style.setProperty('--home-ambient-wash-x', '0px')
-    root.style.setProperty('--home-ambient-wash-y', '0px')
-    root.style.setProperty('--home-ambient-scale', '1')
-    root.style.setProperty('--home-ambient-violet-scale', '.98')
-    root.style.setProperty('--home-ambient-center-scale', '1.05')
-    root.style.setProperty('--home-ambient-wash-scale', '.98')
-    root.style.setProperty('--home-ambient-opacity', '.82')
-    root.style.setProperty('--home-ambient-wash', '.72')
+    hero.dataset.auroraMotion = 'static'
+    hero.style.setProperty('--hero-aurora-x', '0px')
+    hero.style.setProperty('--hero-aurora-y', '0px')
+    hero.style.setProperty('--hero-aurora-rx', '0px')
+    hero.style.setProperty('--hero-aurora-ry', '0px')
+    hero.style.setProperty('--hero-aurora-rotate', '0deg')
+    hero.style.setProperty('--hero-aurora-scale', '1')
+    hero.style.setProperty('--hero-aurora-tail-scale', '1')
+    hero.style.setProperty('--hero-aurora-opacity', '.98')
     return
   }
 
-  root.dataset.ambientMotion = 'dynamic'
+  hero.dataset.auroraMotion = 'dynamic'
 
   let frame = 0
-  const target = { x: 0, y: 0, hero: 0, page: 0 }
-  const current = { x: 0, y: 0, hero: 0, page: 0 }
+  const target = { x: 0, y: 0, scroll: 0, page: 0 }
+  const current = { x: 0, y: 0, scroll: 0, page: 0 }
 
   const syncScrollTarget = () => {
+    const heroHeight = Math.max(hero.offsetHeight, 1)
     const viewport = Math.max(window.innerHeight, 1)
     const documentHeight = Math.max(document.documentElement.scrollHeight - viewport, 1)
-    target.hero = Math.min(Math.max(window.scrollY / (viewport * 1.25), 0), 1)
+    target.scroll = Math.min(Math.max(window.scrollY / (heroHeight * .92), 0), 1)
     target.page = Math.min(Math.max(window.scrollY / documentHeight, 0), 1)
   }
 
   const writeFrame = () => {
     frame = 0
-    const smoothing = .115
+    const smoothing = .105
+
     current.x += (target.x - current.x) * smoothing
     current.y += (target.y - current.y) * smoothing
-    current.hero += (target.hero - current.hero) * smoothing
+    current.scroll += (target.scroll - current.scroll) * smoothing
     current.page += (target.page - current.page) * smoothing
 
-    const phase = Math.sin(current.page * Math.PI * 1.9)
-    const x = current.x * 112 + phase * 52
-    const y = current.y * 58 - current.hero * 176
-    const reverseX = current.x * -86 - phase * 42
-    const reverseY = current.y * -44 + current.hero * 118
-    const rotate = current.x * 8.5 + current.page * 15
-    const scale = 1 + current.hero * .14 + Math.abs(current.x) * .055
-    const opacity = Math.max(.58, 1.02 - current.hero * .18 - current.page * .08)
-    const wash = Math.max(.42, .96 - current.hero * .20 - current.page * .08)
-    const centerX = x * .58
-    const centerY = reverseY * .66
-    const washX = x * .42
-    const washY = y * .34
+    const drift = Math.sin(current.page * Math.PI * 2.1)
+    const x = current.x * 118 + drift * 38
+    const y = current.y * 48 - current.scroll * 138
+    const reverseX = current.x * -84 - drift * 28
+    const reverseY = current.y * -34 + current.scroll * 82
+    const rotate = current.x * 4.6 + current.page * 4.5
+    const scale = 1 + current.scroll * .12 + Math.abs(current.x) * .035
+    const tailScale = 1 + current.scroll * .18 + Math.abs(current.y) * .025
+    const opacity = Math.max(.66, .99 - current.scroll * .18)
 
-    root.style.setProperty('--home-ambient-x', `${x.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-y', `${y.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-rx', `${reverseX.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-ry', `${reverseY.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-center-x', `${centerX.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-center-y', `${centerY.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-wash-x', `${washX.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-wash-y', `${washY.toFixed(2)}px`)
-    root.style.setProperty('--home-ambient-rotate', `${rotate.toFixed(2)}deg`)
-    root.style.setProperty('--home-ambient-violet-rotate', `${(-rotate * .72).toFixed(2)}deg`)
-    root.style.setProperty('--home-ambient-center-rotate', `${(rotate * .38).toFixed(2)}deg`)
-    root.style.setProperty('--home-ambient-scale', scale.toFixed(4))
-    root.style.setProperty('--home-ambient-violet-scale', (scale * .98).toFixed(4))
-    root.style.setProperty('--home-ambient-center-scale', (scale * 1.05).toFixed(4))
-    root.style.setProperty('--home-ambient-wash-scale', (.98 + (scale - 1) * .35).toFixed(4))
-    root.style.setProperty('--home-ambient-opacity', opacity.toFixed(4))
-    root.style.setProperty('--home-ambient-wash', wash.toFixed(4))
+    hero.style.setProperty('--hero-aurora-x', `${x.toFixed(2)}px`)
+    hero.style.setProperty('--hero-aurora-y', `${y.toFixed(2)}px`)
+    hero.style.setProperty('--hero-aurora-rx', `${reverseX.toFixed(2)}px`)
+    hero.style.setProperty('--hero-aurora-ry', `${reverseY.toFixed(2)}px`)
+    hero.style.setProperty('--hero-aurora-rotate', `${rotate.toFixed(2)}deg`)
+    hero.style.setProperty('--hero-aurora-scale', scale.toFixed(4))
+    hero.style.setProperty('--hero-aurora-tail-scale', tailScale.toFixed(4))
+    hero.style.setProperty('--hero-aurora-opacity', opacity.toFixed(4))
 
     const unsettled =
       Math.abs(target.x - current.x) > .001 ||
       Math.abs(target.y - current.y) > .001 ||
-      Math.abs(target.hero - current.hero) > .001 ||
+      Math.abs(target.scroll - current.scroll) > .001 ||
       Math.abs(target.page - current.page) > .001
 
     if (unsettled) frame = window.requestAnimationFrame(writeFrame)
@@ -237,7 +218,7 @@ function initAmbientMotion() {
   }
 
   syncScrollTarget()
-  current.hero = target.hero
+  current.scroll = target.scroll
   current.page = target.page
   writeFrame()
 
@@ -246,13 +227,13 @@ function initAmbientMotion() {
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
 
-  ambientMotionCleanup = () => {
+  heroAuroraCleanup = () => {
     if (frame) window.cancelAnimationFrame(frame)
     window.removeEventListener('pointermove', onPointerMove)
     document.documentElement.removeEventListener('pointerleave', onPointerLeave)
     window.removeEventListener('scroll', onScroll)
     window.removeEventListener('resize', onResize)
-    ambientMotionCleanup = null
+    heroAuroraCleanup = null
   }
 }
 
@@ -313,7 +294,7 @@ function initPointerGlow() {
 onMounted(async () => {
   initRevealMotion()
   initPointerGlow()
-  initAmbientMotion()
+  initHeroAuroraMotion()
 
   try {
     const response: unknown = await paymentApi.listPublicPlans()
@@ -330,7 +311,7 @@ onBeforeUnmount(() => {
   root?.removeEventListener('pointermove', handlePointerGlowMove)
   root?.removeEventListener('pointerout', handlePointerGlowOut)
   if (pointerGlowFrame) window.cancelAnimationFrame(pointerGlowFrame)
-  ambientMotionCleanup?.()
+  heroAuroraCleanup?.()
 })
 
 const zh = {
@@ -361,11 +342,6 @@ const en = {
 
 <template>
   <div ref="homeRoot" class="home-page">
-    <div class="home-ambient-motion" aria-hidden="true">
-      <i class="home-ambient-orb home-ambient-orb-blue"></i>
-      <i class="home-ambient-orb home-ambient-orb-violet"></i>
-      <i class="home-ambient-orb home-ambient-orb-center"></i>
-    </div>
     <header class="home-topbar">
       <RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
       <nav class="home-nav" :class="{ 'is-open': mobileMenuOpen }"><a href="#capabilities">{{ copy.nav[0] }}</a><a href="#tools">{{ copy.nav[1] }}</a><a href="#pricing">{{ copy.nav[2] }}</a><a href="#faq">{{ copy.nav[3] }}</a></nav>
