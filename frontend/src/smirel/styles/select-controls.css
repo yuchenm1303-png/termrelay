@@ -35,6 +35,24 @@
     outline: none;
   }
 
+  /* Bare selects (not wrapped in .select-control) get a stable built-in
+   * arrow painted via background so they never collide with the picker-icon
+   * that Chromium injects on the trigger button. The arrow lane mirrors the
+   * padding reserves used by .select-control, keeping the value column
+   * visually centered regardless of viewport width. */
+  .smirel-app select:not(.select-control select) {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='m4 6 4 4 4-4' fill='none' stroke='%2377818c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    background-size: 12px 12px;
+  }
+  .smirel-app select:not(.select-control select):hover:not(:disabled) {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='m4 6 4 4 4-4' fill='none' stroke='%23a2acb7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  }
+  .smirel-app select:not(.select-control select):open {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='m4 10 4-4 4 4' fill='none' stroke='%23a2acb7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  }
+
   .smirel-app select::picker(select) {
     margin-block: 6px;
     max-height: 284px;
@@ -102,26 +120,12 @@
     color: #67bff2;
   }
 
-  /* Keep native picker indicators in a stable trailing lane. Their own box,
-   * rather than the glyph's baseline, is the rotation reference. */
+  /* The Chromium-native picker-icon is what was pushing the trigger value
+   * off-center and doubling up against our own SVG arrows. Hide it on every
+   * trigger button; the popup indicator (::checkmark) still renders inside
+   * option rows and keeps the dark dropdown fully themeable. */
   .smirel-app select::picker-icon {
-    width: 14px;
-    height: 14px;
-    flex: 0 0 14px;
-    margin-inline-start: auto;
-    color: #77818c;
-    transform-box: border-box;
-    transform-origin: 50% 50%;
-    transition: transform .15s ease, color .15s ease;
-  }
-
-  .smirel-app select:hover::picker-icon,
-  .smirel-app select:open::picker-icon {
-    color: #a2acb7;
-  }
-
-  .smirel-app select:open::picker-icon {
-    transform: rotate(180deg);
+    display: none;
   }
 
   /* Composite filter fields (label + select + chevron) already own a fixed
@@ -139,10 +143,6 @@
     line-height: 1;
   }
 
-  .smirel-app .select-control select::picker-icon {
-    display: none;
-  }
-
   .smirel-app .select-control > svg {
     display: block;
     pointer-events: none;
@@ -150,9 +150,14 @@
     transform: translateY(-50%);
   }
 
+  /* Lock the arrow's geometric center to the SVG's own bounding box so the
+   * rotation pivot stays stable regardless of viewBox, stroke or inherited
+   * transforms on the parent <svg>. transform-box: fill-box scopes the
+   * origin to the painted path, removing the visual "wobble" we had when
+   * transform-box: view-box recomputed against viewBox edges. */
   .smirel-app .select-control > svg path {
-    transform-box: view-box;
-    transform-origin: 8px 8px;
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
     transition: transform .15s ease;
   }
 
@@ -245,12 +250,7 @@ html.smirel-app[data-theme='light'] select option {
   }
 
   html.smirel-app[data-theme='light'] select::picker-icon {
-    color: #82909d;
-  }
-
-  html.smirel-app[data-theme='light'] select:hover::picker-icon,
-  html.smirel-app[data-theme='light'] select:open::picker-icon {
-    color: #536b7e;
+    display: none;
   }
 
   html.smirel-app[data-theme='light'] select::picker(select)::-webkit-scrollbar-thumb {
@@ -260,7 +260,6 @@ html.smirel-app[data-theme='light'] select option {
 
 @media (prefers-reduced-motion: reduce) {
   .smirel-app select,
-  .smirel-app select::picker-icon,
   .smirel-app select option,
   .smirel-app .select-control > svg path {
     transition: none;

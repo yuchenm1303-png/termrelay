@@ -530,10 +530,13 @@ onMounted(() => void load())
             <WorkspaceNavIcon name="search" />
             <input v-model="search" type="search" placeholder="搜索模型或 Endpoint" />
           </label>
-          <select v-model="modelFilter" aria-label="筛选模型">
-            <option value="all">全部模型</option>
-            <option v-for="model in modelOptions" :key="model" :value="model">{{ model }}</option>
-          </select>
+          <label class="select-control select-control--ghost">
+            <select v-model="modelFilter" aria-label="筛选模型">
+              <option value="all">全部模型</option>
+              <option v-for="model in modelOptions" :key="model" :value="model">{{ model }}</option>
+            </select>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+          </label>
         </div>
       </header>
 
@@ -1053,6 +1056,9 @@ onMounted(() => void load())
 .usage-search input { width: 100%; border: 0; outline: none; color: #d7dbe0; background: transparent; font: inherit; font-size: .68rem; }
 .usage-search input::placeholder { color: #525a64; }
 .log-filters select { min-width: 126px; height: 36px; padding: 0 28px 0 10px; border: 1px solid #292e35; border-radius: 8px; color: #a4abb4; background-color: #111317; font: inherit; font-size: .68rem; }
+.log-filters .select-control { position: relative; min-width: 126px; height: 36px; padding: 0 28px 0 10px; border: 1px solid #292e35; border-radius: 8px; background: #111317; display: inline-flex; align-items: center; cursor: pointer; }
+.log-filters .select-control select { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: #a4abb4; font: inherit; font-size: .68rem; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.log-filters .select-control svg { position: absolute; right: 10px; top: 50%; width: 12px; height: 12px; fill: none; stroke: #7d8691; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; transform: translateY(-50%); }
 
 .usage-table-scroll { overflow-x: auto; }
 .usage-table { min-width: 820px; }
