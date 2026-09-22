@@ -1106,3 +1106,363 @@ html.smirel-app[data-theme='dark'] .home-page .home-faq details:hover {
     transition: none !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+ * Homepage chroma polish
+ * Brighter, premium color accents without turning the landing page into a
+ * neon gradient wall. Large surfaces stay quiet; chroma is concentrated in
+ * glows, badges, featured cards and section transitions.
+ * -------------------------------------------------------------------------- */
+.home-page {
+  --home-cyan: #45b8ff;
+  --home-blue: #5879ff;
+  --home-violet: #8468f6;
+  --home-pink: #e978c4;
+  --home-mint: #43cda2;
+}
+
+/* Hero: richer multi-stop atmosphere with a clean white reading zone. */
+.home-page .home-hero {
+  background:
+    radial-gradient(ellipse 48% 34% at 10% 78%, rgba(57, 155, 255, .24), transparent 70%),
+    radial-gradient(ellipse 44% 38% at 48% 72%, rgba(104, 107, 255, .22), transparent 72%),
+    radial-gradient(ellipse 38% 34% at 88% 62%, rgba(223, 104, 196, .18), transparent 70%),
+    linear-gradient(180deg, #f9fcff 0%, #f7f9ff 46%, #f1f3ff 100%);
+}
+
+.home-page .home-hero::before {
+  width: min(1160px, 94vw);
+  height: 390px;
+  top: 210px;
+  left: 50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 22% 58%, rgba(58, 170, 255, .32), transparent 34%),
+    radial-gradient(circle at 51% 52%, rgba(91, 105, 255, .30), transparent 38%),
+    radial-gradient(circle at 80% 45%, rgba(222, 105, 199, .24), transparent 34%);
+  filter: blur(46px);
+  transform: translateX(-50%);
+  opacity: .92;
+}
+
+.home-page .home-hero::after {
+  width: min(1040px, 86vw);
+  height: 150px;
+  top: auto;
+  bottom: 28px;
+  left: 50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at center, rgba(89, 111, 255, .22), transparent 70%);
+  filter: blur(34px);
+  transform: translateX(-50%);
+  opacity: .8;
+}
+
+.home-page .home-eyebrow {
+  border-color: rgba(58, 150, 222, .30);
+  background:
+    linear-gradient(135deg, rgba(239, 249, 255, .92), rgba(239, 241, 255, .88));
+  color: #1675b6;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.86),
+    0 7px 22px rgba(77, 112, 184, .08);
+}
+
+.home-page .home-hero-lead {
+  background: linear-gradient(90deg, #227fbd 0%, #4f66d9 52%, #8e58bc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Model rail: subtle alternating accent edges instead of identical grey pills. */
+.home-page .home-model-chip {
+  border-color: rgba(115, 151, 198, .30);
+  background: rgba(255, 255, 255, .78);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.9),
+    0 8px 22px rgba(71, 94, 146, .07);
+}
+
+.home-page .home-model-chip:nth-child(3n + 1) {
+  border-color: rgba(70, 173, 238, .34);
+}
+
+.home-page .home-model-chip:nth-child(3n + 2) {
+  border-color: rgba(112, 104, 235, .30);
+}
+
+.home-page .home-model-chip:nth-child(3n) {
+  border-color: rgba(208, 103, 184, .28);
+}
+
+/* Card grid: each card keeps a neutral body but receives a faint spectral
+   tint. This gives the page rhythm without turning the copy area colorful. */
+.home-page .home-card-grid article {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(251,253,255,.88));
+}
+
+.home-page .home-card-grid article:nth-child(1) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(70, 188, 255, .10), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(249,252,255,.90));
+}
+
+.home-page .home-card-grid article:nth-child(2) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(99, 116, 255, .09), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(250,250,255,.90));
+}
+
+.home-page .home-card-grid article:nth-child(3) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(76, 202, 168, .085), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(249,253,252,.90));
+}
+
+.home-page .home-card-grid article:nth-child(4),
+.home-page .home-card-grid article.is-emphasis {
+  border-color: rgba(145, 113, 232, .18);
+  background:
+    radial-gradient(circle at 14% 4%, rgba(85, 183, 255, .17), transparent 38%),
+    radial-gradient(circle at 88% 96%, rgba(232, 111, 195, .16), transparent 42%),
+    linear-gradient(140deg, #f3fbff 0%, #f4f0ff 50%, #fff1fa 100%);
+  box-shadow:
+    0 18px 42px rgba(91, 95, 184, .11),
+    inset 0 1px rgba(255,255,255,.84);
+}
+
+/* Number badges become a small color system. */
+.home-page .home-card-grid article:nth-child(1) > span:first-child,
+.home-page .home-steps article:nth-child(1) > span:first-child {
+  background: #e6f6ff;
+  color: #1887c8;
+}
+
+.home-page .home-card-grid article:nth-child(2) > span:first-child,
+.home-page .home-steps article:nth-child(2) > span:first-child {
+  background: #eeefff;
+  color: #5e62d7;
+}
+
+.home-page .home-card-grid article:nth-child(3) > span:first-child,
+.home-page .home-steps article:nth-child(3) > span:first-child {
+  background: #e9faf4;
+  color: #178e6f;
+}
+
+.home-page .home-card-grid article:nth-child(4) > span:first-child {
+  background: rgba(255,255,255,.78);
+  color: #8b5ac2;
+  box-shadow: 0 6px 18px rgba(132, 91, 190, .08);
+}
+
+/* Capabilities gets a more intentional aurora wash. */
+.home-page .home-capabilities {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(66, 179, 246, .18), transparent 30%),
+    radial-gradient(circle at 51% 24%, rgba(102, 111, 245, .14), transparent 35%),
+    radial-gradient(circle at 94% 82%, rgba(229, 112, 196, .13), transparent 34%),
+    linear-gradient(115deg, #f5fbff 0%, #f7f5ff 52%, #fff7fb 100%);
+}
+
+.home-page .home-capabilities::before,
+.home-page .home-capabilities::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(30px);
+  opacity: .7;
+}
+
+.home-page .home-capabilities::before {
+  width: 260px;
+  height: 260px;
+  left: -90px;
+  top: 16%;
+  background: rgba(62, 177, 246, .14);
+}
+
+.home-page .home-capabilities::after {
+  width: 320px;
+  height: 320px;
+  right: -120px;
+  bottom: 2%;
+  background: rgba(217, 104, 192, .11);
+}
+
+/* Tool marks and plan badges carry the same chroma vocabulary. */
+.home-page .home-tool-grid a:nth-child(3n + 1) b {
+  background: #e5f6ff;
+  color: #1683c1;
+}
+
+.home-page .home-tool-grid a:nth-child(3n + 2) b {
+  background: #eeefff;
+  color: #5c61d4;
+}
+
+.home-page .home-tool-grid a:nth-child(3n) b {
+  background: #f8eafa;
+  color: #a44b93;
+}
+
+.home-page .home-plan.is-featured {
+  border-color: rgba(91, 145, 219, .34);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(71, 181, 242, .12), transparent 40%),
+    radial-gradient(circle at 96% 96%, rgba(142, 103, 231, .10), transparent 44%),
+    var(--home-surface);
+  box-shadow: 0 14px 36px rgba(70, 98, 154, .09);
+}
+
+/* Closing CTA becomes the strongest decorative block on the page. */
+.home-page .home-closing {
+  border-color: rgba(112, 125, 216, .20);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(64, 185, 247, .20), transparent 36%),
+    radial-gradient(circle at 92% 92%, rgba(230, 106, 195, .17), transparent 38%),
+    linear-gradient(115deg, #effaff 0%, #f2f0ff 50%, #fff0f8 100%);
+  box-shadow:
+    0 22px 54px rgba(79, 93, 159, .10),
+    inset 0 1px rgba(255,255,255,.82);
+}
+
+/* Dark mode: richer jewel-toned glows, while preserving dark reading surfaces. */
+html.smirel-app[data-theme='dark'] .home-page {
+  --home-cyan: #62c8ff;
+  --home-blue: #7389ff;
+  --home-violet: #9c7dff;
+  --home-pink: #ef82ca;
+  --home-mint: #59d8ad;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero {
+  background:
+    radial-gradient(ellipse 54% 44% at 10% 74%, rgba(31, 124, 205, .30), transparent 72%),
+    radial-gradient(ellipse 44% 42% at 52% 68%, rgba(82, 83, 204, .20), transparent 72%),
+    radial-gradient(ellipse 42% 42% at 90% 58%, rgba(169, 63, 139, .18), transparent 72%),
+    linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #090c12 100%);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::before {
+  background:
+    radial-gradient(circle at 22% 58%, rgba(44, 155, 232, .20), transparent 34%),
+    radial-gradient(circle at 51% 52%, rgba(94, 92, 228, .19), transparent 38%),
+    radial-gradient(circle at 80% 45%, rgba(196, 73, 158, .15), transparent 34%);
+  opacity: .9;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero::after {
+  background: radial-gradient(ellipse at center, rgba(91, 112, 255, .16), transparent 70%);
+  opacity: .9;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-eyebrow {
+  border-color: rgba(100, 197, 251, .28);
+  background:
+    linear-gradient(135deg, rgba(29, 95, 133, .18), rgba(74, 61, 139, .16));
+  color: #78cbf7;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.035),
+    0 8px 24px rgba(19, 91, 139, .10);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-hero-lead {
+  background: linear-gradient(90deg, #74d0ff 0%, #8e9dff 52%, #d08ce4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:nth-child(3n + 1) {
+  border-color: rgba(91, 190, 244, .32);
+  background: rgba(11, 25, 36, .82);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:nth-child(3n + 2) {
+  border-color: rgba(123, 122, 242, .28);
+  background: rgba(18, 20, 39, .82);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-model-chip:nth-child(3n) {
+  border-color: rgba(205, 92, 168, .24);
+  background: rgba(30, 17, 34, .80);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article:nth-child(1) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(54, 177, 244, .10), transparent 44%),
+    linear-gradient(180deg, rgba(13,23,33,.98), rgba(9,15,22,.98));
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article:nth-child(2) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(105, 111, 245, .09), transparent 44%),
+    linear-gradient(180deg, rgba(18,20,34,.98), rgba(11,14,24,.98));
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article:nth-child(3) {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(72, 207, 164, .08), transparent 44%),
+    linear-gradient(180deg, rgba(12,24,27,.98), rgba(9,16,19,.98));
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article:nth-child(4),
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article.is-emphasis {
+  border-color: rgba(143, 115, 232, .24);
+  background:
+    radial-gradient(circle at 14% 4%, rgba(60, 174, 237, .15), transparent 38%),
+    radial-gradient(circle at 88% 96%, rgba(200, 76, 159, .13), transparent 42%),
+    linear-gradient(145deg, #111a25 0%, #17172a 54%, #211321 100%);
+  box-shadow:
+    0 18px 46px rgba(0,0,0,.22),
+    inset 0 1px rgba(255,255,255,.025);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(50, 166, 231, .11), transparent 30%),
+    radial-gradient(circle at 51% 24%, rgba(92, 94, 222, .09), transparent 35%),
+    radial-gradient(circle at 94% 82%, rgba(189, 69, 151, .08), transparent 34%),
+    #080b10;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-tool-grid a:nth-child(3n + 1) b {
+  background: rgba(42, 155, 218, .12);
+  color: #73c9f5;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-tool-grid a:nth-child(3n + 2) b {
+  background: rgba(99, 98, 224, .12);
+  color: #aaa8ff;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-tool-grid a:nth-child(3n) b {
+  background: rgba(189, 77, 157, .10);
+  color: #e49bc9;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-plan.is-featured {
+  border-color: rgba(98, 178, 230, .30);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(61, 174, 233, .11), transparent 40%),
+    radial-gradient(circle at 96% 96%, rgba(133, 89, 219, .09), transparent 44%),
+    #0d141e;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-closing {
+  border-color: rgba(115, 122, 225, .22);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(48, 168, 229, .18), transparent 36%),
+    radial-gradient(circle at 92% 92%, rgba(194, 73, 154, .16), transparent 38%),
+    linear-gradient(115deg, #0e2638 0%, #1d1b36 50%, #30182b 100%);
+  box-shadow:
+    0 24px 56px rgba(0,0,0,.22),
+    inset 0 1px rgba(255,255,255,.028);
+}
