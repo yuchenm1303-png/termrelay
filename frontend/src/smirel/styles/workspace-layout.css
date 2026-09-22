@@ -1048,3 +1048,81 @@
     border-left: 0;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+ * Workspace first-entry choreography
+ * The shell only mounts when leaving the public site, so these animations play
+ * once for the public -> console handoff and stay out of normal workspace
+ * route changes. Chrome arrives first, then the canvas settles in behind it.
+ * -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-root {
+    animation: ws-shell-bg-in 360ms ease-out both;
+  }
+
+  .workspace-root .workspace-sidebar {
+    animation: ws-shell-sidebar-in 660ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  .workspace-root .workspace-topbar {
+    animation: ws-shell-topbar-in 600ms cubic-bezier(.22, 1, .36, 1) 70ms both;
+  }
+
+  .workspace-root .workspace-canvas {
+    transform-origin: 50% 18%;
+    animation: ws-shell-canvas-in 820ms cubic-bezier(.22, 1, .36, 1) 120ms both;
+  }
+}
+
+@keyframes ws-shell-bg-in {
+  from { opacity: .72; }
+  to { opacity: 1; }
+}
+
+@keyframes ws-shell-sidebar-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+    filter: blur(7px);
+  }
+  62% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes ws-shell-topbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes ws-shell-canvas-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(.996);
+    filter: blur(7px);
+  }
+  58% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
