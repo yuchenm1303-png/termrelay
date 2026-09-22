@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onMounted, ref } from 'vue'
 import WorkspaceNavIcon from '../components/WorkspaceNavIcon.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
@@ -530,13 +531,12 @@ onMounted(() => void load())
             <WorkspaceNavIcon name="search" />
             <input v-model="search" type="search" placeholder="搜索模型或 Endpoint" />
           </label>
-          <label class="select-control select-control--ghost">
-            <select v-model="modelFilter" aria-label="筛选模型">
-              <option value="all">全部模型</option>
-              <option v-for="model in modelOptions" :key="model" :value="model">{{ model }}</option>
-            </select>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
-          </label>
+          <UiSelect
+            v-model="modelFilter"
+            :options="[{ label: '全部模型', value: 'all' }, ...modelOptions.map((model) => ({ label: model, value: model }))]"
+            aria-label="筛选模型"
+            min-width="156px"
+          />
         </div>
       </header>
 
