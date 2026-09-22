@@ -587,3 +587,522 @@ html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
     transition: none !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+ * Homepage interaction polish
+ * One restrained interaction language for buttons, cards, tables and accordions.
+ * The motion is deliberately short and low-amplitude so the page feels precise,
+ * not playful. Scroll-reveal uses the independent translate/scale properties,
+ * while hover uses transform, so the two systems can compose cleanly.
+ * -------------------------------------------------------------------------- */
+.home-page {
+  --home-motion-fast: 140ms;
+  --home-motion-base: 210ms;
+  --home-motion-slow: 320ms;
+  --home-motion-ease: cubic-bezier(.2,.78,.2,1);
+  --home-hover-line: color-mix(in srgb, var(--home-accent) 45%, var(--home-line));
+  --home-hover-ring: color-mix(in srgb, var(--home-accent) 14%, transparent);
+  --home-hover-surface: color-mix(in srgb, var(--home-accent-soft) 24%, var(--home-surface));
+  --home-hover-shadow: 0 18px 44px rgba(49, 76, 108, .12);
+}
+
+/* Shared press/focus behavior for every primary clickable surface. */
+.home-page :is(
+  .home-primary,
+  .home-secondary,
+  .home-register,
+  .home-language-toggle,
+  .home-theme-toggle,
+  .home-model-chip,
+  .home-tool-grid a,
+  .home-plan > a,
+  .home-code button,
+  .home-inline-link,
+  .home-nav a
+) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-page :is(
+  .home-primary,
+  .home-secondary,
+  .home-register,
+  .home-language-toggle,
+  .home-theme-toggle,
+  .home-tool-grid a,
+  .home-plan > a,
+  .home-code button
+) {
+  transition:
+    transform var(--home-motion-base) var(--home-motion-ease),
+    border-color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease,
+    color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease,
+    opacity var(--home-motion-base) ease;
+}
+
+.home-page :is(
+  .home-primary,
+  .home-secondary,
+  .home-register,
+  .home-language-toggle,
+  .home-theme-toggle,
+  .home-tool-grid a,
+  .home-plan > a,
+  .home-code button
+):active {
+  transform: translateY(1px) scale(.985);
+  transition-duration: var(--home-motion-fast);
+}
+
+.home-page :is(
+  .home-primary,
+  .home-secondary,
+  .home-register,
+  .home-language-toggle,
+  .home-theme-toggle,
+  .home-tool-grid a,
+  .home-plan > a,
+  .home-code button,
+  .home-inline-link,
+  .home-nav a,
+  .home-faq summary
+):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--home-hover-ring);
+}
+
+/* Hero CTA buttons: slight lift, edge-light and a very soft sheen. */
+.home-page .home-primary,
+.home-page .home-secondary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.home-page .home-primary::after,
+.home-page .home-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 18%, rgba(255,255,255,.16) 48%, transparent 76%);
+  translate: -135% 0;
+  opacity: 0;
+  transition:
+    translate 520ms cubic-bezier(.2,.78,.2,1),
+    opacity 180ms ease;
+}
+
+.home-page .home-primary:hover,
+.home-page .home-secondary:hover {
+  transform: translateY(-2px);
+}
+
+.home-page .home-primary:hover::after,
+.home-page .home-secondary:hover::after {
+  translate: 135% 0;
+  opacity: .72;
+}
+
+.home-page .home-primary:active,
+.home-page .home-secondary:active {
+  transform: translateY(0) scale(.985);
+}
+
+.home-page .home-primary:hover {
+  box-shadow:
+    0 12px 30px color-mix(in srgb, var(--home-accent) 22%, transparent),
+    inset 0 1px rgba(255,255,255,.16);
+}
+
+.home-page .home-secondary:hover {
+  box-shadow:
+    0 10px 24px rgba(45, 65, 88, .10),
+    inset 0 1px rgba(255,255,255,.08);
+}
+
+/* Provider chips: tiny lift only; logo and border do the visual work. */
+.home-page .home-model-chip {
+  cursor: default;
+  transform-origin: 50% 70%;
+  transition:
+    transform var(--home-motion-base) var(--home-motion-ease),
+    border-color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease;
+}
+
+.home-page .home-model-chip:hover {
+  transform: translateY(-3px) scale(1.018);
+  border-color: var(--home-hover-line);
+  box-shadow:
+    0 11px 26px rgba(50, 76, 108, .12),
+    inset 0 1px rgba(255,255,255,.08);
+}
+
+.home-page .home-model-chip:active {
+  transform: translateY(-1px) scale(.995);
+}
+
+/* Problem/capability cards: edge light + quiet depth, with a restrained
+   diagonal highlight that follows no cursor and therefore never feels gimmicky. */
+.home-page .home-card-grid article {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform-origin: 50% 85%;
+  transition:
+    transform var(--home-motion-slow) var(--home-motion-ease),
+    border-color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-slow) var(--home-motion-ease);
+}
+
+.home-page .home-card-grid article::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--home-accent) 11%, transparent), transparent 42%),
+    linear-gradient(145deg, rgba(255,255,255,.055), transparent 42%);
+  opacity: 0;
+  transition: opacity var(--home-motion-slow) ease;
+}
+
+.home-page .home-card-grid article:hover {
+  transform: translateY(-6px);
+  border-color: var(--home-hover-line);
+  background-color: var(--home-hover-surface);
+  box-shadow: var(--home-hover-shadow);
+}
+
+.home-page .home-card-grid article:hover::after {
+  opacity: 1;
+}
+
+.home-page .home-card-grid article > span:first-child {
+  transition:
+    transform var(--home-motion-base) var(--home-motion-ease),
+    background-color var(--home-motion-base) ease,
+    color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease;
+}
+
+.home-page .home-card-grid article:hover > span:first-child {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--home-accent) 12%, transparent);
+}
+
+/* Tool tiles: make the arrow carry the interaction rather than moving the
+   whole card too aggressively. */
+.home-page .home-tool-grid a {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.home-page .home-tool-grid a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--home-accent) 10%, transparent), transparent 58%);
+  opacity: 0;
+  transition: opacity var(--home-motion-base) ease;
+}
+
+.home-page .home-tool-grid a:hover {
+  transform: translateY(-4px);
+  border-color: var(--home-hover-line);
+  box-shadow: 0 14px 32px rgba(50, 76, 108, .11);
+}
+
+.home-page .home-tool-grid a:hover::before {
+  opacity: 1;
+}
+
+.home-page .home-tool-grid a i {
+  transition:
+    transform var(--home-motion-base) var(--home-motion-ease),
+    color var(--home-motion-base) ease;
+}
+
+.home-page .home-tool-grid a:hover i {
+  transform: translate(3px, -3px);
+  color: var(--home-accent);
+}
+
+/* Comparison table: row highlighting improves scanability without turning it
+   into another card grid. */
+.home-page .home-table > div {
+  transition:
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease;
+}
+
+.home-page .home-table > div:not(:first-child):hover {
+  background: color-mix(in srgb, var(--home-accent-soft) 22%, transparent);
+  box-shadow: inset 3px 0 var(--home-accent);
+}
+
+.home-page .home-table > div:not(:first-child) > * {
+  transition:
+    color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease;
+}
+
+/* Three-step cards: a thin top rail grows and content settles upward. */
+.home-page .home-steps article {
+  position: relative;
+  overflow: hidden;
+  border-top-color: transparent;
+  box-shadow: inset 0 2px var(--home-text);
+  transition:
+    transform var(--home-motion-slow) var(--home-motion-ease),
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease;
+}
+
+.home-page .home-steps article::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--home-accent);
+  transition: width 420ms var(--home-motion-ease);
+}
+
+.home-page .home-steps article:hover {
+  transform: translateY(-5px);
+  background: var(--home-hover-surface);
+  box-shadow:
+    inset 0 2px color-mix(in srgb, var(--home-text) 18%, transparent),
+    0 16px 34px rgba(50, 76, 108, .10);
+}
+
+.home-page .home-steps article:hover::before {
+  width: 100%;
+}
+
+.home-page .home-code {
+  transition:
+    border-color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-base) ease;
+}
+
+.home-page .home-code:hover {
+  border-color: var(--home-hover-line);
+  box-shadow: 0 0 0 3px var(--home-hover-ring);
+}
+
+.home-page .home-code button:hover {
+  color: var(--home-accent);
+  background: color-mix(in srgb, var(--home-accent-soft) 55%, transparent);
+}
+
+/* Pricing cards: richer depth, featured cards retain their identity. */
+.home-page .home-plan {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform-origin: 50% 88%;
+  transition:
+    transform var(--home-motion-slow) var(--home-motion-ease),
+    border-color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-slow) var(--home-motion-ease);
+}
+
+.home-page .home-plan::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 14% 0%, color-mix(in srgb, var(--home-accent) 10%, transparent), transparent 44%);
+  opacity: 0;
+  transition: opacity var(--home-motion-slow) ease;
+}
+
+.home-page .home-plan:hover {
+  transform: translateY(-6px);
+  border-color: var(--home-hover-line);
+  background-color: var(--home-hover-surface);
+  box-shadow: 0 20px 44px rgba(50, 76, 108, .12);
+}
+
+.home-page .home-plan:hover::before {
+  opacity: 1;
+}
+
+.home-page .home-plan.is-featured:hover {
+  box-shadow:
+    0 22px 48px color-mix(in srgb, var(--home-accent) 15%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--home-accent) 18%, transparent);
+}
+
+.home-page .home-plan > a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 22px color-mix(in srgb, var(--home-accent) 20%, transparent);
+}
+
+.home-page .home-plan > a:active {
+  transform: translateY(0) scale(.985);
+}
+
+/* FAQ: one continuous quiet list; hover is a subtle local highlight.
+   The plus sign rotation remains tied to the native open state. */
+.home-page .home-faq details {
+  border-radius: 10px;
+  transition:
+    background-color var(--home-motion-base) ease,
+    border-color var(--home-motion-base) ease;
+}
+
+.home-page .home-faq details:hover {
+  background: color-mix(in srgb, var(--home-accent-soft) 22%, transparent);
+}
+
+.home-page .home-faq summary {
+  padding-inline: 12px;
+  border-radius: 10px;
+  outline: none;
+  transition:
+    color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease;
+}
+
+.home-page .home-faq summary b {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  transition:
+    transform 260ms var(--home-motion-ease),
+    color var(--home-motion-base) ease,
+    background-color var(--home-motion-base) ease;
+}
+
+.home-page .home-faq summary:hover b {
+  background: color-mix(in srgb, var(--home-accent-soft) 70%, transparent);
+}
+
+.home-page .home-faq details[open] summary b {
+  transform: rotate(45deg);
+  color: var(--home-text);
+}
+
+/* Inline links feel clickable without looking like buttons. */
+.home-page .home-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition:
+    color var(--home-motion-base) ease,
+    transform var(--home-motion-base) var(--home-motion-ease);
+}
+
+.home-page .home-inline-link:hover {
+  color: var(--home-accent);
+  transform: translateX(3px);
+}
+
+/* Closing panel receives a tiny depth response; buttons keep the common CTA
+   behavior above. */
+.home-page .home-closing {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--home-motion-base) ease,
+    box-shadow var(--home-motion-slow) var(--home-motion-ease),
+    transform var(--home-motion-slow) var(--home-motion-ease);
+}
+
+.home-page .home-closing:hover {
+  border-color: var(--home-hover-line);
+  box-shadow: 0 20px 48px rgba(50, 76, 108, .10);
+  transform: translateY(-3px);
+}
+
+/* Dark mode needs slightly stronger light response because the surfaces begin
+   much closer together in luminance. */
+html.smirel-app[data-theme='dark'] .home-page {
+  --home-hover-line: rgba(105, 190, 242, .44);
+  --home-hover-ring: rgba(105, 190, 242, .14);
+  --home-hover-surface: rgba(15, 26, 36, .96);
+  --home-hover-shadow: 0 20px 46px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.035);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-card-grid article:hover,
+html.smirel-app[data-theme='dark'] .home-page .home-plan:hover,
+html.smirel-app[data-theme='dark'] .home-page .home-steps article:hover {
+  border-color: rgba(105, 190, 242, .36);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-tool-grid a:hover {
+  border-color: rgba(105, 190, 242, .38);
+  background: #101923;
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-faq details:hover {
+  background: rgba(91, 166, 218, .055);
+}
+
+/* Pointer-less devices should never get sticky desktop hover elevation. */
+@media (hover: none) {
+  .home-page :is(
+    .home-primary,
+    .home-secondary,
+    .home-model-chip,
+    .home-card-grid article,
+    .home-tool-grid a,
+    .home-steps article,
+    .home-plan,
+    .home-plan > a,
+    .home-closing
+  ):hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page :is(
+    .home-primary,
+    .home-secondary,
+    .home-register,
+    .home-language-toggle,
+    .home-theme-toggle,
+    .home-model-chip,
+    .home-card-grid article,
+    .home-card-grid article::after,
+    .home-tool-grid a,
+    .home-tool-grid a::before,
+    .home-tool-grid a i,
+    .home-table > div,
+    .home-steps article,
+    .home-steps article::before,
+    .home-code,
+    .home-code button,
+    .home-plan,
+    .home-plan::before,
+    .home-plan > a,
+    .home-faq details,
+    .home-faq summary,
+    .home-faq summary b,
+    .home-inline-link,
+    .home-closing
+  ) {
+    transition: none !important;
+  }
+}
