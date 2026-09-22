@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiSelect from '../components/ui/UiSelect.vue'
 // Admin Orders —— 真实订单列表 + 取消/重试/退款
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -50,8 +51,8 @@ const filterDefs = computed<{ key: Filter; label: string }[]>(() => [
   ...ALL_STATUSES.map((s) => ({ key: s as Filter, label: t('payment.status.' + s, s) })),
 ])
 
-function onFilterChange(e: Event): void {
-  activeFilter.value = (e.target as HTMLSelectElement).value as Filter
+function onFilterChange(value: string | number | boolean | null): void {
+  activeFilter.value = String(value) as Filter
 }
 
 const refundModalOpen = ref(false)
@@ -423,12 +424,16 @@ const canSubmitRefund = computed(() => !!refundPreview.value?.requestable && !re
     <p v-if="success" class="success-banner">{{ success }}</p>
 
     <div class="orders-filters">
-      <label class="filter-select">
+      <div class="filter-select">
         <span>{{ t('payment.adminOrders.statusFilter') }}</span>
-        <select :value="activeFilter" @change="onFilterChange">
-          <option v-for="f in filterDefs" :key="f.key" :value="f.key">{{ f.label }}</option>
-        </select>
-      </label>
+        <UiSelect
+          :model-value="activeFilter"
+          :options="filterDefs.map((f) => ({ label: f.label, value: f.key }))"
+          :aria-label="t('payment.adminOrders.statusFilter')"
+          min-width="168px"
+          @change="onFilterChange"
+        />
+      </div>
     </div>
 
     <section class="orders-panel">
