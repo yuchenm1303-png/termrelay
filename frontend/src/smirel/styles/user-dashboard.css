@@ -573,3 +573,147 @@
     transition: none;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+ * Dashboard staged entrance
+ * Surfaces fade/settle in sequence instead of appearing as one flat frame.
+ * The motion is deliberately soft: no bounce and no abrupt card pop.
+ * -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .user-console-page .user-console-heading {
+    animation: user-dashboard-heading-in 620ms cubic-bezier(.22, 1, .36, 1) 170ms both;
+  }
+
+  .user-console-page .user-console-overview {
+    transform-origin: 50% 24%;
+    animation: user-dashboard-surface-in 760ms cubic-bezier(.22, 1, .36, 1) 245ms both;
+  }
+
+  .user-console-page .user-usage-surface {
+    transform-origin: 50% 22%;
+    animation: user-dashboard-surface-in 760ms cubic-bezier(.22, 1, .36, 1) 335ms both;
+  }
+
+  .user-console-page .user-lifetime-panel {
+    transform-origin: 72% 20%;
+    animation: user-dashboard-surface-in 720ms cubic-bezier(.22, 1, .36, 1) 430ms both;
+  }
+
+  .user-console-page .user-quick-panel {
+    transform-origin: 28% 20%;
+    animation: user-dashboard-surface-in 720ms cubic-bezier(.22, 1, .36, 1) 490ms both;
+  }
+
+  .user-console-page .user-balance-value {
+    animation: user-dashboard-detail-in 560ms cubic-bezier(.22, 1, .36, 1) 390ms both;
+  }
+
+  .user-console-page .user-endpoint-panel > code {
+    animation: user-dashboard-detail-in 560ms cubic-bezier(.22, 1, .36, 1) 430ms both;
+  }
+
+  .user-console-page .user-key-progress span {
+    transform-origin: left center;
+    animation: user-dashboard-progress-in 760ms cubic-bezier(.22, 1, .36, 1) 470ms both;
+  }
+
+  .user-console-page .user-usage-grid article {
+    animation: user-dashboard-metric-in 560ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  .user-console-page .user-usage-grid article:nth-child(1) { animation-delay: 455ms; }
+  .user-console-page .user-usage-grid article:nth-child(2) { animation-delay: 515ms; }
+  .user-console-page .user-usage-grid article:nth-child(3) { animation-delay: 575ms; }
+
+  .user-console-page .user-lifetime-panel dl > div,
+  .user-console-page .user-quick-panel nav a {
+    animation: user-dashboard-tile-in 520ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  .user-console-page .user-lifetime-panel dl > div:nth-child(1),
+  .user-console-page .user-quick-panel nav a:nth-child(1) { animation-delay: 570ms; }
+
+  .user-console-page .user-lifetime-panel dl > div:nth-child(2),
+  .user-console-page .user-quick-panel nav a:nth-child(2) { animation-delay: 625ms; }
+
+  .user-console-page .user-lifetime-panel dl > div:nth-child(3),
+  .user-console-page .user-quick-panel nav a:nth-child(3) { animation-delay: 680ms; }
+}
+
+@keyframes user-dashboard-heading-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes user-dashboard-surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.992);
+    filter: blur(7px);
+    box-shadow: 0 18px 46px rgba(36, 56, 82, 0);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes user-dashboard-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes user-dashboard-progress-in {
+  from {
+    opacity: .22;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes user-dashboard-metric-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes user-dashboard-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(9px) scale(.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
