@@ -181,7 +181,7 @@ func (s *SubscriptionService) ListPlanAccessRequests(ctx context.Context, userID
 	if err := s.entClient.Driver().Query(ctx, query, args, &rows); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []PlanAccessRequest{}
 	for rows.Next() {
 		var item PlanAccessRequest
