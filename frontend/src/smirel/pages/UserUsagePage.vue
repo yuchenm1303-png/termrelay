@@ -23,6 +23,7 @@ const search = ref('')
 const modelFilter = ref('all')
 const period = ref<Period>('7d')
 const metric = ref<Metric>('tokens')
+const hoveredTrendIndex = ref<number | null>(null)
 const customStart = ref('')
 const customEnd = ref('')
 
@@ -241,9 +242,21 @@ const chartBottom = 166
 const chartLeft = 20
 const chartRight = 980
 
+const trendPeakValue = computed(() => Math.max(...trendData.value.map((item) => item.value), 0))
+const trendScaleMax = computed(() => Math.max(trendPeakValue.value, 1))
+const trendAverageValue = computed(() => {
+  const rows = trendData.value
+  return rows.length ? rows.reduce((sum, item) => sum + item.value, 0) / rows.length : 0
+})
+const trendTicks = computed(() => [1, 2 / 3, 1 / 3, 0].map((ratio) => ({
+  ratio,
+  value: trendPeakValue.value * ratio,
+  y: chartBottom - ratio * (chartBottom - chartTop),
+})))
+
 const trendPoints = computed(() => {
   const rows = trendData.value
-  const max = Math.max(...rows.map((item) => item.value), 1)
+  const max = trendScaleMax.value
   return rows.map((item, index) => {
     const x = rows.length === 1
       ? chartWidth / 2
@@ -251,6 +264,11 @@ const trendPoints = computed(() => {
     const y = chartBottom - (item.value / max) * (chartBottom - chartTop)
     return { ...item, x, y }
   })
+})
+
+const activeTrendPoint = computed(() => {
+  if (hoveredTrendIndex.value === null) return null
+  return trendPoints.value[hoveredTrendIndex.value] || null
 })
 
 const trendLinePath = computed(() => {
@@ -297,6 +315,10 @@ function formatTime(value?: string) {
 
 function trendValue(item: TrendBucket) {
   return metric.value === 'tokens' ? `${compact(item.tokens)} Tokens` : money(item.cost)
+}
+
+function formatTrendMetric(value: number) {
+  return metric.value === 'tokens' ? compact(value) : money(value)
 }
 
 async function load() {
@@ -420,7 +442,11 @@ onMounted(() => void load())
         </header>
 
         <div class="trend-chart">
-          <div class="trend-grid-lines"><i></i><i></i><i></i><i></i></div>
+          <div class="trend-chart-meta" aria-hidden="true">
+            <span><em>PEAK</em><strong>{{ formatTrendMetric(trendPeakValue) }}</strong></span>
+            <span><em>AVG</em><strong>{{ formatTrendMetric(trendAverageValue) }}</strong></span>
+          </div>
+
           <svg
             class="trend-line-svg"
             :viewBox="`0 0 ${chartWidth} 190`"
@@ -430,31 +456,87 @@ onMounted(() => void load())
           >
             <defs>
               <linearGradient id="usageTrendArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="currentColor" stop-opacity=".16" />
+                <stop offset="0%" stop-color="currentColor" stop-opacity=".18" />
+                <stop offset="54%" stop-color="currentColor" stop-opacity=".065" />
                 <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
               </linearGradient>
             </defs>
-            <path v-if="trendAreaPath" class="trend-area" :d="trendAreaPath" />
-            <path v-if="trendLinePath" class="trend-line" :d="trendLinePath" />
+
+            <g class="trend-grid-svg" aria-hidden="true">
+              <line
+                v-for="tick in trendTicks"
+                :key="`grid-${tick.ratio}`"
+                :x1="chartLeft"
+                :x2="chartRight"
+                :y1="tick.y"
+                :y2="tick.y"
+              />
+            </g>
+
+            <path
+              v-if="trendAreaPath"
+              :key="`area-${period}-${metric}-${trendData.length}`"
+              class="trend-area"
+              :d="trendAreaPath"
+            />
+            <line
+              v-if="activeTrendPoint"
+              class="trend-crosshair"
+              :x1="activeTrendPoint.x"
+              :x2="activeTrendPoint.x"
+              :y1="chartTop"
+              :y2="chartBottom"
+            />
+            <path
+              v-if="trendLinePath"
+              :key="`line-${period}-${metric}-${trendData.length}`"
+              class="trend-line"
+              :d="trendLinePath"
+              pathLength="1"
+            />
           </svg>
+
+          <div class="trend-y-axis" aria-hidden="true">
+            <small
+              v-for="tick in trendTicks"
+              :key="`y-${tick.ratio}`"
+              :style="{ top: `${(tick.y / 190) * 100}%` }"
+            >{{ formatTrendMetric(tick.value) }}</small>
+          </div>
+
           <div class="trend-point-layer" aria-hidden="true">
             <span
-              v-for="point in trendPoints"
+              v-for="(point, index) in trendPoints"
               :key="`dot-${point.fullLabel}`"
               class="trend-dot"
+              :class="{ 'is-active': hoveredTrendIndex === index, 'is-latest': index === trendPoints.length - 1 }"
               :style="{
                 left: `${(point.x / chartWidth) * 100}%`,
                 top: `${(point.y / 190) * 100}%`,
+                animationDelay: `${Math.min(index * 26, 180)}ms`,
               }"
               :title="`${point.fullLabel} · ${trendValue(point)} · ${point.requests} 次请求`"
+              @mouseenter="hoveredTrendIndex = index"
+              @mouseleave="hoveredTrendIndex = null"
             ></span>
           </div>
-          <div class="trend-axis" :style="{ gridTemplateColumns: `repeat(${Math.max(trendData.length, 1)}, minmax(0, 1fr))` }">
+
+          <Transition name="trend-inspector">
+            <div v-if="activeTrendPoint" class="trend-inspector">
+              <span>{{ activeTrendPoint.fullLabel }}</span>
+              <strong>{{ trendValue(activeTrendPoint) }}</strong>
+              <small>{{ activeTrendPoint.requests }} 次请求</small>
+            </div>
+          </Transition>
+
+          <div class="trend-axis" aria-hidden="true">
             <small
-              v-for="item in trendData"
-              :key="`axis-${item.fullLabel}`"
-              :class="{ muted: !item.showLabel }"
-            >{{ item.label }}</small>
+              v-for="(point, index) in trendPoints"
+              v-show="point.showLabel"
+              :key="`axis-${point.fullLabel}`"
+              :class="{ 'is-first': index === 0, 'is-last': index === trendPoints.length - 1 }"
+              :style="{ left: `${(point.x / chartWidth) * 100}%` }"
+            >{{ point.label }}</small>
           </div>
         </div>
       </article>
