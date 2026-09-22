@@ -463,6 +463,15 @@ onBeforeUnmount(() => {
 }
 
 .ui-select__menu {
+  --ui-select-menu-bg: rgba(13, 15, 19, .985);
+  --ui-select-menu-border: #2b3038;
+  --ui-select-menu-shadow: 0 22px 52px rgba(0, 0, 0, .42), 0 5px 16px rgba(0, 0, 0, .22), inset 0 1px rgba(255, 255, 255, .025);
+  --ui-select-option: #b9c1ca;
+  --ui-select-option-hover: #171b21;
+  --ui-select-option-selected: #132331;
+  --ui-select-option-selected-hover: #182a39;
+  --ui-select-check: #67bff2;
+
   position: fixed;
   z-index: 1200;
   padding: 6px;
@@ -636,6 +645,22 @@ onBeforeUnmount(() => {
   --ui-select-option-selected: #eaf4fb;
   --ui-select-option-selected-hover: #e1eff8;
   --ui-select-check: #2f91cf;
+}
+
+:global(html.smirel-app[data-theme='light']) .ui-select__menu {
+  --ui-select-menu-bg: rgba(255, 255, 255, .985);
+  --ui-select-menu-border: #d8e1e8;
+  --ui-select-menu-shadow: 0 20px 46px rgba(29, 45, 59, .14), 0 4px 12px rgba(29, 45, 59, .06), inset 0 1px rgba(255, 255, 255, .95);
+  --ui-select-option: #52606d;
+  --ui-select-option-hover: #f4f7fa;
+  --ui-select-option-selected: #eaf4fb;
+  --ui-select-option-selected-hover: #e1eff8;
+  --ui-select-check: #2f91cf;
+  scrollbar-color: #c3ced7 transparent;
+}
+
+:global(html.smirel-app[data-theme='light']) .ui-select__menu::-webkit-scrollbar-thumb {
+  background: #c3ced7;
 }
 
 :global(html.smirel-app[data-theme='light']) .ui-select__trigger:hover .ui-select__chevron,
