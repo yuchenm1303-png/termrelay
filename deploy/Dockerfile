@@ -43,6 +43,12 @@ RUN if [ "${FRONTEND_FAST_BUILD}" = "true" ]; then \
       pnpm run build; \
     fi
 
+# Minimal local-output target used by TermRelay's frontend-only deploy path.
+# Exporting a few MiB of dist files is much faster than committing/loading an
+# intermediate Node image and then docker-cp'ing the bundle back out.
+FROM scratch AS frontend-export
+COPY --from=frontend-builder /app/backend/internal/web/dist/ /
+
 # -----------------------------------------------------------------------------
 # Stage 2: Backend Builder
 # -----------------------------------------------------------------------------
