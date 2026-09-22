@@ -11,12 +11,28 @@
   --hero-aurora-scale: 1;
   --hero-aurora-tail-scale: 1;
   --hero-aurora-opacity: .98;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 2;
   background:
     radial-gradient(ellipse 58% 42% at 8% 79%, rgba(50, 154, 255, .29), transparent 70%),
     radial-gradient(ellipse 52% 44% at 50% 71%, rgba(98, 101, 255, .25), transparent 72%),
     radial-gradient(ellipse 48% 42% at 91% 60%, rgba(224, 103, 199, .23), transparent 71%),
     linear-gradient(180deg, #f9fcff 0%, #f7f9ff 45%, #f0f3ff 100%);
+}
+
+.home-page .home-hero > * {
+  position: relative;
+  z-index: 2;
+}
+
+.home-page .home-hero::before,
+.home-page .home-hero::after {
+  z-index: 0;
+}
+
+.home-page .home-hero + .home-section {
+  position: relative;
+  z-index: 1;
 }
 
 .home-page .home-hero::before {
@@ -48,7 +64,7 @@
   width: min(1320px, 112vw);
   height: 245px;
   top: auto;
-  bottom: -14px;
+  bottom: -76px;
   left: 50%;
   border-radius: 50%;
   background:
@@ -90,25 +106,25 @@
 
 html.smirel-app[data-theme='dark'] .home-page .home-hero {
   background:
-    radial-gradient(ellipse 62% 46% at 7% 80%, rgba(29, 127, 211, .34), transparent 72%),
-    radial-gradient(ellipse 54% 46% at 51% 71%, rgba(78, 79, 201, .26), transparent 72%),
-    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .24), transparent 72%),
+    radial-gradient(ellipse 62% 46% at 7% 80%, rgba(29, 127, 211, .16), transparent 72%),
+    radial-gradient(ellipse 54% 46% at 51% 71%, rgba(78, 79, 201, .12), transparent 72%),
+    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .10), transparent 72%),
     linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #090c12 100%);
 }
 
 html.smirel-app[data-theme='dark'] .home-page .home-hero::before {
   background:
-    radial-gradient(ellipse 39% 62% at 14% 62%, rgba(38, 150, 231, .31), transparent 67%),
-    radial-gradient(ellipse 44% 66% at 50% 53%, rgba(87, 87, 224, .30), transparent 69%),
-    radial-gradient(ellipse 38% 60% at 84% 44%, rgba(192, 69, 160, .25), transparent 67%);
-  filter: blur(50px) saturate(1.18);
+    radial-gradient(ellipse 39% 62% at 14% 62%, rgba(38, 150, 231, .42), transparent 67%),
+    radial-gradient(ellipse 44% 66% at 50% 53%, rgba(87, 87, 224, .39), transparent 69%),
+    radial-gradient(ellipse 38% 60% at 84% 44%, rgba(192, 69, 160, .34), transparent 67%);
+  filter: blur(48px) saturate(1.28);
 }
 
 html.smirel-app[data-theme='dark'] .home-page .home-hero::after {
   background:
-    radial-gradient(ellipse 36% 72% at 18% 52%, rgba(41, 134, 216, .18), transparent 72%),
-    radial-gradient(ellipse 48% 78% at 51% 48%, rgba(81, 94, 226, .23), transparent 72%),
-    radial-gradient(ellipse 34% 70% at 83% 43%, rgba(176, 70, 166, .17), transparent 72%);
+    radial-gradient(ellipse 36% 72% at 18% 52%, rgba(41, 134, 216, .27), transparent 72%),
+    radial-gradient(ellipse 48% 78% at 51% 48%, rgba(81, 94, 226, .31), transparent 72%),
+    radial-gradient(ellipse 34% 70% at 83% 43%, rgba(176, 70, 166, .24), transparent 72%);
 }
 
 @media (max-width: 820px) {
