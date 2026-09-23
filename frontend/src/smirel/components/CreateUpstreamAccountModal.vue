@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 
+type UpstreamPlatform = 'openai' | 'anthropic' | 'gemini' | 'grok'
+
 interface GroupOption {
   id: number
   name?: string
@@ -13,12 +15,62 @@ interface CreateAccountResult {
   id?: number
 }
 
+interface PlatformOption {
+  value: UpstreamPlatform
+  label: string
+  badge: string
+  description: string
+  baseUrlPlaceholder: string
+  keyPlaceholder: string
+  previewModels: string[]
+}
+
+const platformOptions: PlatformOption[] = [
+  {
+    value: 'openai',
+    label: 'OpenAI',
+    badge: 'OpenAI Compatible',
+    description: 'OpenAI Chat / Responses 兼容接口',
+    baseUrlPlaceholder: 'https://api.openai.com',
+    keyPlaceholder: 'sk-••••••••••••••••',
+    previewModels: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.5'],
+  },
+  {
+    value: 'anthropic',
+    label: 'Anthropic',
+    badge: 'Anthropic / Claude',
+    description: 'Anthropic Messages / Claude 接口',
+    baseUrlPlaceholder: 'https://api.anthropic.com',
+    keyPlaceholder: 'sk-ant-••••••••••••',
+    previewModels: ['claude-sonnet-4-5', 'claude-haiku-4-5'],
+  },
+  {
+    value: 'gemini',
+    label: 'Gemini',
+    badge: 'Google Gemini',
+    description: 'Google Gemini 原生接口',
+    baseUrlPlaceholder: 'https://generativelanguage.googleapis.com',
+    keyPlaceholder: '输入 Gemini API Key',
+    previewModels: ['gemini-2.5-pro', 'gemini-2.5-flash'],
+  },
+  {
+    value: 'grok',
+    label: 'Grok',
+    badge: 'xAI / Grok',
+    description: 'xAI Grok 接口',
+    baseUrlPlaceholder: 'https://api.x.ai',
+    keyPlaceholder: '输入 xAI API Key',
+    previewModels: ['grok-4', 'grok-3-mini'],
+  },
+]
+
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{
   close: []
   created: []
 }>()
 
+const platform = ref<UpstreamPlatform>('openai')
 const name = ref('')
 const baseUrl = ref('')
 const apiKey = ref('')
@@ -35,6 +87,7 @@ const saving = ref(false)
 const error = ref('')
 const syncedModels = ref<string[]>([])
 
+const selectedPlatform = computed(() => platformOptions.find((item) => item.value === platform.value) || platformOptions[0])
 const canSync = computed(() => Boolean(baseUrl.value.trim() && apiKey.value.trim()) && !syncing.value)
 const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value)
 
@@ -51,7 +104,14 @@ function validateBaseUrl(value: string) {
   }
 }
 
+function passthroughExtra() {
+  if (platform.value === 'openai') return { openai_passthrough: true }
+  if (platform.value === 'anthropic') return { anthropic_passthrough: true }
+  return {}
+}
+
 function resetForm() {
+  platform.value = 'openai'
   name.value = ''
   baseUrl.value = ''
   apiKey.value = ''
@@ -60,6 +120,7 @@ function resetForm() {
   priority.value = 10
   rateMultiplier.value = 1
   groupIds.value = []
+  groups.value = []
   showApiKey.value = false
   syncing.value = false
   saving.value = false
@@ -91,13 +152,21 @@ function normalizeModels(value: unknown): string[] {
 }
 
 async function loadGroups() {
+  const requestedPlatform = platform.value
   groupsLoading.value = true
   try {
     if (previewMode) {
-      groups.value = [{ id: 1, name: 'openai-default', platform: 'openai', status: 'active' }]
+      groups.value = [{
+        id: 1,
+        name: `${selectedPlatform.value.label.toLowerCase()}-default`,
+        platform: requestedPlatform,
+        status: 'active',
+      }]
     } else {
-      const response = await api.get<GroupOption[]>('/admin/groups/all', { params: { platform: 'openai' } })
-      groups.value = Array.isArray(response.data) ? response.data : []
+      const response = await api.get<GroupOption[]>('/admin/groups/all', { params: { platform: requestedPlatform } })
+      if (requestedPlatform !== platform.value) return
+      const received = Array.isArray(response.data) ? response.data : []
+      groups.value = received.filter((item) => String(item.platform || '').toLowerCase() === requestedPlatform)
     }
 
     if (!groupIds.value.length && groups.value.length) {
@@ -105,10 +174,18 @@ async function loadGroups() {
       groupIds.value = [preferred.id]
     }
   } catch {
-    groups.value = []
+    if (requestedPlatform === platform.value) groups.value = []
   } finally {
     groupsLoading.value = false
   }
+}
+
+function onPlatformChange() {
+  groupIds.value = []
+  groups.value = []
+  syncedModels.value = []
+  error.value = ''
+  void loadGroups()
 }
 
 async function syncModels() {
@@ -126,11 +203,11 @@ async function syncModels() {
   syncing.value = true
   try {
     if (previewMode) {
-      syncedModels.value = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.5']
+      syncedModels.value = [...selectedPlatform.value.previewModels]
       return
     }
     const response = await api.post<{ models?: unknown[] }>('/admin/accounts/models/sync-upstream-preview', {
-      platform: 'openai',
+      platform: platform.value,
       type: 'apikey',
       base_url: cleanBaseUrl(baseUrl.value),
       api_key: apiKey.value.trim(),
@@ -179,16 +256,16 @@ async function submit() {
     await api.post<CreateAccountResult>('/admin/accounts', {
       name: name.value.trim(),
       notes: notes.value.trim() || undefined,
-      platform: 'openai',
+      platform: platform.value,
       type: 'apikey',
       credentials: {
         api_key: apiKey.value.trim(),
         base_url: cleanBaseUrl(baseUrl.value),
         model_mapping: modelMapping,
       },
-      // OpenAI-compatible relay accounts should preserve the caller's request
-      // semantics and only replace upstream authentication.
-      extra: { openai_passthrough: true },
+      // Direct API-key accounts preserve native request semantics for the
+      // providers that expose an explicit passthrough mode.
+      extra: passthroughExtra(),
       concurrency: Math.max(1, Math.round(Number(concurrency.value) || 1)),
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
@@ -224,9 +301,9 @@ watch(
             <span class="create-kicker">UPSTREAM CONNECTION</span>
             <div class="create-title-row">
               <h2 id="upstream-create-title">新增上游账户</h2>
-              <span class="protocol-badge"><i></i> OpenAI Compatible</span>
+              <span class="protocol-badge"><i></i> {{ selectedPlatform.badge }}</span>
             </div>
-            <p>接入兼容 OpenAI API 的上游服务。凭据只提交到 TermRelay 服务端。</p>
+            <p>接入 {{ selectedPlatform.description }}。凭据只提交到 TermRelay 服务端。</p>
           </div>
           <button class="dialog-close" type="button" aria-label="关闭" :disabled="saving" @click="close">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
@@ -237,29 +314,39 @@ watch(
           <section class="form-section connection-section">
             <div class="section-heading">
               <span>01</span>
-              <div><strong>连接信息</strong><small>上游地址与认证凭据</small></div>
+              <div><strong>连接信息</strong><small>协议、上游地址与认证凭据</small></div>
             </div>
 
             <div class="form-grid">
               <label class="field field-wide">
+                <span>上游协议</span>
+                <select v-model="platform" class="protocol-select" :disabled="saving || syncing" @change="onPlatformChange">
+                  <option v-for="option in platformOptions" :key="option.value" :value="option.value">
+                    {{ option.label }} · {{ option.description }}
+                  </option>
+                </select>
+                <small>协议会同时决定模型探测、可选分组和请求转发；账户创建后不可直接修改。</small>
+              </label>
+
+              <label class="field field-wide">
                 <span>账户名称</span>
-                <input v-model="name" type="text" maxlength="80" placeholder="例如 SwiftAPI Primary" autocomplete="off" />
+                <input v-model="name" type="text" maxlength="80" :placeholder="`例如 ${selectedPlatform.label} Primary`" autocomplete="off" />
               </label>
 
               <label class="field field-wide">
                 <span>Base URL</span>
                 <div class="input-with-prefix">
                   <b>URL</b>
-                  <input v-model="baseUrl" type="url" placeholder="https://api.example.com" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="syncedModels = []" />
                 </div>
-                <small>填写服务根地址；TermRelay 会按 OpenAI 兼容协议转发。</small>
+                <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。</small>
               </label>
 
               <label class="field field-wide">
                 <span>API Key</span>
                 <div class="secret-input">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7" cy="10" r="3" /><path d="m9.7 8.3 6-6M13 5l2 2" /></svg>
-                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" placeholder="sk-••••••••••••••••" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="syncedModels = []" />
                   <button type="button" @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button>
                 </div>
               </label>
@@ -272,7 +359,7 @@ watch(
                 </span>
                 <div>
                   <strong>{{ syncedModels.length ? `已发现 ${syncedModels.length} 个模型` : '检测上游模型' }}</strong>
-                  <small>{{ syncedModels.length ? '模型目录已验证，创建后保持原始模型 ID 透传。' : '建议创建前先检测 /v1/models，确认凭据和地址可用。' }}</small>
+                  <small>{{ syncedModels.length ? '模型目录已验证，创建后保持原始模型 ID 透传。' : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
                 </div>
               </div>
               <button type="button" :disabled="!canSync" @click="syncModels">
@@ -315,7 +402,7 @@ watch(
           <section class="form-section group-section">
             <div class="section-heading">
               <span>03</span>
-              <div><strong>调度分组</strong><small>选择允许该账户参与调度的 OpenAI 分组</small></div>
+              <div><strong>调度分组</strong><small>选择允许该账户参与调度的 {{ selectedPlatform.label }} 分组</small></div>
             </div>
 
             <div v-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
@@ -330,15 +417,15 @@ watch(
                 <span class="group-check">
                   <svg v-if="groupIds.includes(group.id)" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7" /></svg>
                 </span>
-                <span><strong>{{ group.name || `Group #${group.id}` }}</strong><small>#{{ group.id }} · {{ group.platform || 'openai' }}</small></span>
+                <span><strong>{{ group.name || `Group #${group.id}` }}</strong><small>#{{ group.id }} · {{ group.platform || platform }}</small></span>
               </button>
             </div>
-            <p v-else class="group-empty">未找到 OpenAI 分组。账户仍可创建，之后可在分组配置中绑定。</p>
+            <p v-else class="group-empty">未找到 {{ selectedPlatform.label }} 分组。账户仍可创建，之后可在分组配置中绑定。</p>
           </section>
 
           <label class="field notes-field">
             <span>备注 <small>可选</small></span>
-            <textarea v-model="notes" rows="2" maxlength="300" placeholder="例如：第三方 OpenAI 兼容中转 · 主线路"></textarea>
+            <textarea v-model="notes" rows="2" maxlength="300" :placeholder="`例如：${selectedPlatform.label} 上游 · 主线路`"></textarea>
           </label>
 
           <p v-if="error" class="create-error">
@@ -472,6 +559,7 @@ watch(
 
 .field input,
 .field textarea,
+.protocol-select,
 .input-with-prefix,
 .secret-input,
 .number-suffix {
@@ -483,7 +571,9 @@ watch(
 }
 .field input { height: 42px; padding: 0 12px; outline: 0; font-size: .74rem; }
 .field textarea { width: 100%; min-height: 68px; padding: 11px 12px; outline: 0; resize: vertical; font: inherit; font-size: .72rem; line-height: 1.5; box-sizing: border-box; }
-.field input:focus, .field textarea:focus, .input-with-prefix:focus-within, .secret-input:focus-within, .number-suffix:focus-within {
+.protocol-select { width: 100%; height: 42px; padding: 0 11px; outline: 0; color-scheme: dark; font-size: .72rem; cursor: pointer; }
+.protocol-select:disabled { opacity: .55; cursor: default; }
+.field input:focus, .field textarea:focus, .protocol-select:focus, .input-with-prefix:focus-within, .secret-input:focus-within, .number-suffix:focus-within {
   border-color: #46505d; box-shadow: 0 0 0 3px rgba(111, 132, 154, .07);
 }
 .field input::placeholder, .field textarea::placeholder { color: #525b66; }
