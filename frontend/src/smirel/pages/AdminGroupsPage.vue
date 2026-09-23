@@ -27,6 +27,9 @@ const search = ref('')
 const platform = ref('')
 const expandedId = ref<number | null>(null)
 const modelCache = reactive<Record<number, string[]>>({})
+const selectedModels = reactive<Record<number, string[]>>({})
+const modelSearch = reactive<Record<number, string>>({})
+const manualModelInput = reactive<Record<number, string>>({})
 const selectedAccounts = reactive<Record<number, number[]>>({})
 const showEditor = ref(false)
 const editingId = ref<number | null>(null)
@@ -73,6 +76,44 @@ function normalizeModels(value: unknown): string[] {
   }
   return [...out].sort((a,b) => a.localeCompare(b))
 }
+function candidateModels(g: GroupRow) {
+  const out = new Set<string>([
+    ...configuredModels(g),
+    ...(modelCache[g.id] || []),
+    ...(selectedModels[g.id] || []),
+  ])
+  return [...out].filter(Boolean).sort((a,b) => a.localeCompare(b))
+}
+function visibleCandidateModels(g: GroupRow) {
+  const q = String(modelSearch[g.id] || '').trim().toLowerCase()
+  const models = candidateModels(g)
+  return q ? models.filter(model => model.toLowerCase().includes(q)) : models
+}
+function isModelSelected(g: GroupRow, model: string) {
+  return (selectedModels[g.id] || []).includes(model)
+}
+function toggleModel(g: GroupRow, model: string) {
+  const current = new Set(selectedModels[g.id] || [])
+  if (current.has(model)) current.delete(model)
+  else current.add(model)
+  selectedModels[g.id] = [...current].sort((a,b) => a.localeCompare(b))
+}
+function selectVisibleModels(g: GroupRow) {
+  selectedModels[g.id] = [...new Set([...(selectedModels[g.id] || []), ...visibleCandidateModels(g)])].sort((a,b) => a.localeCompare(b))
+}
+function clearModelSelection(g: GroupRow) {
+  selectedModels[g.id] = []
+}
+function addManualModels(g: GroupRow) {
+  const models = String(manualModelInput[g.id] || '')
+    .split(/[\n,;]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+  if (!models.length) return
+  modelCache[g.id] = [...new Set([...(modelCache[g.id] || []), ...models])].sort((a,b) => a.localeCompare(b))
+  selectedModels[g.id] = [...new Set([...(selectedModels[g.id] || []), ...models])].sort((a,b) => a.localeCompare(b))
+  manualModelInput[g.id] = ''
+}
 
 async function loadAll() {
   loading.value = true; error.value = ''
@@ -85,7 +126,12 @@ async function loadAll() {
     groups.value = Array.isArray(gr.data?.items) ? gr.data.items : []
     accounts.value = Array.isArray(ar.data?.items) ? ar.data.items : []
     channels.value = Array.isArray(cr.data?.items) ? cr.data.items : []
-    for (const g of groups.value) selectedAccounts[g.id] = groupAccounts(g).map(a => a.id)
+    for (const g of groups.value) {
+      selectedAccounts[g.id] = groupAccounts(g).map(a => a.id)
+      selectedModels[g.id] = [...configuredModels(g)]
+      modelSearch[g.id] ||= ''
+      manualModelInput[g.id] ||= ''
+    }
   } catch (e) { error.value = getErrorMessage(e) }
   finally { loading.value = false }
 }
@@ -97,7 +143,11 @@ async function toggleGroup(g: GroupRow) {
 async function refreshCandidates(g: GroupRow) {
   try {
     const r = await api.get<unknown[]>(`/admin/groups/${g.id}/models-list-candidates`, { params: { platform: g.platform } })
-    modelCache[g.id] = normalizeModels(r.data)
+    modelCache[g.id] = [...new Set([
+      ...(modelCache[g.id] || []),
+      ...configuredModels(g),
+      ...normalizeModels(r.data),
+    ])].sort((a,b) => a.localeCompare(b))
   } catch (e) { error.value = getErrorMessage(e) }
 }
 function openCreate() {
@@ -143,7 +193,7 @@ async function saveMembership(g: GroupRow) {
 
 async function publishCatalog(g: GroupRow, explicitModels?: string[]) {
   const models = (explicitModels?.length ? explicitModels : configuredModels(g)).filter(Boolean)
-  if (!models.length) throw new Error('没有可发布的模型，请先同步模型')
+  if (!models.length) throw new Error('没有可发布的模型，请先选择模型')
   const map = Object.fromEntries(models.map(m => [m, m]))
   const payload = {
     name: `${g.name} Catalog`,
@@ -165,12 +215,11 @@ async function publishCatalog(g: GroupRow, explicitModels?: string[]) {
   else await api.post('/admin/channels', payload)
 }
 
-async function syncModelsAndPublish(g: GroupRow) {
+async function syncModelCandidates(g: GroupRow) {
   busy.value = `sync-${g.id}`; error.value = ''; notice.value = ''
   try {
     const linked = groupAccounts(g).filter(a => a.status === 'active' && a.schedulable !== false)
-    if (!linked.length) throw new Error('这个分组还没有可调度账号')
-    const all = new Set<string>()
+    const all = new Set<string>([...configuredModels(g), ...(modelCache[g.id] || [])])
     let syncedAccounts = 0
     for (const a of linked) {
       accountMappingModels(a).forEach(m => all.add(m))
@@ -183,19 +232,35 @@ async function syncModelsAndPublish(g: GroupRow) {
         await api.put(`/admin/accounts/${a.id}`, { credentials: { ...(a.credentials || {}), model_mapping: mapping } })
         models.forEach(m => all.add(m)); syncedAccounts += 1
       } catch {
-        // Other API-key account types may not implement /v1/models; keep existing mappings.
+        // Some API-key providers cannot enumerate models reliably. Existing
+        // mappings and manual Model IDs remain available as fallback candidates.
       }
     }
-    if (!all.size) {
+    try {
       const r = await api.get<unknown[]>(`/admin/groups/${g.id}/models-list-candidates`, { params: { platform: g.platform } })
       normalizeModels(r.data).forEach(m => all.add(m))
+    } catch {
+      // Keep upstream/account candidates even if the aggregate endpoint is unavailable.
     }
-    if (!all.size) throw new Error('没有发现可发布模型')
-    const models = [...all].sort((a,b) => a.localeCompare(b))
+    if (!all.size) throw new Error('没有发现候选模型，可以在下方手动添加 Model ID')
+    modelCache[g.id] = [...all].sort((a,b) => a.localeCompare(b))
+    notice.value = `已发现 ${all.size} 个候选模型${syncedAccounts ? `，同步 ${syncedAccounts} 个上游账号` : ''}。请选择需要的模型后保存并发布。`
+  } catch (e) { error.value = getErrorMessage(e) }
+  finally { busy.value = '' }
+}
+
+async function saveModelWhitelist(g: GroupRow) {
+  const models = [...new Set(selectedModels[g.id] || [])].map(model => model.trim()).filter(Boolean).sort((a,b) => a.localeCompare(b))
+  if (!models.length) {
+    error.value = '至少选择或手动添加一个模型后再保存'
+    return
+  }
+  busy.value = `models-${g.id}`; error.value = ''; notice.value = ''
+  try {
     await api.put(`/admin/groups/${g.id}`, { models_list_config: { enabled: true, models } })
     await publishCatalog(g, models)
-    modelCache[g.id] = models
-    notice.value = `已保存 ${models.length} 个模型并发布到模型广场${syncedAccounts ? `，同步 ${syncedAccounts} 个上游账号` : ''}`
+    modelCache[g.id] = [...new Set([...(modelCache[g.id] || []), ...models])].sort((a,b) => a.localeCompare(b))
+    notice.value = `已保存 ${models.length} 个模型到「${g.name}」并同步模型广场目录`
     await loadAll()
   } catch (e) { error.value = getErrorMessage(e) }
   finally { busy.value = '' }
@@ -279,7 +344,7 @@ onMounted(() => void loadAll())
               <div class="detail">
             <div class="detail-top">
               <div><span>分组说明</span><strong>{{ g.description || '暂无说明' }}</strong></div>
-              <div class="detail-actions"><button @click="openEdit(g)">编辑分组</button><button @click="setGroupStatus(g)">{{ g.status === 'active' ? '停用' : '启用' }}</button><button class="danger-action" :disabled="busy === `delete-${g.id}`" @click="deleteGroup(g)">{{ busy === `delete-${g.id}` ? '删除中…' : '删除' }}</button><button class="accent" :disabled="busy === `sync-${g.id}`" @click="syncModelsAndPublish(g)">{{ busy === `sync-${g.id}` ? '同步中…' : '同步模型并发布' }}</button></div>
+              <div class="detail-actions"><button @click="openEdit(g)">编辑分组</button><button @click="setGroupStatus(g)">{{ g.status === 'active' ? '停用' : '启用' }}</button><button class="danger-action" :disabled="busy === `delete-${g.id}`" @click="deleteGroup(g)">{{ busy === `delete-${g.id}` ? '删除中…' : '删除' }}</button><button class="accent" :disabled="busy === `sync-${g.id}`" @click="syncModelCandidates(g)">{{ busy === `sync-${g.id}` ? '同步中…' : '同步模型候选' }}</button></div>
             </div>
 
             <div class="detail-grid">
@@ -294,10 +359,34 @@ onMounted(() => void loadAll())
               </section>
 
               <section class="subpanel models-panel">
-                <header><div><strong>模型白名单</strong><small>真实用于 /v1/models 与目录发布</small></div><button @click="refreshCandidates(g)">刷新候选</button></header>
-                <div class="model-summary"><b>{{ configuredModels(g).length || modelCache[g.id]?.length || 0 }}</b><span>个已配置模型</span><em>{{ findCatalogChannel(g) ? '目录已同步' : '尚未发布' }}</em></div>
-                <div class="chips"><span v-for="m in (configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).slice(0, 18)" :key="m">{{ m }}</span><span v-if="(configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).length > 18">+{{ (configuredModels(g).length ? configuredModels(g) : modelCache[g.id] || []).length - 18 }}</span></div>
-                <p class="model-hint">“同步模型并发布”会从已绑定 API Key 上游读取真实模型，安全合并保存 model_mapping，再更新分组模型列表与模型广场渠道。</p>
+                <header>
+                  <div><strong>模型白名单</strong><small>候选来自已绑定上游；最终由你选择哪些模型进入该分组</small></div>
+                  <div class="model-header-actions">
+                    <button @click="refreshCandidates(g)">刷新候选</button>
+                    <button class="model-save" :disabled="busy === `models-${g.id}` || !(selectedModels[g.id]?.length)" @click="saveModelWhitelist(g)">{{ busy === `models-${g.id}` ? '保存中…' : '保存并发布' }}</button>
+                  </div>
+                </header>
+                <div class="model-summary"><b>{{ selectedModels[g.id]?.length || 0 }}</b><span>个已选择模型</span><em>候选 {{ candidateModels(g).length }} · {{ findCatalogChannel(g) ? '目录已同步' : '尚未发布' }}</em></div>
+
+                <div class="model-toolbar">
+                  <input v-model="modelSearch[g.id]" type="search" placeholder="搜索模型 ID" />
+                  <div><button @click="selectVisibleModels(g)">全选{{ modelSearch[g.id] ? '结果' : '' }}</button><button @click="clearModelSelection(g)">清空</button></div>
+                </div>
+
+                <div v-if="candidateModels(g).length" class="model-options">
+                  <label v-for="model in visibleCandidateModels(g)" :key="model" class="model-option" :class="{ selected: isModelSelected(g, model) }">
+                    <input type="checkbox" :checked="isModelSelected(g, model)" @change="toggleModel(g, model)" />
+                    <code>{{ model }}</code>
+                  </label>
+                  <p v-if="!visibleCandidateModels(g).length" class="model-empty">没有匹配“{{ modelSearch[g.id] }}”的候选模型。</p>
+                </div>
+                <p v-else class="model-empty">还没有候选模型。可以先点击“同步模型候选”，或直接在下方手动添加 Model ID。</p>
+
+                <div class="manual-model-entry">
+                  <textarea v-model="manualModelInput[g.id]" rows="2" placeholder="手动 Model ID，支持换行、逗号或分号分隔&#10;例如 claude-sonnet-4-5, claude-haiku-4-5"></textarea>
+                  <button :disabled="!manualModelInput[g.id]?.trim()" @click="addManualModels(g)">添加并选中</button>
+                </div>
+                <p class="model-hint">同步只负责发现候选，不会再自动把全部模型发布。勾选需要的模型后点击“保存并发布”；无法自动枚举模型的上游可直接手动填写 Model ID。</p>
               </section>
             </div>
               </div>
@@ -326,5 +415,5 @@ onMounted(() => void loadAll())
 </template>
 
 <style scoped>
-.groups-page{--bg:#0b0d11;--panel:#101217;--panel2:#0d0f13;--border:#252931;--border2:#343943;--text:#f4f6f8;--soft:#c6ccd3;--muted:#77818c;--green:#43cd98;--blue:#78aee8;width:100%;color:var(--text);font-size:14px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:2px 0 24px}.kicker,.dialog header span{color:#66717d;font-size:.66rem;font-weight:700;letter-spacing:.12em}.page-head h1{margin:8px 0 0;font-size:2.05rem;line-height:1;font-weight:700;letter-spacing:-.045em}.page-head p{margin:11px 0 0;color:#858e99;font-size:.84rem}.head-actions,.detail-actions{display:flex;gap:8px}button{font:inherit}.ghost,.primary,.detail-actions button,.subpanel header button{height:40px;padding:0 14px;border:1px solid var(--border2);border-radius:8px;background:#13161b;color:#cbd1d7;cursor:pointer}.primary,.detail-actions .accent{border-color:#e2e6ea;background:#f2f4f6;color:#111318;font-weight:680}.primary:hover,.detail-actions .accent:hover{background:#fff}.ghost:hover,.detail-actions button:hover,.subpanel header button:hover{border-color:#4a515c;color:#fff}.overview{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:12px;background:linear-gradient(180deg,#111318,#0e1014);overflow:hidden}.overview article{min-height:112px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;position:relative}.overview article+article:before{content:"";position:absolute;left:0;top:20px;bottom:20px;width:1px;background:#272b32}.overview span{color:#7a838e;font-size:.7rem}.overview strong{margin-top:8px;font-size:1.8rem;line-height:1;font-weight:700}.overview small{margin-top:8px;color:#626b76;font-size:.65rem}.alert{margin-top:12px;padding:10px 13px;border-radius:8px;font-size:.74rem}.alert.danger{border:1px solid rgba(225,108,115,.28);background:rgba(225,108,115,.07);color:#e7a2a7}.alert.success{border:1px solid rgba(67,205,152,.22);background:rgba(67,205,152,.06);color:#91dabd}.panel{margin-top:14px;border:1px solid var(--border);border-radius:12px;background:#0f1115;overflow:hidden}.toolbar{min-height:68px;padding:12px 14px 12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);background:#101217}.toolbar>div:first-child{display:flex;align-items:baseline;gap:9px}.toolbar strong{font-size:.9rem}.toolbar span{color:#66717c;font-size:.67rem}.filters{display:flex;gap:7px;align-items:center}.filters input,.form-grid input,.form-grid select,.form-grid textarea{border:1px solid #2b3038;border-radius:8px;background:#0b0d11;color:#e8ebee;outline:none}.filters input{width:280px;height:40px;padding:0 12px}.filters .select-control{position:relative;display:inline-flex;align-items:center;height:40px;min-width:152px;padding:0 30px 0 11px;border:1px solid #2b3038;border-radius:8px;background:#0b0d11;color:#e8ebee;gap:7px;cursor:pointer}.filters .select-control>span{color:#626b76;font-size:.66rem;font-weight:600;pointer-events:none}.filters .select-control select{flex:1;min-width:0;height:100%;padding:0;border:0;outline:0;background:transparent;color:#cfd5dc;font:inherit;font-size:.74rem;appearance:none;-webkit-appearance:none;cursor:pointer}.filters .select-control svg{position:absolute;right:10px;top:50%;width:13px;height:13px;fill:none;stroke:#7d8691;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;transform:translateY(-50%)}.group-list{min-height:300px}.group-card+.group-card{border-top:1px solid #20242a}.group-card.open{background:#0d0f13}.group-main{width:100%;min-height:72px;padding:0 18px;border:0;background:transparent;color:inherit;display:grid;grid-template-columns:38px minmax(230px,1.4fr) 105px repeat(3,85px) 92px 24px;align-items:center;gap:13px;text-align:left;cursor:pointer}.group-main:hover{background:#14171c}.mark{width:34px;height:34px;border:1px solid #343943;border-radius:10px;background:#171a1f;display:grid;place-items:center;font:700 .66rem ui-monospace,SFMono-Regular,monospace;color:#cfd5db}.identity{min-width:0;display:flex;flex-direction:column}.identity strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identity small{margin-top:5px;color:#69737e;font-size:.65rem}.state,.publish{display:inline-flex;align-items:center;gap:6px;width:max-content;color:#b8bfc7;font-size:.67rem}.state i,.publish i{width:6px;height:6px;border-radius:50%;background:#727b86}.state.active{color:#8fd9bb}.state.active i,.publish.on i{background:var(--green)}.publish.on{color:#8fd9bb}.metric{display:flex;flex-direction:column;gap:5px}.metric small{color:#68727d;font-size:.62rem}.metric b{font-size:.75rem}.chev{justify-self:end;color:#6b7580;font-size:1.3rem;transform:rotate(0);transition:.15s}.open .chev{transform:rotate(90deg)}.detail{padding:0 18px 18px 69px}.detail-top{padding:15px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #20242a}.detail-top>div:first-child{display:flex;flex-direction:column;gap:5px}.detail-top span{color:#68727d;font-size:.63rem}.detail-top strong{color:#cbd1d7;font-size:.74rem;font-weight:560}.detail-actions button{height:34px;padding:0 11px;font-size:.67rem}.detail-actions .danger-action{border-color:rgba(225,108,115,.32);background:rgba(225,108,115,.07);color:#d99a9f}.detail-actions .danger-action:hover{border-color:rgba(225,108,115,.55);background:rgba(225,108,115,.12);color:#efb0b4}.detail-actions button:disabled{opacity:.55;cursor:not-allowed}.detail-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:12px}.subpanel{border:1px solid #242830;border-radius:10px;background:#0a0c10;overflow:hidden}.subpanel header{min-height:54px;padding:0 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #22262c}.subpanel header>div{display:flex;flex-direction:column;gap:3px}.subpanel header strong{font-size:.76rem}.subpanel header small{color:#68727d;font-size:.61rem}.subpanel header button{height:30px;padding:0 9px;font-size:.63rem}.account-option{min-height:48px;padding:0 13px;display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:9px;border-bottom:1px solid #1c2026;cursor:pointer}.account-option:last-child{border-bottom:0}.account-option input{accent-color:#7e8791}.account-option span{display:flex;flex-direction:column;gap:3px}.account-option b{font-size:.7rem}.account-option small{color:#68727d;font-size:.6rem}.account-option em{font-style:normal;color:#9c7e5a;font-size:.61rem}.account-option em.ok{color:#83cdb0}.model-summary{padding:15px 14px;display:flex;align-items:baseline;gap:7px}.model-summary b{font-size:1.5rem}.model-summary span{color:#707a85;font-size:.67rem}.model-summary em{margin-left:auto;font-style:normal;color:#6f7984;font-size:.61rem}.chips{padding:0 14px 8px;display:flex;flex-wrap:wrap;gap:6px}.chips span{padding:5px 7px;border:1px solid #293039;border-radius:6px;background:#11151a;color:#aab3bd;font:560 .59rem ui-monospace,SFMono-Regular,monospace}.model-hint{margin:5px 14px 14px;color:#65707b;font-size:.62rem;line-height:1.55}.empty{padding:18px;color:#68727d;font-size:.68rem}.empty.big{min-height:240px;display:grid;place-items:center}.overlay{position:fixed;inset:0;z-index:80;padding:24px;background:rgba(0,0,0,.68);backdrop-filter:blur(8px);display:grid;place-items:center}.dialog{width:min(620px,100%);border:1px solid #333842;border-radius:14px;background:#111318;box-shadow:0 28px 90px rgba(0,0,0,.55);overflow:hidden}.dialog header{padding:20px 22px;display:flex;justify-content:space-between;border-bottom:1px solid #262a31}.dialog h2{margin:6px 0 0;font-size:1.25rem}.dialog header button{width:34px;height:34px;border:1px solid #30353d;border-radius:8px;background:#171a1f;color:#98a1ac;cursor:pointer}.form-grid{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid label{display:flex;flex-direction:column;gap:7px}.form-grid label.wide{grid-column:1/-1}.form-grid label>span{color:#858e98;font-size:.68rem}.protocol-help{margin-top:-1px;color:#697682;font-size:.61rem;line-height:1.5}.form-grid input,.form-grid select{height:42px;padding:0 11px}.form-grid textarea{padding:10px 11px;resize:vertical}.dialog footer{padding:14px 22px;border-top:1px solid #262a31;display:flex;justify-content:flex-end;gap:8px}@media(max-width:1050px){.overview{grid-template-columns:1fr 1fr}.overview article:nth-child(3):before{display:none}.overview article:nth-child(n+3){border-top:1px solid #272b32}.group-main{grid-template-columns:38px 1fr 90px 70px 70px 24px}.group-main>.metric:nth-of-type(3),.publish{display:none}.detail{padding-left:18px}.detail-grid{grid-template-columns:1fr}}@media(max-width:680px){.page-head{flex-direction:column}.head-actions{width:100%}.head-actions button{flex:1}.overview{grid-template-columns:1fr 1fr}.toolbar{align-items:flex-start;flex-direction:column}.filters{width:100%;flex-direction:column;align-items:stretch}.filters input,.filters .select-control{width:100%}.group-main{grid-template-columns:38px 1fr 24px}.group-main>.state,.group-main>.metric,.group-main>.publish{display:none}.detail-top{align-items:flex-start;flex-direction:column}.detail-actions{width:100%;flex-wrap:wrap}.detail-actions button{flex:1}.form-grid{grid-template-columns:1fr}.form-grid label.wide{grid-column:auto}}
+.groups-page{--bg:#0b0d11;--panel:#101217;--panel2:#0d0f13;--border:#252931;--border2:#343943;--text:#f4f6f8;--soft:#c6ccd3;--muted:#77818c;--green:#43cd98;--blue:#78aee8;width:100%;color:var(--text);font-size:14px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:2px 0 24px}.kicker,.dialog header span{color:#66717d;font-size:.66rem;font-weight:700;letter-spacing:.12em}.page-head h1{margin:8px 0 0;font-size:2.05rem;line-height:1;font-weight:700;letter-spacing:-.045em}.page-head p{margin:11px 0 0;color:#858e99;font-size:.84rem}.head-actions,.detail-actions{display:flex;gap:8px}button{font:inherit}.ghost,.primary,.detail-actions button,.subpanel header button{height:40px;padding:0 14px;border:1px solid var(--border2);border-radius:8px;background:#13161b;color:#cbd1d7;cursor:pointer}.primary,.detail-actions .accent{border-color:#e2e6ea;background:#f2f4f6;color:#111318;font-weight:680}.primary:hover,.detail-actions .accent:hover{background:#fff}.ghost:hover,.detail-actions button:hover,.subpanel header button:hover{border-color:#4a515c;color:#fff}.overview{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:12px;background:linear-gradient(180deg,#111318,#0e1014);overflow:hidden}.overview article{min-height:112px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;position:relative}.overview article+article:before{content:"";position:absolute;left:0;top:20px;bottom:20px;width:1px;background:#272b32}.overview span{color:#7a838e;font-size:.7rem}.overview strong{margin-top:8px;font-size:1.8rem;line-height:1;font-weight:700}.overview small{margin-top:8px;color:#626b76;font-size:.65rem}.alert{margin-top:12px;padding:10px 13px;border-radius:8px;font-size:.74rem}.alert.danger{border:1px solid rgba(225,108,115,.28);background:rgba(225,108,115,.07);color:#e7a2a7}.alert.success{border:1px solid rgba(67,205,152,.22);background:rgba(67,205,152,.06);color:#91dabd}.panel{margin-top:14px;border:1px solid var(--border);border-radius:12px;background:#0f1115;overflow:hidden}.toolbar{min-height:68px;padding:12px 14px 12px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);background:#101217}.toolbar>div:first-child{display:flex;align-items:baseline;gap:9px}.toolbar strong{font-size:.9rem}.toolbar span{color:#66717c;font-size:.67rem}.filters{display:flex;gap:7px;align-items:center}.filters input,.form-grid input,.form-grid select,.form-grid textarea{border:1px solid #2b3038;border-radius:8px;background:#0b0d11;color:#e8ebee;outline:none}.filters input{width:280px;height:40px;padding:0 12px}.filters .select-control{position:relative;display:inline-flex;align-items:center;height:40px;min-width:152px;padding:0 30px 0 11px;border:1px solid #2b3038;border-radius:8px;background:#0b0d11;color:#e8ebee;gap:7px;cursor:pointer}.filters .select-control>span{color:#626b76;font-size:.66rem;font-weight:600;pointer-events:none}.filters .select-control select{flex:1;min-width:0;height:100%;padding:0;border:0;outline:0;background:transparent;color:#cfd5dc;font:inherit;font-size:.74rem;appearance:none;-webkit-appearance:none;cursor:pointer}.filters .select-control svg{position:absolute;right:10px;top:50%;width:13px;height:13px;fill:none;stroke:#7d8691;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;transform:translateY(-50%)}.group-list{min-height:300px}.group-card+.group-card{border-top:1px solid #20242a}.group-card.open{background:#0d0f13}.group-main{width:100%;min-height:72px;padding:0 18px;border:0;background:transparent;color:inherit;display:grid;grid-template-columns:38px minmax(230px,1.4fr) 105px repeat(3,85px) 92px 24px;align-items:center;gap:13px;text-align:left;cursor:pointer}.group-main:hover{background:#14171c}.mark{width:34px;height:34px;border:1px solid #343943;border-radius:10px;background:#171a1f;display:grid;place-items:center;font:700 .66rem ui-monospace,SFMono-Regular,monospace;color:#cfd5db}.identity{min-width:0;display:flex;flex-direction:column}.identity strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.identity small{margin-top:5px;color:#69737e;font-size:.65rem}.state,.publish{display:inline-flex;align-items:center;gap:6px;width:max-content;color:#b8bfc7;font-size:.67rem}.state i,.publish i{width:6px;height:6px;border-radius:50%;background:#727b86}.state.active{color:#8fd9bb}.state.active i,.publish.on i{background:var(--green)}.publish.on{color:#8fd9bb}.metric{display:flex;flex-direction:column;gap:5px}.metric small{color:#68727d;font-size:.62rem}.metric b{font-size:.75rem}.chev{justify-self:end;color:#6b7580;font-size:1.3rem;transform:rotate(0);transition:.15s}.open .chev{transform:rotate(90deg)}.detail{padding:0 18px 18px 69px}.detail-top{padding:15px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #20242a}.detail-top>div:first-child{display:flex;flex-direction:column;gap:5px}.detail-top span{color:#68727d;font-size:.63rem}.detail-top strong{color:#cbd1d7;font-size:.74rem;font-weight:560}.detail-actions button{height:34px;padding:0 11px;font-size:.67rem}.detail-actions .danger-action{border-color:rgba(225,108,115,.32);background:rgba(225,108,115,.07);color:#d99a9f}.detail-actions .danger-action:hover{border-color:rgba(225,108,115,.55);background:rgba(225,108,115,.12);color:#efb0b4}.detail-actions button:disabled{opacity:.55;cursor:not-allowed}.detail-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:12px}.subpanel{border:1px solid #242830;border-radius:10px;background:#0a0c10;overflow:hidden}.subpanel header{min-height:54px;padding:0 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #22262c}.subpanel header>div{display:flex;flex-direction:column;gap:3px}.subpanel header strong{font-size:.76rem}.subpanel header small{color:#68727d;font-size:.61rem}.subpanel header button{height:30px;padding:0 9px;font-size:.63rem}.account-option{min-height:48px;padding:0 13px;display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:9px;border-bottom:1px solid #1c2026;cursor:pointer}.account-option:last-child{border-bottom:0}.account-option input{accent-color:#7e8791}.account-option span{display:flex;flex-direction:column;gap:3px}.account-option b{font-size:.7rem}.account-option small{color:#68727d;font-size:.6rem}.account-option em{font-style:normal;color:#9c7e5a;font-size:.61rem}.account-option em.ok{color:#83cdb0}.model-summary{padding:15px 14px 10px;display:flex;align-items:baseline;gap:7px}.model-summary b{font-size:1.5rem}.model-summary span{color:#707a85;font-size:.67rem}.model-summary em{margin-left:auto;font-style:normal;color:#6f7984;font-size:.61rem}.model-header-actions{display:flex!important;flex-direction:row!important;gap:6px!important}.model-header-actions .model-save{border-color:rgba(67,205,152,.32);background:rgba(67,205,152,.08);color:#8fd9bb}.model-header-actions .model-save:disabled{opacity:.42;cursor:not-allowed}.model-toolbar{padding:0 14px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}.model-toolbar>input{min-width:0;flex:1;height:34px;padding:0 10px;border:1px solid #293039;border-radius:7px;background:#0d1014;color:#d9dee3;outline:none;font-size:.65rem}.model-toolbar>input:focus{border-color:#424a55}.model-toolbar>div{display:flex;gap:6px}.model-toolbar button,.manual-model-entry button{height:34px;padding:0 9px;border:1px solid #303640;border-radius:7px;background:#14181d;color:#aeb7c1;font-size:.62rem;cursor:pointer}.model-toolbar button:hover,.manual-model-entry button:hover:not(:disabled){border-color:#49525e;color:#fff}.model-options{margin:0 14px 10px;border:1px solid #242b33;border-radius:8px;background:#0d1014;max-height:210px;overflow:auto}.model-option{min-height:36px;padding:0 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1d232a;color:#9ea8b3;cursor:pointer}.model-option:last-of-type{border-bottom:0}.model-option:hover{background:#12161b}.model-option.selected{background:rgba(67,205,152,.045);color:#c9e5da}.model-option input{accent-color:#43cd98}.model-option code{font:560 .6rem ui-monospace,SFMono-Regular,monospace;overflow-wrap:anywhere}.model-empty{margin:0;padding:12px 14px;color:#66717c;font-size:.62rem;line-height:1.5}.manual-model-entry{margin:0 14px 10px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}.manual-model-entry textarea{min-width:0;min-height:58px;padding:8px 10px;border:1px solid #293039;border-radius:8px;background:#0d1014;color:#d7dde3;outline:none;resize:vertical;font:560 .61rem/1.5 ui-monospace,SFMono-Regular,monospace}.manual-model-entry textarea:focus{border-color:#424a55}.manual-model-entry button{height:auto;min-height:58px}.manual-model-entry button:disabled{opacity:.42;cursor:not-allowed}.model-hint{margin:5px 14px 14px;color:#65707b;font-size:.62rem;line-height:1.55}.empty{padding:18px;color:#68727d;font-size:.68rem}.empty.big{min-height:240px;display:grid;place-items:center}.overlay{position:fixed;inset:0;z-index:80;padding:24px;background:rgba(0,0,0,.68);backdrop-filter:blur(8px);display:grid;place-items:center}.dialog{width:min(620px,100%);border:1px solid #333842;border-radius:14px;background:#111318;box-shadow:0 28px 90px rgba(0,0,0,.55);overflow:hidden}.dialog header{padding:20px 22px;display:flex;justify-content:space-between;border-bottom:1px solid #262a31}.dialog h2{margin:6px 0 0;font-size:1.25rem}.dialog header button{width:34px;height:34px;border:1px solid #30353d;border-radius:8px;background:#171a1f;color:#98a1ac;cursor:pointer}.form-grid{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid label{display:flex;flex-direction:column;gap:7px}.form-grid label.wide{grid-column:1/-1}.form-grid label>span{color:#858e98;font-size:.68rem}.protocol-help{margin-top:-1px;color:#697682;font-size:.61rem;line-height:1.5}.form-grid input,.form-grid select{height:42px;padding:0 11px}.form-grid textarea{padding:10px 11px;resize:vertical}.dialog footer{padding:14px 22px;border-top:1px solid #262a31;display:flex;justify-content:flex-end;gap:8px}@media(max-width:1050px){.overview{grid-template-columns:1fr 1fr}.overview article:nth-child(3):before{display:none}.overview article:nth-child(n+3){border-top:1px solid #272b32}.group-main{grid-template-columns:38px 1fr 90px 70px 70px 24px}.group-main>.metric:nth-of-type(3),.publish{display:none}.detail{padding-left:18px}.detail-grid{grid-template-columns:1fr}}@media(max-width:680px){.page-head{flex-direction:column}.head-actions{width:100%}.head-actions button{flex:1}.overview{grid-template-columns:1fr 1fr}.toolbar{align-items:flex-start;flex-direction:column}.filters{width:100%;flex-direction:column;align-items:stretch}.filters input,.filters .select-control{width:100%}.group-main{grid-template-columns:38px 1fr 24px}.group-main>.state,.group-main>.metric,.group-main>.publish{display:none}.detail-top{align-items:flex-start;flex-direction:column}.detail-actions{width:100%;flex-wrap:wrap}.detail-actions button{flex:1}.form-grid{grid-template-columns:1fr}.form-grid label.wide{grid-column:auto}.model-toolbar,.manual-model-entry{grid-template-columns:1fr;flex-direction:column;align-items:stretch}.model-toolbar>div{width:100%}.model-toolbar button{flex:1}.model-header-actions{width:100%}.model-header-actions button{flex:1}}
 </style>
