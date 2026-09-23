@@ -286,6 +286,83 @@ html.smirel-app[data-theme='light'] .workspace-root .groups-page button:disabled
   cursor: not-allowed;
 }
 
+/* Model whitelist editor was added after the original light-mode remap. Keep
+ * those controls native to the light workspace instead of inheriting the
+ * component's dark defaults. */
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-toolbar > input,
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry textarea {
+  border-color: #d7dde4;
+  background: #ffffff;
+  color: #29313a;
+  box-shadow: inset 0 1px 1px rgba(20, 29, 38, .02);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-toolbar > input::placeholder,
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry textarea::placeholder {
+  color: #929ca7;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-toolbar > input:focus,
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry textarea:focus {
+  border-color: #aebdca;
+  box-shadow: 0 0 0 3px rgba(40, 120, 183, .08);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-toolbar button,
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry button {
+  border-color: #d7dde4;
+  background: #ffffff;
+  color: #53606c;
+  box-shadow: 0 1px 1px rgba(20, 29, 38, .025);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-toolbar button:hover,
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry button:hover:not(:disabled) {
+  border-color: #c6ced7;
+  background: #f6f8fa;
+  color: #222a31;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-options {
+  border-color: #dfe4e9;
+  background: #ffffff;
+  scrollbar-color: #b4bdc6 #f2f4f6;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-option {
+  border-color: #edf0f3;
+  background: #ffffff;
+  color: #596572;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-option:hover {
+  background: #f7f9fb;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-option.selected {
+  background: #f2faf6;
+  color: #254b3e;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-option input {
+  accent-color: #24966f;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-option code {
+  color: inherit;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .model-empty {
+  color: #7a8590;
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .groups-page .manual-model-entry button:disabled {
+  border-color: #dde2e7;
+  background: #eef1f4;
+  color: #98a1aa;
+  opacity: 1;
+}
+
 @media (max-width: 1050px) {
   html.smirel-app[data-theme='light'] .workspace-root .groups-page .overview article:nth-child(n + 3) {
     border-color: #e5e9ed;
