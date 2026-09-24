@@ -28,11 +28,14 @@ type PlazaModel = {
   official_pricing?: OfficialPricing | null
 }
 
+type GroupDisplayIcon = 'auto' | 'claude' | 'openai' | 'gemini' | 'grok' | 'antigravity' | 'generic'
+
 type PlazaGroup = {
   id: number
   name: string
   description?: string
   platform: string
+  display_icon?: GroupDisplayIcon
   subscription_type?: string
   rate_multiplier: number
   user_rate_multiplier?: number | null
@@ -364,24 +367,47 @@ function protocol(platform: string) {
   )[String(platform || '').toLowerCase()] || platform || 'Compatible API'
 }
 
-function providerInfoForGroup(group: PlazaGroup): ProviderInfo {
-  const platform = String(group.platform || '').trim().toLowerCase()
+function groupIconFromModel(model: string): GroupDisplayIcon | null {
+  const id = String(model || '').trim().toLowerCase()
+  if (/^claude(?:[-_.]|$)/.test(id)) return 'claude'
+  if (/^(?:gpt|chatgpt)(?:[-_.]|$)/.test(id) || /^o\d+(?:[-_.]|$)/.test(id) || /^codex(?:[-_.]|$)/.test(id)) return 'openai'
+  if (/^gemini(?:[-_.]|$)/.test(id)) return 'gemini'
+  if (/^grok(?:[-_.]|$)/.test(id)) return 'grok'
+  if (/^antigravity(?:[-_.]|$)/.test(id)) return 'antigravity'
+  return null
+}
 
-  // Group badges should represent the actual upstream/provider. Previously any
-  // group whose name started with "Smirel" was forced to the generic composite
-  // glyph, which made valid provider logos look like broken dark squares.
-  if (platform && platform !== 'composite') return providerFromPlatform(platform)
-
-  if (platform === 'composite') {
-    const normalizedName = String(group.name || '').trim().toLowerCase()
-    if (normalizedName.includes('composite')) {
-      return { key: 'composite', name: 'Muxway', mark: 'M' }
-    }
+function resolvedGroupIcon(group: PlazaGroup): GroupDisplayIcon {
+  const configured = String(group.display_icon || '').trim().toLowerCase() as GroupDisplayIcon
+  if (configured && configured !== 'auto' && ['claude', 'openai', 'gemini', 'grok', 'antigravity', 'generic'].includes(configured)) {
+    return configured
   }
 
-  const firstModel = group.models?.[0]
-  if (firstModel) return family(firstModel.name, [{ group, model: firstModel }])
-  return providerFromPlatform(group.platform)
+  const detected = new Set<GroupDisplayIcon>()
+  for (const model of group.models || []) {
+    const icon = groupIconFromModel(model.name)
+    if (icon) detected.add(icon)
+  }
+  if (detected.size === 1) return [...detected][0]
+  if (detected.size > 1) return 'generic'
+
+  const platform = String(group.platform || '').trim().toLowerCase()
+  if (platform === 'anthropic' || platform === 'claude') return 'claude'
+  if (platform === 'openai') return 'openai'
+  if (platform === 'gemini' || platform === 'google') return 'gemini'
+  if (platform === 'grok' || platform === 'xai') return 'grok'
+  if (platform === 'antigravity') return 'antigravity'
+  return 'generic'
+}
+
+function providerInfoForGroup(group: PlazaGroup): ProviderInfo {
+  const icon = resolvedGroupIcon(group)
+  if (icon === 'claude') return { key: 'anthropic', name: 'Anthropic', mark: 'A' }
+  if (icon === 'openai') return { key: 'openai', name: 'OpenAI', mark: 'O' }
+  if (icon === 'gemini') return { key: 'google', name: 'Google', mark: 'G' }
+  if (icon === 'grok') return { key: 'xai', name: 'xAI', mark: 'X' }
+  if (icon === 'antigravity') return { key: 'antigravity', name: 'Antigravity', mark: 'AG' }
+  return { key: 'composite', name: 'Composite', mark: 'C' }
 }
 
 function providerKeyForGroup(group: PlazaGroup) {

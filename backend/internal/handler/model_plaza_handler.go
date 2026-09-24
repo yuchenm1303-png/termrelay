@@ -59,6 +59,7 @@ type modelPlazaGroup struct {
 	Name               string            `json:"name"`
 	Description        string            `json:"description"`
 	Platform           string            `json:"platform"`
+	DisplayIcon        string            `json:"display_icon,omitempty"`
 	SubscriptionType   string            `json:"subscription_type"`
 	RateMultiplier     float64           `json:"rate_multiplier"`
 	UserRateMultiplier *float64          `json:"user_rate_multiplier,omitempty"`
@@ -170,6 +171,7 @@ func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) mo
 		Name:               g.Name,
 		Description:        g.Description,
 		Platform:           g.Platform,
+		DisplayIcon:        g.DisplayIcon,
 		SubscriptionType:   g.SubscriptionType,
 		RateMultiplier:     g.RateMultiplier,
 		PeakRateEnabled:    g.PeakRateEnabled,
