@@ -1,0 +1,506 @@
+/*
+ * Workspace responsive shell
+ *
+ * Final responsive layer for the authenticated console.  The desktop shell
+ * keeps its persistent navigation, while touch/tablet and phone widths switch
+ * to a drawer so page layouts can use the full viewport.  This file is loaded
+ * last from main.ts on purpose: it reconciles older page-specific desktop
+ * assumptions without duplicating pages or changing their data flow.
+ */
+
+.workspace-root,
+.workspace-root .workspace-main,
+.workspace-root .workspace-canvas,
+.workspace-root .workspace-route-stage,
+.workspace-root .workspace-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.workspace-root .workspace-route-stage,
+.workspace-root .workspace-page {
+  overflow-wrap: anywhere;
+}
+
+.workspace-root .data-table,
+.workspace-root .table-shell,
+.workspace-root .table-wrap {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
+  .workspace-root {
+    display: block !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .workspace-root .workspace-main {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0;
+    margin-left: 0 !important;
+    overflow: visible !important;
+  }
+
+  .workspace-root .workspace-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 70 !important;
+    width: min(312px, 88vw) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translate3d(-104%, 0, 0) !important;
+    visibility: hidden;
+    pointer-events: none;
+    animation: none !important;
+    box-shadow: 24px 0 70px rgba(0, 0, 0, .24);
+    transition:
+      transform .24s cubic-bezier(.22, .72, .25, 1),
+      visibility 0s linear .24s !important;
+    will-change: transform;
+  }
+
+  .workspace-root .workspace-sidebar.open {
+    transform: translate3d(0, 0, 0) !important;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s !important;
+  }
+
+  .workspace-root .workspace-scrim {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 68 !important;
+    display: block !important;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(7, 9, 12, .48) !important;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+
+  .workspace-root .mobile-menu {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 9px !important;
+    flex: 0 0 38px;
+    border-radius: 10px !important;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .workspace-root .mobile-close {
+    width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px;
+    display: grid !important;
+    place-items: center;
+  }
+
+  .workspace-root .workspace-topbar.workspace-topbar--contextual {
+    position: sticky !important;
+    top: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 55 !important;
+    width: 100% !important;
+    height: 60px !important;
+    padding: 0 22px !important;
+  }
+
+  .workspace-root .workspace-topbar-left {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .workspace-root .workspace-breadcrumb {
+    min-width: 0;
+    max-width: min(42vw, 340px);
+  }
+
+  .workspace-root .workspace-breadcrumb-root,
+  .workspace-root .workspace-breadcrumb-group,
+  .workspace-root .workspace-breadcrumb-separator,
+  .workspace-root .workspace-topbar-link,
+  .workspace-root .workspace-topbar-divider {
+    display: none !important;
+  }
+
+  .workspace-root .workspace-topbar-title {
+    display: block !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .workspace-root .workspace-topbar-actions {
+    flex: 0 0 auto;
+    gap: 7px;
+  }
+
+  .workspace-root .workspace-profile-copy,
+  .workspace-root .workspace-profile-chevron {
+    display: none !important;
+  }
+
+  .workspace-root .workspace-profile-link {
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 3px !important;
+    justify-content: center;
+  }
+
+  .workspace-root .workspace-canvas {
+    width: 100%;
+    max-width: 100% !important;
+    padding: 28px 24px 46px !important;
+    overflow-x: clip;
+  }
+
+  .workspace-root .workspace-page,
+  .workspace-root .workspace-route-stage {
+    width: 100%;
+  }
+
+  .workspace-root .page-heading {
+    min-height: auto;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .workspace-root .page-heading h1 {
+    font-size: clamp(1.65rem, 3vw, 1.9rem);
+  }
+
+  .workspace-root .metric-grid,
+  .workspace-root .metric-grid-three,
+  .workspace-root .admin-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-root .account-summary {
+    grid-template-columns: minmax(180px, .85fr) minmax(0, 1.15fr);
+    gap: 22px;
+  }
+
+  .workspace-root .account-summary > .primary-button,
+  .workspace-root .account-summary > .secondary-button,
+  .workspace-root .account-summary > .ghost-button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .workspace-root .summary-meta {
+    min-width: 0;
+  }
+
+  .workspace-root .action-strip,
+  .workspace-root .table-toolbar {
+    max-width: 100%;
+  }
+
+  .workspace-root .table-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .workspace-root .table-toolbar > div {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .workspace-root .data-table {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  .workspace-root .workspace-utility-popover {
+    max-width: calc(100vw - 28px);
+  }
+
+  .workspace-root .workspace-notifications-panel {
+    width: min(380px, calc(100vw - 28px));
+  }
+
+  .workspace-root .groups-page,
+  .workspace-root .accounts-page,
+  .workspace-root .channels-page,
+  .workspace-root .model-catalog-page,
+  .workspace-root .usage-page,
+  .workspace-root .orders-page,
+  .workspace-root .users-page {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .workspace-root .groups-page .panel,
+  .workspace-root .accounts-page .panel,
+  .workspace-root .channels-page .panel,
+  .workspace-root .model-catalog-page .panel {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-root .workspace-topbar.workspace-topbar--contextual {
+    padding: 0 16px !important;
+  }
+
+  .workspace-root .workspace-canvas {
+    padding: 24px 18px 40px !important;
+  }
+
+  .workspace-root .page-heading {
+    gap: 14px;
+  }
+
+  .workspace-root .page-heading > :last-child:not(:first-child) {
+    max-width: 100%;
+  }
+
+  .workspace-root .action-strip {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .workspace-root .workspace-notifications-panel,
+  .workspace-root .workspace-choice-panel {
+    right: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .workspace-root .workspace-sidebar {
+    width: min(300px, 90vw) !important;
+  }
+
+  .workspace-root .workspace-topbar.workspace-topbar--contextual {
+    height: 56px !important;
+    padding:
+      0 max(12px, env(safe-area-inset-right))
+      0 max(12px, env(safe-area-inset-left)) !important;
+  }
+
+  .workspace-root .workspace-topbar-actions {
+    gap: 4px;
+  }
+
+  .workspace-root .workspace-breadcrumb {
+    max-width: min(34vw, 132px);
+  }
+
+  .workspace-root .workspace-breadcrumb-home {
+    display: none;
+  }
+
+  .workspace-root .workspace-topbar-title {
+    font-size: .77rem !important;
+  }
+
+  .workspace-root .workspace-mode-switch {
+    width: 84px !important;
+    height: 34px !important;
+  }
+
+  .workspace-root .workspace-mode-indicator {
+    height: 26px !important;
+  }
+
+  .workspace-root .workspace-mode-long {
+    display: none !important;
+  }
+
+  .workspace-root .workspace-mode-short {
+    display: inline !important;
+  }
+
+  .workspace-root .workspace-utility-button {
+    min-width: 34px !important;
+    width: 34px;
+    height: 34px !important;
+    padding: 0 7px !important;
+  }
+
+  .workspace-root .workspace-language-button span,
+  .workspace-root .workspace-profile-copy,
+  .workspace-root .workspace-profile-chevron {
+    display: none !important;
+  }
+
+  .workspace-root .workspace-profile-link {
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .workspace-root .workspace-profile-link .mini-avatar {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
+  .workspace-root .workspace-canvas {
+    padding: 20px 14px 34px !important;
+  }
+
+  .workspace-root .page-heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .workspace-root .page-heading h1 {
+    font-size: 1.55rem;
+  }
+
+  .workspace-root .page-heading p {
+    margin-top: 7px;
+    font-size: .8rem;
+  }
+
+  .workspace-root .page-heading .primary-button,
+  .workspace-root .page-heading .secondary-button,
+  .workspace-root .page-heading .ghost-button {
+    width: 100%;
+  }
+
+  .workspace-root .account-summary {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .workspace-root .summary-meta {
+    grid-column: auto;
+    min-height: auto;
+    padding: 16px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--ws-border, #292d34);
+  }
+
+  .workspace-root .action-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-root .action-strip > *,
+  .workspace-root .action-strip .primary-button,
+  .workspace-root .action-strip .secondary-button,
+  .workspace-root .action-strip .ghost-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .workspace-root .table-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-root .table-toolbar > div {
+    width: 100%;
+  }
+
+  .workspace-root .workspace-utility-popover,
+  .workspace-root .workspace-notifications-panel,
+  .workspace-root .workspace-choice-panel {
+    position: fixed !important;
+    top: 64px !important;
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 78px);
+    overflow: auto;
+  }
+
+  .workspace-root .overlay {
+    padding: 10px !important;
+    align-items: end;
+  }
+
+  .workspace-root .dialog {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px 16px 10px 10px !important;
+    overflow: auto !important;
+  }
+
+  .workspace-root .dialog header,
+  .workspace-root .dialog footer {
+    position: sticky;
+    z-index: 2;
+    background: inherit;
+  }
+
+  .workspace-root .dialog header {
+    top: 0;
+  }
+
+  .workspace-root .dialog footer {
+    bottom: 0;
+  }
+
+  .workspace-root input,
+  .workspace-root select,
+  .workspace-root textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace-root .workspace-breadcrumb {
+    max-width: 86px;
+  }
+
+  .workspace-root .workspace-mode-switch {
+    width: 78px !important;
+  }
+
+  .workspace-root .workspace-mode-switch button {
+    font-size: .6rem !important;
+  }
+
+  .workspace-root .workspace-profile-link {
+    display: none !important;
+  }
+
+  .workspace-root .metric-grid,
+  .workspace-root .metric-grid-three,
+  .workspace-root .admin-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-root .metric-card {
+    min-height: 104px;
+  }
+
+  .workspace-root .workspace-canvas {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+@supports selector(body:has(.workspace-sidebar.open)) {
+  html:has(.workspace-root .workspace-sidebar.open),
+  body:has(.workspace-root .workspace-sidebar.open) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .workspace-sidebar {
+    transition: none !important;
+  }
+}
