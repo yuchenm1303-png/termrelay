@@ -3,7 +3,10 @@ package service
 import "strings"
 
 func normalizeGroupModelsListConfig(cfg GroupModelsListConfig) GroupModelsListConfig {
-	out := GroupModelsListConfig{Enabled: cfg.Enabled}
+	out := GroupModelsListConfig{
+		Enabled:     cfg.Enabled,
+		DisplayIcon: strings.TrimSpace(cfg.DisplayIcon),
+	}
 	if len(cfg.Models) == 0 {
 		return out
 	}
