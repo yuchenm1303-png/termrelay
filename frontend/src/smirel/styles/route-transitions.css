@@ -5,6 +5,10 @@
  * The shell stays anchored while page content gets a short "depth handoff":
  * old content settles away, the next page resolves from a soft blur/lift,
  * and its first few major sections follow with a restrained stagger.
+ *
+ * Keep the transition itself neutral. A previous ambient blue sweep sat behind
+ * the entire route stage and could read as a pale frame flashing during page
+ * changes, especially in the light theme.
  */
 
 :root {
@@ -16,29 +20,12 @@
 }
 
 .workspace-route-stage {
-  --sm-route-glow: rgba(74, 159, 220, .10);
   position: relative;
   width: 100%;
   min-width: 0;
   isolation: isolate;
   transform-origin: 50% 22px;
   backface-visibility: hidden;
-}
-
-.workspace-route-stage::before {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  left: -34px;
-  right: -34px;
-  top: -34px;
-  height: 170px;
-  pointer-events: none;
-  opacity: 0;
-  background:
-    radial-gradient(ellipse at 18% 0%, var(--sm-route-glow), transparent 58%);
-  transform: translate3d(-14px, -5px, 0) scaleX(.96);
-  transform-origin: left top;
 }
 
 .workspace-route-stage > * {
@@ -53,10 +40,6 @@
     filter 330ms var(--sm-motion-ease-out),
     clip-path var(--sm-motion-route-enter) var(--sm-motion-ease-soft);
   will-change: opacity, transform, filter, clip-path;
-}
-
-.workspace-route-enter-active::before {
-  animation: sm-route-ambient 560ms var(--sm-motion-ease-out) both;
 }
 
 .workspace-route-leave-active {
@@ -105,10 +88,6 @@
 .workspace-route-enter-active > :first-child > :nth-child(4) { animation-delay: 134ms; }
 .workspace-route-enter-active > :first-child > :nth-child(5) { animation-delay: 158ms; }
 
-html.smirel-app[data-theme='light'] .workspace-route-stage {
-  --sm-route-glow: rgba(54, 145, 207, .075);
-}
-
 /* Public/auth routes use the same visual family, but with less travel because
  * they usually occupy the entire viewport rather than a fixed workspace. */
 .app-route-enter-active {
@@ -154,31 +133,10 @@ html.smirel-app[data-theme='light'] .workspace-route-stage {
   }
 }
 
-@keyframes sm-route-ambient {
-  0% {
-    opacity: 0;
-    transform: translate3d(-14px, -5px, 0) scaleX(.96);
-  }
-  38% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(20px, 2px, 0) scaleX(1.035);
-  }
-}
-
 @media (max-width: 720px) {
   .workspace-route-enter-from {
     transform: translate3d(0, 11px, 0) scale(.995);
     filter: blur(1.6px);
-  }
-
-  .workspace-route-stage::before {
-    left: -18px;
-    right: -18px;
-    top: -24px;
-    height: 130px;
   }
 
   .workspace-route-enter-active > :first-child > :nth-child(-n + 5) {
@@ -194,7 +152,6 @@ html.smirel-app[data-theme='light'] .workspace-route-stage {
     transition: none !important;
   }
 
-  .workspace-route-enter-active::before,
   .workspace-route-enter-active > :first-child > :nth-child(-n + 5) {
     animation: none !important;
   }
