@@ -73,7 +73,7 @@ function fallbackIconForPlatform(v: string): ResolvedDisplayIcon {
 function iconForModel(modelId: string): ResolvedDisplayIcon | null {
   const model = modelId.trim().toLowerCase()
   if (/^claude(?:[-_.]|$)/.test(model)) return 'claude'
-  if (/^(?:gpt|chatgpt|o1|o3|o4|codex)(?:[-_.]|$)/.test(model)) return 'openai'
+  if (/^(?:gpt|chatgpt|o\d+|codex)(?:[-_.]|$)/.test(model)) return 'openai'
   if (/^gemini(?:[-_.]|$)/.test(model)) return 'gemini'
   if (/^grok(?:[-_.]|$)/.test(model)) return 'grok'
   if (/^antigravity(?:[-_.]|$)/.test(model)) return 'antigravity'
@@ -86,14 +86,10 @@ function resolvedGroupIcon(g: GroupRow): ResolvedDisplayIcon {
   if (!models.length) return fallbackIconForPlatform(g.platform)
 
   const detected = models.map(iconForModel).filter((icon): icon is ResolvedDisplayIcon => icon !== null)
-  if (!detected.length) return 'generic'
-
-  const claudeCount = detected.filter(icon => icon === 'claude').length
-  if (claudeCount > models.length / 2) return 'claude'
+  if (!detected.length) return fallbackIconForPlatform(g.platform)
 
   const unique = [...new Set(detected)]
-  if (unique.length === 1 && detected.length === models.length) return unique[0]
-  return 'generic'
+  return unique.length === 1 ? unique[0] : 'generic'
 }
 function displayIconMark(v: ResolvedDisplayIcon) {
   return ({ claude: 'A', openai: 'O', gemini: 'G', grok: 'X', antigravity: 'AG', generic: 'C' } as Record<ResolvedDisplayIcon, string>)[v]
