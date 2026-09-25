@@ -37,6 +37,7 @@ import './smirel/styles/group-display-icons.css'
 import './smirel/styles/account-settings-light.css'
 import './smirel/styles/route-transitions.css'
 import './smirel/styles/workspace-responsive.css'
+import './smirel/styles/workspace-nav-controls.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
