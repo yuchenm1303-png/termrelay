@@ -1,0 +1,238 @@
+/* Responsive navigation control polish.
+ * Loaded after workspace-responsive.css so the compact shell keeps one
+ * consistent, deliberate treatment for the drawer open / close controls.
+ */
+
+@media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
+  .workspace-root .mobile-menu,
+  .workspace-root .mobile-close {
+    position: relative;
+    box-sizing: border-box;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    min-height: 40px;
+    flex: 0 0 40px;
+    padding: 0 !important;
+    border: 1px solid #2a3038;
+    border-radius: 12px !important;
+    display: grid !important;
+    place-items: center;
+    overflow: hidden;
+    color: #8e99a5;
+    background: linear-gradient(180deg, #14171c 0%, #101318 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .035),
+      0 1px 2px rgba(0, 0, 0, .16),
+      0 7px 18px rgba(0, 0, 0, .08);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color .16s ease,
+      border-color .16s ease,
+      background-color .16s ease,
+      box-shadow .18s ease,
+      transform .16s cubic-bezier(.2, .75, .25, 1);
+  }
+
+  /* Use a purpose-built sidebar glyph instead of a generic three-line menu. */
+  .workspace-root .mobile-menu {
+    flex-direction: initial !important;
+    gap: 0 !important;
+  }
+
+  .workspace-root .mobile-menu > span {
+    display: none !important;
+  }
+
+  .workspace-root .mobile-menu::before {
+    content: '';
+    width: 17px;
+    height: 15px;
+    box-sizing: border-box;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    background:
+      linear-gradient(
+        90deg,
+        transparent 0 5px,
+        currentColor 5px 6.5px,
+        transparent 6.5px 100%
+      );
+    opacity: .96;
+    transition: transform .18s cubic-bezier(.2, .75, .25, 1);
+  }
+
+  .workspace-root .mobile-menu::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 16px;
+    width: 2.5px;
+    height: 2.5px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: .82;
+    transition: transform .18s cubic-bezier(.2, .75, .25, 1), opacity .16s ease;
+  }
+
+  /* Replace the typographic × with a crisp vector-like close mark. */
+  .workspace-root .mobile-close {
+    font-size: 0 !important;
+    line-height: 0;
+  }
+
+  .workspace-root .mobile-close::before,
+  .workspace-root .mobile-close::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform .18s cubic-bezier(.2, .75, .25, 1);
+  }
+
+  .workspace-root .mobile-close::before {
+    transform: rotate(45deg);
+  }
+
+  .workspace-root .mobile-close::after {
+    transform: rotate(-45deg);
+  }
+
+  .workspace-root .mobile-menu:hover,
+  .workspace-root .mobile-close:hover {
+    border-color: #394550;
+    color: #d8e1e8;
+    background: linear-gradient(180deg, #181d23 0%, #12171d 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .045),
+      0 2px 5px rgba(0, 0, 0, .18),
+      0 10px 22px rgba(0, 0, 0, .12);
+    transform: translateY(-1px);
+  }
+
+  .workspace-root .mobile-menu:hover::before {
+    transform: translateX(.5px);
+  }
+
+  .workspace-root .mobile-menu:hover::after {
+    opacity: 1;
+    transform: translateX(1px);
+  }
+
+  .workspace-root .mobile-close:hover::before {
+    transform: rotate(45deg) scale(1.06);
+  }
+
+  .workspace-root .mobile-close:hover::after {
+    transform: rotate(-45deg) scale(1.06);
+  }
+
+  .workspace-root .mobile-menu:active,
+  .workspace-root .mobile-close:active {
+    transform: translateY(0) scale(.96);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .025),
+      0 1px 3px rgba(0, 0, 0, .14);
+    transition-duration: .07s;
+  }
+
+  .workspace-root .mobile-menu:focus-visible,
+  .workspace-root .mobile-close:focus-visible {
+    outline: none;
+    border-color: #47708f;
+    box-shadow:
+      0 0 0 3px rgba(73, 146, 198, .12),
+      inset 0 1px 0 rgba(255, 255, 255, .035);
+  }
+
+  .workspace-root .workspace-sidebar .workspace-brand-row {
+    gap: 10px;
+  }
+
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-menu,
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-close {
+    border-color: #d6dee6;
+    color: #5b6977;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .98),
+      0 1px 2px rgba(30, 47, 61, .045),
+      0 7px 18px rgba(30, 47, 61, .045);
+  }
+
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-menu:hover,
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-close:hover {
+    border-color: #bfd0dc;
+    color: #356f98;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f6f9 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 2px 5px rgba(36, 62, 80, .055),
+      0 10px 22px rgba(36, 62, 80, .06);
+  }
+
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-menu:active,
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-close:active {
+    border-color: #c8d5df;
+    background: #f2f6f8;
+    box-shadow:
+      inset 0 1px 2px rgba(35, 55, 70, .045),
+      0 1px 2px rgba(35, 55, 70, .035);
+  }
+
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-menu:focus-visible,
+  html.smirel-app[data-theme='light'] .workspace-root .mobile-close:focus-visible {
+    border-color: #8cb4cf;
+    box-shadow:
+      0 0 0 3px rgba(47, 143, 206, .10),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+}
+
+@media (max-width: 720px) {
+  .workspace-root .mobile-menu,
+  .workspace-root .mobile-close {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
+    flex-basis: 36px;
+    border-radius: 11px !important;
+  }
+
+  .workspace-root .mobile-menu::before {
+    width: 16px;
+    height: 14px;
+  }
+
+  .workspace-root .mobile-menu::after {
+    left: 15.5px;
+    top: 14.5px;
+  }
+
+  .workspace-root .mobile-close::before,
+  .workspace-root .mobile-close::after {
+    width: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .mobile-menu,
+  .workspace-root .mobile-close,
+  .workspace-root .mobile-menu::before,
+  .workspace-root .mobile-menu::after,
+  .workspace-root .mobile-close::before,
+  .workspace-root .mobile-close::after {
+    transition: none !important;
+  }
+
+  .workspace-root .mobile-menu:hover,
+  .workspace-root .mobile-close:hover,
+  .workspace-root .mobile-menu:active,
+  .workspace-root .mobile-close:active {
+    transform: none !important;
+  }
+}
