@@ -185,8 +185,7 @@
   }
 
   .workspace-root .metric-grid,
-  .workspace-root .metric-grid-three,
-  .workspace-root .admin-summary-grid {
+  .workspace-root .metric-grid-three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -476,8 +475,7 @@
   }
 
   .workspace-root .metric-grid,
-  .workspace-root .metric-grid-three,
-  .workspace-root .admin-summary-grid {
+  .workspace-root .metric-grid-three {
     grid-template-columns: 1fr;
   }
 
