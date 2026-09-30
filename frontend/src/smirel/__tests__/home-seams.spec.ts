@@ -19,6 +19,8 @@ describe('homepage transitions', () => {
   it('uses a shared reading-canvas color beneath every section and footer', () => {
     expect(declaration('.home-page', '--story-paper').value).toBe('#f9fbff')
     expect(declaration('.home-page', 'background').value).toBe('var(--story-paper)')
+    expect(declaration("html.smirel-app[data-theme='light'] .home-page", 'background').value)
+      .toBe('var(--story-paper)')
     expect(declaration('.home-page .home-section', 'border').value).toBe('0')
     expect(declaration('.home-page .home-section', 'border').important).toBe(true)
     expect(declaration('.home-page .home-section', 'background').value).toBe('transparent')

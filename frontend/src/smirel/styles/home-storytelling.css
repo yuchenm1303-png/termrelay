@@ -491,6 +491,12 @@
   .home-page .home-answers .home-faq details { padding-inline: 17px; }
   .home-page .home-closing { border-radius: 25px; margin-bottom: 55px; }
 }
+/* The light theme's older, higher-specificity root gradient used a different
+   base gray. It must not reappear under the hero's exact bottom fade. */
+html.smirel-app[data-theme='light'] .home-page {
+  --story-paper: #f9fbff;
+  background: var(--story-paper);
+}
 html.smirel-app[data-theme='dark'] .home-page {
   --story-ink: #e7edf5;
   --story-muted: #a1b2c2;
