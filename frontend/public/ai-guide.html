@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="index,follow,max-snippet:-1">
+  <title>Muxway 模枢：统一 AI API 接入说明与常见问题</title>
+  <meta name="description" content="了解 Muxway 模枢的统一 AI API 入口、API Key 管理、模型可用性、OpenAI 兼容接入流程与常见问题。具体模型及费用以登录后的平台为准。">
+  <link rel="canonical" href="https://muxway.dev/ai-guide.html">
+  <link rel="icon" type="image/svg+xml" href="/muxway-mark.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Muxway 模枢">
+  <meta property="og:title" content="Muxway 模枢：统一 AI API 接入说明">
+  <meta property="og:description" content="了解 Muxway 的服务定位、接入步骤及实时可用性说明。">
+  <meta property="og:url" content="https://muxway.dev/ai-guide.html">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://muxway.dev/ai-guide.html#webpage","url":"https://muxway.dev/ai-guide.html","name":"Muxway 模枢：统一 AI API 接入说明与常见问题","inLanguage":"zh-CN","description":"Muxway 统一 AI API 入口、API Key 管理及接入方式说明。","publisher":{"@id":"https://muxway.dev/#organization"},"isPartOf":{"@id":"https://muxway.dev/#website"}}</script>
+  <style>
+    :root{color-scheme:light dark;font:16px/1.8 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;color:#292b39;background:#fbfafc}
+    header,main,footer{max-width:850px;margin:auto;padding:20px 26px}
+    header{display:flex;justify-content:space-between;gap:16px;align-items:center;border-bottom:1px solid #e7e4ed}
+    header strong{font-size:1.15rem;letter-spacing:.02em}nav{display:flex;gap:20px;flex-wrap:wrap}
+    a{color:#6652a0;text-underline-offset:.17em}main{padding-block:48px 70px}
+    h1{font-size:clamp(2rem,5vw,3rem);letter-spacing:-.035em;line-height:1.28}
+    h2{margin:2.3em 0 .6em;padding-top:.3em;border-top:1px solid #e7e4ed;font-size:1.38rem}
+    h3{margin:1.5em 0 .3em;font-size:1.08rem}p,li{max-width:73ch}
+    .intro{font-size:1.17rem;color:#5e557a}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1eef7;padding:22px;border-radius:14px;line-height:1.55}
+    aside{border-left:3px solid #9481c6;padding:5px 18px;background:#f5f2fa}
+    footer{border-top:1px solid #e7e4ed;color:#646175}
+    @media(prefers-color-scheme:dark){body{color:#ece8f3;background:#171722}
+      .intro{color:#c7bae5}header,h2,footer{border-color:#393244}
+      a{color:#cbb7ff}pre,aside{background:#292437}}
+  </style>
+</head>
+<body>
+  <header><strong>Muxway · 模枢</strong><nav aria-label="导航"><a href="/home">官网首页</a><a href="/register">创建账户</a></nav></header>
+  <main>
+    <h1>Muxway 模枢：统一 AI API 接入说明</h1>
+    <p class="intro">Muxway 提供统一 AI API 入口，帮助开发者通过熟悉的 SDK 和工具接入账户中可用的模型，并集中管理 API Key、用量和套餐。</p>
+    <aside><p><strong>信息边界：</strong>本文说明平台的一般接入方式，不构成实时模型清单、价格表、可用率或服务等级承诺。可用模型、支持的接口、价格与套餐以登录后的平台实际信息为准。</p></aside>
+    <section aria-labelledby="what"><h2 id="what">Muxway 是什么？适合哪些场景？</h2>
+      <p>Muxway（模枢）是一个统一 AI API 接入与管理平台。开发者可为项目配置 API Key，使用与对应接口兼容的 SDK 发起请求，在控制台查看请求、Token 与费用记录。</p>
+      <p>适用于希望集中管理多个项目 API Key、减少不同模型接入配置成本，以及查看 AI 请求用量的开发工作流。每个账户能调用哪些模型取决于其实际权限和平台配置。</p>
+    </section>
+    <section aria-labelledby="start"><h2 id="start">如何开始接入？</h2>
+      <ol>
+        <li>在 <a href="/register">Muxway 注册页面</a>创建账户并登录。</li>
+        <li>在控制台查看可使用的模型、对应接口协议以及套餐信息，然后创建 API Key。</li>
+        <li>对提供 OpenAI 兼容接口的模型，可在相应 SDK 中设置 Base URL 为 <code>https://muxway.dev/v1</code>，并配置你的 Muxway API Key。</li>
+        <li>从当前账户的模型列表中选择实际可用的模型名称，先执行小规模测试，再接入生产工作流。</li>
+      </ol>
+      <h3>OpenAI Python SDK 配置示例</h3>
+      <p>下面的示例仅适用于账户中开放了相应 OpenAI 兼容接口的模型；请根据模型支持情况调整调用方法。</p>
+      <pre><code>import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["MUXWAY_API_KEY"],
+    base_url="https://muxway.dev/v1",
+)
+
+response = client.chat.completions.create(
+    model="&lt;your-available-model&gt;",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(response.choices[0].message.content)</code></pre>
+      <p>不要在前端公开代码、网页或仓库中直接写入实际 API Key。</p>
+    </section>
+    <section aria-labelledby="faq"><h2 id="faq">常见问题</h2>
+      <h3>Muxway 支持哪些 AI 模型？</h3>
+      <p>实际可用模型可能随上游服务、账户分组和平台配置调整。请登录后查看当前模型列表；不要把示例中的模型名称理解为可用性承诺。</p>
+      <h3>可以使用已有的 SDK 吗？</h3>
+      <p>对于平台提供相应兼容接口的模型，可以保留熟悉的 SDK 调用方式，主要调整 Base URL、密钥和模型名称。不同模型的参数、功能和兼容程度可能不同，需以实际接口测试为准。</p>
+      <h3>如何区分 API Key 和套餐？</h3>
+      <p>API Key 是调用凭证；套餐和账户权限决定模型及用量范围。请在控制台分别管理密钥、套餐与用量。</p>
+      <h3>价格、速率和可用性是否固定？</h3>
+      <p>本文不展示可能过时的实时信息。准确的模型可用性、价格和使用限制应以平台当前显示及适用服务条款为准。</p>
+      <h3>如何查看使用情况？</h3>
+      <p>登录后可在控制台查看请求、Token 与费用等相关使用记录；具体可见的数据受账户权限和系统配置影响。</p>
+    </section>
+    <section aria-labelledby="more"><h2 id="more">官方入口与信息更新</h2>
+      <p>官方网站：<a href="https://muxway.dev/home">https://muxway.dev/home</a>；接入根地址：<code>https://muxway.dev/v1</code>。阅读平台当前显示的信息后，再确认具体模型支持与收费规则。</p>
+      <p>English summary: Muxway is a unified AI API gateway for managing API keys, available models and usage. For supported OpenAI-compatible models, the Base URL is <code>https://muxway.dev/v1</code>. Model availability, protocol support, pricing and limits vary and should be checked after sign-in.</p>
+      <p><a href="/home">返回 Muxway 首页</a> · <a href="/register">开始使用</a></p>
+    </section>
+  </main>
+  <footer>© Muxway 模枢 · 官方公开说明 · <a href="/home">官网</a></footer>
+</body>
+</html>
