@@ -7,7 +7,9 @@
   --story-muted: #657587;
   --story-line: rgba(124, 151, 188, .16);
   --story-paper: #f9fbff;
-  background: linear-gradient(180deg, #f8fbff 0%, #f9fbff 32%, #f8faff 68%, #f9fbff 100%);
+  /* The reading surface must be one color across chapter boundaries.
+     Local atmospheres supply hue, but never their own opaque section paint. */
+  background: var(--story-paper);
   overflow-x: clip;
   overflow-y: visible;
   scroll-behavior: smooth;
@@ -37,6 +39,20 @@
   padding-top: clamp(112px, 13.5vh, 148px);
   padding-bottom: 112px;
   scroll-margin-top: 72px;
+  /* Retain the original hero's static colored field while blending its bottom
+     into the same reading canvas behind every later chapter. The original
+     animated ::before/::after clouds remain untouched and bleed naturally. */
+  background:
+    linear-gradient(180deg,
+      rgba(249, 251, 255, 0) 0%,
+      rgba(249, 251, 255, 0) 57%,
+      rgba(249, 251, 255, .16) 73%,
+      rgba(249, 251, 255, .83) 92%,
+      #f9fbff 100%),
+    radial-gradient(ellipse 58% 42% at 8% 72%, rgba(50, 154, 255, .29), transparent 70%),
+    radial-gradient(ellipse 52% 44% at 50% 70%, rgba(98, 101, 255, .25), transparent 72%),
+    radial-gradient(ellipse 48% 42% at 91% 60%, rgba(224, 103, 199, .23), transparent 71%),
+    linear-gradient(180deg, #f9fcff 0%, #f7f9ff 48%, #f9fbff 100%) !important;
 }
 .home-page .home-hero h1 {
   letter-spacing: -.052em;
@@ -101,7 +117,8 @@
   position: relative;
   padding-block: clamp(88px, 8.3vw, 134px);
   scroll-margin-top: 80px;
-  border-top: 1px solid var(--story-line) !important;
+  /* The section headings, not hard horizontal rules, divide the chapters. */
+  border: 0 !important;
   background: transparent !important;
 }
 .home-page .home-heading {
@@ -134,15 +151,12 @@
   border-top: 0 !important;
   z-index: 3;
 }
+/* The legacy white mist sat ON TOP of the original aurora tail, creating
+   another unmistakable horizontal band. The now-matching hero and canvas
+   need no occluding seam layer. */
 .home-page .home-hero + .home-pain::before {
-  top: -140px;
-  height: 270px;
-  background: linear-gradient(180deg,
-    rgba(246, 249, 255, 0) 0%,
-    rgba(247, 250, 255, .36) 29%,
-    rgba(249, 251, 255, .85) 61%,
-    rgba(249, 251, 255, 0) 100%) !important;
-  filter: blur(17px);
+  content: none !important;
+  display: none !important;
 }
 .home-page .home-pain .home-heading {
   margin: 5px 0 0;
@@ -166,13 +180,47 @@
 .home-page .home-pain .home-card-grid h3 { margin-top: 22px; }
 .home-page .home-pain .home-card-grid p { line-height: 1.74; }
 /* Chapter 02: asymmetrical bento composition and a continuous tinted field. */
+/* Keep content at the SAME reading-column width as adjacent sections.
+   The legacy full-bleed negative margins used 1160px, while main is 1180px,
+   leaving edge offsets. Only the masked wash is allowed to span the viewport. */
 .home-page .home-capabilities {
-  border-top: 0 !important;
-  border-bottom: 0 !important;
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  overflow: visible !important;
+  isolation: isolate;
+  z-index: 0;
+  background: transparent !important;
+}
+.home-page .home-capabilities::before {
+  content: '';
+  display: block;
+  position: absolute;
+  z-index: -1;
+  top: -112px;
+  bottom: -112px;
+  left: 50%;
+  right: auto;
+  width: 100vw;
+  height: auto;
+  border-radius: 0 !important;
+  transform: translateX(-50%);
+  filter: none !important;
+  opacity: 1 !important;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse 43% 65% at 2% 28%, rgba(83, 185, 242, .105), transparent 82%),
-    radial-gradient(ellipse 43% 65% at 98% 69%, rgba(221, 114, 213, .095), transparent 84%),
-    linear-gradient(180deg, rgba(246, 250, 255, .2), rgba(246, 246, 255, .45), rgba(250, 250, 255, .12)) !important;
+    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(91, 191, 247, .17), transparent 80%),
+    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(127, 121, 244, .12), transparent 81%),
+    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(222, 126, 205, .13), transparent 83%);
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent 0%, #000 22%, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    transparent 0%, #000 22%, #000 74%, transparent 100%);
+}
+/* The legacy independent blurred blobs caused clipping at both ends. All
+   color now lives in the continuous masked section atmosphere above. */
+.home-page .home-capabilities::after {
+  content: none !important;
+  display: none !important;
 }
 .home-page .home-capabilities .home-card-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -334,7 +382,25 @@
   box-shadow: 0 28px 70px rgba(70, 97, 156, .075);
 }
 .home-page .home-closing h2 { text-wrap: balance; line-height: 1.16; }
-.home-page .home-footer { width: min(1180px, calc(100% - 64px)); }
+/* The dark legacy shell painted an opaque footer strip; keep the canvas
+   continuous, with only a short, fading hairline for its semantic boundary. */
+.home-page .home-footer {
+  position: relative;
+  width: min(1180px, calc(100% - 64px));
+  border-top: 0 !important;
+  background: transparent !important;
+}
+.home-page .home-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 7%;
+  width: 86%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent, rgba(123, 153, 194, .21) 24%, rgba(123, 153, 194, .21) 76%, transparent);
+}
 /* Chapter rail is outside the reading column and hidden before it could
    overlap cards on laptop/tablet widths. Anchors are also keyboard friendly. */
 .home-page .home-journey {
@@ -427,17 +493,36 @@ html.smirel-app[data-theme='dark'] .home-page {
   --story-ink: #e7edf5;
   --story-muted: #a1b2c2;
   --story-line: rgba(135, 165, 202, .11);
-  background: linear-gradient(180deg, #090d14 0%, #0c111a 43%, #0a0e16 100%);
+  --story-paper: #0b1018;
+  background: var(--story-paper);
 }
 html.smirel-app[data-theme='dark'] .home-page main { background: transparent !important; }
 html.smirel-app[data-theme='dark'] .home-page .home-section { background: transparent !important; }
 html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
-  background:
-    radial-gradient(ellipse 43% 68% at 2% 35%, rgba(57, 138, 199, .065), transparent 84%),
-    radial-gradient(ellipse 43% 69% at 98% 70%, rgba(166, 85, 176, .055), transparent 84%) !important;
+  background: transparent !important;
 }
-html.smirel-app[data-theme='dark'] .home-page .home-hero + .home-pain::before {
-  background: linear-gradient(180deg, transparent, rgba(10, 15, 23, .42) 30%, rgba(11, 16, 25, .82) 67%, transparent) !important;
+html.smirel-app[data-theme='dark'] .home-page .home-hero {
+  background:
+    linear-gradient(180deg,
+      rgba(11, 16, 24, 0) 0%,
+      rgba(11, 16, 24, 0) 57%,
+      rgba(11, 16, 24, .17) 72%,
+      rgba(11, 16, 24, .84) 92%,
+      #0b1018 100%),
+    radial-gradient(ellipse 62% 46% at 7% 77%, rgba(29, 127, 211, .16), transparent 72%),
+    radial-gradient(ellipse 54% 46% at 51% 70%, rgba(78, 79, 201, .12), transparent 72%),
+    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .10), transparent 72%),
+    linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #0b1018 100%) !important;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-capabilities::before {
+  background:
+    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(48, 141, 208, .105), transparent 80%),
+    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(105, 89, 202, .075), transparent 81%),
+    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(172, 76, 151, .088), transparent 83%);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-footer::before {
+  background: linear-gradient(90deg,
+    transparent, rgba(122, 160, 207, .15) 24%, rgba(122, 160, 207, .15) 76%, transparent);
 }
 html.smirel-app[data-theme='dark'] .home-page .home-scroll-cue { color: #a8bfd9; }
 html.smirel-app[data-theme='dark'] .home-page .home-scroll-cue i { border-color: rgba(135, 165, 203, .3); }
