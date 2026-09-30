@@ -38,9 +38,22 @@ describe('model detail card finishing layer', () => {
     expect(finish).toBeGreaterThan(compact)
     expect(value(card, '--mm-surface')).toBe('#161d29')
     expect(value(lightCard, '--mm-surface')).toBe('#ffffff')
-    expect(value(lightCard, 'background')).toBe('var(--mm-surface)')
-    expect(value(lightCard + ':hover', 'background')).toBe('var(--mm-surface)')
+    expect(value(lightCard, 'background')).toBe('var(--mm-card-ambient), var(--mm-surface)')
+    expect(value(lightCard + ':hover', 'background')).toBe('var(--mm-card-ambient), var(--mm-surface)')
     expect(value(card, 'border-radius')).toBe('18px')
+  })
+
+  it('keeps one continuous ambient wash across the card and the price boundary', () => {
+    const surface = 'var(--mm-card-ambient), var(--mm-surface)'
+    expect(value(card, '--mm-card-ambient')).toContain('radial-gradient(')
+    expect(value(card, 'background')).toBe(surface)
+    expect(value(card + ':hover', 'background')).toBe(surface)
+    expect(value(card + '.is-expanded', 'background')).toBe(surface)
+    expect(value(lightCard, 'background')).toBe(surface)
+    expect(value(lightCard + ':hover', 'background')).toBe(surface)
+    expect(value(card + ' .model-card-head', 'background')).toBe('transparent')
+    expect(value(card + ' .model-primary-prices', 'background')).toBe('var(--mm-price-bg)')
+    expect(value(card + ' .model-primary-prices', 'border')).toBe('1px solid var(--mm-line)')
   })
 
   it('preserves existing expandable model data, logos and copy interaction', () => {
