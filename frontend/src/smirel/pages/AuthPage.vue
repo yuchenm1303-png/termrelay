@@ -469,9 +469,16 @@ async function submit() {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* Global app.css still contains the legacy padded auth layout. Reset it
+   * here so this dedicated view fits the viewport instead of growing vertically. */
+  height: 100vh;
+  height: 100dvh;
   min-height: 100svh;
+  padding: 0;
   overflow-x: clip;
+  /* Only scroll when a short/zoomed viewport, validation message or Turnstile
+   * genuinely needs more space; never crop the submit button or challenge. */
+  overflow-y: auto;
   isolation: isolate;
   color: var(--auth-ink);
   color-scheme: dark;
@@ -588,7 +595,7 @@ async function submit() {
   width: min(1280px, calc(100% - 112px));
   flex: 1 0 auto;
   margin: 0 auto;
-  padding: 115px 0 48px;
+  padding: clamp(92px, 11vh, 114px) 0 clamp(20px, 3.5vh, 40px);
 }
 .auth-intro {
   max-width: 590px;
@@ -690,6 +697,9 @@ async function submit() {
   position: relative;
   width: 100%;
   min-width: 0;
+  /* app.css had margin: 12vh auto 0 (14vh on mobile) on this card.
+   * That leftover margin was the main reason the redesigned view scrolled. */
+  margin: 0;
   padding: clamp(27px, 3vw, 43px);
   border: 1px solid var(--auth-panel-line);
   border-radius: 25px;
@@ -1011,6 +1021,45 @@ async function submit() {
   .auth-card header { margin-top: 22px; }
   .auth-capabilities { margin-top: 28px; }
   .auth-capabilities > div { min-height: 80px; }
+}
+/* Laptop/short-window variant: preserve the two-column composition and fit
+ * the full register form on a normal desktop viewport (including Turnstile).
+ * Emergency overflow stays available for browser zoom, errors and tiny screens. */
+@media (max-height: 950px) {
+  .auth-brand { top: clamp(18px, 2.7vh, 27px); }
+  .auth-layout {
+    padding-top: clamp(80px, 10vh, 94px);
+    padding-bottom: clamp(14px, 2.4vh, 23px);
+  }
+  .auth-intro { padding: 8px 0; }
+  .auth-intro h2 {
+    margin-top: 19px;
+    font-size: clamp(2.65rem, 3.7vw, 3.75rem);
+  }
+  .auth-intro > p { margin-top: 14px; line-height: 1.68; }
+  .auth-capabilities { margin-top: 24px; }
+  .auth-capabilities > div { min-height: 75px; padding-top: 9px; padding-bottom: 9px; }
+  .auth-capabilities b { width: 45px; height: 45px; border-radius: 15px; }
+  .auth-card { padding: clamp(23px, 3vh, 30px); }
+  .auth-card header { margin-top: 20px; }
+  .auth-card header p { margin-top: 6px; line-height: 1.5; }
+  .oauth-login { margin-top: 16px; }
+  .oauth-button { height: 45px; }
+  .oauth-divider { margin-top: 12px; }
+  .auth-card form { gap: 11px; margin-top: 18px; }
+  .auth-card form.with-oauth { margin-top: 14px; }
+  .auth-field { gap: 6px; }
+  .auth-field-control { height: 44px; }
+  .auth-submit { min-height: 47px; }
+  .auth-card footer { margin-top: 15px; }
+  .auth-page-footer { padding-bottom: 13px; }
+}
+@media (max-width: 920px) and (max-height: 950px) {
+  .auth-layout { padding-top: clamp(78px, 9.5vh, 90px); padding-bottom: 17px; }
+}
+@media (max-width: 520px) and (max-height: 950px) {
+  .auth-layout { padding-top: 82px; padding-bottom: 12px; }
+  .auth-card { padding: 22px 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .auth-intro,
