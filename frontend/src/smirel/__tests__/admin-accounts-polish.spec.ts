@@ -79,6 +79,25 @@ describe('upstream accounts visual contract', () => {
     expect(value(lastRule(row, '640px'), 'grid-template-columns')).toContain('minmax(0, 1fr)')
   })
 
+  it('reserves an unshrinkable action track and never stacks button labels', () => {
+    const head = '.workspace-root .admin-accounts-page .upstream-table-head'
+    const row = '.workspace-root .admin-accounts-page .upstream-row'
+    const actions = '.workspace-root .admin-accounts-page .quick-actions'
+    const button = '.workspace-root .admin-accounts-page .quick-button'
+    const label = '.workspace-root .admin-accounts-page .quick-button > span'
+    const wideTrack = value(lastRule(row, undefined, 'grid-template-columns'), 'grid-template-columns')
+    const mediumTrack = value(lastRule(row, '1380px', 'grid-template-columns'), 'grid-template-columns')
+    expect(wideTrack?.trim().endsWith('260px')).toBe(true)
+    expect(mediumTrack?.trim().endsWith('260px')).toBe(true)
+    expect(value(lastRule(head, '1380px', 'grid-template-columns'), 'grid-template-columns')).toBe(mediumTrack)
+    expect(value(lastRule(actions, undefined, 'flex-wrap'), 'flex-wrap')).toBe('nowrap')
+    expect(value(lastRule(button, undefined, 'min-width'), 'min-width')).toBe('68px')
+    expect(value(lastRule(button, undefined, 'flex'), 'flex')).toBe('0 0 auto')
+    expect(value(lastRule(label, undefined, 'white-space'), 'white-space')).toBe('nowrap')
+    expect(value(lastRule(label, '1180px', 'display'), 'display')).toBe('none')
+    expect(value(lastRule(button, '1180px', 'min-width'), 'min-width')).toBe('33px')
+  })
+
   it('maintains both themes and responsive overflow handling', () => {
     expect(hasRule(".workspace-root .admin-accounts-page .load-track")).toBe(true)
     expect(hasRule(".workspace-root .admin-accounts-page .upstream-groups > b")).toBe(true)

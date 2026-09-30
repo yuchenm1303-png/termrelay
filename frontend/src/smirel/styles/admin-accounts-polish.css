@@ -249,7 +249,7 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 .workspace-root .admin-accounts-page .upstream-row {
   grid-template-columns: 30px minmax(205px, 1.35fr) minmax(115px, .6fr)
     minmax(75px, .38fr) minmax(108px, .6fr) minmax(215px, 1.25fr)
-    minmax(105px, .6fr) minmax(225px, 1fr);
+    minmax(105px, .6fr) 260px;
   gap: 10px;
 }
 .workspace-root .admin-accounts-page .upstream-table-head {
@@ -376,7 +376,32 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 }
 .workspace-root .admin-accounts-page .selection-toggle.selected > span { background: var(--ac-accent); border-color: var(--ac-accent); }
 .workspace-root .admin-accounts-page .selection-toggle.selected > span::after { border-color: #fff; }
-.workspace-root .admin-accounts-page .quick-actions { gap: 6px; }
+/* The action column is an invariant control group, not spare width that can
+ * be borrowed by a long group name. Keep labels horizontal at every zoom. */
+.workspace-root .admin-accounts-page .quick-actions {
+  min-width: 0;
+  justify-self: end;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.workspace-root .admin-accounts-page .quick-button,
+.workspace-root .admin-accounts-page .expand-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.workspace-root .admin-accounts-page .quick-button {
+  min-width: 68px;
+}
+.workspace-root .admin-accounts-page .quick-button svg {
+  flex: 0 0 14px;
+}
+.workspace-root .admin-accounts-page .quick-button > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .workspace-root .admin-accounts-page .quick-button,
 .workspace-root .admin-accounts-page .expand-button {
   min-height: 33px;
@@ -400,7 +425,7 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
   background: var(--ac-accent-soft);
   transform: translateY(-1px);
 }
-.workspace-root .admin-accounts-page .expand-button { width: 33px; }
+.workspace-root .admin-accounts-page .expand-button { width: 33px; min-width: 33px; }
 .workspace-root .admin-accounts-page .expand-button.open {
   color: var(--ac-accent);
   border-color: color-mix(in srgb, var(--ac-accent) 34%, transparent);
@@ -479,7 +504,7 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
   .workspace-root .admin-accounts-page .upstream-row {
     grid-template-columns: 30px minmax(180px, 1.25fr) minmax(105px, .6fr)
       minmax(70px, .36fr) minmax(98px, .54fr) minmax(175px, 1.1fr)
-      minmax(195px, 1fr);
+      260px;
     gap: 9px;
   }
   .workspace-root .admin-accounts-page .accounts-toolbar { align-items: flex-start; flex-wrap: wrap; }
@@ -487,6 +512,14 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
   .workspace-root .admin-accounts-page .search-control { flex: 1 1 260px; width: auto; max-width: 410px; }
 }
 @media (max-width: 1180px) {
+  /* This is where the narrow, icon-only action track begins. Keep the
+   * button labels accessible via their existing title attributes. */
+  .workspace-root .admin-accounts-page .quick-button > span { display: none; }
+  .workspace-root .admin-accounts-page .quick-button {
+    width: 33px;
+    min-width: 33px;
+    padding-inline: 0;
+  }
   /* The SFC already hides load at 1180px (before its 1120px v2 rules).
    * Match that earlier breakpoint to prevent an empty ghost track. */
   .workspace-root .admin-accounts-page .upstream-table-head,
