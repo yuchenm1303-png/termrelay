@@ -40,7 +40,8 @@ interface ApiKeyItem {
 type KeyListPayload = ApiKeyItem[] | { items?: ApiKeyItem[] }
 
 const { locale } = useI18n()
-const loading = ref(false)
+// Reserve the card grid on the first frame; do not flash the empty state before onMounted fetches.
+const loading = ref(true)
 const creating = ref(false)
 const error = ref('')
 const createError = ref('')
