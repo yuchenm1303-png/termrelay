@@ -1,0 +1,535 @@
+/* Operations monitor: clean hierarchy, honest charts, and consistent surfaces.
+   This layer is intentionally after all workspace theme styles. The ambient
+   background belongs to the workspace, not to isolated dashboard panels. */
+
+.workspace-root .ops-host-page .admin-ops-workspace {
+  --ops-panel: #151c28;
+  --ops-panel-soft: #1a2431;
+  --ops-ink: #eff4fa;
+  --ops-text: #bdcbd9;
+  --ops-muted: #96a9bb;
+  --ops-line: #303d4d;
+  --ops-accent: #8daef0;
+  --ops-accent-soft: rgba(117, 154, 225, .13);
+  --ops-green: #6dd0ae;
+  --ops-green-soft: rgba(100, 205, 170, .12);
+  --ops-amber: #e8bb7c;
+  --ops-shadow: 0 6px 28px rgba(0, 0, 0, .12);
+  gap: 16px;
+  color: var(--ops-ink);
+}
+html.smirel-app[data-theme='light'] .workspace-root .ops-host-page .admin-ops-workspace {
+  --ops-panel: #fff;
+  --ops-panel-soft: #f8faff;
+  --ops-ink: #253347;
+  --ops-text: #52647c;
+  --ops-muted: #74869b;
+  --ops-line: #e4eaf3;
+  --ops-accent: #4378bd;
+  --ops-accent-soft: #eef4fd;
+  --ops-green: #228d70;
+  --ops-green-soft: #eaf7f2;
+  --ops-amber: #a87734;
+  --ops-shadow: 0 3px 8px rgba(38, 59, 93, .023), 0 14px 38px rgba(51, 76, 116, .05);
+}
+
+.workspace-root .ops-host-page .ops-page-heading {
+  min-height: 122px;
+  margin-bottom: 0;
+  padding: 9px 2px 24px;
+  align-items: start;
+}
+.workspace-root .ops-host-page .ops-page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ws-muted, #8999ae);
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 720;
+  letter-spacing: .12em;
+}
+.workspace-root .ops-host-page .ops-page-eyebrow::before {
+  content: '';
+  width: 19px;
+  height: 1px;
+  background: #85aadf;
+}
+.workspace-root .ops-host-page .ops-page-heading h1 {
+  margin-top: 11px;
+  font-size: clamp(29px, 2.25vw, 35px);
+  line-height: 1.2;
+  letter-spacing: -.045em;
+}
+.workspace-root .ops-host-page .ops-page-heading p {
+  margin-top: 9px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.workspace-root .ops-host-page .admin-ops-workspace :is(.ops-snapshot-bar, .ops-metric-strip, .ops-trend-panel, .ops-period-panel, .ops-shortcuts) {
+  border: 1px solid var(--ops-line);
+  border-radius: 15px;
+  background: var(--ops-panel);
+  box-shadow: var(--ops-shadow);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-bar {
+  min-height: 65px;
+  padding: 10px 13px;
+  gap: 14px;
+  border-radius: 13px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-state { gap: 12px; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-state-icon {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border: 1px solid var(--ops-line);
+  border-radius: 11px;
+  background: var(--ops-panel-soft);
+  color: var(--ops-accent);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-state.ready .ops-state-icon {
+  border-color: color-mix(in srgb, var(--ops-green) 24%, var(--ops-line));
+  background: var(--ops-green-soft);
+  color: var(--ops-green);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-state.stale .ops-state-icon {
+  border-color: color-mix(in srgb, var(--ops-amber) 34%, var(--ops-line));
+  background: color-mix(in srgb, var(--ops-amber) 10%, var(--ops-panel));
+  color: var(--ops-amber);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-state strong {
+  color: var(--ops-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-state small {
+  color: var(--ops-muted);
+  font-size: 11px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-toolbar { gap: 10px; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-switch {
+  min-height: 39px;
+  padding: 3px;
+  border: 1px solid var(--ops-line);
+  border-radius: 10px;
+  background: var(--ops-panel-soft);
+  gap: 3px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-switch button {
+  min-width: 47px;
+  height: 31px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--ops-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: .01em;
+  transition: background .18s ease, box-shadow .18s ease, color .18s ease;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-switch button:hover:not(:disabled) {
+  background: var(--ops-accent-soft);
+  color: var(--ops-accent);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-switch button.active {
+  background: var(--ops-panel);
+  color: var(--ops-accent);
+  box-shadow: 0 2px 7px rgba(42, 67, 108, .095);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-refresh {
+  min-height: 39px;
+  padding-inline: 12px;
+  border: 1px solid var(--ops-line);
+  border-radius: 10px;
+  color: var(--ops-text);
+  background: var(--ops-panel);
+  font-size: 12px;
+  font-weight: 650;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-refresh:hover:not(:disabled) {
+  color: var(--ops-accent);
+  border-color: color-mix(in srgb, var(--ops-accent) 36%, var(--ops-line));
+  background: var(--ops-accent-soft);
+}
+
+/* An even four-up overview with readable units, optical alignment and quiet
+   color accents. No black dividers or disjointed top-left accent strip. */
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip { min-height: 137px; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article {
+  min-height: 137px;
+  padding: 23px 24px 21px;
+  border-color: var(--ops-line);
+  justify-content: flex-start;
+  gap: 0;
+  transition: background .19s ease;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article:hover {
+  background: color-mix(in srgb, var(--ops-accent) 2.6%, var(--ops-panel));
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article:first-child::before {
+  display: none;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-label {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 675;
+  letter-spacing: .015em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article > div {
+  margin-top: 13px;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip strong {
+  color: var(--ops-ink);
+  font-size: clamp(26px, 2.2vw, 33px);
+  font-weight: 750;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article > div small {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .015em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip p {
+  margin-top: 10px;
+  color: var(--ops-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* Analytics and detail form one visual system. Shorten very tall empty
+   visuals, but preserve actual trend values and their real time domain. */
+.workspace-root .ops-host-page .admin-ops-workspace .ops-main-grid {
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.63fr) minmax(325px, .82fr);
+  align-items: start;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-panel,
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-panel { min-width: 0; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head {
+  min-height: 74px;
+  padding: 15px 21px;
+  border-bottom: 1px solid var(--ops-line);
+  gap: 12px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head > div { gap: 7px; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head span {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 710;
+  letter-spacing: .1em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head strong {
+  color: var(--ops-ink);
+  font-size: 15px;
+  font-weight: 715;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-range-label {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .01em;
+  text-align: right;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head a {
+  min-height: 30px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ops-accent);
+  font-size: 11px;
+  font-weight: 670;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head a:hover {
+  color: var(--ops-accent);
+  background: var(--ops-accent-soft);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-stack {
+  padding-inline: 21px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card {
+  min-height: 144px;
+  padding: 16px 0;
+  border-color: var(--ops-line);
+  grid-template-columns: minmax(145px, .25fr) minmax(0, 1fr);
+  gap: clamp(15px, 2.5vw, 29px);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy > span {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .08em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy > strong {
+  margin-top: 6px;
+  color: var(--ops-text);
+  font-size: 12px;
+  font-weight: 645;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy > div {
+  margin-top: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy b {
+  color: var(--ops-ink);
+  font-size: 24px;
+  line-height: 1.16;
+  font-weight: 745;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy div small {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 660;
+  letter-spacing: .02em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy p {
+  margin-top: 8px;
+  color: var(--ops-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 9px;
+  color: #77abe7;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot svg {
+  display: block;
+  width: 100%;
+  height: 91px;
+  overflow: hidden;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot line {
+  stroke: var(--ops-line);
+  stroke-width: .9;
+  stroke-dasharray: 2 5;
+  opacity: .96;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot polyline {
+  stroke: #75aee7;
+  stroke-width: 2.1;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card:nth-child(2) .ops-trend-plot {
+  color: #68c5a1;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card:nth-child(2) .ops-trend-plot polyline { stroke: #68c5a1; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card:nth-child(3) .ops-trend-plot {
+  color: #c5a0d9;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card:nth-child(3) .ops-trend-plot polyline { stroke: #c5a0d9; }
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot .ops-plot-halo {
+  fill: currentColor;
+  opacity: .13;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-plot .ops-plot-point {
+  fill: currentColor;
+  stroke: var(--ops-panel);
+  stroke-width: 1.5;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-axis {
+  margin-top: 5px;
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: .015em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-single-axis {
+  justify-content: space-between;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-single-axis > span:last-child {
+  color: var(--ops-accent);
+  font-size: 10px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-empty {
+  min-height: 345px;
+  padding: 40px 22px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-empty strong {
+  color: var(--ops-text);
+  font-size: 14px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-trend-empty span {
+  color: var(--ops-muted);
+  font-size: 12px;
+}
+
+/* Right panel: period cost is the lead, the rest is a clean definition list. */
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-total {
+  padding: 26px 22px 23px;
+  border-color: var(--ops-line);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--ops-accent) 5%, var(--ops-panel)), var(--ops-panel) 72%);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-total span {
+  color: var(--ops-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-total strong {
+  margin-top: 12px;
+  color: var(--ops-ink);
+  font-size: clamp(28px, 2.15vw, 35px);
+  line-height: 1.15;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-total small {
+  margin-top: 9px;
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 580;
+  letter-spacing: 0;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-list {
+  padding-inline: 22px;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-list > div {
+  min-height: 57px;
+  border-color: var(--ops-line);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-list dt {
+  color: var(--ops-muted);
+  font-size: 12px;
+  font-weight: 560;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-period-list dd {
+  color: var(--ops-ink);
+  font-size: 12px;
+  font-weight: 680;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Direct navigation: the same restrained surfaces as the panels above. */
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts > a {
+  min-height: 77px;
+  padding-inline: 18px;
+  border-color: var(--ops-line);
+  transition: background .19s ease;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts > a:hover {
+  background: var(--ops-panel-soft);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcut-icon {
+  border-color: var(--ops-line);
+  border-radius: 10px;
+  color: var(--ops-accent);
+  background: var(--ops-accent-soft);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts small {
+  color: var(--ops-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 680;
+  letter-spacing: .07em;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts strong {
+  color: var(--ops-text);
+  font-size: 12px;
+  font-weight: 670;
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts b {
+  color: var(--ops-muted);
+}
+.workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts > a:hover b {
+  color: var(--ops-accent);
+}
+.workspace-root .ops-host-page .admin-ops-workspace button:focus-visible,
+.workspace-root .ops-host-page .admin-ops-workspace a:focus-visible {
+  outline: 2px solid var(--ops-accent);
+  outline-offset: 2px;
+}
+@media (max-width: 1200px) {
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-period-panel {
+    display: block;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-period-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 20px;
+  }
+}
+@media (max-width: 1080px) {
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article {
+    border-color: var(--ops-line);
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article:nth-child(3) {
+    border-right: 1px solid var(--ops-line);
+  }
+}
+@media (max-width: 760px) {
+  .workspace-root .ops-host-page .ops-page-heading { padding-bottom: 18px; min-height: 0; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-snapshot-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-toolbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article {
+    min-height: 126px;
+    padding: 18px 15px;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip article:nth-child(2n) { border-right: 0; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-trend-stack { padding-inline: 14px; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-trend-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+    padding-block: 18px;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-trend-copy > div { margin-top: 9px; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-panel-head { padding-inline: 15px; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-period-list { grid-template-columns: 1fr; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts { grid-template-columns: 1fr; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts > a {
+    border-right: 0;
+    border-bottom: 1px solid var(--ops-line);
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-shortcuts > a:last-child { border-bottom: 0; }
+}
+@media (max-width: 420px) {
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-metric-strip strong { font-size: 25px; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-refresh { padding-inline: 9px; }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-period-switch button { min-width: 39px; padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .ops-host-page .admin-ops-workspace :is(button, a, .ops-metric-strip article) {
+    transition: none;
+  }
+  .workspace-root .ops-host-page .admin-ops-workspace .ops-refresh svg {
+    animation: none;
+  }
+}

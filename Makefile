@@ -11,7 +11,8 @@ FRONTEND_CRITICAL_VITEST := \
 	src/smirel/__tests__/workspace-ambient.spec.ts \
 	src/smirel/__tests__/admin-accounts-polish.spec.ts \
 	src/smirel/__tests__/admin-channels-polish.spec.ts \
-	src/smirel/__tests__/model-card-finish.spec.ts
+	src/smirel/__tests__/model-card-finish.spec.ts \
+	src/smirel/__tests__/admin-ops-polish.spec.ts
 
 # 一键编译前后端
 build: build-backend build-frontend

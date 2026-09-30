@@ -115,6 +115,9 @@ const rangeLabel = computed(() => {
   if (!trend.value.length) return `最近 ${periodDays.value} 天`
   const first = trend.value[0]?.date?.slice(0, 10)
   const last = trend.value[trend.value.length - 1]?.date?.slice(0, 10)
+  // A single recorded day is a point, not a multi-day trend. Avoid
+  // repeating its date at both ends of the chart and summary.
+  if (first && first === last) return `${first} · 单日记录`
   return first && last ? `${first} — ${last}` : `最近 ${periodDays.value} 天`
 })
 
@@ -126,6 +129,7 @@ const trendCharts = computed(() => [
     value: compact(periodRequests.value),
     unit: 'REQUESTS',
     points: sparkline((point) => point.requests),
+    singlePointY: periodRequests.value > 0 ? 52 : 94,
     peak: `峰值 ${compact(peakRequests.value)} / 日`,
   },
   {
@@ -135,6 +139,7 @@ const trendCharts = computed(() => [
     value: compact(periodTokens.value),
     unit: 'TOKENS',
     points: sparkline((point) => point.total_tokens),
+    singlePointY: periodTokens.value > 0 ? 52 : 94,
     peak: `日均 ${compact(trend.value.length ? periodTokens.value / trend.value.length : 0)}`,
   },
   {
@@ -144,6 +149,7 @@ const trendCharts = computed(() => [
     value: money(periodCost.value),
     unit: 'USD',
     points: sparkline((point) => point.actual_cost),
+    singlePointY: periodCost.value > 0 ? 52 : 94,
     peak: `单次均值 ${money(averageCostPerRequest.value, 4)}`,
   },
 ])
@@ -188,7 +194,7 @@ onMounted(() => void load())
 <template>
   <div class="admin-ops-workspace">
     <div class="ops-snapshot-bar">
-      <div class="ops-snapshot-state" :class="{ ready: refreshedAt && !error }">
+      <div class="ops-snapshot-state" :class="{ ready: refreshedAt && !error && !stats.stats_stale, stale: stats.stats_stale }">
         <span class="ops-state-icon"><WorkspaceNavIcon name="activity" /></span>
         <span>
           <strong>{{ stats.stats_stale ? '统计数据正在追赶' : (refreshedAt ? t('admin.dataSynced') : t('admin.waitingData')) }}</strong>
@@ -196,8 +202,8 @@ onMounted(() => void load())
         </span>
       </div>
       <div class="ops-toolbar">
-        <div class="ops-period-switch" aria-label="Trend period">
-          <button v-for="days in ([7, 30, 90] as PeriodDays[])" :key="days" type="button" :class="{ active: periodDays === days }" :disabled="loading" @click="setPeriod(days)">
+        <div class="ops-period-switch" role="group" aria-label="趋势统计范围">
+          <button v-for="days in ([7, 30, 90] as PeriodDays[])" :key="days" type="button" :class="{ active: periodDays === days }" :aria-pressed="periodDays === days" :title="`最近 ${days} 天`" :disabled="loading" @click="setPeriod(days)">
             {{ days }}D
           </button>
         </div>
@@ -215,22 +221,22 @@ onMounted(() => void load())
 
     <section class="ops-metric-strip" aria-label="Operations snapshot">
       <article>
-        <span class="ops-metric-label">TODAY REQUESTS</span>
+        <span class="ops-metric-label">今日请求</span>
         <div><strong>{{ compact(stats.today_requests) }}</strong><small>REQ</small></div>
         <p>今日累计请求量</p>
       </article>
       <article>
-        <span class="ops-metric-label">TODAY TOKENS</span>
+        <span class="ops-metric-label">今日 Token</span>
         <div><strong>{{ compact(stats.today_tokens) }}</strong><small>TOKENS</small></div>
         <p>今日累计 Token 用量</p>
       </article>
       <article>
-        <span class="ops-metric-label">TODAY COST</span>
+        <span class="ops-metric-label">今日费用</span>
         <div><strong>{{ money(stats.today_actual_cost) }}</strong><small>USD</small></div>
         <p>今日实际扣除成本</p>
       </article>
       <article>
-        <span class="ops-metric-label">REQUEST RATE</span>
+        <span class="ops-metric-label">实时请求率</span>
         <div><strong>{{ compact(stats.rpm) }}</strong><small>RPM</small></div>
         <p>近 5 分钟平均请求率 · TPM {{ compact(stats.tpm) }}</p>
       </article>
@@ -240,7 +246,7 @@ onMounted(() => void load())
       <section class="ops-trend-panel">
         <header class="ops-panel-head">
           <div>
-            <span>REAL USAGE TREND</span>
+            <span>USAGE ANALYTICS</span>
             <strong>真实用量趋势</strong>
           </div>
           <small class="ops-range-label">{{ rangeLabel }}</small>
@@ -254,14 +260,21 @@ onMounted(() => void load())
               <div><b>{{ chart.value }}</b><small>{{ chart.unit }}</small></div>
               <p>{{ chart.peak }}</p>
             </div>
-            <div class="ops-trend-plot" aria-hidden="true">
-              <svg viewBox="0 0 320 104" preserveAspectRatio="none">
+            <div class="ops-trend-plot" role="img" :aria-label="`${chart.label}：${chart.value}，${rangeLabel}`">
+              <svg viewBox="0 0 320 104" preserveAspectRatio="none" aria-hidden="true">
                 <line x1="0" y1="10" x2="320" y2="10" />
                 <line x1="0" y1="52" x2="320" y2="52" />
                 <line x1="0" y1="94" x2="320" y2="94" />
-                <polyline :points="chart.points" />
+                <polyline v-if="trend.length > 1" :points="chart.points" />
+                <!-- A single point cannot form a line. Show the actual
+                     observation rather than leaving an empty-looking plot. -->
+                <template v-else>
+                  <circle class="ops-plot-halo" cx="160" :cy="chart.singlePointY" r="11" />
+                  <circle class="ops-plot-point" cx="160" :cy="chart.singlePointY" r="4.2" />
+                </template>
               </svg>
-              <div><span>{{ trend[0]?.date?.slice(5, 10) }}</span><span>{{ trend[trend.length - 1]?.date?.slice(5, 10) }}</span></div>
+              <div v-if="trend.length > 1" class="ops-trend-axis"><span>{{ trend[0]?.date?.slice(5, 10) }}</span><span>{{ trend[trend.length - 1]?.date?.slice(5, 10) }}</span></div>
+              <div v-else class="ops-trend-axis ops-single-axis"><span>{{ trend[0]?.date?.slice(5, 10) }}</span><span>仅一天记录 · 无法构成趋势</span></div>
             </div>
           </article>
         </div>
@@ -275,7 +288,7 @@ onMounted(() => void load())
       <section class="ops-period-panel">
         <header class="ops-panel-head">
           <div>
-            <span>PERIOD DETAIL</span>
+            <span>PERIOD OVERVIEW</span>
             <strong>周期详细指标</strong>
           </div>
           <RouterLink to="/admin/usage">{{ t('admin.usageRecords') }} →</RouterLink>

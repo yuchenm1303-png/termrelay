@@ -160,12 +160,13 @@ onMounted(() => void load())
 </script>
 
 <template>
-  <section class="workspace-page">
+  <section class="workspace-page" :class="{ 'ops-host-page': isAdminOps }">
     <AdminUsersPage v-if="isAdminUsers" />
 
     <template v-else>
-      <header v-if="!isDashboard" class="page-heading">
+      <header v-if="!isDashboard" class="page-heading" :class="{ 'ops-page-heading': isAdminOps }">
         <div>
+          <span v-if="isAdminOps" class="ops-page-eyebrow">SYSTEM / OPERATIONS</span>
           <h1>{{ title }}</h1>
           <p>{{ pageDescription }}</p>
         </div>
