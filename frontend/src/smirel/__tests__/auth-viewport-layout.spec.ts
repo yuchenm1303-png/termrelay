@@ -14,6 +14,15 @@ describe('auth viewport layout contract', () => {
     expect(card).toMatch(/margin:\s*0;/)
   })
 
+  it('contains decoration within the page instead of generating a phantom scrollbar', () => {
+    const ambientLayer = scopedStyles.match(/\\.auth-page::after\\s*\\{([^}]+)\\}/)?.[1] ?? ''
+    expect(ambientLayer).toMatch(/inset:\\s*0;/)
+    expect(ambientLayer).not.toMatch(/(?:rotate\\(|right:\\s*-|top:\\s*\\d+%|width:\\s*min\\()/)
+    expect(scopedStyles).not.toMatch(/\\.auth-page::after\\s*\\{\\s*width:\\s*90vw/)
+    // Keep normal overflow available for browser zoom, dynamic errors and Turnstile.
+    expect(scopedStyles).toContain('overflow-y: auto;')
+  })
+
   it('keeps compact laptop spacing without cropping errors or security checks', () => {
     const compact = scopedStyles.split('@media (max-height: 950px) {')[1]?.split('@media (max-width: 920px)')[0] ?? ''
     expect(compact).toContain('.auth-card form.with-oauth')

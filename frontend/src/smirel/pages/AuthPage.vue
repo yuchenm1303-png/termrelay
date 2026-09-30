@@ -502,16 +502,14 @@ async function submit() {
     radial-gradient(ellipse 25% 30% at 96% 63%, rgba(136, 93, 248, .17), transparent 85%),
     radial-gradient(ellipse 55% 25% at 43% 106%, rgba(81, 148, 244, .11), transparent 90%);
 }
+/* Full-bleed color atmosphere, not an off-screen rotated ellipse. The old
+ * ellipse extended ~58px beyond an 896px desktop viewport and made this
+ * deliberately one-screen auth view show a scrollbar. */
 .auth-page::after {
-  width: min(63vw, 920px);
-  aspect-ratio: 1.2;
-  top: 3%;
-  right: -12%;
-  border: 1px solid rgba(164, 178, 255, .14);
-  border-radius: 47% 53% 62% 38% / 55% 42% 58% 45%;
-  transform: rotate(-25deg);
-  background: linear-gradient(140deg, rgba(87, 144, 255, .13), rgba(162, 111, 246, .07) 45%, transparent 76%);
-  box-shadow: inset 0 0 95px rgba(100, 139, 255, .05), 0 0 95px rgba(117, 133, 255, .035);
+  inset: 0;
+  background:
+    radial-gradient(ellipse 34% 48% at 76% 38%, rgba(96, 150, 244, .10), transparent 90%),
+    radial-gradient(ellipse 32% 43% at 96% 70%, rgba(145, 110, 235, .08), transparent 91%);
 }
 .auth-page.is-light {
   --auth-ink: #182137;
@@ -538,9 +536,9 @@ async function submit() {
     radial-gradient(ellipse 54% 30% at 41% 108%, rgba(147, 195, 255, .20), transparent 83%);
 }
 .auth-page.is-light::after {
-  border-color: rgba(145, 175, 250, .18);
-  background: linear-gradient(138deg, rgba(173, 208, 255, .15), rgba(173, 155, 255, .09) 51%, transparent 80%);
-  box-shadow: inset 0 0 120px rgba(129, 175, 255, .05), 0 0 130px rgba(163, 179, 255, .07);
+  background:
+    radial-gradient(ellipse 42% 55% at 74% 37%, rgba(159, 202, 255, .16), transparent 90%),
+    radial-gradient(ellipse 32% 43% at 97% 70%, rgba(181, 159, 246, .11), transparent 92%);
 }
 .auth-brand {
   position: absolute;
@@ -994,7 +992,7 @@ async function submit() {
   .auth-intro h2 { font-size: clamp(2.65rem, 4.4vw, 3.5rem); }
 }
 @media (max-width: 920px) {
-  .auth-page::after { width: 90vw; right: -42%; top: 10%; }
+  /* The decorative layer stays bounded on compact screens, too. */
   .auth-layout { display: flex; width: min(480px, calc(100% - 48px)); justify-content: center; padding-top: 117px; padding-bottom: 58px; }
   .auth-intro { display: none; }
   .auth-card { padding: 33px; }
