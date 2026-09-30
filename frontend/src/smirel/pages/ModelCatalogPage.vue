@@ -702,7 +702,7 @@ onBeforeUnmount(() => {
             <div class="model-identity">
               <span class="provider-mark" :data-provider="model.providerKey">{{ model.mark }}</span>
               <div>
-                <h2>{{ model.id }}</h2>
+                <h2 :title="model.id">{{ model.id }}</h2>
                 <div class="model-tags">
                   <span>{{ model.provider }}</span>
                   <span>{{ model.bestRate.toFixed(2) }}×</span>
@@ -765,8 +765,8 @@ onBeforeUnmount(() => {
                   <section class="model-access-block">
                     <div class="model-id-row">
                       <span>{{ isZh ? '模型 ID' : 'Model ID' }}</span>
-                      <code>{{ model.id }}</code>
-                      <button type="button" @click="copyId(model.id)">{{ copied === model.id ? (isZh ? '已复制' : 'Copied') : (isZh ? '复制' : 'Copy') }}</button>
+                      <code :title="model.id">{{ model.id }}</code>
+                      <button type="button" :aria-label="isZh ? `复制模型 ID ${model.id}` : `Copy model ID ${model.id}`" @click="copyId(model.id)">{{ copied === model.id ? (isZh ? '已复制' : 'Copied') : (isZh ? '复制' : 'Copy') }}</button>
                     </div>
                     <div class="protocol-list">
                       <span>{{ isZh ? '兼容接口' : 'APIs' }}</span>
@@ -788,7 +788,7 @@ onBeforeUnmount(() => {
                     <div v-for="offer in model.offers" :key="`${offer.group.id}-${offer.model.platform}-${offer.model.mapped_model || offer.model.name}`" class="model-group-item">
                       <i class="provider-mini-mark" :data-provider="providerKeyForGroup(offer.group)">{{ providerMarkForGroup(offer.group) }}</i>
                       <span class="model-group-copy">
-                        <b>{{ offer.group.name }}</b>
+                        <b :title="offer.group.name">{{ offer.group.name }}</b>
                         <small>#{{ offer.group.id }} · {{ protocol(offer.group.platform) }}<template v-if="offer.model.mapped_model && offer.model.mapped_model !== model.id"> · {{ offer.model.mapped_model }}</template></small>
                       </span>
                       <em>{{ rate(offer.group).toFixed(2) }}×</em>

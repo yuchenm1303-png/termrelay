@@ -1,0 +1,625 @@
+/* Model marketplace card finish.
+ * One quiet visual hierarchy for both themes: primary prices are dominant,
+ * cache/spec metadata share calm bands, routes read as a single list.
+ * Existing expand/collapse and view-transition geometry remain untouched.
+ */
+html.smirel-app .workspace-root .model-market-page .model-market-card {
+  --mm-surface: #161d29;
+  --mm-surface-soft: #1b2533;
+  --mm-body: #111a27;
+  --mm-price-bg: #172231;
+  --mm-chip: #1b2738;
+  --mm-line: #2c394a;
+  --mm-ink: #f1f5fb;
+  --mm-body-text: #c1cede;
+  --mm-muted: #98aabe;
+  --mm-accent: #9dbcf0;
+  --mm-accent-soft: rgba(107, 151, 229, .14);
+  --mm-green: #88d9bc;
+  --mm-blue-wash: rgba(83, 155, 235, .075);
+  --mm-purple-wash: rgba(164, 139, 228, .055);
+  --mm-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+  color: var(--mm-ink);
+  border: 1px solid var(--mm-line);
+  border-radius: 18px;
+  background: var(--mm-surface);
+  box-shadow: var(--mm-shadow);
+}
+html.smirel-app[data-theme='light'] .workspace-root .model-market-page .model-market-card {
+  --mm-surface: #ffffff;
+  --mm-surface-soft: #f6f9ff;
+  --mm-body: #f9fbff;
+  --mm-price-bg: #fcfdff;
+  --mm-chip: #f2f6fd;
+  --mm-line: #e3eaf4;
+  --mm-ink: #263345;
+  --mm-body-text: #50617a;
+  --mm-muted: #718198;
+  --mm-accent: #3b71b5;
+  --mm-accent-soft: #ecf4fc;
+  --mm-green: #258a6e;
+  --mm-blue-wash: rgba(106, 168, 239, .08);
+  --mm-purple-wash: rgba(166, 145, 224, .058);
+  --mm-shadow: 0 3px 9px rgba(41, 61, 98, .025), 0 14px 38px rgba(45, 68, 112, .062);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card:hover {
+  border-color: color-mix(in srgb, var(--mm-accent) 35%, var(--mm-line));
+  background: var(--mm-surface);
+  box-shadow: 0 6px 30px rgba(39, 68, 108, .08);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card.is-expanded {
+  border-color: color-mix(in srgb, var(--mm-accent) 35%, var(--mm-line));
+  background: var(--mm-surface);
+  box-shadow: var(--mm-shadow);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card.is-expanded::before {
+  left: 21px;
+  width: 112px;
+  height: 2px;
+  background: linear-gradient(90deg, #6daee4, rgba(149, 140, 224, .55), transparent);
+}
+
+/* The brand mark remains the actual bundled provider logo, never a redrawn
+   replacement. Title and pills no longer compete with the detail button. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-card-head {
+  min-height: 88px;
+  padding: 19px 21px 15px;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(110deg, var(--mm-blue-wash), transparent 60%);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-identity {
+  min-width: 0;
+  grid-template-columns: 45px minmax(0, 1fr);
+  gap: 13px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-identity > div {
+  min-width: 0;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .provider-mark {
+  width: 45px;
+  height: 45px;
+  border-radius: 13px;
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .provider-mark::before {
+  width: 24px;
+  height: 24px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-identity h2 {
+  color: var(--mm-ink);
+  font-size: clamp(16px, 1.15vw, 20px);
+  line-height: 1.32;
+  font-weight: 735;
+  letter-spacing: -.032em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags {
+  margin-top: 8px;
+  gap: 6px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags span {
+  min-height: 24px;
+  padding-inline: 10px;
+  border: 1px solid var(--mm-line);
+  border-radius: 999px;
+  color: var(--mm-body-text);
+  background: var(--mm-chip);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags span:first-child {
+  color: var(--mm-body-text);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags span:nth-child(2) {
+  border-color: color-mix(in srgb, var(--mm-accent) 27%, var(--mm-line));
+  background: var(--mm-accent-soft);
+  color: var(--mm-accent);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-card-actions {
+  gap: 11px;
+  align-self: flex-start;
+  padding-top: 2px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-rank {
+  color: var(--mm-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-toggle {
+  min-height: 36px;
+  padding-inline: 12px 10px;
+  border: 1px solid var(--mm-line);
+  border-radius: 11px;
+  color: var(--mm-body-text);
+  background: var(--mm-surface-soft);
+  font-size: 11px;
+  font-weight: 680;
+  white-space: nowrap;
+  transform: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-toggle:hover,
+html.smirel-app .workspace-root .model-market-page .model-market-card.is-expanded .model-detail-toggle {
+  border-color: color-mix(in srgb, var(--mm-accent) 31%, var(--mm-line));
+  color: var(--mm-accent);
+  background: var(--mm-accent-soft);
+  transform: none;
+}
+
+/* Only the two high-priority prices get the highlighted price surface. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices,
+html.smirel-app .workspace-root .model-market-page .model-market-card.is-expanded .model-primary-prices {
+  margin: 0 21px 18px;
+  border: 1px solid color-mix(in srgb, var(--mm-accent) 17%, var(--mm-line));
+  border-radius: 14px;
+  background: linear-gradient(115deg, var(--mm-blue-wash), var(--mm-price-bg) 49%, var(--mm-purple-wash));
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices > div {
+  min-width: 0;
+  min-height: 99px;
+  padding: 16px 20px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices > div + div {
+  border-left: 1px solid var(--mm-line);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices span {
+  color: var(--mm-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices strong {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--mm-ink);
+  font-size: 20px;
+  font-weight: 740;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices small {
+  margin: 0;
+  color: var(--mm-muted);
+  font-size: 11px;
+  font-weight: 540;
+  white-space: nowrap;
+}
+
+/* Expanded content: use three visual groups on the left, one on the right.
+   Combining related cells removes the white-border-card stack. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-shell {
+  background: var(--mm-body);
+  border-top-color: transparent;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card.is-expanded .model-detail-shell {
+  border-top-color: var(--mm-line);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-layout {
+  grid-template-columns: minmax(0, 1.13fr) minmax(290px, .87fr);
+  gap: 16px;
+  padding: 17px 21px 19px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-main {
+  gap: 11px;
+}
+
+/* Cache prices share a single surface divided by a hairline. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices > div {
+  min-width: 0;
+  min-height: 77px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices > div + div {
+  border-left: 1px solid var(--mm-line);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices span {
+  color: var(--mm-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 7px;
+  color: var(--mm-ink);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices small {
+  margin: 0;
+  color: var(--mm-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* The three spec values are a single horizontal strip, not three tiles. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs > div {
+  min-width: 0;
+  min-height: 72px;
+  padding: 13px 15px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 7px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs > div + div {
+  border: 0;
+  border-left: 1px solid var(--mm-line);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs span {
+  color: var(--mm-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs strong {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--mm-ink);
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 685;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* IDs and API compatibility read like a compact definition list. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-access-block {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row,
+html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list,
+html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list {
+  min-height: 50px;
+  padding: 10px 15px;
+  grid-template-columns: 89px minmax(0, 1fr) auto;
+  gap: 11px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list,
+html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list {
+  grid-template-columns: 89px minmax(0, 1fr);
+  border-top: 1px solid var(--mm-line);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row > span,
+html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list > span,
+html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list > span {
+  color: var(--mm-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mm-accent);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row button {
+  height: 30px;
+  min-width: 48px;
+  padding-inline: 11px;
+  border: 1px solid var(--mm-line);
+  border-radius: 9px;
+  color: var(--mm-body-text);
+  background: var(--mm-surface-soft);
+  font-size: 11px;
+  font-weight: 640;
+  white-space: nowrap;
+  transition: background-color .17s ease, border-color .17s ease, color .17s ease;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row button:hover {
+  border-color: color-mix(in srgb, var(--mm-accent) 36%, var(--mm-line));
+  color: var(--mm-accent);
+  background: var(--mm-accent-soft);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list b,
+html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list code {
+  min-height: 25px;
+  padding: 4px 9px;
+  border: 1px solid var(--mm-line);
+  border-radius: 8px;
+  color: var(--mm-body-text);
+  background: var(--mm-chip);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list code {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Routes appear as one organized list, not floating bordered rectangles. */
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-section {
+  min-width: 0;
+  align-self: start;
+  margin: 0;
+  padding: 14px 15px 8px;
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-title {
+  min-height: 34px;
+  gap: 10px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-title > span {
+  color: var(--mm-body-text);
+  font-size: 12px;
+  font-weight: 690;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-title > strong {
+  min-width: 26px;
+  height: 24px;
+  padding-inline: 8px;
+  border: 1px solid var(--mm-line);
+  border-radius: 999px;
+  color: var(--mm-body-text);
+  background: var(--mm-surface-soft);
+  font-size: 11px;
+  font-weight: 680;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-list {
+  display: grid;
+  gap: 0;
+  margin-top: 6px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item {
+  min-width: 0;
+  min-height: 70px;
+  padding: 12px 1px;
+  border: 0;
+  border-top: 1px solid var(--mm-line);
+  border-radius: 0;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color .17s ease;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item:hover {
+  border-top-color: var(--mm-line);
+  background: var(--mm-surface-soft);
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item .provider-mini-mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 1px solid var(--mm-line);
+  border-radius: 10px;
+  background: var(--mm-chip);
+  box-shadow: none;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item .provider-mini-mark::before {
+  width: 17px;
+  height: 17px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-copy {
+  min-width: 0;
+  gap: 4px;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-copy > b {
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  color: var(--mm-ink);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 685;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-copy > small {
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  color: var(--mm-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item > em {
+  flex: 0 0 auto;
+  min-width: 57px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  color: var(--mm-accent);
+  background: var(--mm-accent-soft);
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Mobile cards preserve the same grouping instead of growing into a
+   long stack of separate tiles. */
+@media (max-width: 1120px) {
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-section {
+    align-self: stretch;
+  }
+}
+@media (max-width: 640px) {
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-card-head {
+    min-height: 0;
+    padding: 15px 14px 13px;
+    gap: 10px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-identity {
+    grid-template-columns: 37px minmax(0, 1fr);
+    gap: 9px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .provider-mark {
+    width: 37px;
+    height: 37px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .provider-mark::before {
+    width: 21px;
+    height: 21px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-identity h2 {
+    font-size: 15px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-card-actions {
+    gap: 5px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-rank {
+    display: none;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-toggle {
+    min-height: 32px;
+    padding-inline: 9px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags {
+    gap: 5px;
+    margin-top: 6px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-tags span {
+    padding-inline: 8px;
+    min-height: 22px;
+    font-size: 10px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices {
+    margin: 0 13px 13px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices > div {
+    min-height: 80px;
+    padding: 12px 13px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices strong {
+    font-size: 16px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices small {
+    font-size: 10px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-layout {
+    gap: 10px;
+    padding: 12px 13px 14px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-secondary-prices > div {
+    min-height: 70px;
+    padding: 12px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs > div {
+    min-height: 66px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 11px 9px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs > div + div {
+    border: 0;
+    border-left: 1px solid var(--mm-line);
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list {
+    padding: 9px 11px;
+    gap: 8px;
+    grid-template-columns: 70px minmax(0, 1fr) auto;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .protocol-list,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .mapped-model-list {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-section {
+    padding: 12px 12px 7px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 8px;
+    min-height: 62px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item .provider-mini-mark {
+    width: 30px;
+    height: 30px;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item > em {
+    min-width: 48px;
+    padding-inline: 5px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 380px) {
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices {
+    grid-template-columns: 1fr;
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-primary-prices > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--mm-line);
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-specs > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--mm-line);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.smirel-app .workspace-root .model-market-page .model-market-card:hover,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-detail-toggle,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-id-row button,
+  html.smirel-app .workspace-root .model-market-page .model-market-card .model-group-item {
+    transition: none;
+  }
+}
