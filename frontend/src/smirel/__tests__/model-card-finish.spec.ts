@@ -38,6 +38,8 @@ describe('model detail card finishing layer', () => {
     expect(finish).toBeGreaterThan(compact)
     expect(value(card, '--mm-surface')).toBe('#161d29')
     expect(value(lightCard, '--mm-surface')).toBe('#ffffff')
+    expect(value(lightCard, 'background')).toBe('var(--mm-surface)')
+    expect(value(lightCard + ':hover', 'background')).toBe('var(--mm-surface)')
     expect(value(card, 'border-radius')).toBe('18px')
   })
 
