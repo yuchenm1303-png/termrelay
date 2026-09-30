@@ -36,7 +36,7 @@ func TestGeoPublicResources(t *testing.T) {
 	if end == -1 {
 		t.Fatal("guide JSON-LD is not closed")
 	}
-	var structured map[string]interface{}
+	var structured map[string]any
 	if err := json.Unmarshal([]byte(rest[:end]), &structured); err != nil {
 		t.Fatalf("guide JSON-LD is not valid JSON: %v", err)
 	}
