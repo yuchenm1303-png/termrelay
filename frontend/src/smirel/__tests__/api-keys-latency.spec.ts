@@ -6,6 +6,26 @@ import ApiKeysPage from '../pages/ApiKeysPage.vue'
 import { api } from '../core/api'
 import { workspaceRouteSettledKey } from '../core/route-motion'
 
+// preferences.ts evaluates matchMedia during module import. jsdom does
+// not ship it, so install a browser-compatible stub before SFC imports run.
+vi.hoisted(() => {
+  if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (media: string) => ({
+        matches: false,
+        media,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    })
+  }
+})
+
 vi.mock('../core/api', () => ({
   previewMode: false,
   api: { get: vi.fn() },
