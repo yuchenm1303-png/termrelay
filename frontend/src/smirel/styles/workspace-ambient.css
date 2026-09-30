@@ -3,14 +3,28 @@
  * Fixed behind the scrolling canvas, clipped at the chrome boundary, and
  * independent of async page loading and sidebar/topbar interactions.
  */
+/* The former fixed layer alone could disappear behind the console's legacy
+ * opaque backgrounds. Paint a visible, very soft fallback on the *actual*
+ * workspace main surface too. Unlike a sibling layer, this cannot be
+ * occluded by the route canvas once its own background is transparent.
+ * Color and motion share tokens, so all console routes stay consistent. */
 .workspace-root .workspace-main {
+  --ambient-blue: rgba(80, 165, 242, .31);
+  --ambient-violet: rgba(126, 131, 231, .23);
+  --ambient-pink: rgba(224, 143, 207, .255);
+  --ambient-mint: rgba(103, 207, 204, .09);
+  --ambient-surface-blue: rgba(80, 165, 242, .20);
+  --ambient-surface-violet: rgba(126, 131, 231, .145);
+  --ambient-surface-pink: rgba(224, 143, 207, .155);
   position: relative;
+  background-image:
+    radial-gradient(ellipse 72% 76% at 12% 18%, var(--ambient-surface-blue), transparent 77%),
+    radial-gradient(ellipse 67% 73% at 91% 28%, var(--ambient-surface-pink), transparent 79%),
+    radial-gradient(ellipse 74% 70% at 51% 94%, var(--ambient-surface-violet), transparent 82%) !important;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 .workspace-root .workspace-main > .workspace-atmosphere {
-  --ambient-blue: rgba(80, 165, 242, .19);
-  --ambient-violet: rgba(126, 131, 231, .115);
-  --ambient-pink: rgba(224, 143, 207, .155);
-  --ambient-mint: rgba(103, 207, 204, .065);
   position: fixed;
   z-index: 0;
   inset: 58px 0 0 var(--workspace-sidebar-width, 232px);
@@ -27,30 +41,29 @@
 .workspace-root .workspace-main > .workspace-atmosphere::after {
   content: '';
   position: absolute;
-  inset: -9% -18%;
+  inset: -7% -9%;
   pointer-events: none;
   background-repeat: no-repeat;
   transform: translate3d(0, 0, 0);
 }
 .workspace-root .workspace-main > .workspace-atmosphere::before {
   background:
-    radial-gradient(ellipse 53% 63% at 2% 12%, var(--ambient-blue), transparent 80%),
-    radial-gradient(ellipse 49% 56% at 98% 7%, var(--ambient-pink), transparent 80%),
-    radial-gradient(ellipse 52% 60% at 53% 89%, var(--ambient-violet), transparent 84%);
+    radial-gradient(ellipse 65% 70% at 12% 16%, var(--ambient-blue), transparent 80%),
+    radial-gradient(ellipse 62% 67% at 88% 20%, var(--ambient-pink), transparent 81%),
+    radial-gradient(ellipse 65% 73% at 53% 82%, var(--ambient-violet), transparent 84%);
   animation: workspace-ambient-breathe 29s ease-in-out infinite alternate;
 }
 .workspace-root .workspace-main > .workspace-atmosphere::after {
-  inset: -16% -24%;
+  inset: -12% -12%;
   background:
-    radial-gradient(ellipse 44% 59% at 30% 88%, var(--ambient-mint), transparent 85%),
-    radial-gradient(ellipse 54% 63% at 71% 50%, var(--ambient-violet), transparent 86%);
+    radial-gradient(ellipse 55% 64% at 25% 82%, var(--ambient-mint), transparent 85%),
+    radial-gradient(ellipse 60% 69% at 74% 49%, var(--ambient-violet), transparent 86%);
   opacity: .78;
   animation: workspace-ambient-counterflow 37s ease-in-out infinite alternate;
 }
-/* The legacy light sheet painted the canvas opaque, hiding backgrounds in
- * earlier attempts. Keep the body/page surfaces and all data cards intact;
- * remove only the shell canvas paint sitting over this decorative layer.
- */
+/* The old light-mode tail paints an opaque canvas. Preserve all actual
+ * surface/card colors but clear only that shell canvas paint, so BOTH the
+ * direct fallback and the drifting layers can be seen between the cards. */
 .workspace-root .workspace-main > .workspace-canvas {
   position: relative;
   z-index: 1;
@@ -67,11 +80,14 @@
 /* The sidebar and topbar retain their original clean, opaque appearance.
  * The glow exists exclusively behind the route canvas, not inside widgets.
  */
-html.smirel-app[data-theme='dark'] .workspace-root .workspace-main > .workspace-atmosphere {
-  --ambient-blue: rgba(45, 133, 222, .15);
-  --ambient-violet: rgba(102, 102, 232, .115);
-  --ambient-pink: rgba(194, 91, 170, .11);
-  --ambient-mint: rgba(50, 164, 177, .055);
+html.smirel-app[data-theme='dark'] .workspace-root .workspace-main {
+  --ambient-blue: rgba(45, 133, 222, .27);
+  --ambient-violet: rgba(102, 102, 232, .21);
+  --ambient-pink: rgba(194, 91, 170, .23);
+  --ambient-mint: rgba(50, 164, 177, .09);
+  --ambient-surface-blue: rgba(45, 133, 222, .15);
+  --ambient-surface-violet: rgba(102, 102, 232, .12);
+  --ambient-surface-pink: rgba(194, 91, 170, .13);
 }
 /* In drawer mode there is no permanent sidebar; the ambient field fills
  * the main viewport without shifting the responsive layout.
@@ -82,6 +98,10 @@ html.smirel-app[data-theme='dark'] .workspace-root .workspace-main > .workspace-
   }
 }
 @media (max-width: 720px) {
+  .workspace-root .workspace-main {
+    /* Fixed backgrounds behave inconsistently in several mobile browsers. */
+    background-attachment: scroll;
+  }
   .workspace-root .workspace-main > .workspace-atmosphere {
     top: 56px;
   }
