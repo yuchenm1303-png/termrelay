@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import postcss from 'postcss'
+import postcss, { type Rule } from 'postcss'
 
 const root = resolve(process.cwd(), 'src')
 const stylesheetPath = resolve(root, 'smirel/styles/admin-accounts-polish.css')
@@ -17,6 +17,22 @@ function hasRule(part: string) {
     )
 }
 
+function lastRule(selector: string, media?: string): Rule {
+  const nodes = media
+    ? stylesheet.nodes.filter((node) => node.type === 'atrule' && node.name === 'media' && node.params.includes(media))
+        .flatMap((node) => node.type === 'atrule' ? (node.nodes || []) : [])
+    : stylesheet.nodes.filter((node) => node.type === 'rule')
+  const rules = nodes.filter((node): node is Rule =>
+    node.type === 'rule' && postcss.list.comma(node.selector).some((part) => part.trim() === selector))
+  expect(rules.length).toBeGreaterThan(0)
+  return rules[rules.length - 1]
+}
+
+function value(rule: Rule, property: string) {
+  return rule.nodes.filter((node) => node.type === 'decl' && node.prop === property)
+    .map((node) => node.type === 'decl' ? node.value : '').at(-1)
+}
+
 describe('upstream accounts visual contract', () => {
   it('imports the page-specific finishing layer after shared workspace overrides', () => {
     const before = main.indexOf("import './smirel/styles/workspace-nav-controls.css'")
@@ -30,6 +46,31 @@ describe('upstream accounts visual contract', () => {
     expect(accountsPage).toContain("gemini: 'google'")
     expect(accountsPage).toContain("grok: 'xai'")
     expect(accountsPage).toContain(':title="groupName(id)"')
+  })
+
+  it('shows complete routing group names instead of clipping the capsule', () => {
+    const group = lastRule('.workspace-root .admin-accounts-page .upstream-groups')
+    const chip = lastRule('.workspace-root .admin-accounts-page .upstream-groups > b')
+    const row = lastRule('.workspace-root .admin-accounts-page .upstream-row')
+    expect(value(group, 'flex-wrap')).toBe('wrap')
+    expect(value(group, 'overflow')).toBe('visible')
+    expect(value(chip, 'white-space')).toBe('normal')
+    expect(value(chip, 'overflow-wrap')).toBe('anywhere')
+    expect(value(chip, 'height')).toBe('auto')
+    expect(value(row, 'padding-block')).toBe('12px')
+    expect(value(chip, 'text-overflow')).toBeUndefined()
+  })
+
+  it('matches visible row and header columns at each breakpoint', () => {
+    const head = '.workspace-root .admin-accounts-page .upstream-table-head'
+    const row = '.workspace-root .admin-accounts-page .upstream-row'
+    for (const media of [undefined, '1380px', '1120px', '860px']) {
+      const headColumns = value(lastRule(head, media), 'grid-template-columns')
+      const rowColumns = value(lastRule(row, media), 'grid-template-columns')
+      expect(headColumns).toBe(rowColumns)
+      expect(headColumns).toBeTruthy()
+    }
+    expect(value(lastRule(row, '640px'), 'grid-template-columns')).toContain('minmax(0, 1fr)')
   })
 
   it('maintains both themes and responsive overflow handling', () => {

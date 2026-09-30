@@ -242,7 +242,16 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 }
 .workspace-root .admin-accounts-page .clear-button:hover { color: var(--ac-accent); border-color: var(--ac-accent); }
 
-/* Rows: the account and its state are the visual anchors; avoid black bars. */
+/* Rows: the account and its state are the visual anchors; avoid black bars.
+ * The routing group gets enough space for its names, while other columns
+ * stay compact. The head must use the exact same tracks as every row. */
+.workspace-root .admin-accounts-page .upstream-table-head,
+.workspace-root .admin-accounts-page .upstream-row {
+  grid-template-columns: 30px minmax(205px, 1.35fr) minmax(115px, .6fr)
+    minmax(75px, .38fr) minmax(108px, .6fr) minmax(215px, 1.25fr)
+    minmax(105px, .6fr) minmax(225px, 1fr);
+  gap: 10px;
+}
 .workspace-root .admin-accounts-page .upstream-table-head {
   min-height: 46px;
   border-color: var(--ac-hairline);
@@ -253,6 +262,7 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 }
 .workspace-root .admin-accounts-page .upstream-row {
   min-height: 84px;
+  padding-block: 12px;
   border-color: var(--ac-hairline);
   background: var(--ac-panel);
   transition: background .19s ease;
@@ -315,26 +325,35 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
   transition: width .35s ease;
 }
 .workspace-root .admin-accounts-page .load-values > small { color: var(--ac-muted); font-size: 11px; }
+/* Long routing group names must remain readable in the table, without
+ * colliding with the neighboring last-used column. A row grows if needed. */
 .workspace-root .admin-accounts-page .upstream-groups {
-  flex-wrap: nowrap;
-  overflow: hidden;
-  gap: 5px;
+  min-width: 0;
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
 }
 .workspace-root .admin-accounts-page .upstream-groups > b {
   max-width: 100%;
   min-width: 0;
   flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  height: 26px;
-  padding-inline: 9px;
+  height: auto;
+  min-height: 26px;
+  padding: 5px 9px;
   border-radius: 8px;
   border: 1px solid var(--ac-hairline);
   background: var(--ac-panel-soft);
   color: var(--ac-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-align: left;
+  align-items: center;
 }
-.workspace-root .admin-accounts-page .upstream-groups > b { font: inherit; font-size: 11px; font-weight: 600; line-height: 24px; }
 .workspace-root .admin-accounts-page .upstream-groups > small { color: var(--ac-muted); }
 .workspace-root .admin-accounts-page .health-badge {
   height: 25px;
@@ -454,22 +473,46 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 
 /* Responsive columns must agree with the existing SFC's progressive hiding. */
 @media (max-width: 1380px) {
+  /* Below 1380px the last-used column is hidden by the SFC. */
+  .workspace-root .admin-accounts-page .upstream-table-head,
+  .workspace-root .admin-accounts-page .upstream-row {
+    grid-template-columns: 30px minmax(190px, 1.35fr) minmax(110px, .6fr)
+      minmax(72px, .36fr) minmax(195px, 1.25fr) minmax(208px, 1fr);
+    gap: 9px;
+  }
   .workspace-root .admin-accounts-page .accounts-toolbar { align-items: flex-start; flex-wrap: wrap; }
   .workspace-root .admin-accounts-page .toolbar-controls { justify-content: flex-start; flex-wrap: wrap; }
   .workspace-root .admin-accounts-page .search-control { flex: 1 1 260px; width: auto; max-width: 410px; }
 }
 @media (max-width: 1120px) {
+  /* Load is also hidden here: keep the routing group wider than actions. */
+  .workspace-root .admin-accounts-page .upstream-table-head,
+  .workspace-root .admin-accounts-page .upstream-row {
+    grid-template-columns: 30px minmax(170px, 1.25fr) minmax(100px, .6fr)
+      minmax(70px, .38fr) minmax(175px, 1.16fr) minmax(154px, .9fr);
+    gap: 8px;
+  }
   .workspace-root .admin-accounts-page .toolbar-title small { display: none; }
   .workspace-root .admin-accounts-page .accounts-toolbar { flex-direction: column; }
   .workspace-root .admin-accounts-page .toolbar-controls { width: 100%; }
 }
 @media (max-width: 860px) {
+  /* Group information remains available in expanded account details. */
+  .workspace-root .admin-accounts-page .upstream-table-head,
+  .workspace-root .admin-accounts-page .upstream-row {
+    grid-template-columns: 30px minmax(165px, 1fr) minmax(95px, .65fr) minmax(150px, .8fr);
+    gap: 8px;
+  }
   .workspace-root .admin-accounts-page .fleet-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace-root .admin-accounts-page .fleet-overview article:nth-child(3)::before { display: none; }
   .workspace-root .admin-accounts-page .fleet-overview article:nth-child(n + 3) { border-top: 1px solid var(--ac-hairline); }
   .workspace-root .admin-accounts-page .upstream-row { min-height: 79px; }
 }
 @media (max-width: 640px) {
+  .workspace-root .admin-accounts-page .upstream-row {
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
   .workspace-root .admin-accounts-page .accounts-heading { flex-direction: column; align-items: stretch; }
   .workspace-root .admin-accounts-page .accounts-heading-actions { width: 100%; padding-top: 0; }
   .workspace-root .admin-accounts-page .fleet-overview { grid-template-columns: 1fr; }
