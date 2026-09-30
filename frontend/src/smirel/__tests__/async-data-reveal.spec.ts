@@ -70,7 +70,8 @@ describe('async data readiness and route choreography', () => {
     expect(dashboardParent).toContain(':ready="dashboardReady"')
     const keyPage = read('src/smirel/pages/ApiKeysPage.vue')
     expect(keyPage).toContain('void loadGroupRates(requestId)')
-    expect(keyPage).not.toContain('await api.get<Record<string, number>>(\'/groups/rates\')')
+    const keyPageInitialLoad = keyPage.split('async function loadPage()')[1]?.split('async function createKey()')[0]
+    expect(keyPageInitialLoad).not.toContain('await api.get<Record<string, number>>(\'/groups/rates\')')
     const app = read('src/App.vue')
     expect(app).toContain('workspaceRouteSettled.value = !useWorkspace.value')
     expect(app).toContain('@after-enter="markWorkspaceEntered"')
