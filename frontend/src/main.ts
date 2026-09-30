@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { syncRouteSEO } from './smirel/core/seo'
 import i18n from './smirel/core/i18n'
 import { restoreInterfacePreferences } from './smirel/core/preferences'
 import { restoreNotifications } from './smirel/core/notifications'
@@ -44,7 +45,7 @@ import './smirel/styles/workspace-ambient.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')
-  document.title = 'Muxway 模枢 · One API. Every model.'
+  // Keep the crawlable document title intact until the router resolves.
   restoreInterfacePreferences()
   restoreNotifications()
   await restoreSession()
@@ -53,6 +54,7 @@ async function bootstrap() {
   app.use(i18n)
   app.use(router)
   await router.isReady()
+  syncRouteSEO(router.currentRoute.value.path)
   app.mount('#app')
 }
 
