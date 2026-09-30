@@ -11,6 +11,7 @@ import {
 } from '../core/api'
 import { useSession } from '../core/session'
 import { interfacePreferences } from '../core/preferences'
+import { estimatePasswordStrength } from '../core/password-strength'
 
 const route = useRoute()
 const router = useRouter()
@@ -81,6 +82,7 @@ const submitLabels: Record<string, string> = {
 const title = computed(() => titles[kind.value] || titles.login)
 const subtitle = computed(() => subtitles[kind.value] || '')
 const submitLabel = computed(() => submitLabels[kind.value] || submitLabels.login)
+const passwordStrength = computed(() => estimatePasswordStrength(password.value, email.value))
 
 function loadTurnstileScript(): Promise<void> {
   if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.resolve()
@@ -274,7 +276,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-page" :class="{ 'is-light': interfacePreferences.resolvedTheme === 'light' }">
+  <div class="auth-page" :class="{ 'is-light': interfacePreferences.resolvedTheme === 'light', 'is-register': kind === 'register' }">
     <RouterLink to="/home" class="auth-brand brand-link">
       <img :src="logoUrl" alt="Muxway" />
       <span>
@@ -383,6 +385,30 @@ async function submit() {
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4 20 20M10.7 6.1A11 11 0 0 1 12 6c6 0 9.5 6 9.5 6a15.8 15.8 0 0 1-3.1 3.5M6.8 7.8C4.1 9.4 2.5 12 2.5 12s3.5 6 9.5 6c1.5 0 2.8-.4 4-1"/><path d="M10 10a3 3 0 0 0 4 4"/></svg>
               </button>
             </span>
+            <div v-if="kind === 'register'" class="auth-strength" :class="`level-${passwordStrength.level}`">
+              <div class="auth-strength-head">
+                <span>密码强度 <small>仅供参考</small></span>
+                <strong aria-live="polite" aria-atomic="true">{{ passwordStrength.label }}</strong>
+              </div>
+              <div
+                class="auth-strength-track"
+                role="meter"
+                aria-label="密码强度估算"
+                aria-valuemin="0"
+                aria-valuemax="4"
+                :aria-valuenow="passwordStrength.level"
+                :aria-valuetext="passwordStrength.label"
+              >
+                <span
+                  v-for="step in 4"
+                  :key="step"
+                  class="auth-strength-segment"
+                  :class="{ 'is-filled': passwordStrength.level >= step }"
+                  aria-hidden="true"
+                ></span>
+              </div>
+              <p class="auth-strength-hint">{{ passwordStrength.hint }}</p>
+            </div>
           </div>
 
           <div v-if="kind === 'register'" class="auth-field">
@@ -895,6 +921,67 @@ async function submit() {
 }
 .auth-reveal svg { display: block; width: 19px; height: 19px; }
 .auth-reveal:hover { color: var(--auth-link); background: rgba(122, 147, 212, .10); }
+/* Read-only strength indicator: never an editable range slider.
+ * The server keeps sole authority over password acceptance. */
+.auth-strength {
+  --strength-color: var(--auth-muted);
+  margin-top: 1px;
+}
+.auth-strength.level-1 { --strength-color: #e18d94; }
+.auth-strength.level-2 { --strength-color: #dba654; }
+.auth-strength.level-3 { --strength-color: #73a5f4; }
+.auth-strength.level-4 { --strength-color: #61c3aa; }
+.auth-page.is-light .auth-strength.level-1 { --strength-color: #c75364; }
+.auth-page.is-light .auth-strength.level-2 { --strength-color: #bc842f; }
+.auth-page.is-light .auth-strength.level-3 { --strength-color: #4f7bd3; }
+.auth-page.is-light .auth-strength.level-4 { --strength-color: #298975; }
+.auth-strength-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+  color: var(--auth-subtle);
+  font-size: .72rem;
+}
+.auth-strength-head > span { font-weight: 620; }
+.auth-strength-head small {
+  margin-left: 5px;
+  color: var(--auth-muted);
+  font-size: .65rem;
+  font-weight: 430;
+}
+.auth-strength-head strong {
+  color: var(--strength-color);
+  font-size: .73rem;
+  font-weight: 720;
+  white-space: nowrap;
+  transition: color .27s ease;
+}
+.auth-strength.level-0 .auth-strength-head strong { color: var(--auth-muted); }
+.auth-strength-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  height: 5px;
+}
+.auth-strength-segment {
+  min-width: 0;
+  border-radius: 99px;
+  background: var(--auth-line);
+  transition: background-color .26s ease, box-shadow .26s ease;
+}
+.auth-strength-segment.is-filled {
+  background: var(--strength-color);
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--strength-color) 19%, transparent);
+}
+.auth-strength-hint {
+  margin: 7px 0 0;
+  color: var(--auth-muted);
+  font-size: .67rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
 .turnstile-official {
   display: flex;
   flex-direction: column;
@@ -1098,6 +1185,11 @@ async function submit() {
   .auth-card form.with-oauth { margin-top: 14px; }
   .auth-field { gap: 6px; }
   .auth-field-control { height: 44px; }
+  .auth-page.is-register .auth-card { padding-block: clamp(19px, 2.6vh, 27px); }
+  .auth-page.is-register .auth-card header { margin-top: 17px; }
+  .auth-page.is-register .oauth-login { margin-top: 14px; }
+  .auth-page.is-register .auth-card form.with-oauth { gap: 9px; margin-top: 12px; }
+  .auth-page.is-register .auth-card footer { margin-top: 12px; }
   .auth-submit { min-height: 47px; }
   .auth-card footer { margin-top: 15px; }
   .auth-page-footer { padding-bottom: 13px; }
