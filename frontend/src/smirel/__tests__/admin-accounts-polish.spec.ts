@@ -17,13 +17,14 @@ function hasRule(part: string) {
     )
 }
 
-function lastRule(selector: string, media?: string): Rule {
+function lastRule(selector: string, media?: string, property?: string): Rule {
   const nodes = media
     ? stylesheet.nodes.filter((node) => node.type === 'atrule' && node.name === 'media' && node.params.includes(media))
         .flatMap((node) => node.type === 'atrule' ? (node.nodes || []) : [])
     : stylesheet.nodes.filter((node) => node.type === 'rule')
   const rules = nodes.filter((node): node is Rule =>
-    node.type === 'rule' && postcss.list.comma(node.selector).some((part) => part.trim() === selector))
+    node.type === 'rule' && postcss.list.comma(node.selector).some((part) => part.trim() === selector)
+    && (!property || node.nodes.some((child) => child.type === 'decl' && child.prop === property)))
   expect(rules.length).toBeGreaterThan(0)
   return rules[rules.length - 1]
 }
@@ -65,8 +66,8 @@ describe('upstream accounts visual contract', () => {
     const head = '.workspace-root .admin-accounts-page .upstream-table-head'
     const row = '.workspace-root .admin-accounts-page .upstream-row'
     for (const media of [undefined, '1380px', '1120px', '860px']) {
-      const headColumns = value(lastRule(head, media), 'grid-template-columns')
-      const rowColumns = value(lastRule(row, media), 'grid-template-columns')
+      const headColumns = value(lastRule(head, media, 'grid-template-columns'), 'grid-template-columns')
+      const rowColumns = value(lastRule(row, media, 'grid-template-columns'), 'grid-template-columns')
       expect(headColumns).toBe(rowColumns)
       expect(headColumns).toBeTruthy()
     }
