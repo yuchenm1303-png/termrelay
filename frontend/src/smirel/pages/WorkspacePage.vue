@@ -23,6 +23,7 @@ const { t } = useI18n()
 const { state } = useSession()
 const feature = computed(() => String(route.meta.feature || 'module'))
 const loading = ref(false)
+const dashboardReady = ref(false)
 const error = ref('')
 const stats = ref<DashboardStats | null>(null)
 const keys = ref<ApiKeyRow[]>([])
@@ -89,7 +90,10 @@ const pageDescription = computed(() => {
 async function load() {
   error.value = ''
   if (previewMode) {
-    if (isDashboard.value) stats.value = { total_api_keys: 4, active_api_keys: 3, total_requests: 12480, total_tokens: 8294000, total_actual_cost: 18.72, today_requests: 842, today_tokens: 612340, today_actual_cost: 1.94 }
+    if (isDashboard.value) {
+      stats.value = { total_api_keys: 4, active_api_keys: 3, total_requests: 12480, total_tokens: 8294000, total_actual_cost: 18.72, today_requests: 842, today_tokens: 612340, today_actual_cost: 1.94 }
+      dashboardReady.value = true
+    }
     if (isKeys.value) keys.value = [{ id: 1, name: 'Production', key: 'sk-••••••••9F2A', status: 'active', created_at: '2026-09-01' }, { id: 2, name: 'Development', key: 'sk-••••••••71CD', status: 'active', created_at: '2026-08-28' }]
     if (isUsage.value) usage.value = [{ id: 1, model: 'gpt-5.6', inbound_endpoint: '/v1/responses', input_tokens: 12000, output_tokens: 6420, actual_cost: 0.082, created_at: '2026-09-06 14:20' }, { id: 2, model: 'claude-sonnet', inbound_endpoint: '/v1/messages', input_tokens: 6400, output_tokens: 3420, actual_cost: 0.051, created_at: '2026-09-06 14:12' }]
     return
@@ -106,7 +110,10 @@ async function load() {
       const data = (await api.get<{ items?: UsageRecord[] } | UsageRecord[]>('/usage', { params: { page: 1, page_size: 30 } })).data
       usage.value = Array.isArray(data) ? data : (data.items || [])
     }
-  } catch (caught) { error.value = getErrorMessage(caught) } finally { loading.value = false }
+  } catch (caught) { error.value = getErrorMessage(caught) } finally {
+    loading.value = false
+    if (isDashboard.value) dashboardReady.value = true
+  }
 }
 
 async function createKey() {
@@ -176,6 +183,7 @@ onMounted(() => void load())
         :stats="stats"
         :balance="accountBalance"
         :loading="loading"
+        :ready="dashboardReady"
         @refresh="load"
       />
 

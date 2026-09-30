@@ -64,6 +64,10 @@ describe('async data readiness and route choreography', () => {
       expect(page, name).toContain('<AsyncDataReveal :ready="!loading"')
       expect(page, name).toContain('const loading = ref(true)')
     }
+    const dashboard = read('src/smirel/components/UserDashboardPage.vue')
+    expect(dashboard).toContain('<AsyncDataReveal :ready="ready" :content-motion="false"')
+    const dashboardParent = read('src/smirel/pages/WorkspacePage.vue')
+    expect(dashboardParent).toContain(':ready="dashboardReady"')
     const app = read('src/App.vue')
     expect(app).toContain('workspaceRouteSettled.value = !useWorkspace.value')
     expect(app).toContain('@after-enter="markWorkspaceEntered"')

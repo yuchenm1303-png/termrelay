@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AsyncDataReveal from './AsyncDataReveal.vue'
 import '../styles/user-dashboard.css'
 import '../styles/user-dashboard-refresh.css'
 import '../styles/user-dashboard-lower.css'
@@ -21,6 +22,7 @@ const props = defineProps<{
   stats: DashboardStats | null
   balance: number
   loading: boolean
+  ready: boolean
 }>()
 
 const emit = defineEmits<{
@@ -59,6 +61,23 @@ async function copyEndpoint() {
       </button>
     </header>
 
+    <AsyncDataReveal :ready="ready" :content-motion="false" class="user-dashboard-data">
+      <template #loading>
+        <div class="user-dashboard-loading-layout" role="status" :aria-label="t('workspace.refreshing')">
+          <div class="user-dashboard-loading-overview" aria-hidden="true">
+            <div v-for="index in 2" :key="index" class="user-dashboard-loading-tile">
+              <i class="async-data-skeleton" /><i class="async-data-skeleton" /><i class="async-data-skeleton" />
+            </div>
+          </div>
+          <div class="user-dashboard-loading-metrics" aria-hidden="true">
+            <i class="async-data-skeleton" />
+            <div><i v-for="index in 3" :key="index" class="async-data-skeleton" /></div>
+          </div>
+          <div class="user-dashboard-loading-overview" aria-hidden="true">
+            <div v-for="index in 2" :key="index" class="user-dashboard-loading-tile lower"><i class="async-data-skeleton" /><i class="async-data-skeleton" /></div>
+          </div>
+        </div>
+      </template>
     <section class="user-console-overview">
       <div class="user-balance-panel">
         <div class="user-panel-label">{{ t('workspace.availableBalance') }}</div>
@@ -144,5 +163,39 @@ async function copyEndpoint() {
         </nav>
       </div>
     </section>
+    </AsyncDataReveal>
   </div>
 </template>
+
+<style scoped>
+.user-dashboard-loading-layout { display: grid; gap: 16px; }
+.user-dashboard-loading-overview { display: grid; grid-template-columns: .82fr 1.18fr; gap: 16px; }
+.user-dashboard-loading-tile {
+  min-height: 208px;
+  padding: 24px;
+  border: 1px solid var(--ws-border, rgba(127, 145, 161, .18));
+  border-radius: 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+}
+.user-dashboard-loading-tile i:nth-child(1) { width: 34%; height: 12px; }
+.user-dashboard-loading-tile i:nth-child(2) { width: 56%; height: 34px; }
+.user-dashboard-loading-tile i:nth-child(3) { width: 77%; height: 12px; }
+.user-dashboard-loading-tile.lower { min-height: 180px; }
+.user-dashboard-loading-metrics {
+  min-height: 210px;
+  padding: 24px;
+  border: 1px solid var(--ws-border, rgba(127, 145, 161, .18));
+  border-radius: 13px;
+  display: grid;
+  gap: 24px;
+}
+.user-dashboard-loading-metrics > i { width: 24%; height: 14px; }
+.user-dashboard-loading-metrics > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.user-dashboard-loading-metrics > div i { height: 86px; }
+@media (max-width: 760px) {
+  .user-dashboard-loading-overview { grid-template-columns: 1fr; }
+}
+</style>
