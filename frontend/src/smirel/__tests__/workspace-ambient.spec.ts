@@ -85,6 +85,23 @@ describe('full-shell shared aurora', () => {
     expect(decl(`${dark} body:has(.workspace-root)`, 'background').value).toBe('#0d121b')
   })
 
+  it('places the original logo on the sidebar without a separate white brand tile', () => {
+    const row = `${root} .workspace-sidebar .workspace-brand-row`
+    const link = `${row} .brand-link`
+    expect(decl(row, 'background').value).toBe('transparent')
+    expect(decl(row, 'background').important).toBe(true)
+    expect(decl(row, 'box-shadow').value).toBe('none')
+    for (const state of ['', ':hover', ':active']) {
+      expect(decl(link + state, 'background').value).toBe('transparent')
+      expect(decl(link + state, 'background').important).toBe(true)
+      expect(decl(link + state, 'border-color').value).toBe('transparent')
+      expect(decl(link + state, 'box-shadow').value).toBe('none')
+    }
+    expect(decl(link + ':focus-visible', 'outline').value).toContain('2px solid')
+    expect(shell).toContain('class="workspace-brand-mark"')
+    expect(shell).toContain('<img :src="logoUrl" alt=""')
+  })
+
   it('keeps the original drift, neutral center, and safe responsive drawer', () => {
     expect(decl(plane, 'background').value).toContain('--workspace-ambient-base-blue')
     expect(decl(plane, 'background').value).toContain('--workspace-ambient-base-pink')

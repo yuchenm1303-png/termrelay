@@ -131,6 +131,28 @@ html.smirel-app[data-theme='dark'] .workspace-root .workspace-brand-row {
   border-bottom-color: rgba(129, 155, 208, .13);
 }
 
+/* The logo belongs directly on the sidebar atmosphere, not in a separate
+ * white card. Clear both the brand-row wrapper and the RouterLink's
+ * light-theme hover fill; preserve the supplied original logo asset and
+ * keep an explicit keyboard focus ring instead of a persistent card. */
+.workspace-root .workspace-sidebar .workspace-brand-row {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.workspace-root .workspace-sidebar .workspace-brand-row .brand-link,
+.workspace-root .workspace-sidebar .workspace-brand-row .brand-link:hover,
+.workspace-root .workspace-sidebar .workspace-brand-row .brand-link:active {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.workspace-root .workspace-sidebar .workspace-brand-row .brand-link:focus-visible {
+  outline: 2px solid rgba(69, 143, 221, .6) !important;
+  outline-offset: 2px;
+}
+
 @keyframes workspace-ambient-breathe {
   from { transform: translate3d(-1.8%, 1%, 0) scale(1.015); opacity: .46; }
   to { transform: translate3d(1.8%, -1.3%, 0) scale(1.045); opacity: .73; }
