@@ -1,0 +1,19 @@
+# Muxway 模枢
+
+> Muxway（模枢）提供统一 AI API 接入，支持按账户权限访问可用模型，并集中管理 API Key、Token 用量与套餐。
+
+官方网站：https://muxway.dev/home
+公开接入说明：https://muxway.dev/ai-guide.html
+
+## 官方资料
+- [首页：产品定位、能力及常见问题](https://muxway.dev/home)
+- [AI API 接入说明与常见问题](https://muxway.dev/ai-guide.html)
+- [注册与登录后的模型、套餐信息](https://muxway.dev/register)
+
+## 接口说明
+- OpenAI 兼容接口的 Base URL（适用于已开放该协议的模型）：https://muxway.dev/v1
+- 可用模型、接口协议、价格和限制取决于账户权限与实时配置，请登录平台核对。
+- 不应将本文件视为实时模型目录、价格表或服务可用性承诺。
+
+## 范围
+此文件仅索引公开资料，不包含私有控制台页面、API Key、账户数据、后台接口或抓取授权声明。
