@@ -1,48 +1,48 @@
 package web
 
 import (
-  "bytes"
-  "net/http"
-  "path"
-  "strings"
+	"bytes"
+	"net/http"
+	"path"
+	"strings"
 
-  "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 // The backend serves one SPA document for many routes. Only the public landing
 // page is indexable; private SPA URLs receive an HTTP-level noindex even when
 // JavaScript is disabled or interrupted.
 func SEOHeaders() gin.HandlerFunc {
-  return func(c *gin.Context) {
-    if (c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead) &&
-      isFrontendDocumentPath(c.Request.URL.Path) &&
-      !isSearchableHome(c.Request.URL.Path) {
-      c.Header("X-Robots-Tag", "noindex, nofollow, noarchive")
-    }
-    c.Next()
-  }
+	return func(c *gin.Context) {
+		if (c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead) &&
+			isFrontendDocumentPath(c.Request.URL.Path) &&
+			!isSearchableHome(c.Request.URL.Path) {
+			c.Header("X-Robots-Tag", "noindex, nofollow, noarchive")
+		}
+		c.Next()
+	}
 }
 
 func isSearchableHome(requestPath string) bool {
-  return requestPath == "/" || requestPath == "/home"
+	return requestPath == "/" || requestPath == "/home"
 }
 
 func isFrontendDocumentPath(requestPath string) bool {
-  if requestPath == "/robots.txt" || requestPath == "/sitemap.xml" {
-    return false
-  }
-  for _, prefix := range []string{
-    "/api/", "/v1/", "/v1beta/", "/backend-api/", "/antigravity/",
-    "/assets/", "/images/", "/videos/", "/.well-known/",
-  } {
-    if strings.HasPrefix(requestPath, prefix) {
-      return false
-    }
-  }
-  if path.Ext(requestPath) != "" {
-    return false // static files, including scripts, stylesheets and icons
-  }
-  return true
+	if requestPath == "/robots.txt" || requestPath == "/sitemap.xml" {
+		return false
+	}
+	for _, prefix := range []string{
+		"/api/", "/v1/", "/v1beta/", "/backend-api/", "/antigravity/",
+		"/assets/", "/images/", "/videos/", "/.well-known/",
+	} {
+		if strings.HasPrefix(requestPath, prefix) {
+			return false
+		}
+	}
+	if path.Ext(requestPath) != "" {
+		return false // static files, including scripts, stylesheets and icons
+	}
+	return true
 }
 
 // The Vue app mounts normally and replaces this crawlable HTML. Inject the
@@ -74,12 +74,12 @@ const homeSnapshot = `<main class="seo-snapshot" aria-label="Muxway 模枢">
 </main>`
 
 func decorateHomeHTML(body []byte, requestPath string) []byte {
-  if !isSearchableHome(requestPath) {
-    return body
-  }
-  // Vite retains the app mount node. An explicit, non-JS fallback avoids
-  // shipping a whole second renderer and does not modify Vue's animation code.
-  const mount = `<div id="app"></div>`
-  content := bytes.Replace(body, []byte(mount), []byte(`<div id="app">`+homeSnapshot+`</div>`), 1)
-  return content
+	if !isSearchableHome(requestPath) {
+		return body
+	}
+	// Vite retains the app mount node. An explicit, non-JS fallback avoids
+	// shipping a whole second renderer and does not modify Vue's animation code.
+	const mount = `<div id="app"></div>`
+	content := bytes.Replace(body, []byte(mount), []byte(`<div id="app">`+homeSnapshot+`</div>`), 1)
+	return content
 }
