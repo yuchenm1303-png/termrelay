@@ -75,7 +75,7 @@ describe('upstream accounts visual contract', () => {
       // at 1380px, then load at 1120px, then models/groups at 860px.
       const expected = media === '1380px' ? 7 : media === '1180px' || media === '1120px' ? 6 : media === '860px' ? 4 : 8
       const flexibleTracks = (headColumns?.match(/minmax\(/g) || []).length
-      const fixedTracks = (headColumns?.match(/(?:^|\\s)\\d+px(?=\\s|$)/g) || []).length
+      const fixedTracks = (headColumns?.match(/(?:^|\s)\d+px(?=\s|$)/g) || []).length
       expect(flexibleTracks + fixedTracks).toBe(expected)
     }
     expect(value(lastRule(row, '640px'), 'grid-template-columns')).toContain('minmax(0, 1fr)')
