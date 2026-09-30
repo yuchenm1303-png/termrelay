@@ -15,10 +15,10 @@ describe('auth viewport layout contract', () => {
   })
 
   it('contains decoration within the page instead of generating a phantom scrollbar', () => {
-    const ambientLayer = scopedStyles.match(/\\.auth-page::after\\s*\\{([^}]+)\\}/)?.[1] ?? ''
-    expect(ambientLayer).toMatch(/inset:\\s*0;/)
-    expect(ambientLayer).not.toMatch(/(?:rotate\\(|right:\\s*-|top:\\s*\\d+%|width:\\s*min\\()/)
-    expect(scopedStyles).not.toMatch(/\\.auth-page::after\\s*\\{\\s*width:\\s*90vw/)
+    const ambientLayer = scopedStyles.match(/\.auth-page::after\s*\{([^}]+)\}/)?.[1] ?? ''
+    expect(ambientLayer).toMatch(/inset:\s*0;/)
+    expect(ambientLayer).not.toMatch(/(?:rotate\(|right:\s*-|top:\s*\d+%|width:\s*min\()/)
+    expect(scopedStyles).not.toMatch(/\.auth-page::after\s*\{\s*width:\s*90vw/)
     // Keep normal overflow available for browser zoom, dynamic errors and Turnstile.
     expect(scopedStyles).toContain('overflow-y: auto;')
   })
