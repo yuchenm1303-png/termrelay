@@ -3,24 +3,24 @@
  * Fixed behind the scrolling canvas, clipped at the chrome boundary, and
  * independent of async page loading and sidebar/topbar interactions.
  */
-/* The former fixed layer alone could disappear behind the console's legacy
- * opaque backgrounds. Paint a visible, very soft fallback on the *actual*
- * workspace main surface too. Unlike a sibling layer, this cannot be
- * occluded by the route canvas once its own background is transparent.
- * Color and motion share tokens, so all console routes stay consistent. */
+/* The legacy canvas paints an opaque background, so keep a deliberately
+ * faint static fallback on the real scrolling surface. The former fallback
+ * used viewport-wide, 15-20% gradients; combined with the animated layer
+ * it tinted the entire dashboard blue/purple. These corner washes fade well
+ * before the central cards, with almost no color at the lower edge. */
 .workspace-root .workspace-main {
-  --ambient-blue: rgba(80, 165, 242, .31);
-  --ambient-violet: rgba(126, 131, 231, .23);
-  --ambient-pink: rgba(224, 143, 207, .255);
-  --ambient-mint: rgba(103, 207, 204, .09);
-  --ambient-surface-blue: rgba(80, 165, 242, .20);
-  --ambient-surface-violet: rgba(126, 131, 231, .145);
-  --ambient-surface-pink: rgba(224, 143, 207, .155);
+  --ambient-blue: rgba(80, 165, 242, .085);
+  --ambient-violet: rgba(126, 131, 231, .038);
+  --ambient-pink: rgba(224, 143, 207, .080);
+  --ambient-mint: rgba(103, 207, 204, .025);
+  --ambient-surface-blue: rgba(80, 165, 242, .065);
+  --ambient-surface-violet: rgba(126, 131, 231, .016);
+  --ambient-surface-pink: rgba(224, 143, 207, .053);
   position: relative;
   background-image:
-    radial-gradient(ellipse 72% 76% at 12% 18%, var(--ambient-surface-blue), transparent 77%),
-    radial-gradient(ellipse 67% 73% at 91% 28%, var(--ambient-surface-pink), transparent 79%),
-    radial-gradient(ellipse 74% 70% at 51% 94%, var(--ambient-surface-violet), transparent 82%) !important;
+    radial-gradient(ellipse 44% 47% at 4% 3%, var(--ambient-surface-blue), transparent 79%),
+    radial-gradient(ellipse 42% 42% at 98% 4%, var(--ambient-surface-pink), transparent 80%),
+    radial-gradient(ellipse 32% 31% at 54% 105%, var(--ambient-surface-violet), transparent 84%) !important;
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -41,25 +41,24 @@
 .workspace-root .workspace-main > .workspace-atmosphere::after {
   content: '';
   position: absolute;
-  inset: -7% -9%;
+  inset: -5% -7%;
   pointer-events: none;
   background-repeat: no-repeat;
   transform: translate3d(0, 0, 0);
 }
 .workspace-root .workspace-main > .workspace-atmosphere::before {
   background:
-    radial-gradient(ellipse 65% 70% at 12% 16%, var(--ambient-blue), transparent 80%),
-    radial-gradient(ellipse 62% 67% at 88% 20%, var(--ambient-pink), transparent 81%),
-    radial-gradient(ellipse 65% 73% at 53% 82%, var(--ambient-violet), transparent 84%);
-  animation: workspace-ambient-breathe 29s ease-in-out infinite alternate;
+    radial-gradient(ellipse 42% 49% at 5% 5%, var(--ambient-blue), transparent 81%),
+    radial-gradient(ellipse 40% 47% at 96% 10%, var(--ambient-pink), transparent 82%);
+  animation: workspace-ambient-breathe 31s ease-in-out infinite alternate;
 }
 .workspace-root .workspace-main > .workspace-atmosphere::after {
-  inset: -12% -12%;
+  inset: -9% -9%;
   background:
-    radial-gradient(ellipse 55% 64% at 25% 82%, var(--ambient-mint), transparent 85%),
-    radial-gradient(ellipse 60% 69% at 74% 49%, var(--ambient-violet), transparent 86%);
-  opacity: .78;
-  animation: workspace-ambient-counterflow 37s ease-in-out infinite alternate;
+    radial-gradient(ellipse 38% 43% at 22% 82%, var(--ambient-mint), transparent 85%),
+    radial-gradient(ellipse 40% 49% at 78% 27%, var(--ambient-violet), transparent 86%);
+  opacity: .62;
+  animation: workspace-ambient-counterflow 41s ease-in-out infinite alternate;
 }
 /* The old light-mode tail paints an opaque canvas. Preserve all actual
  * surface/card colors but clear only that shell canvas paint, so BOTH the
@@ -70,24 +69,24 @@
   background: transparent !important;
 }
 @keyframes workspace-ambient-breathe {
-  from { transform: translate3d(-1.7%, 1%, 0) scale(1.015); opacity: .76; }
-  to { transform: translate3d(2.2%, -2%, 0) scale(1.055); opacity: 1; }
+  from { transform: translate3d(-1.5%, 1%, 0) scale(1.015); opacity: .65; }
+  to { transform: translate3d(1.7%, -1.2%, 0) scale(1.045); opacity: .9; }
 }
 @keyframes workspace-ambient-counterflow {
-  from { transform: translate3d(2%, -2%, 0) scale(1.02); opacity: .54; }
-  to { transform: translate3d(-2.5%, 2%, 0) scale(1.065); opacity: .82; }
+  from { transform: translate3d(1.8%, -1.5%, 0) scale(1.02); opacity: .45; }
+  to { transform: translate3d(-1.8%, 1.7%, 0) scale(1.055); opacity: .68; }
 }
 /* The sidebar and topbar retain their original clean, opaque appearance.
  * The glow exists exclusively behind the route canvas, not inside widgets.
  */
 html.smirel-app[data-theme='dark'] .workspace-root .workspace-main {
-  --ambient-blue: rgba(45, 133, 222, .27);
-  --ambient-violet: rgba(102, 102, 232, .21);
-  --ambient-pink: rgba(194, 91, 170, .23);
-  --ambient-mint: rgba(50, 164, 177, .09);
-  --ambient-surface-blue: rgba(45, 133, 222, .15);
-  --ambient-surface-violet: rgba(102, 102, 232, .12);
-  --ambient-surface-pink: rgba(194, 91, 170, .13);
+  --ambient-blue: rgba(45, 133, 222, .105);
+  --ambient-violet: rgba(102, 102, 232, .050);
+  --ambient-pink: rgba(194, 91, 170, .087);
+  --ambient-mint: rgba(50, 164, 177, .032);
+  --ambient-surface-blue: rgba(45, 133, 222, .071);
+  --ambient-surface-violet: rgba(102, 102, 232, .025);
+  --ambient-surface-pink: rgba(194, 91, 170, .057);
 }
 /* In drawer mode there is no permanent sidebar; the ambient field fills
  * the main viewport without shifting the responsive layout.

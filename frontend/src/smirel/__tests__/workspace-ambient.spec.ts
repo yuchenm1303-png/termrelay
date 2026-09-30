@@ -58,6 +58,18 @@ describe('authenticated workspace ambient layers', () => {
       expect(background.value).toContain(`var(--ambient-surface-${tone})`)
     }
     expect(property(main, 'background-attachment').value).toBe('fixed')
+    // The screenshot regression: the previous 70%-wide static washes plus
+    // 60%-wide animated gradients combined into a blue/purple page-sized veil.
+    // Never reintroduce broad or high-alpha fallback colors.
+    const staticColors = ['--ambient-surface-blue', '--ambient-surface-violet', '--ambient-surface-pink']
+    for (const token of staticColors) {
+      const stop = property(main, token).value.match(/rgba\([^)]*,\s*([.0-9]+)\)/)
+      expect(stop, token).not.toBeNull()
+      expect(Number(stop![1]), token).toBeLessThanOrEqual(.075)
+    }
+    expect(background.value).toContain('ellipse 44% 47%')
+    expect(background.value).toContain('ellipse 42% 42%')
+    expect(background.value).not.toContain('ellipse 72% 76%')
   })
   it('uses quiet blue violet and pink washes with two independent ambient loops', () => {
     const colors = findRule('.workspace-root .workspace-main')
@@ -66,16 +78,19 @@ describe('authenticated workspace ambient layers', () => {
     }
     expect(property(`${atmosphere}::before`, 'animation').value).toContain('workspace-ambient-breathe')
     expect(property(`${atmosphere}::after`, 'animation').value).toContain('workspace-ambient-counterflow')
+    const cloud = property(`${atmosphere}::before`, 'background').value
+    expect(cloud).toContain('ellipse 42% 49%')
+    expect(cloud).not.toContain('ellipse 65% 70%')
     const names: string[] = []
     css.walkAtRules('keyframes', (rule) => names.push(rule.params))
     expect(names).toContain('workspace-ambient-breathe')
     expect(names).toContain('workspace-ambient-counterflow')
     expect(property('.workspace-root .workspace-main', '--ambient-blue').value)
-      .toBe('rgba(80, 165, 242, .31)')
+      .toBe('rgba(80, 165, 242, .085)')
     const dark = "html.smirel-app[data-theme='dark'] .workspace-root .workspace-main"
-    expect(property(dark, '--ambient-blue').value).toBe('rgba(45, 133, 222, .27)')
+    expect(property(dark, '--ambient-blue').value).toBe('rgba(45, 133, 222, .105)')
     expect(property(dark, '--ambient-surface-pink').value)
-      .toBe('rgba(194, 91, 170, .13)')
+      .toBe('rgba(194, 91, 170, .057)')
   })
   it('keeps mobile gutters safe and removes animation for reduced-motion users', () => {
     const mobile = '(max-width: 1279px), (max-width: 1366px) and (pointer: coarse)'
