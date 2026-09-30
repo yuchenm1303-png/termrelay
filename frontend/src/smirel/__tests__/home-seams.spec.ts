@@ -8,7 +8,8 @@ const stylesheet = postcss.parse(readFileSync(
 ))
 const rules = stylesheet.nodes.filter((node): node is Rule => node.type === 'rule')
 function declaration(selector: string, property: string): Declaration {
-  const rule = rules.find((node) => node.selector === selector)
+  // PostCSS keeps grouped selectors as one rule (e.g. dark main + footer).
+  const rule = rules.find((node) => postcss.list.comma(node.selector).some((part) => part.trim() === selector))
   const entry = rule?.nodes.find((node): node is Declaration =>
     node.type === 'decl' && node.prop === property)
   expect(entry, `${selector} must set ${property}`).toBeDefined()
