@@ -486,8 +486,18 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
   .workspace-root .admin-accounts-page .toolbar-controls { justify-content: flex-start; flex-wrap: wrap; }
   .workspace-root .admin-accounts-page .search-control { flex: 1 1 260px; width: auto; max-width: 410px; }
 }
+@media (max-width: 1180px) {
+  /* The SFC already hides load at 1180px (before its 1120px v2 rules).
+   * Match that earlier breakpoint to prevent an empty ghost track. */
+  .workspace-root .admin-accounts-page .upstream-table-head,
+  .workspace-root .admin-accounts-page .upstream-row {
+    grid-template-columns: 30px minmax(170px, 1.25fr) minmax(100px, .6fr)
+      minmax(70px, .38fr) minmax(175px, 1.16fr) minmax(154px, .9fr);
+    gap: 8px;
+  }
+}
 @media (max-width: 1120px) {
-  /* Load is also hidden here: keep the routing group wider than actions. */
+  /* Load remains hidden here: keep the routing group wider than actions. */
   .workspace-root .admin-accounts-page .upstream-table-head,
   .workspace-root .admin-accounts-page .upstream-row {
     grid-template-columns: 30px minmax(170px, 1.25fr) minmax(100px, .6fr)
