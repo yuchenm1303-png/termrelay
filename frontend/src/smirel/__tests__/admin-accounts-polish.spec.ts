@@ -70,6 +70,11 @@ describe('upstream accounts visual contract', () => {
       const rowColumns = value(lastRule(row, media, 'grid-template-columns'), 'grid-template-columns')
       expect(headColumns).toBe(rowColumns)
       expect(headColumns).toBeTruthy()
+      // Expected visible columns: check, identity, state, models, load,
+      // groups, recency, actions. The legacy breakpoint only hides recency
+      // at 1380px, then load at 1120px, then models/groups at 860px.
+      const expected = media === '1380px' ? 7 : media === '1120px' ? 6 : media === '860px' ? 4 : 8
+      expect((headColumns?.match(/minmax\(/g) || []).length + 1).toBe(expected)
     }
     expect(value(lastRule(row, '640px'), 'grid-template-columns')).toContain('minmax(0, 1fr)')
   })

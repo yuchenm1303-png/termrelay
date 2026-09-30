@@ -473,11 +473,13 @@ html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before
 
 /* Responsive columns must agree with the existing SFC's progressive hiding. */
 @media (max-width: 1380px) {
-  /* Below 1380px the last-used column is hidden by the SFC. */
+  /* At this breakpoint only last-used is hidden. Keep load and group
+   * in separate tracks, matching the SFC's seven remaining columns. */
   .workspace-root .admin-accounts-page .upstream-table-head,
   .workspace-root .admin-accounts-page .upstream-row {
-    grid-template-columns: 30px minmax(190px, 1.35fr) minmax(110px, .6fr)
-      minmax(72px, .36fr) minmax(195px, 1.25fr) minmax(208px, 1fr);
+    grid-template-columns: 30px minmax(180px, 1.25fr) minmax(105px, .6fr)
+      minmax(70px, .36fr) minmax(98px, .54fr) minmax(175px, 1.1fr)
+      minmax(195px, 1fr);
     gap: 9px;
   }
   .workspace-root .admin-accounts-page .accounts-toolbar { align-items: flex-start; flex-wrap: wrap; }
