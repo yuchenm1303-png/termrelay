@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { interfacePreferences } from '../core/preferences'
 
@@ -139,7 +140,7 @@ const previewCatalog: PlazaResponse = {
 }
 
 const isZh = computed(() => interfacePreferences.locale === 'zh-CN')
-const loading = ref(false)
+const loading = ref(true)
 const error = ref('')
 const description = ref('')
 const groups = ref<PlazaGroup[]>([])
@@ -668,6 +669,12 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <AsyncDataReveal :ready="!loading" class="market-async-data">
+        <template #loading>
+          <div class="market-loading" role="status" aria-label="Loading models">
+            <i v-for="n in 6" :key="n"></i>
+          </div>
+        </template>
       <section class="market-result-head">
         <div>
           <strong>{{ filtered.length }} {{ isZh ? '个模型' : 'models' }}</strong>
@@ -794,15 +801,13 @@ onBeforeUnmount(() => {
         </article>
       </div>
 
-      <section v-else-if="!loading" class="market-empty">
+      <section v-else class="market-empty">
         <strong>{{ models.length ? (isZh ? '没有符合筛选条件的模型' : 'No matching models') : (isZh ? '模型目录还没有发布任何模型' : 'No models have been published yet') }}</strong>
         <span v-if="!models.length">{{ isZh ? '管理员可在「分组与模型」中同步真实上游模型并发布。' : 'An admin can sync and publish models from Groups & Models.' }}</span>
         <button v-if="models.length" type="button" @click="reset">{{ isZh ? '清除筛选' : 'Reset filters' }}</button>
       </section>
 
-      <div v-if="loading && !models.length" class="market-loading" aria-label="loading">
-        <i v-for="n in 6" :key="n"></i>
-      </div>
+      </AsyncDataReveal>
     </template>
   </section>
 </template>

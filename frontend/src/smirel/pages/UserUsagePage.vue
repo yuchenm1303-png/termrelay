@@ -2,13 +2,14 @@
 import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onMounted, ref } from 'vue'
 import WorkspaceNavIcon from '../components/WorkspaceNavIcon.vue'
+import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { usageEndpoint, usageGroupLabel, usageTotalTokens, type UsageRecord } from '../core/usage'
 
 type Period = 'today' | '7d' | '30d' | '90d' | 'custom' | 'all'
 type Metric = 'tokens' | 'cost'
 
-const loading = ref(false)
+const loading = ref(true)
 const error = ref('')
 const usage = ref<UsageRecord[]>([])
 const search = ref('')
@@ -373,6 +374,22 @@ onMounted(() => void load())
 
     <p v-if="error" class="inline-error">{{ error }}</p>
 
+    <AsyncDataReveal :ready="!loading" class="usage-data-boundary">
+      <template #loading>
+        <div class="usage-summary-grid" aria-hidden="true">
+          <article v-for="index in 4" :key="index" class="usage-summary-card usage-loading-metric">
+            <i class="async-data-skeleton" /><div><i class="async-data-skeleton" /><i class="async-data-skeleton" /></div>
+          </article>
+        </div>
+        <div class="analytics-grid" aria-hidden="true">
+          <article class="analytics-panel trend-panel usage-loading-chart">
+            <i class="async-data-skeleton" /><i class="async-data-skeleton" />
+          </article>
+          <article class="analytics-panel usage-loading-chart">
+            <i class="async-data-skeleton" /><i class="async-data-skeleton" />
+          </article>
+        </div>
+      </template>
     <div class="usage-summary-grid">
       <article class="usage-summary-card">
         <div class="summary-icon"><WorkspaceNavIcon name="activity" /></div>
@@ -642,10 +659,19 @@ onMounted(() => void load())
         <span>费用以最终账单结算为准</span>
       </footer>
     </section>
+    </AsyncDataReveal>
   </section>
 </template>
 
 <style scoped>
+.usage-loading-metric { min-height: 134px; display: flex; align-items: center; gap: 20px; }
+.usage-loading-metric > i { width: 39px; height: 39px; border-radius: 11px; }
+.usage-loading-metric > div { flex: 1; display: grid; gap: 13px; }
+.usage-loading-metric > div i:first-child { width: 42%; height: 11px; }
+.usage-loading-metric > div i:last-child { width: 61%; height: 22px; }
+.usage-loading-chart { min-height: 290px; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+.usage-loading-chart i:first-child { width: 40%; height: 13px; }
+.usage-loading-chart i:last-child { width: 88%; height: 165px; margin-top: 12px; }
 .user-usage-page {
   width: 100%;
   max-width: 1320px;

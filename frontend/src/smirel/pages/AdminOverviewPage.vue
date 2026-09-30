@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import WorkspaceNavIcon from '../components/WorkspaceNavIcon.vue'
+import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 import { interfacePreferences } from '../core/preferences'
@@ -25,7 +26,7 @@ interface Snapshot {
 }
 
 const { t } = useI18n()
-const loading = ref(false)
+const loading = ref(true)
 const error = ref('')
 const snapshot = ref<Snapshot | null>(null)
 const stats = computed<AdminStats>(() => snapshot.value?.stats ?? {})
@@ -134,6 +135,17 @@ onMounted(() => void load())
 
     <p v-if="error" class="inline-error">{{ error }}</p>
 
+    <AsyncDataReveal :ready="!loading" class="admin-overview-data">
+      <template #loading>
+        <div class="admin-summary-grid" aria-hidden="true">
+          <div v-for="index in 3" :key="index" class="glass admin-metric-card admin-loading-metric">
+            <i class="async-data-skeleton" /><i class="async-data-skeleton" /><i class="async-data-skeleton" />
+          </div>
+        </div>
+        <section class="glass admin-ops-panel admin-loading-ops" aria-hidden="true">
+          <i class="async-data-skeleton" /><i class="async-data-skeleton" />
+        </section>
+      </template>
     <div class="admin-summary-grid">
       <RouterLink to="/admin/users" class="glass metric-card admin-metric-card admin-metric-users">
         <div class="admin-metric-head">
@@ -242,10 +254,32 @@ onMounted(() => void load())
         </RouterLink>
       </div>
     </section>
+    </AsyncDataReveal>
   </section>
 </template>
 
 <style scoped>
+.admin-loading-metric {
+  min-height: 186px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 24px;
+}
+.admin-loading-metric i:nth-child(1) { width: 38%; height: 11px; }
+.admin-loading-metric i:nth-child(2) { width: 52%; height: 32px; }
+.admin-loading-metric i:nth-child(3) { width: 76%; height: 12px; }
+.admin-loading-ops {
+  min-height: 215px;
+  margin-top: 18px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.admin-loading-ops i:first-child { width: 31%; height: 14px; }
+.admin-loading-ops i:last-child { width: 83%; height: 74px; }
 .admin-overview {
   width: 100%;
   max-width: 1280px;
