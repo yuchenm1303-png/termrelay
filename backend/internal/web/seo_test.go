@@ -32,6 +32,22 @@ func TestLandingSnapshotOnlyOnPublicHomepage(t *testing.T) {
 	}
 }
 
+func TestHomepageTitleOverridesLegacySiteSettingOnlyForPublicLanding(t *testing.T) {
+	oldTitle := `<title>Sub2API - AI API Gateway</title>`
+	source := []byte(`<html><head>` + oldTitle + `<link rel="canonical" href="https://muxway.dev/home" /></head><body><div id="app"></div></body></html>`)
+	home := string(decorateHomeHTML(source, "/home"))
+	if !strings.Contains(home, `<title>Muxway 模枢 | 统一 AI API 接入 · One API. Every model.</title>`) {
+		t.Fatal("public homepage must retain its Muxway title after settings injection")
+	}
+	if strings.Contains(home, oldTitle) {
+		t.Fatal("upstream branding must not leak into the indexed homepage title")
+	}
+	private := string(decorateHomeHTML(source, "/dashboard"))
+	if !strings.Contains(private, oldTitle) {
+		t.Fatal("private console routes retain the dynamically configured title")
+	}
+}
+
 func TestSEOHeadersProtectPrivateSPAWithoutTaggingAssets(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

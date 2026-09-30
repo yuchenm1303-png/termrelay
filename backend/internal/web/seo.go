@@ -81,5 +81,22 @@ func decorateHomeHTML(body []byte, requestPath string) []byte {
 	// shipping a whole second renderer and does not modify Vue's animation code.
 	const mount = `<div id="app"></div>`
 	content := bytes.Replace(body, []byte(mount), []byte(`<div id="app">`+homeSnapshot+`</div>`), 1)
+	// Site settings may still contain the upstream Sub2API brand. Keep the
+	// publicly indexed homepage title aligned with its Muxway canonical,
+	// description and structured data; private console routes remain branded
+	// by their configured site title.
+	if bytes.Equal(content, body) {
+		return content
+	}
+	titleStart := bytes.Index(content, []byte("<title>"))
+	titleEnd := bytes.Index(content, []byte("</title>"))
+	if titleStart != -1 && titleEnd > titleStart {
+		const marketingTitle = "<title>Muxway 模枢 | 统一 AI API 接入 · One API. Every model.</title>"
+		content = bytes.Join([][]byte{
+			content[:titleStart],
+			[]byte(marketingTitle),
+			content[titleEnd+len("</title>"):],
+		}, nil)
+	}
 	return content
 }
