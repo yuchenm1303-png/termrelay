@@ -1,0 +1,25 @@
+/* Data entrances begin on actual data readiness, not an arbitrary timeout
+ * after route navigation. Keep expensive filters and clipping off data grids. */
+.async-data-boundary { min-width: 0; }
+.async-data-enter-active {
+  transition: opacity 310ms cubic-bezier(.18, .8, .3, 1),
+              transform 410ms cubic-bezier(.18, .8, .3, 1);
+  will-change: opacity, transform;
+}
+.async-data-enter-from { opacity: 0; transform: translate3d(0, 10px, 0); }
+.async-data-leave-active { transition: opacity 100ms ease-out; pointer-events: none; }
+.async-data-leave-to { opacity: 0; }
+/* Sections with their own per-card TransitionGroup opt out of double motion. */
+.async-data-content--instant.async-data-enter-active { transition: none; will-change: auto; }
+.async-data-content--instant.async-data-enter-from { opacity: 1; transform: none; }
+.async-data-skeleton {
+  display: block;
+  min-width: 0;
+  border-radius: 8px;
+  background: currentColor;
+  opacity: .065;
+}
+@media (prefers-reduced-motion: reduce) {
+  .async-data-enter-active, .async-data-leave-active { transition: none !important; will-change: auto; }
+  .async-data-enter-from, .async-data-leave-to { transform: none !important; opacity: 1 !important; }
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
@@ -20,6 +20,17 @@ import {
 } from '../core/preferences'
 import { useSession } from '../core/session'
 import '../styles/workspace-layout.css'
+
+const emit = defineEmits<{ (e: 'canvas-entered'): void }>()
+function onCanvasAnimationEnd(event: AnimationEvent) {
+  if (event.target === event.currentTarget && event.animationName === 'ws-shell-canvas-in') {
+    emit('canvas-entered')
+  }
+}
+onMounted(() => {
+  // Reduced-motion users never receive animationend, so unblock immediately.
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) emit('canvas-entered')
+})
 
 interface NavGroup {
   label: string
@@ -536,7 +547,7 @@ watch(() => route.path, () => {
           </RouterLink>
         </div>
       </header>
-      <main class="workspace-canvas"><slot /></main>
+      <main class="workspace-canvas" @animationend="onCanvasAnimationEnd"><slot /></main>
     </section>
   </div>
 </template>
