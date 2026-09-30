@@ -1,102 +1,163 @@
-/* A single atmospheric plane for every authenticated workspace route.
- * Earlier revisions painted three competing layers: a fixed mist, a
- * full-width gradient on workspace-main, and route-specific pseudo-elements.
- * Their rectangular bounds were visible behind the cards. The real main
- * now owns only a continuous neutral paper color; the one fixed plane below
- * the transparent canvas owns all the color and ambient motion.
+/* Shared workspace atmosphere — ONE full-viewport field.
+ *
+ * A main-only fixed layer made an obvious blue vertical edge where the
+ * opaque white sidebar ended; the body underneath was still dark. Paint
+ * the ambient field across the ENTIRE authenticated shell and let the
+ * sidebar/topbar use coordinated translucent surfaces over the same field.
+ * No route-specific cloud is needed and no data panel becomes translucent.
  */
-.workspace-root .workspace-main {
-  --workspace-ambient-paper: #0d121b;
-  --workspace-ambient-blue: rgba(71, 142, 224, .12);
-  --workspace-ambient-pink: rgba(179, 93, 175, .105);
-  --workspace-ambient-violet: rgba(112, 106, 214, .07);
-  --workspace-ambient-mint: rgba(61, 177, 177, .035);
+.workspace-root {
+  --workspace-shell-paper: #0d121b;
+  --workspace-ambient-blue: rgba(71, 142, 224, .105);
+  --workspace-ambient-pink: rgba(179, 93, 175, .09);
+  --workspace-ambient-violet: rgba(112, 106, 214, .058);
+  --workspace-ambient-mint: rgba(61, 177, 177, .03);
+  --workspace-ambient-base-blue: rgba(71, 142, 224, .065);
+  --workspace-ambient-base-pink: rgba(179, 93, 175, .052);
   position: relative;
-  background: var(--workspace-ambient-paper) !important;
+  isolation: isolate;
+  width: 100%;
+  background: var(--workspace-shell-paper) !important;
+}
+.workspace-root .workspace-main {
+  position: relative;
+  background: transparent !important;
+}
+html.smirel-app[data-theme='light'] .workspace-root {
+  --workspace-shell-paper: #f8faff;
+  --workspace-ambient-blue: rgba(84, 159, 235, .102);
+  --workspace-ambient-pink: rgba(216, 131, 199, .092);
+  --workspace-ambient-violet: rgba(120, 124, 218, .053);
+  --workspace-ambient-mint: rgba(78, 180, 183, .032);
+  --workspace-ambient-base-blue: rgba(84, 159, 235, .069);
+  --workspace-ambient-base-pink: rgba(216, 131, 199, .059);
+}
+/* Remove the old almost-black page background from the 1px outer gutter
+ * around the application. These rules only apply to authenticated pages.
+ */
+html.smirel-app[data-theme='light']:has(.workspace-root),
+html.smirel-app[data-theme='light'] body:has(.workspace-root) {
+  background: #f8faff;
+  color-scheme: light;
+}
+html.smirel-app[data-theme='dark']:has(.workspace-root),
+html.smirel-app[data-theme='dark'] body:has(.workspace-root) {
+  background: #0d121b;
+  color-scheme: dark;
 }
 
-html.smirel-app[data-theme='light'] .workspace-root .workspace-main {
-  --workspace-ambient-paper: #f8faff;
-  --workspace-ambient-blue: rgba(89, 171, 242, .118);
-  --workspace-ambient-pink: rgba(222, 139, 200, .105);
-  --workspace-ambient-violet: rgba(121, 126, 224, .058);
-  --workspace-ambient-mint: rgba(87, 185, 187, .035);
-}
-
+/* Main, sidebar and fixed header all sit above exactly the same field.
+ * Keep the field independent of route height: no rectangular section ends.
+ */
 .workspace-root .workspace-main > .workspace-atmosphere {
   position: fixed;
   z-index: 0;
-  inset: 58px 0 0 var(--workspace-sidebar-width, 232px);
+  inset: 0;
   pointer-events: none;
   overflow: hidden;
   contain: paint;
-  isolation: isolate;
-  /* This quiet static wash is also the fallback with motion disabled.
-   * It has no inset box or separate page-level color, so it cannot make
-   * a rectangle at the header/route boundary. */
   background:
-    radial-gradient(ellipse 49% 50% at 0% 0%,
-      var(--workspace-ambient-blue), transparent 80%),
-    radial-gradient(ellipse 45% 48% at 100% 0%,
-      var(--workspace-ambient-pink), transparent 82%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 39%, rgba(0,0,0,.68) 72%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 39%, rgba(0,0,0,.68) 72%, transparent 100%);
+    radial-gradient(ellipse 47% 60% at 2% 1%,
+      var(--workspace-ambient-base-blue), transparent 83%),
+    radial-gradient(ellipse 44% 54% at 100% 2%,
+      var(--workspace-ambient-base-pink), transparent 84%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0,0,0,.76) 68%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 42%, rgba(0,0,0,.76) 68%, transparent 100%);
 }
-
 .workspace-root .workspace-main > .workspace-atmosphere::before,
 .workspace-root .workspace-main > .workspace-atmosphere::after {
   content: '';
   position: absolute;
-  inset: -12% -15%;
+  inset: -12% -14%;
   pointer-events: none;
   background-repeat: no-repeat;
   transform: translate3d(0, 0, 0);
 }
-
-/* Opposing layers drift very slowly; center of the page stays neutral, and
- * the cards never acquire an additional translucent color overlay. */
 .workspace-root .workspace-main > .workspace-atmosphere::before {
   background:
-    radial-gradient(ellipse 35% 50% at 9% 10%,
-      var(--workspace-ambient-blue), transparent 81%),
-    radial-gradient(ellipse 36% 49% at 92% 10%,
-      var(--workspace-ambient-pink), transparent 83%);
+    radial-gradient(ellipse 40% 57% at 9% 11%,
+      var(--workspace-ambient-blue), transparent 82%),
+    radial-gradient(ellipse 39% 51% at 92% 12%,
+      var(--workspace-ambient-pink), transparent 84%);
   animation: workspace-ambient-breathe 31s ease-in-out infinite alternate;
 }
-
 .workspace-root .workspace-main > .workspace-atmosphere::after {
   background:
-    radial-gradient(ellipse 37% 43% at 73% 25%,
-      var(--workspace-ambient-violet), transparent 84%),
-    radial-gradient(ellipse 35% 48% at 13% 55%,
-      var(--workspace-ambient-mint), transparent 86%);
+    radial-gradient(ellipse 38% 47% at 73% 26%,
+      var(--workspace-ambient-violet), transparent 85%),
+    radial-gradient(ellipse 35% 46% at 12% 52%,
+      var(--workspace-ambient-mint), transparent 87%);
   animation: workspace-ambient-counterflow 41s ease-in-out infinite alternate;
 }
 
-/* This is the sole legacy override required to reveal the atmosphere.
- * Neither actual panel fills nor the topbar/sidebar paints are touched. */
+/* Content stays above the atmosphere, and ALL data panels keep their own
+ * opaque background. Only the blank shell canvas becomes transparent.
+ */
 .workspace-root .workspace-main > .workspace-canvas {
   position: relative;
   z-index: 1;
   background: transparent !important;
 }
 
+/* Chromium previously showed the fixed glow beginning at the main column
+ * and an opaque white sidebar separated by a gray line. These chrome
+ * surfaces now blend with the full-width field while retaining legibility.
+ * Do not change the position, size or interaction behavior of the chrome.
+ */
+html.smirel-app[data-theme='light'] .workspace-root .workspace-sidebar {
+  background: rgba(251, 252, 255, .73) !important;
+  border-right: 1px solid rgba(142, 165, 201, .13) !important;
+  box-shadow: none !important;
+}
+html.smirel-app[data-theme='light'] .workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
+  background: rgba(251, 252, 255, .82) !important;
+  border-bottom-color: rgba(142, 165, 201, .15) !important;
+  box-shadow: none !important;
+}
+html.smirel-app[data-theme='light'] .workspace-root .workspace-brand-row {
+  border-bottom-color: rgba(142, 165, 201, .15);
+}
+html.smirel-app[data-theme='dark'] .workspace-root .workspace-sidebar {
+  background: rgba(13, 20, 32, .82) !important;
+  border-right: 1px solid rgba(129, 155, 208, .12) !important;
+  box-shadow: none !important;
+}
+html.smirel-app[data-theme='dark'] .workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
+  background: rgba(14, 20, 33, .87) !important;
+  border-bottom-color: rgba(129, 155, 208, .12) !important;
+  box-shadow: none !important;
+}
+html.smirel-app[data-theme='dark'] .workspace-root .workspace-brand-row {
+  border-bottom-color: rgba(129, 155, 208, .13);
+}
+
 @keyframes workspace-ambient-breathe {
-  from { transform: translate3d(-1.8%, 1%, 0) scale(1.015); opacity: .48; }
-  to { transform: translate3d(1.8%, -1.3%, 0) scale(1.045); opacity: .74; }
+  from { transform: translate3d(-1.8%, 1%, 0) scale(1.015); opacity: .46; }
+  to { transform: translate3d(1.8%, -1.3%, 0) scale(1.045); opacity: .73; }
 }
 @keyframes workspace-ambient-counterflow {
   from { transform: translate3d(1.5%, -1.7%, 0) scale(1.02); opacity: .38; }
   to { transform: translate3d(-2%, 1.3%, 0) scale(1.055); opacity: .62; }
 }
 
+/* The responsive navigation is a drawer, not a translucent floating sheet.
+ * Keep it nearly opaque when the main page scrolls underneath it.
+ */
 @media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
-  .workspace-root .workspace-main > .workspace-atmosphere { left: 0; }
+  html.smirel-app[data-theme='light'] .workspace-root .workspace-sidebar {
+    background: rgba(250, 252, 255, .97) !important;
+  }
+  html.smirel-app[data-theme='dark'] .workspace-root .workspace-sidebar {
+    background: rgba(13, 20, 32, .97) !important;
+  }
 }
 @media (max-width: 720px) {
-  .workspace-root .workspace-main > .workspace-atmosphere { top: 56px; }
-  .workspace-root .workspace-main > .workspace-atmosphere::before { inset: -11% -46%; }
-  .workspace-root .workspace-main > .workspace-atmosphere::after { display: none; }
+  .workspace-root .workspace-main > .workspace-atmosphere::before {
+    inset: -10% -48%;
+  }
+  .workspace-root .workspace-main > .workspace-atmosphere::after {
+    display: none;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace-root .workspace-main > .workspace-atmosphere::before,
