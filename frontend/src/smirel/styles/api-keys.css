@@ -364,3 +364,46 @@
     transform: none;
   }
 }
+
+
+/* API credential cards have their own post-fetch entrance rather than
+ * inheriting the route's full-surface blur/clip animation. Animating only
+ * transform + opacity keeps both large cards on compositor-friendly layers. */
+.workspace-root .api-key-grid > .key-card-enter-active {
+  transition:
+    opacity 290ms cubic-bezier(.18, .82, .28, 1),
+    transform 380ms cubic-bezier(.18, .82, .28, 1);
+  transition-delay: calc(var(--key-enter-index, 0) * 44ms);
+  will-change: opacity, transform;
+}
+
+.workspace-root .api-key-grid > .key-card-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(.996);
+}
+
+.workspace-root .api-key-grid > .key-card-leave-active {
+  transition: opacity 150ms ease-out;
+  will-change: opacity;
+}
+
+.workspace-root .api-key-grid > .key-card-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .api-key-grid > .key-card-enter-active,
+  .workspace-root .api-key-grid > .key-card-leave-active {
+    transition: none;
+    will-change: auto;
+  }
+
+  .workspace-root .api-key-grid > .key-card-enter-from {
+    opacity: 1;
+    transform: none;
+  }
+
+  .workspace-root .api-key-grid > .key-card-leave-to {
+    opacity: 1;
+  }
+}

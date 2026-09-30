@@ -13,7 +13,7 @@ const useWorkspace = computed(() => route.meta.shell === 'workspace')
     <template v-if="useWorkspace">
       <WorkspaceShell>
         <Transition name="workspace-route" mode="out-in">
-          <div :key="route.path" class="workspace-route-stage">
+          <div :key="route.path" class="workspace-route-stage" :class="{ 'workspace-route-stage--keys': route.path === '/keys' }">
             <component :is="Component" />
           </div>
         </Transition>

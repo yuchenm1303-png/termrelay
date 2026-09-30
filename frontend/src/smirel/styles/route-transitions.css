@@ -76,6 +76,45 @@
   filter: blur(1px);
 }
 
+/* Keys resolve asynchronously: their two credential cards get a separate
+ * post-fetch entrance. Avoid blurring, clipping and also staggering the whole
+ * keys library while those cards are being replaced/animated. */
+.workspace-route-enter-active.workspace-route-stage--keys {
+  transition:
+    opacity 245ms var(--sm-motion-ease-out),
+    transform 300ms var(--sm-motion-ease-out);
+  will-change: opacity, transform;
+}
+
+.workspace-route-enter-from.workspace-route-stage--keys {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  filter: none;
+  clip-path: none;
+}
+
+.workspace-route-enter-to.workspace-route-stage--keys {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: none;
+  clip-path: none;
+}
+
+.workspace-route-leave-active.workspace-route-stage--keys {
+  transition: opacity var(--sm-motion-route-leave) linear;
+  will-change: opacity;
+}
+
+.workspace-route-leave-to.workspace-route-stage--keys {
+  opacity: 0;
+  transform: none;
+  filter: none;
+}
+
+.workspace-route-enter-active.workspace-route-stage--keys > :first-child > :nth-child(-n + 5) {
+  animation: none;
+}
+
 /* The first major blocks on a page arrive just after the stage itself. This
  * is deliberately capped at five children to avoid animating long tables. */
 .workspace-route-enter-active > :first-child > :nth-child(-n + 5) {

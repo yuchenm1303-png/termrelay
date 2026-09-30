@@ -484,12 +484,32 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <div v-if="loading && !keys.length" class="keys-loading-state">
-        <i v-for="index in 2" :key="index" />
+      <div
+        v-if="loading && !keys.length"
+        class="keys-loading-state"
+        role="status"
+        :aria-label="isZh ? '正在加载 API 密钥' : 'Loading API keys'"
+      >
+        <div v-for="index in 2" :key="index" class="api-key-card keys-loading-card" aria-hidden="true">
+          <div class="keys-loading-head">
+            <i class="keys-loading-icon" />
+            <div class="keys-loading-title"><i /><i /></div>
+            <i class="keys-loading-badge" />
+          </div>
+          <div class="keys-loading-secret"><i /><i /></div>
+          <div class="keys-loading-meta"><i v-for="field in 4" :key="field" /></div>
+          <div class="keys-loading-foot"><i /><i /></div>
+        </div>
       </div>
-      <div v-else-if="keys.length" class="api-key-grid">
-        <ApiKeyCredentialCard v-for="item in keys" :key="item.id" :item="item" @remove="removeKey" />
-      </div>
+      <TransitionGroup v-else-if="keys.length" appear name="key-card" tag="div" class="api-key-grid">
+        <ApiKeyCredentialCard
+          v-for="(item, index) in keys"
+          :key="item.id"
+          :item="item"
+          :style="{ '--key-enter-index': Math.min(index, 7) }"
+          @remove="removeKey"
+        />
+      </TransitionGroup>
       <div v-else class="keys-empty-state">
         <span class="keys-empty-mark">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="3.5" /><path d="m10.7 12.3 7.6-7.6M15.7 7.3l2 2M13.6 9.4l2 2" /></svg>
@@ -898,14 +918,84 @@ onBeforeUnmount(() => {
   gap: 12px;
 }
 
-.keys-loading-state i {
-  min-height: 190px;
-  border: 1px solid #22272e;
-  border-radius: 11px;
-  background: linear-gradient(105deg, #0e1014 25%, #141820 43%, #0e1014 62%);
-  background-size: 260% 100%;
-  animation: keys-shimmer 1.2s linear infinite;
+/* Skeletons share the actual card layout, so resolving the API request does
+ * not swap two short shimmer blocks for two much taller credential cards. */
+.keys-loading-card {
+  min-height: 345px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
 }
+
+.keys-loading-card i {
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.keys-loading-head {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.keys-loading-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px !important;
+}
+
+.keys-loading-title {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.keys-loading-title i:first-child { width: 112px; height: 12px; }
+.keys-loading-title i:last-child { width: 58px; height: 8px; }
+.keys-loading-badge { width: 68px; height: 27px; margin-left: auto; }
+
+.keys-loading-secret {
+  height: 92px;
+  margin-top: 22px;
+  padding: 17px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid color-mix(in srgb, currentColor 9%, transparent);
+  border-radius: 8px;
+}
+
+.keys-loading-secret i:first-child { width: 36px; height: 10px; }
+.keys-loading-secret i:last-child { width: 64%; max-width: 260px; height: 11px; }
+
+.keys-loading-meta {
+  min-height: 89px;
+  margin-top: 14px;
+  padding-top: 17px;
+  border-top: 1px solid color-mix(in srgb, currentColor 9%, transparent);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 24px 18px;
+}
+
+.keys-loading-meta i { width: 40%; height: 10px; }
+
+.keys-loading-foot {
+  min-height: 44px;
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid color-mix(in srgb, currentColor 9%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.keys-loading-foot i:first-child { width: 42%; max-width: 160px; height: 10px; }
+.keys-loading-foot i:last-child { width: 30px; height: 10px; }
 
 .keys-empty-state {
   min-height: 230px;
