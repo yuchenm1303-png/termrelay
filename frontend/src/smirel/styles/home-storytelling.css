@@ -105,8 +105,15 @@
   animation: home-cloud-idle 9s ease-in-out infinite alternate;
 }
 .home-page .home-hero::after {
+  animation-name: home-cloud-tail-idle;
   animation-duration: 11s;
   animation-direction: alternate-reverse;
+}
+/* The tail must remain quieter than the foreground cloud even while
+   animating. A shared opacity keyframe otherwise overrides its .64 factor. */
+@keyframes home-cloud-tail-idle {
+  from { opacity: calc(var(--hero-aurora-opacity, .76) * .54); }
+  to { opacity: calc(var(--hero-aurora-opacity, .76) * .64); }
 }
 @keyframes home-cloud-idle {
   from { opacity: calc(var(--hero-aurora-opacity, .76) * .82); }

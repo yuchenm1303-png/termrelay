@@ -49,6 +49,7 @@ describe('subtle existing hero mist', () => {
     expect(aurora.toString()).toContain("width: min(2160px, 150vw)")
     expect(aurora.toString()).toContain("width: min(1920px, 142vw)")
     expect(aurora.toString()).toContain("width: 174vw")
+    expect(storytelling.toString()).toContain("animation-name: home-cloud-tail-idle")
   })
   it('keeps secondary section atmosphere restrained rather than a separate color wall', () => {
     expect(maxCloudAlpha(gradient(storytelling, '.home-page .home-capabilities::before')))
