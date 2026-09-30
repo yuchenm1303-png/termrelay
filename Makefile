@@ -6,7 +6,8 @@ FRONTEND_CRITICAL_VITEST := \
 	src/smirel/__tests__/async-data-reveal.spec.ts \
 	src/smirel/__tests__/api-keys-latency.spec.ts \
 	src/smirel/__tests__/home-seams.spec.ts \
-	src/smirel/__tests__/home-aurora-subtle.spec.ts
+	src/smirel/__tests__/home-aurora-subtle.spec.ts \
+	src/smirel/__tests__/workspace-ambient.spec.ts
 
 # 一键编译前后端
 build: build-backend build-frontend

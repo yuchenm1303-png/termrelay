@@ -346,6 +346,7 @@ watch(() => route.path, () => {
     <button v-if="openUtility" class="workspace-utility-dismiss" type="button" :aria-label="t('shell.closeNav')" @click="openUtility = null"></button>
 
     <section ref="workspaceMain" class="workspace-main">
+      <div class="workspace-atmosphere" aria-hidden="true"></div>
       <header class="workspace-topbar workspace-topbar--contextual">
         <div class="workspace-topbar-left">
           <button class="mobile-menu" type="button" :aria-label="t('shell.openNav')" @click="mobileOpen = true"><span></span><span></span><span></span></button>

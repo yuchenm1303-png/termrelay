@@ -1,0 +1,102 @@
+/* Authenticated workspace ambient: a quiet continuation of the homepage aurora.
+ * The atmosphere belongs to the shared shell, NOT individual route cards.
+ * Fixed behind the scrolling canvas, clipped at the chrome boundary, and
+ * independent of async page loading and sidebar/topbar interactions.
+ */
+.workspace-root .workspace-main {
+  position: relative;
+}
+.workspace-root .workspace-main > .workspace-atmosphere {
+  --ambient-blue: rgba(80, 165, 242, .19);
+  --ambient-violet: rgba(126, 131, 231, .115);
+  --ambient-pink: rgba(224, 143, 207, .155);
+  --ambient-mint: rgba(103, 207, 204, .065);
+  position: fixed;
+  z-index: 0;
+  inset: 58px 0 0 var(--workspace-sidebar-width, 232px);
+  overflow: hidden;
+  contain: paint;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Two translucent surfaces move independently. No new scrolling container,
+ * blur filter, image asset, or full-page overlay over the actual controls.
+ */
+.workspace-root .workspace-main > .workspace-atmosphere::before,
+.workspace-root .workspace-main > .workspace-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: -9% -18%;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  transform: translate3d(0, 0, 0);
+}
+.workspace-root .workspace-main > .workspace-atmosphere::before {
+  background:
+    radial-gradient(ellipse 53% 63% at 2% 12%, var(--ambient-blue), transparent 80%),
+    radial-gradient(ellipse 49% 56% at 98% 7%, var(--ambient-pink), transparent 80%),
+    radial-gradient(ellipse 52% 60% at 53% 89%, var(--ambient-violet), transparent 84%);
+  animation: workspace-ambient-breathe 29s ease-in-out infinite alternate;
+}
+.workspace-root .workspace-main > .workspace-atmosphere::after {
+  inset: -16% -24%;
+  background:
+    radial-gradient(ellipse 44% 59% at 30% 88%, var(--ambient-mint), transparent 85%),
+    radial-gradient(ellipse 54% 63% at 71% 50%, var(--ambient-violet), transparent 86%);
+  opacity: .78;
+  animation: workspace-ambient-counterflow 37s ease-in-out infinite alternate;
+}
+/* The legacy light sheet painted the canvas opaque, hiding backgrounds in
+ * earlier attempts. Keep the body/page surfaces and all data cards intact;
+ * remove only the shell canvas paint sitting over this decorative layer.
+ */
+.workspace-root .workspace-main > .workspace-canvas {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+@keyframes workspace-ambient-breathe {
+  from { transform: translate3d(-1.7%, 1%, 0) scale(1.015); opacity: .76; }
+  to { transform: translate3d(2.2%, -2%, 0) scale(1.055); opacity: 1; }
+}
+@keyframes workspace-ambient-counterflow {
+  from { transform: translate3d(2%, -2%, 0) scale(1.02); opacity: .54; }
+  to { transform: translate3d(-2.5%, 2%, 0) scale(1.065); opacity: .82; }
+}
+/* The sidebar and topbar retain their original clean, opaque appearance.
+ * The glow exists exclusively behind the route canvas, not inside widgets.
+ */
+html.smirel-app[data-theme='dark'] .workspace-root .workspace-main > .workspace-atmosphere {
+  --ambient-blue: rgba(45, 133, 222, .15);
+  --ambient-violet: rgba(102, 102, 232, .115);
+  --ambient-pink: rgba(194, 91, 170, .11);
+  --ambient-mint: rgba(50, 164, 177, .055);
+}
+/* In drawer mode there is no permanent sidebar; the ambient field fills
+ * the main viewport without shifting the responsive layout.
+ */
+@media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
+  .workspace-root .workspace-main > .workspace-atmosphere {
+    left: 0;
+  }
+}
+@media (max-width: 720px) {
+  .workspace-root .workspace-main > .workspace-atmosphere {
+    top: 56px;
+  }
+  .workspace-root .workspace-main > .workspace-atmosphere::before {
+    inset: -10% -55%;
+    opacity: .62;
+  }
+  .workspace-root .workspace-main > .workspace-atmosphere::after {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .workspace-main > .workspace-atmosphere::before,
+  .workspace-root .workspace-main > .workspace-atmosphere::after {
+    animation: none !important;
+    transform: none;
+  }
+}
