@@ -1,0 +1,481 @@
+/* Muxway long-form homepage: the rhythm, navigation and section transitions.
+ * This is deliberately isolated from the legacy 3k-line landing styles.
+ * Existing hero clouds and pointer-following card materials remain the source.
+ */
+.home-page {
+  --story-ink: #25313f;
+  --story-muted: #657587;
+  --story-line: rgba(124, 151, 188, .16);
+  --story-paper: #f9fbff;
+  background: linear-gradient(180deg, #f8fbff 0%, #f9fbff 32%, #f8faff 68%, #f9fbff 100%);
+  overflow-x: clip;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+}
+.home-page main {
+  width: min(1180px, calc(100% - 64px));
+  background: transparent !important;
+}
+.home-page .home-topbar {
+  box-shadow: 0 9px 32px rgba(55, 78, 119, .035);
+}
+.home-page .home-reading-progress {
+  position: absolute;
+  inset: auto 0 -1px;
+  width: 100%;
+  height: 2px;
+  border-radius: 99px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #3da8ec 0%, #7279ed 53%, #d77ec6 100%);
+  box-shadow: 0 0 14px rgba(102, 128, 228, .22);
+  transform: scaleX(var(--home-scroll-progress, 0));
+  transform-origin: left center;
+  will-change: transform;
+}
+.home-page .home-hero {
+  min-height: clamp(680px, 82svh, 750px);
+  padding-top: clamp(112px, 13.5vh, 148px);
+  padding-bottom: 112px;
+  scroll-margin-top: 72px;
+}
+.home-page .home-hero h1 {
+  letter-spacing: -.052em;
+  text-wrap: balance;
+}
+.home-page .home-hero-copy {
+  max-width: 700px;
+  text-wrap: pretty;
+}
+.home-page .home-model-rail { max-width: min(1040px, 100%); }
+.home-page .home-scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 27px;
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 20px;
+  color: #56708e;
+  font-size: .67rem;
+  font-weight: 650;
+  letter-spacing: .1em;
+  transform: translateX(-50%);
+  transition: color .25s ease;
+}
+.home-page .home-scroll-cue i {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid rgba(87, 121, 171, .22);
+  border-radius: 50%;
+  font-size: 1rem;
+  font-style: normal;
+  animation: home-scroll-invite 2.6s ease-in-out infinite;
+}
+.home-page .home-scroll-cue:hover { color: #236fae; }
+@keyframes home-scroll-invite {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 5px; }
+}
+/* Keep the original animated hero clouds, but animate opacity instead of
+   re-blurring two viewport-sized layers on every frame while scrolling. */
+.home-page .home-hero::before,
+.home-page .home-hero::after {
+  will-change: transform, opacity;
+  animation: home-cloud-idle 9s ease-in-out infinite alternate;
+}
+.home-page .home-hero::after {
+  animation-duration: 11s;
+  animation-direction: alternate-reverse;
+}
+@keyframes home-cloud-idle {
+  from { opacity: calc(var(--hero-aurora-opacity, .98) * .83); }
+  to { opacity: var(--hero-aurora-opacity, .98); }
+}
+/* A continuous reading canvas replaces abrupt full-width section stripes. */
+.home-page .home-section {
+  position: relative;
+  padding-block: clamp(88px, 8.3vw, 134px);
+  scroll-margin-top: 80px;
+  border-top: 1px solid var(--story-line) !important;
+  background: transparent !important;
+}
+.home-page .home-heading {
+  margin-bottom: clamp(32px, 4.3vw, 54px);
+}
+.home-page .home-heading h2 {
+  max-width: 920px;
+  margin-top: 17px;
+  color: var(--story-ink);
+  text-wrap: balance;
+  letter-spacing: -.043em;
+  line-height: 1.14;
+}
+.home-page .home-heading p {
+  max-width: 670px;
+  color: var(--story-muted);
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+/* Chapter 01: editorial side heading + concise 2x2 cards, not another
+   wide row identical to the next section. */
+.home-page .home-pain {
+  display: grid;
+  grid-template-columns: minmax(270px, .75fr) minmax(0, 1.7fr);
+  align-items: start;
+  gap: clamp(44px, 5.4vw, 82px);
+  padding-top: 126px;
+}
+.home-page .home-hero + .home-pain {
+  border-top: 0 !important;
+  z-index: 3;
+}
+.home-page .home-hero + .home-pain::before {
+  top: -140px;
+  height: 270px;
+  background: linear-gradient(180deg,
+    rgba(246, 249, 255, 0) 0%,
+    rgba(247, 250, 255, .36) 29%,
+    rgba(249, 251, 255, .85) 61%,
+    rgba(249, 251, 255, 0) 100%) !important;
+  filter: blur(17px);
+}
+.home-page .home-pain .home-heading {
+  margin: 5px 0 0;
+}
+.home-page .home-pain .home-heading h2 {
+  max-width: 11ch;
+  font-size: clamp(2.45rem, 3.45vw, 3.75rem);
+  line-height: 1.2;
+}
+.home-page .home-pain .home-heading p { max-width: 27ch; }
+.home-page .home-pain .home-card-grid {
+  margin-top: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.home-page .home-pain .home-card-grid article {
+  min-height: 210px;
+  padding: 25px;
+  border-radius: 24px;
+}
+.home-page .home-pain .home-card-grid h3 { margin-top: 22px; }
+.home-page .home-pain .home-card-grid p { line-height: 1.74; }
+/* Chapter 02: asymmetrical bento composition and a continuous tinted field. */
+.home-page .home-capabilities {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  background:
+    radial-gradient(ellipse 43% 65% at 2% 28%, rgba(83, 185, 242, .105), transparent 82%),
+    radial-gradient(ellipse 43% 65% at 98% 69%, rgba(221, 114, 213, .095), transparent 84%),
+    linear-gradient(180deg, rgba(246, 250, 255, .2), rgba(246, 246, 255, .45), rgba(250, 250, 255, .12)) !important;
+}
+.home-page .home-capabilities .home-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.home-page .home-capabilities .home-card-grid article { min-height: 226px; }
+.home-page .home-capabilities .home-card-grid article:first-child,
+.home-page .home-capabilities .home-card-grid article:last-child {
+  grid-column: span 2;
+}
+.home-page .home-capabilities .home-card-grid article:first-child h3,
+.home-page .home-capabilities .home-card-grid article:last-child h3 {
+  font-size: clamp(1.14rem, 1.6vw, 1.42rem);
+}
+.home-page .home-capabilities .home-card-grid article:first-child p,
+.home-page .home-capabilities .home-card-grid article:last-child p {
+  max-width: 43ch;
+}
+/* Chapter 03: a restrained tool gallery, with consistent floating icon rails. */
+.home-page #tools .home-tool-grid { gap: 18px; margin-top: 37px; }
+.home-page #tools .home-tool-grid a { min-height: 116px; border-radius: 23px; }
+.home-page #tools .home-inline-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  margin-top: 26px;
+  border-bottom: 1px solid rgba(70, 140, 195, .25);
+}
+/* Chapter 04: turn the dense comparison into one quiet, legible surface. */
+.home-page .home-compare .home-table {
+  margin-top: 37px;
+  border: 1px solid rgba(142, 166, 202, .24);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 20px 60px rgba(54, 84, 117, .055);
+  overflow: hidden;
+}
+.home-page .home-compare .home-table > div > * {
+  border-color: rgba(148, 174, 206, .19);
+  padding: 21px 25px;
+  font-size: .86rem;
+  transition: background-color .25s ease;
+}
+.home-page .home-compare .home-table > div:first-child > * {
+  background: rgba(234, 241, 254, .54);
+  font-size: .79rem;
+  color: #3b5270;
+}
+.home-page .home-compare .home-table > div > *:last-child {
+  background: rgba(220, 240, 255, .58);
+  color: #24628d;
+  font-weight: 650;
+}
+.home-page .home-compare .home-table > div:not(:first-child):hover > * {
+  background-color: rgba(242, 247, 255, .7);
+}
+.home-page .home-compare .home-table > div:not(:first-child):hover > *:last-child {
+  background-color: rgba(212, 235, 254, .85);
+}
+/* Chapter 05: connected onboarding steps, with the endpoint as the finale. */
+.home-page .home-onboarding .home-steps {
+  position: relative;
+  gap: 18px;
+  margin-top: 42px;
+}
+.home-page .home-onboarding .home-steps::before {
+  content: '';
+  position: absolute;
+  top: 46px;
+  left: 8%;
+  width: 84%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(103, 154, 211, .33), rgba(145, 118, 213, .32), transparent);
+  pointer-events: none;
+}
+.home-page .home-onboarding .home-steps article {
+  position: relative;
+  min-height: 265px;
+  padding: 29px;
+  border: 1px solid rgba(146, 173, 207, .16);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, .74);
+  box-shadow: 0 14px 42px rgba(55, 85, 119, .045);
+}
+.home-page .home-onboarding .home-steps article > span {
+  width: 45px;
+  height: 45px;
+  border-radius: 16px;
+  box-shadow: 0 5px 18px rgba(76, 113, 177, .07);
+}
+.home-page .home-onboarding .home-steps article h3 { margin-top: 31px; }
+.home-page .home-onboarding .home-code {
+  min-height: 39px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  align-items: center;
+}
+.home-page .home-onboarding .home-code button {
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: 9px;
+  transition: background-color .2s ease;
+}
+.home-page .home-onboarding .home-code button:hover { background: rgba(87, 167, 216, .12); }
+/* Chapters 06/07: pricing breathing room and tactile FAQ. */
+.home-page .home-pricing .home-plan-groups { gap: 54px; }
+.home-page .home-pricing .home-plan-grid { gap: 18px; }
+.home-page .home-pricing .home-plan {
+  padding: 28px;
+  border-radius: 24px;
+  box-shadow: 0 13px 40px rgba(56, 89, 129, .045);
+  transition: box-shadow .35s ease, border-color .35s ease;
+}
+.home-page .home-pricing .home-plan:hover { box-shadow: 0 22px 52px rgba(56, 89, 129, .09); }
+.home-page .home-pricing .home-plan > a { border-radius: 13px; }
+.home-page .home-answers { padding-bottom: 84px; }
+.home-page .home-answers .home-faq {
+  margin-top: 34px;
+  border-top: 0;
+  display: grid;
+  gap: 12px;
+}
+.home-page .home-answers .home-faq details {
+  border: 1px solid rgba(143, 168, 202, .18);
+  border-radius: 17px;
+  padding: 0 25px;
+  background: rgba(255, 255, 255, .75);
+  box-shadow: 0 7px 24px rgba(58, 80, 116, .035);
+  transition: border-color .28s ease, box-shadow .28s ease;
+}
+.home-page .home-answers .home-faq details[open] {
+  border-color: rgba(93, 151, 214, .28);
+  box-shadow: 0 12px 33px rgba(58, 91, 137, .055);
+}
+.home-page .home-answers .home-faq summary {
+  min-height: 66px;
+  align-items: center;
+  padding: 17px 0;
+}
+.home-page .home-answers .home-faq summary b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(225, 239, 254, .56);
+  transition: transform .28s ease;
+}
+.home-page .home-answers .home-faq p { max-width: 820px; padding-right: 20px; }
+.home-page .home-closing {
+  margin-bottom: 86px;
+  border-radius: 31px;
+  padding: clamp(34px, 5vw, 64px);
+  background:
+    radial-gradient(ellipse 55% 98% at 0% 0%, rgba(115, 194, 249, .2), transparent 79%),
+    radial-gradient(ellipse 51% 95% at 100% 100%, rgba(231, 135, 207, .22), transparent 82%),
+    linear-gradient(115deg, #f4f9ff 0%, #f7f5ff 52%, #fff4fb 100%);
+  box-shadow: 0 28px 70px rgba(70, 97, 156, .075);
+}
+.home-page .home-closing h2 { text-wrap: balance; line-height: 1.16; }
+.home-page .home-footer { width: min(1180px, calc(100% - 64px)); }
+/* Chapter rail is outside the reading column and hidden before it could
+   overlap cards on laptop/tablet widths. Anchors are also keyboard friendly. */
+.home-page .home-journey {
+  position: fixed;
+  z-index: 21;
+  top: 50%;
+  right: clamp(15px, 2vw, 38px);
+  transform: translateY(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+.home-page .home-journey a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  gap: 11px;
+  min-height: 27px;
+  padding: 5px 0 5px 13px;
+  color: #667f9c;
+}
+.home-page .home-journey a i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 99px;
+  background: rgba(119, 146, 181, .46);
+  box-shadow: 0 0 0 0 transparent;
+  transition: transform .3s ease, background-color .3s ease, box-shadow .3s ease;
+}
+.home-page .home-journey a span {
+  min-width: 110px;
+  text-align: right;
+  opacity: 0;
+  translate: 6px 0;
+  pointer-events: none;
+  font-size: .7rem;
+  font-weight: 700;
+  transition: opacity .24s ease, translate .3s ease;
+}
+.home-page .home-journey a:hover span,
+.home-page .home-journey a:focus-visible span,
+.home-page .home-journey a.is-current span {
+  opacity: 1;
+  translate: 0 0;
+}
+.home-page .home-journey a.is-current i {
+  transform: scale(1.45);
+  background: #538de5;
+  box-shadow: 0 0 0 4px rgba(89, 146, 226, .12);
+}
+@media (min-width: 1510px) {
+  .home-page .home-journey { display: flex; }
+}
+@media (max-width: 1100px) {
+  .home-page .home-pain { grid-template-columns: 1fr; gap: 33px; padding-top: 105px; }
+  .home-page .home-pain .home-heading { max-width: 710px; }
+  .home-page .home-pain .home-heading h2 { max-width: 18ch; }
+  .home-page .home-pain .home-heading p { max-width: 650px; }
+  .home-page .home-pain .home-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 820px) {
+  .home-page main, .home-page .home-footer { width: min(100% - 36px, 690px); }
+  .home-page .home-hero { min-height: 650px; padding-top: 114px; padding-bottom: 90px; }
+  .home-page .home-scroll-cue { bottom: 15px; }
+  .home-page .home-section { padding-block: 84px; }
+  .home-page .home-capabilities .home-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-page .home-capabilities .home-card-grid article:first-child,
+  .home-page .home-capabilities .home-card-grid article:last-child { grid-column: auto; }
+  .home-page .home-onboarding .home-steps::before { display: none; }
+}
+@media (max-width: 580px) {
+  .home-page .home-hero { min-height: 610px; padding-top: 96px; padding-bottom: 73px; }
+  .home-page .home-hero h1 { letter-spacing: -.035em; }
+  .home-page .home-scroll-cue { display: none; }
+  .home-page .home-pain { padding-top: 96px; }
+  .home-page .home-pain .home-card-grid,
+  .home-page .home-capabilities .home-card-grid { grid-template-columns: 1fr; }
+  .home-page .home-pain .home-card-grid article { min-height: 0; }
+  .home-page .home-capabilities .home-card-grid article:first-child,
+  .home-page .home-capabilities .home-card-grid article:last-child { grid-column: auto; }
+  .home-page .home-compare .home-table { border-radius: 18px; overflow-x: auto; }
+  .home-page .home-compare .home-table > div { min-width: 610px; }
+  .home-page .home-answers .home-faq details { padding-inline: 17px; }
+  .home-page .home-closing { border-radius: 25px; margin-bottom: 55px; }
+}
+html.smirel-app[data-theme='dark'] .home-page {
+  --story-ink: #e7edf5;
+  --story-muted: #a1b2c2;
+  --story-line: rgba(135, 165, 202, .11);
+  background: linear-gradient(180deg, #090d14 0%, #0c111a 43%, #0a0e16 100%);
+}
+html.smirel-app[data-theme='dark'] .home-page main { background: transparent !important; }
+html.smirel-app[data-theme='dark'] .home-page .home-section { background: transparent !important; }
+html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
+  background:
+    radial-gradient(ellipse 43% 68% at 2% 35%, rgba(57, 138, 199, .065), transparent 84%),
+    radial-gradient(ellipse 43% 69% at 98% 70%, rgba(166, 85, 176, .055), transparent 84%) !important;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-hero + .home-pain::before {
+  background: linear-gradient(180deg, transparent, rgba(10, 15, 23, .42) 30%, rgba(11, 16, 25, .82) 67%, transparent) !important;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-scroll-cue { color: #a8bfd9; }
+html.smirel-app[data-theme='dark'] .home-page .home-scroll-cue i { border-color: rgba(135, 165, 203, .3); }
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table {
+  border-color: rgba(132, 166, 213, .16);
+  background: rgba(17, 25, 37, .77);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, .15);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table > div > * { border-color: rgba(132, 166, 213, .12); }
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table > div:first-child > * { background: #152235; color: #b7cee9; }
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table > div > *:last-child { background: #132b43; color: #acd5f6; }
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table > div:not(:first-child):hover > * { background-color: #152132; }
+html.smirel-app[data-theme='dark'] .home-page .home-compare .home-table > div:not(:first-child):hover > *:last-child { background-color: #173753; }
+html.smirel-app[data-theme='dark'] .home-page .home-onboarding .home-steps article {
+  border-color: rgba(123, 153, 196, .14);
+  background: rgba(19, 28, 40, .86);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, .13);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-answers .home-faq details {
+  border-color: rgba(113, 150, 187, .15);
+  background: rgba(19, 28, 39, .86);
+  box-shadow: 0 7px 24px rgba(0, 0, 0, .095);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-answers .home-faq details[open] { border-color: rgba(121, 164, 213, .28); }
+html.smirel-app[data-theme='dark'] .home-page .home-answers .home-faq summary b { background: rgba(77, 132, 195, .12); }
+html.smirel-app[data-theme='dark'] .home-page .home-closing {
+  background: radial-gradient(ellipse 68% 110% at 0% 0%, rgba(57, 126, 191, .14), transparent 82%),
+    radial-gradient(ellipse 68% 100% at 100% 100%, rgba(170, 82, 156, .12), transparent 82%),
+    linear-gradient(135deg, #121d2b, #201a2c 65%, #2b1b2b);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-journey a { color: #9aacc0; }
+html.smirel-app[data-theme='dark'] .home-page .home-journey a i { background: rgba(137, 165, 203, .5); }
+html.smirel-app[data-theme='dark'] .home-page .home-journey a.is-current i { background: #86bffc; box-shadow: 0 0 0 4px rgba(105, 167, 241, .12); }
+@media (prefers-reduced-motion: reduce) {
+  .home-page .home-hero::before, .home-page .home-hero::after {
+    animation: none !important;
+    will-change: auto;
+  }
+  .home-page .home-scroll-cue i { animation: none; }
+  .home-page .home-journey a, .home-page .home-journey a * { transition: none; }
+}

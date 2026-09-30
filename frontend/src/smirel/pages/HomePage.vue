@@ -17,11 +17,16 @@ import minimaxLogo from '../assets/providers/minimax.svg'
 import '../styles/home-landing.css'
 import '../styles/home-light.css'
 import '../styles/home-hero-aurora-motion.css'
+import '../styles/home-storytelling.css'
 
 const { isAuthenticated, isAdmin } = useSession()
 const plans = ref<PublicSubscriptionPlan[]>([])
 const plansState = ref<'loading' | 'ready' | 'unavailable'>('loading')
 const mobileMenuOpen = ref(false)
+const activeSection = ref('top')
+const journeySections = computed(() => isEnglish.value
+  ? [{ id: 'top', label: 'Overview' }, { id: 'pain', label: 'Challenges' }, { id: 'capabilities', label: 'Capabilities' }, { id: 'tools', label: 'Tools' }, { id: 'compare', label: 'Compare' }, { id: 'steps', label: 'Get started' }, { id: 'pricing', label: 'Plans' }, { id: 'faq', label: 'FAQ' }]
+  : [{ id: 'top', label: '概览' }, { id: 'pain', label: '痛点' }, { id: 'capabilities', label: '平台能力' }, { id: 'tools', label: '工具兼容' }, { id: 'compare', label: '接入对比' }, { id: 'steps', label: '快速接入' }, { id: 'pricing', label: '套餐' }, { id: 'faq', label: '答疑' }])
 const copied = ref(false)
 const homeRoot = ref<HTMLElement | null>(null)
 let revealObserver: IntersectionObserver | null = null
@@ -32,6 +37,7 @@ let pointerGlowTarget: HTMLElement | null = null
 let pointerGlowClientX = 0
 let pointerGlowClientY = 0
 let heroAuroraCleanup: (() => void) | null = null
+let journeyCleanup: (() => void) | null = null
 const apiBase = 'https://muxway.dev/v1'
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const consolePath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
@@ -236,6 +242,39 @@ function initHeroAuroraMotion() {
   }
 }
 
+// One passive, frame-coalesced scroll reader powers the progress bar and chapter rail.
+function initJourneyNavigation() {
+  const root = homeRoot.value
+  if (!root) return
+
+  const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-journey-section]'))
+  let frame = 0
+  const update = () => {
+    frame = 0
+    const scrollable = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0)
+    const progress = scrollable ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0
+    root.style.setProperty('--home-scroll-progress', progress.toFixed(4))
+
+    // The selected chapter follows the content crossing the upper viewport.
+    const marker = Math.min(window.innerHeight * .38, 360)
+    let chapter = 'top'
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= marker) chapter = section.id
+    }
+    if (activeSection.value !== chapter) activeSection.value = chapter
+  }
+  const queue = () => { if (!frame) frame = window.requestAnimationFrame(update) }
+  update()
+  window.addEventListener('scroll', queue, { passive: true })
+  window.addEventListener('resize', queue, { passive: true })
+  journeyCleanup = () => {
+    window.removeEventListener('scroll', queue)
+    window.removeEventListener('resize', queue)
+    if (frame) window.cancelAnimationFrame(frame)
+    journeyCleanup = null
+  }
+}
+
 function findPointerGlowTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return null
   const card = target.closest<HTMLElement>(pointerGlowSelector)
@@ -294,6 +333,7 @@ onMounted(async () => {
   initRevealMotion()
   initPointerGlow()
   initHeroAuroraMotion()
+  initJourneyNavigation()
 
   try {
     const response: unknown = await paymentApi.listPublicPlans()
@@ -311,6 +351,7 @@ onBeforeUnmount(() => {
   root?.removeEventListener('pointerout', handlePointerGlowOut)
   if (pointerGlowFrame) window.cancelAnimationFrame(pointerGlowFrame)
   heroAuroraCleanup?.()
+  journeyCleanup?.()
 })
 
 const zh = {
@@ -341,20 +382,29 @@ const en = {
 
 <template>
   <div ref="homeRoot" class="home-page">
+    <nav class="home-journey" :aria-label="isEnglish ? 'Page chapters' : '页面章节'">
+      <a v-for="(chapter, index) in journeySections" :key="chapter.id"
+        :href="`#${chapter.id}`" :class="{ 'is-current': activeSection === chapter.id }"
+        :aria-current="activeSection === chapter.id ? 'location' : undefined"
+        :aria-label="chapter.label" :title="chapter.label">
+        <i aria-hidden="true"></i><span>{{ String(index + 1).padStart(2, '0') }} / {{ chapter.label }}</span>
+      </a>
+    </nav>
     <header class="home-topbar">
       <RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
       <nav class="home-nav" :class="{ 'is-open': mobileMenuOpen }"><a href="#capabilities">{{ copy.nav[0] }}</a><a href="#tools">{{ copy.nav[1] }}</a><a href="#pricing">{{ copy.nav[2] }}</a><a href="#faq">{{ copy.nav[3] }}</a></nav>
       <div class="home-actions"><template v-if="isAuthenticated"><HomeTopbarControls /><HomeAccountMenu variant="toolbar" /></template><template v-else><button class="home-language-toggle" type="button" :aria-label="isEnglish ? '切换至中文' : 'Switch to English'" :title="isEnglish ? '切换至中文' : 'Switch to English'" @click="toggleLocale">{{ isEnglish ? '中文' : 'EN' }}</button><button class="home-theme-toggle" type="button" :aria-label="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" :title="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" @click="toggleTheme"><svg v-if="interfacePreferences.resolvedTheme === 'dark'" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z" /></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button><RouterLink to="/login">{{ isEnglish ? 'Log in' : '登录' }}</RouterLink><RouterLink class="home-register" to="/register">{{ isEnglish ? 'Sign up' : '注册' }}</RouterLink></template><button class="home-menu" type="button" @click="mobileMenuOpen = !mobileMenuOpen">{{ isEnglish ? 'Menu' : '菜单' }}</button></div>
+      <span class="home-reading-progress" aria-hidden="true"></span>
     </header>
     <main>
-      <section class="home-hero"><p class="home-eyebrow" data-reveal="hero-soft">{{ copy.hero[0] }}</p><h1 data-reveal="hero-title">{{ copy.hero[1] }}</h1><p class="home-hero-lead" data-reveal="hero-soft">{{ copy.hero[2] }}</p><p class="home-hero-copy" data-reveal="hero-soft">{{ copy.hero[3] }}</p><div class="home-hero-actions" data-reveal="hero-actions"><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.hero[4] }}</RouterLink><RouterLink class="home-secondary" to="/model-plaza">{{ copy.hero[5] }}</RouterLink></div><div class="home-model-rail"><span data-reveal="soft">{{ copy.hero[6] }}</span><div class="home-model-list"><span v-for="provider in providers" :key="provider.name" class="home-model-chip" data-reveal="chip"><img :src="provider.src" :alt="provider.name"><small>{{ provider.name }}</small></span></div></div></section>
-      <section class="home-section home-pain"><div class="home-heading" data-reveal="heading"><span>{{ copy.pain[0] }}</span><h2>{{ copy.pain[1] }}</h2><p>{{ copy.pain[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.pain[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
-      <section id="capabilities" class="home-section home-capabilities"><div class="home-heading" data-reveal="heading"><span>{{ copy.cap[0] }}</span><h2>{{ copy.cap[1] }}</h2><p>{{ copy.cap[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.cap[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 0 || index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
-      <section id="tools" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.tools[0] }}</span><h2>{{ copy.tools[1] }}</h2><p>{{ copy.tools[2] }}</p></div><div class="home-tool-grid"><a v-for="tool in tools" :key="tool[1]" data-reveal="card" href="https://muxway.dev" target="_blank" rel="noreferrer"><b>{{ tool[0] }}</b><span>{{ tool[1] }}</span><i>↗</i></a></div><a class="home-inline-link" data-reveal="soft" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.tools[3] }} →</a></section>
-      <section class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.compare[0] }}</span><h2>{{ copy.compare[1] }}</h2></div><div class="home-table" data-reveal="surface"><div><b v-for="cell in copy.compare[2]" :key="cell">{{ cell }}</b></div><div v-for="row in copy.compare[3]" :key="row[0]"><span v-for="cell in row" :key="cell">{{ cell }}</span></div></div></section>
-      <section class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.steps[0] }}</span><h2>{{ copy.steps[1] }}</h2><p>{{ copy.steps[2] }}</p></div><div class="home-steps"><article v-for="([number, title, text], index) in copy.steps[3]" :key="number" data-reveal="card"><span>{{ number }}</span><h3>{{ title }}</h3><p>{{ text }}</p><div v-if="index === 2" class="home-code"><code>{{ apiBase }}</code><button type="button" @click="copyBase">{{ copied ? copy.steps[5] : copy.steps[4] }}</button></div></article></div></section>
-      <section id="pricing" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.pricing[0] }}</span><h2>{{ copy.pricing[1] }}</h2><p>{{ copy.pricing[2] }}</p></div><p v-if="plansState === 'loading'" class="home-state" data-reveal="soft">{{ copy.pricing[3] }}</p><div v-else-if="plansState === 'ready' && groups.length" class="home-plan-groups"><section v-for="group in groups" :key="group.name"><header data-reveal="heading"><h3>{{ group.name }}</h3><span>{{ group.items.length }}</span></header><div class="home-plan-grid"><article v-for="plan in group.items" :key="plan.id" class="home-plan" data-reveal="card" :class="{ 'is-featured': plan.card_featured }"><div><span>{{ plan.card_badge || plan.card_tier || plan.platform || 'MUXWAY' }}</span><small v-if="plan.card_featured">FEATURED</small></div><h4>{{ plan.name }}</h4><p>{{ plan.description }}</p><strong>{{ formatPrice(plan) }}</strong><em>/ {{ validity(plan) }}</em><dl><div><dt>{{ copy.pricing[7] }}</dt><dd>{{ validity(plan) }}</dd></div><div v-if="plan.monthly_limit_usd"><dt>{{ copy.pricing[8] }}</dt><dd>${{ Number(plan.monthly_limit_usd).toLocaleString() }}</dd></div><div v-if="plan.seat_limit"><dt>{{ copy.pricing[9] }}</dt><dd>{{ plan.seat_limit }}</dd></div><div v-if="plan.concurrency_limit"><dt>{{ copy.pricing[10] }}</dt><dd>{{ plan.concurrency_limit }}</dd></div></dl><ul><li v-for="feature in plan.features.slice(0, 4)" :key="feature">{{ feature }}</li></ul><RouterLink :to="planTarget(plan)">{{ plan.purchase_policy === 'approval' ? copy.pricing[6] : copy.pricing[5] }} →</RouterLink></article></div></section></div><div v-else class="home-state" data-reveal="soft"><p>{{ copy.pricing[4] }}</p><RouterLink class="home-secondary" :to="isAuthenticated ? '/subscriptions' : '/login'">{{ isEnglish ? 'View plans' : '查看套餐' }}</RouterLink></div></section>
-      <section id="faq" class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.faq[0] }}</span><h2>{{ copy.faq[1] }}</h2><p>{{ copy.faq[2] }}</p></div><div class="home-faq"><details v-for="([question, answer], index) in copy.faq[3]" data-reveal="faq" :key="question" :open="index === 0"><summary>{{ question }}<b>+</b></summary><p>{{ answer }}</p></details></div></section>
+      <section id="top" data-journey-section class="home-hero"><p class="home-eyebrow" data-reveal="hero-soft">{{ copy.hero[0] }}</p><h1 data-reveal="hero-title">{{ copy.hero[1] }}</h1><p class="home-hero-lead" data-reveal="hero-soft">{{ copy.hero[2] }}</p><p class="home-hero-copy" data-reveal="hero-soft">{{ copy.hero[3] }}</p><div class="home-hero-actions" data-reveal="hero-actions"><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.hero[4] }}</RouterLink><RouterLink class="home-secondary" to="/model-plaza">{{ copy.hero[5] }}</RouterLink></div><div class="home-model-rail"><span data-reveal="soft">{{ copy.hero[6] }}</span><div class="home-model-list"><span v-for="provider in providers" :key="provider.name" class="home-model-chip" data-reveal="chip"><img :src="provider.src" :alt="provider.name"><small>{{ provider.name }}</small></span></div></div><a class="home-scroll-cue" href="#pain">{{ isEnglish ? 'Discover more' : '向下探索' }}<i aria-hidden="true">↓</i></a></section>
+      <section id="pain" data-journey-section class="home-section home-pain"><div class="home-heading" data-reveal="heading"><span>{{ copy.pain[0] }}</span><h2>{{ copy.pain[1] }}</h2><p>{{ copy.pain[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.pain[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
+      <section id="capabilities" data-journey-section class="home-section home-capabilities"><div class="home-heading" data-reveal="heading"><span>{{ copy.cap[0] }}</span><h2>{{ copy.cap[1] }}</h2><p>{{ copy.cap[2] }}</p></div><div class="home-card-grid"><article v-for="([title, text], index) in copy.cap[3]" :key="title" data-reveal="card" :class="{ 'is-emphasis': index === 0 || index === 3 }"><span>0{{ index + 1 }}</span><h3>{{ title }}</h3><p>{{ text }}</p></article></div></section>
+      <section id="tools" data-journey-section class="home-section"><div class="home-heading" data-reveal="heading"><span>{{ copy.tools[0] }}</span><h2>{{ copy.tools[1] }}</h2><p>{{ copy.tools[2] }}</p></div><div class="home-tool-grid"><a v-for="tool in tools" :key="tool[1]" data-reveal="card" href="https://muxway.dev" target="_blank" rel="noreferrer"><b>{{ tool[0] }}</b><span>{{ tool[1] }}</span><i>↗</i></a></div><a class="home-inline-link" data-reveal="soft" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.tools[3] }} →</a></section>
+      <section id="compare" data-journey-section class="home-section home-compare"><div class="home-heading" data-reveal="heading"><span>{{ copy.compare[0] }}</span><h2>{{ copy.compare[1] }}</h2></div><div class="home-table" data-reveal="surface"><div><b v-for="cell in copy.compare[2]" :key="cell">{{ cell }}</b></div><div v-for="row in copy.compare[3]" :key="row[0]"><span v-for="cell in row" :key="cell">{{ cell }}</span></div></div></section>
+      <section id="steps" data-journey-section class="home-section home-onboarding"><div class="home-heading" data-reveal="heading"><span>{{ copy.steps[0] }}</span><h2>{{ copy.steps[1] }}</h2><p>{{ copy.steps[2] }}</p></div><div class="home-steps"><article v-for="([number, title, text], index) in copy.steps[3]" :key="number" data-reveal="card"><span>{{ number }}</span><h3>{{ title }}</h3><p>{{ text }}</p><div v-if="index === 2" class="home-code"><code>{{ apiBase }}</code><button type="button" @click="copyBase">{{ copied ? copy.steps[5] : copy.steps[4] }}</button></div></article></div></section>
+      <section id="pricing" data-journey-section class="home-section home-pricing"><div class="home-heading" data-reveal="heading"><span>{{ copy.pricing[0] }}</span><h2>{{ copy.pricing[1] }}</h2><p>{{ copy.pricing[2] }}</p></div><p v-if="plansState === 'loading'" class="home-state" data-reveal="soft">{{ copy.pricing[3] }}</p><div v-else-if="plansState === 'ready' && groups.length" class="home-plan-groups"><section v-for="group in groups" :key="group.name"><header data-reveal="heading"><h3>{{ group.name }}</h3><span>{{ group.items.length }}</span></header><div class="home-plan-grid"><article v-for="plan in group.items" :key="plan.id" class="home-plan" data-reveal="card" :class="{ 'is-featured': plan.card_featured }"><div><span>{{ plan.card_badge || plan.card_tier || plan.platform || 'MUXWAY' }}</span><small v-if="plan.card_featured">FEATURED</small></div><h4>{{ plan.name }}</h4><p>{{ plan.description }}</p><strong>{{ formatPrice(plan) }}</strong><em>/ {{ validity(plan) }}</em><dl><div><dt>{{ copy.pricing[7] }}</dt><dd>{{ validity(plan) }}</dd></div><div v-if="plan.monthly_limit_usd"><dt>{{ copy.pricing[8] }}</dt><dd>${{ Number(plan.monthly_limit_usd).toLocaleString() }}</dd></div><div v-if="plan.seat_limit"><dt>{{ copy.pricing[9] }}</dt><dd>{{ plan.seat_limit }}</dd></div><div v-if="plan.concurrency_limit"><dt>{{ copy.pricing[10] }}</dt><dd>{{ plan.concurrency_limit }}</dd></div></dl><ul><li v-for="feature in plan.features.slice(0, 4)" :key="feature">{{ feature }}</li></ul><RouterLink :to="planTarget(plan)">{{ plan.purchase_policy === 'approval' ? copy.pricing[6] : copy.pricing[5] }} →</RouterLink></article></div></section></div><div v-else class="home-state" data-reveal="soft"><p>{{ copy.pricing[4] }}</p><RouterLink class="home-secondary" :to="isAuthenticated ? '/subscriptions' : '/login'">{{ isEnglish ? 'View plans' : '查看套餐' }}</RouterLink></div></section>
+      <section id="faq" data-journey-section class="home-section home-answers"><div class="home-heading" data-reveal="heading"><span>{{ copy.faq[0] }}</span><h2>{{ copy.faq[1] }}</h2><p>{{ copy.faq[2] }}</p></div><div class="home-faq"><details v-for="([question, answer], index) in copy.faq[3]" data-reveal="faq" :key="question" :open="index === 0"><summary>{{ question }}<b>+</b></summary><p>{{ answer }}</p></details></div></section>
       <section class="home-closing" data-reveal="surface"><div><span>MUXWAY · 模枢</span><h2>{{ copy.closing[0] }}</h2><p>{{ copy.closing[1] }}</p></div><div><RouterLink class="home-primary" :to="isAuthenticated ? consolePath : '/register'">{{ copy.closing[2] }}</RouterLink><a class="home-secondary" href="https://muxway.dev" target="_blank" rel="noreferrer">{{ copy.closing[3] }}</a></div></section>
     </main>
     <footer class="home-footer" data-reveal="soft"><div><RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink><p>{{ isEnglish ? 'Muxway unified AI API gateway.' : 'Muxway 模枢一站式 AI API 网关平台。' }}</p></div><div><RouterLink to="/model-plaza">{{ isEnglish ? 'Models and pricing' : '模型与价格' }}</RouterLink><RouterLink to="/key-usage">{{ isEnglish ? 'Usage lookup' : '用量查询' }}</RouterLink><a href="https://muxway.dev" target="_blank" rel="noreferrer">{{ isEnglish ? 'Integration docs' : '接入文档' }}</a></div><small>© {{ new Date().getFullYear() }} Muxway 模枢</small></footer>
