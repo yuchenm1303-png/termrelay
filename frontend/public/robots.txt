@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /home
+Disallow: /api/
+Disallow: /v1/
+Disallow: /v1beta/
+Disallow: /backend-api/
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /email-verify
+Disallow: /settings
+Disallow: /keys
+Disallow: /usage
+Disallow: /orders
+Disallow: /subscriptions
+Disallow: /payment/
+Disallow: /auth/
+
+Sitemap: https://muxway.dev/sitemap.xml

@@ -157,7 +157,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 		}
 
 		// Replace nonce placeholder with actual nonce before serving
-		content := replaceNoncePlaceholder(cached.Content, nonce)
+		content := decorateHomeHTML(replaceNoncePlaceholder(cached.Content, nonce), c.Request.URL.Path)
 
 		c.Header("ETag", cached.ETag)
 		c.Header("Cache-Control", "no-cache") // Must revalidate
@@ -173,7 +173,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	settings, err := s.settings.GetPublicSettingsForInjection(ctx)
 	if err != nil {
 		// Fallback: serve without injection
-		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", decorateHomeHTML(s.baseHTML, c.Request.URL.Path))
 		c.Abort()
 		return
 	}
@@ -181,7 +181,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		// Fallback: serve without injection
-		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", decorateHomeHTML(s.baseHTML, c.Request.URL.Path))
 		c.Abort()
 		return
 	}
@@ -190,7 +190,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	s.cache.Set(rendered, settingsJSON)
 
 	// Replace nonce placeholder with actual nonce before serving
-	content := replaceNoncePlaceholder(rendered, nonce)
+	content := decorateHomeHTML(replaceNoncePlaceholder(rendered, nonce), c.Request.URL.Path)
 
 	cached = s.cache.Get()
 	if cached != nil {
@@ -385,7 +385,7 @@ func serveIndexHTML(c *gin.Context, fsys fs.FS) {
 		return
 	}
 
-	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", decorateHomeHTML(content, c.Request.URL.Path))
 	c.Abort()
 }
 

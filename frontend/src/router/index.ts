@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomePage from '../smirel/pages/HomePage.vue'
+import { syncRouteSEO } from '../smirel/core/seo'
 import AuthPage from '../smirel/pages/AuthPage.vue'
 import OAuthCallbackPage from '../smirel/pages/OAuthCallbackPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
@@ -124,5 +125,8 @@ router.beforeEach((to) => {
   }
   return true
 })
+
+// Apply the same allowlist after every client navigation, including redirects.
+router.afterEach((to) => syncRouteSEO(to.path))
 
 export default router

@@ -117,7 +117,7 @@ func (s *ExternalFrontendServer) serveIndexHTML(c *gin.Context) bool {
 			c.Abort()
 			return true
 		}
-		content := replaceNoncePlaceholder(cached.Content, nonce)
+		content := decorateHomeHTML(replaceNoncePlaceholder(cached.Content, nonce), c.Request.URL.Path)
 		c.Header("ETag", cached.ETag)
 		c.Header("Cache-Control", "no-cache")
 		c.Data(http.StatusOK, "text/html; charset=utf-8", content)
@@ -131,7 +131,7 @@ func (s *ExternalFrontendServer) serveIndexHTML(c *gin.Context) bool {
 	settings, err := s.settings.GetPublicSettingsForInjection(ctx)
 	if err != nil {
 		c.Header("Cache-Control", "no-cache")
-		c.Data(http.StatusOK, "text/html; charset=utf-8", baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", decorateHomeHTML(baseHTML, c.Request.URL.Path))
 		c.Abort()
 		return true
 	}
@@ -139,14 +139,14 @@ func (s *ExternalFrontendServer) serveIndexHTML(c *gin.Context) bool {
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		c.Header("Cache-Control", "no-cache")
-		c.Data(http.StatusOK, "text/html; charset=utf-8", baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", decorateHomeHTML(baseHTML, c.Request.URL.Path))
 		c.Abort()
 		return true
 	}
 
 	rendered := injectSettingsIntoHTML(baseHTML, settingsJSON)
 	s.cache.Set(rendered, settingsJSON)
-	content := replaceNoncePlaceholder(rendered, nonce)
+	content := decorateHomeHTML(replaceNoncePlaceholder(rendered, nonce), c.Request.URL.Path)
 	if cached := s.cache.Get(); cached != nil {
 		c.Header("ETag", cached.ETag)
 	}

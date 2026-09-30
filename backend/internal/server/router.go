@@ -69,6 +69,8 @@ func SetupRouter(
 		return nil
 	}))
 	r.Use(middleware2.ServerTiming(cfg.Server.EnableServerTiming))
+	// Protect every private SPA route before either frontend implementation serves it.
+	r.Use(web.SEOHeaders())
 
 	// Runtime frontend override. When data/public/index.html exists this
 	// middleware serves the full external bundle; otherwise it falls through to
