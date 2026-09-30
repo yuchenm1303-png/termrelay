@@ -24,6 +24,14 @@ describe('homepage transitions', () => {
     expect(declaration('.home-page .home-section', 'background').value).toBe('transparent')
     expect(declaration('.home-page .home-footer', 'background').value).toBe('transparent')
     expect(declaration('.home-page .home-footer', 'background').important).toBe(true)
+    expect(declaration('.home-page .home-section', 'padding-inline').value).toBe('0')
+    expect(declaration('.home-page .home-section', 'padding-inline').important).toBe(true)
+    expect(declaration("html.smirel-app[data-theme='dark'] .home-page main", 'width').important)
+      .toBe(true)
+    expect(declaration("html.smirel-app[data-theme='dark'] .home-page .home-footer", 'width').important)
+      .toBe(true)
+    expect(declaration("html.smirel-app[data-theme='dark'] .home-page .home-closing", 'margin-inline').value)
+      .toBe('0')
   })
 
   it('matches the bottom of both hero themes to their underlying canvas', () => {

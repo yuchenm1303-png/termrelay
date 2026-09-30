@@ -119,6 +119,7 @@
   scroll-margin-top: 80px;
   /* The section headings, not hard horizontal rules, divide the chapters. */
   border: 0 !important;
+  padding-inline: 0 !important;
   background: transparent !important;
 }
 .home-page .home-heading {
@@ -388,6 +389,7 @@
   position: relative;
   width: min(1180px, calc(100% - 64px));
   border-top: 0 !important;
+  padding-inline: 0 !important;
   background: transparent !important;
 }
 .home-page .home-footer::before {
@@ -495,6 +497,24 @@ html.smirel-app[data-theme='dark'] .home-page {
   --story-line: rgba(135, 165, 202, .11);
   --story-paper: #0b1018;
   background: var(--story-paper);
+}
+/* Legacy dark-only layout widened main/footer to 100vw and re-applied
+   viewport gutters inside EVERY chapter. Normalize the content geometry
+   to light mode before blending any of the atmospheric surfaces. */
+html.smirel-app[data-theme='dark'] .home-page main,
+html.smirel-app[data-theme='dark'] .home-page .home-footer {
+  width: min(1180px, calc(100% - 64px)) !important;
+  max-width: none;
+  padding-inline: 0 !important;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-closing {
+  margin-inline: 0 !important;
+}
+@media (max-width: 820px) {
+  html.smirel-app[data-theme='dark'] .home-page main,
+  html.smirel-app[data-theme='dark'] .home-page .home-footer {
+    width: min(100% - 36px, 690px) !important;
+  }
 }
 html.smirel-app[data-theme='dark'] .home-page main { background: transparent !important; }
 html.smirel-app[data-theme='dark'] .home-page .home-section { background: transparent !important; }
