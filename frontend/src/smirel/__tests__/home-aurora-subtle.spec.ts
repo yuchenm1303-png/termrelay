@@ -12,7 +12,10 @@ const homepage = readFileSync(resolve(process.cwd(), 'src/smirel/pages/HomePage.
 
 function gradient(root: postcss.Root, selector: string) {
   let result: Declaration | undefined
-  root.walkRules(selector, (rule) => {
+  root.walkRules((rule) => {
+    // PostCSS matches walkRules(string) by substring, which would allow
+    // ::after or dark-mode rules to override a hero's exact selector.
+    if (rule.selector !== selector) return
     rule.walkDecls('background', (entry) => { result = entry })
   })
   expect(result, `${selector} must define the existing aurora gradient`).toBeDefined()
