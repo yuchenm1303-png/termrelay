@@ -1,0 +1,388 @@
+/* Muxway homepage topbar — a single restrained material language.
+   Imported after the long-form homepage styles so this is the canonical
+   header layer; no duplicated layout / transforms from the old header. */
+.home-page .home-topbar {
+  --header-ink: #25354a;
+  --header-muted: #64758e;
+  --header-border: rgba(115, 143, 190, .15);
+  --header-active: rgba(82, 124, 221, .085);
+  --header-hover: rgba(78, 122, 207, .07);
+  --header-focus: rgba(80, 121, 235, .23);
+  position: sticky;
+  inset: auto;
+  top: 0;
+  z-index: 60;
+  height: 74px;
+  padding: 0 clamp(22px, 3.8vw, 76px);
+  border: 0;
+  border-bottom: 1px solid var(--header-border);
+  border-radius: 0;
+  background: rgba(251, 253, 255, .91);
+  box-shadow: 0 3px 18px rgba(57, 80, 130, .022);
+  -webkit-backdrop-filter: blur(21px) saturate(130%);
+  backdrop-filter: blur(21px) saturate(130%);
+  transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.home-page .home-topbar.is-scrolled {
+  background: rgba(251, 253, 255, .95);
+  border-bottom-color: rgba(115, 143, 190, .20);
+  box-shadow: 0 10px 32px rgba(57, 80, 130, .073);
+}
+.home-page .home-topbar::after { opacity: .65; }
+/* Existing SVG is retained in its own <img>, never reconstructed in CSS. */
+.home-page .home-topbar .home-brand {
+  justify-self: start;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 3px 6px 0;
+  border-radius: 14px;
+  text-decoration: none;
+}
+.home-page .home-topbar .home-brand img {
+  width: 43px;
+  height: 43px;
+  flex: none;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(68, 83, 184, .095));
+}
+.home-page .home-topbar .home-brand span {
+  gap: 7px;
+  align-items: baseline;
+  letter-spacing: -.016em;
+}
+.home-page .home-topbar .home-brand strong {
+  color: var(--header-ink);
+  font-size: 1.18rem;
+  font-weight: 750;
+  letter-spacing: -.034em;
+}
+.home-page .home-topbar .home-brand small {
+  color: #738199;
+  font-size: .88rem;
+  font-weight: 540;
+  letter-spacing: -.006em;
+}
+.home-page .home-topbar .home-brand:focus-visible {
+  outline: 2px solid var(--header-focus);
+  outline-offset: 3px;
+}
+
+/* Navigation reads as a single very light capsule, not four disconnected links. */
+.home-page .home-topbar .home-nav {
+  display: flex;
+  justify-self: center;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(114, 143, 194, .095);
+  border-radius: 999px;
+  background: rgba(123, 150, 198, .038);
+  color: var(--header-muted);
+  white-space: nowrap;
+  font-size: .845rem;
+  font-weight: 590;
+}
+.home-page .home-topbar .home-nav a {
+  min-height: 39px;
+  padding: 0 17px;
+  color: var(--header-muted);
+  border-radius: 999px;
+  transition: color .24s ease, box-shadow .3s ease !important;
+}
+.home-page .home-topbar .home-nav a::before {
+  inset: 0;
+  background: var(--header-active);
+  border-color: transparent;
+}
+.home-page .home-topbar .home-nav a::after {
+  bottom: 3px;
+  height: 1.5px;
+}
+.home-page .home-topbar .home-nav a:hover,
+.home-page .home-topbar .home-nav a:focus-visible,
+.home-page .home-topbar .home-nav a.is-current {
+  color: var(--header-ink);
+  outline: none;
+}
+.home-page .home-topbar .home-nav a.is-current::before {
+  opacity: 1;
+  scale: 1;
+  border-color: rgba(111, 139, 205, .12);
+}
+.home-page .home-topbar .home-nav a.is-current::after {
+  opacity: .66;
+  scale: .75 1;
+}
+.home-page .home-topbar .home-nav a:focus-visible {
+  box-shadow: 0 0 0 3px var(--header-focus) !important;
+}
+
+/* Shared utilities: the existing notification / theme popovers remain
+   positioned by their components, so the dock must never clip overflow. */
+.home-page .home-topbar .home-actions { gap: 9px; }
+.home-page .home-topbar .home-workspace-controls {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  padding: 4px 6px;
+  border: 1px solid rgba(124, 149, 191, .16);
+  border-radius: 17px;
+  background: rgba(124, 151, 203, .055);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .66);
+  overflow: visible;
+}
+.home-page .home-topbar .home-workspace-controls .home-control-divider {
+  height: 20px;
+  margin: 0 3px;
+  background: rgba(124, 149, 191, .2) !important;
+}
+.home-page .home-topbar .home-workspace-controls .home-control-divider:last-child {
+  display: none;
+}
+.home-page .home-topbar .home-workspace-controls .home-utility-button {
+  width: 39px;
+  min-width: 39px;
+  height: 39px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  box-shadow: none;
+  background: transparent;
+  color: #647991;
+  transform: none;
+  transition: color .22s ease, border-color .22s ease, background-color .22s ease, box-shadow .22s ease;
+}
+.home-page .home-topbar .home-workspace-controls .home-language-button {
+  width: auto;
+  min-width: 65px;
+  padding: 0 9px;
+  gap: 7px;
+}
+.home-page .home-topbar .home-workspace-controls .home-utility-button:hover,
+.home-page .home-topbar .home-workspace-controls .home-utility-button.active {
+  transform: none;
+  border-color: rgba(115, 148, 206, .12);
+  background: var(--header-hover);
+  color: #365e9c;
+  box-shadow: none;
+}
+.home-page .home-topbar .home-workspace-controls .home-utility-button:focus-visible {
+  outline: 2px solid var(--header-focus);
+  outline-offset: 1px;
+}
+.home-page .home-topbar .home-workspace-controls .home-notification-badge {
+  top: -3px;
+  right: -3px;
+  border-color: #f7faff;
+}
+.home-page .home-topbar .home-account-menu--toolbar { flex: none; }
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  justify-content: center;
+  gap: 0;
+  border: 1px solid rgba(121, 151, 194, .23);
+  border-radius: 15px;
+  color: #354b68;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 2px 6px rgba(61, 83, 123, .035);
+  transition: border-color .24s ease, background-color .24s ease, box-shadow .24s ease;
+}
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border: 1px solid rgba(121, 151, 194, .19);
+  border-radius: 10px;
+  color: #435775;
+  background: linear-gradient(140deg, #f3f7ff, #edf2fc);
+}
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-copy,
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-chevron { display: none; }
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger:hover,
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger.is-open {
+  border-color: rgba(88, 135, 213, .4);
+  background: #f7faff;
+  box-shadow: 0 5px 14px rgba(76, 109, 176, .08);
+}
+.home-page .home-topbar .home-account-menu--toolbar .home-account-trigger:focus-visible {
+  outline: 2px solid var(--header-focus);
+  outline-offset: 2px;
+}
+
+/* Old light-mode rules use !important and otherwise re-create square,
+   separately bordered icon buttons. Scope their replacement to this header. */
+html.smirel-app[data-theme='light'] .home-page .home-topbar .home-workspace-controls .home-utility-button {
+  border-color: transparent !important;
+  color: #647991 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html.smirel-app[data-theme='light'] .home-page .home-topbar .home-workspace-controls .home-utility-button:hover,
+html.smirel-app[data-theme='light'] .home-page .home-topbar .home-workspace-controls .home-utility-button.active {
+  border-color: rgba(115, 148, 206, .12) !important;
+  color: #365e9c !important;
+  background: var(--header-hover) !important;
+}
+html.smirel-app[data-theme='light'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger {
+  border-color: rgba(121, 151, 194, .23);
+  background: rgba(255, 255, 255, .88);
+}
+html.smirel-app[data-theme='light'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-avatar {
+  border-color: rgba(121, 151, 194, .19);
+  color: #435775;
+  background: linear-gradient(140deg, #f3f7ff, #edf2fc);
+}
+
+html.smirel-app[data-theme='dark'] .home-page .home-topbar {
+  --header-ink: #e6edfa;
+  --header-muted: #a4b3ca;
+  --header-border: rgba(150, 177, 219, .14);
+  --header-active: rgba(116, 160, 239, .17);
+  --header-hover: rgba(116, 160, 239, .12);
+  --header-focus: rgba(140, 182, 255, .32);
+  background: rgba(9, 15, 25, .9);
+  box-shadow: 0 3px 19px rgba(0, 0, 0, .1);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar.is-scrolled {
+  background: rgba(9, 15, 25, .96);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .19);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-brand small { color: #9caec4; }
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-nav {
+  border-color: rgba(141, 174, 224, .12);
+  background: rgba(146, 179, 228, .065);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-workspace-controls {
+  border-color: rgba(141, 174, 224, .14);
+  background: rgba(127, 162, 224, .075);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .04);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-workspace-controls .home-utility-button {
+  color: #afbed2;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-workspace-controls .home-utility-button:hover,
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-workspace-controls .home-utility-button.active {
+  color: #e3edfd;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger {
+  border-color: rgba(145, 175, 217, .22);
+  background: rgba(36, 48, 68, .75);
+  color: #dce8f7;
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-avatar {
+  border-color: rgba(145, 175, 217, .21);
+  color: #dce8f7;
+  background: linear-gradient(145deg, #334761, #293a56);
+}
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger:hover,
+html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger.is-open {
+  border-color: rgba(149, 186, 245, .38);
+  background: rgba(49, 67, 94, .8);
+}
+/* Unauthenticated page actions use the same soft shape, without altering
+   their existing navigation / language / theme logic. */
+.home-page .home-topbar .home-language-toggle,
+.home-page .home-topbar .home-theme-toggle { border-radius: 13px; }
+.home-page .home-topbar .home-register {
+  border-radius: 14px !important;
+}
+@media (max-width: 1040px) {
+  .home-page .home-topbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .home-page .home-topbar .home-nav {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 16px;
+    right: 16px;
+    z-index: 5;
+    width: auto;
+    padding: 9px;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+    border: 1px solid var(--header-border);
+    border-radius: 19px;
+    background: rgba(251, 253, 255, .98);
+    box-shadow: 0 15px 42px rgba(48, 73, 120, .12);
+    backdrop-filter: blur(16px);
+  }
+  .home-page .home-topbar .home-nav.is-open { display: flex; }
+  .home-page .home-topbar .home-nav a {
+    justify-content: flex-start;
+    min-height: 43px;
+    width: 100%;
+    padding-inline: 17px;
+  }
+  .home-page .home-topbar .home-nav a::after { display: none; }
+  .home-page .home-topbar .home-menu {
+    min-height: 39px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border: 1px solid var(--header-border);
+    border-radius: 13px;
+    background: var(--header-hover);
+    color: var(--header-ink);
+    font-weight: 640;
+    cursor: pointer;
+  }
+  .home-page .home-topbar .home-menu:hover { background: var(--header-active); }
+  html.smirel-app[data-theme='dark'] .home-page .home-topbar .home-nav {
+    background: rgba(13, 22, 37, .98);
+  }
+}
+@media (max-width: 620px) {
+  .home-page .home-topbar { height: 64px; padding-inline: 14px; }
+  .home-page .home-topbar .home-brand { gap: 5px; }
+  .home-page .home-topbar .home-brand img { width: 36px; height: 36px; }
+  .home-page .home-topbar .home-brand strong { font-size: 1rem; }
+  .home-page .home-topbar .home-brand small { font-size: .73rem; }
+  .home-page .home-topbar .home-actions { gap: 5px; }
+  .home-page .home-topbar .home-workspace-controls {
+    gap: 0;
+    padding: 2px;
+    border-radius: 13px;
+  }
+  .home-page .home-topbar .home-workspace-controls .home-control-divider { display: none; }
+  .home-page .home-topbar .home-workspace-controls .home-utility-button {
+    width: 35px;
+    min-width: 35px;
+    height: 35px;
+    padding: 0 7px;
+    border-radius: 10px;
+  }
+  .home-page .home-topbar .home-workspace-controls .home-language-button { min-width: 35px; }
+  .home-page .home-topbar .home-workspace-controls .home-language-button > span { display: none; }
+  .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    padding: 3px;
+  }
+  .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger-avatar {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+  .home-page .home-topbar .home-menu { padding-inline: 8px; min-height: 35px; }
+  .home-page .home-topbar .home-nav { top: calc(100% + 6px); }
+}
+@media (max-width: 390px) {
+  .home-page .home-topbar .home-brand span { display: none; }
+  .home-page .home-topbar .home-brand img { width: 39px; height: 39px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page .home-topbar,
+  .home-page .home-topbar .home-nav a,
+  .home-page .home-topbar .home-nav a::before,
+  .home-page .home-topbar .home-nav a::after,
+  .home-page .home-topbar .home-workspace-controls .home-utility-button,
+  .home-page .home-topbar .home-account-menu--toolbar .home-account-trigger {
+    transition: none !important;
+  }
+}

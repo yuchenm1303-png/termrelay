@@ -18,11 +18,13 @@ import '../styles/home-landing.css'
 import '../styles/home-light.css'
 import '../styles/home-hero-aurora-motion.css'
 import '../styles/home-storytelling.css'
+import '../styles/home-topbar-refinement.css'
 
 const { isAuthenticated, isAdmin } = useSession()
 const plans = ref<PublicSubscriptionPlan[]>([])
 const plansState = ref<'loading' | 'ready' | 'unavailable'>('loading')
 const mobileMenuOpen = ref(false)
+const headerScrolled = ref(false)
 const activeSection = ref('top')
 const journeySections = computed(() => isEnglish.value
   ? [{ id: 'top', label: 'Overview' }, { id: 'pain', label: 'Challenges' }, { id: 'capabilities', label: 'Capabilities' }, { id: 'tools', label: 'Tools' }, { id: 'compare', label: 'Compare' }, { id: 'steps', label: 'Get started' }, { id: 'pricing', label: 'Plans' }, { id: 'faq', label: 'FAQ' }]
@@ -255,6 +257,7 @@ function initJourneyNavigation() {
     frame = 0
     const scrollable = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0)
     const progress = scrollable ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0
+    if (headerScrolled.value !== (window.scrollY > 12)) headerScrolled.value = window.scrollY > 12
     root.style.setProperty('--home-scroll-progress', progress.toFixed(4))
 
     // The selected chapter follows the content crossing the upper viewport.
@@ -392,10 +395,15 @@ const en = {
         <i aria-hidden="true"></i><span>{{ String(index + 1).padStart(2, '0') }} / {{ chapter.label }}</span>
       </a>
     </nav>
-    <header class="home-topbar">
-      <RouterLink to="/home" class="home-brand"><img :src="logoUrl" alt="Muxway"><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
-      <nav class="home-nav" :class="{ 'is-open': mobileMenuOpen }"><a href="#capabilities">{{ copy.nav[0] }}</a><a href="#tools">{{ copy.nav[1] }}</a><a href="#pricing">{{ copy.nav[2] }}</a><a href="#faq">{{ copy.nav[3] }}</a></nav>
-      <div class="home-actions"><template v-if="isAuthenticated"><HomeTopbarControls /><HomeAccountMenu variant="toolbar" /></template><template v-else><button class="home-language-toggle" type="button" :aria-label="isEnglish ? '切换至中文' : 'Switch to English'" :title="isEnglish ? '切换至中文' : 'Switch to English'" @click="toggleLocale">{{ isEnglish ? '中文' : 'EN' }}</button><button class="home-theme-toggle" type="button" :aria-label="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" :title="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" @click="toggleTheme"><svg v-if="interfacePreferences.resolvedTheme === 'dark'" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z" /></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button><RouterLink to="/login">{{ isEnglish ? 'Log in' : '登录' }}</RouterLink><RouterLink class="home-register" to="/register">{{ isEnglish ? 'Sign up' : '注册' }}</RouterLink></template><button class="home-menu" type="button" @click="mobileMenuOpen = !mobileMenuOpen">{{ isEnglish ? 'Menu' : '菜单' }}</button></div>
+    <header class="home-topbar" :class="{ 'is-scrolled': headerScrolled }">
+      <RouterLink to="/home" class="home-brand" :aria-label="isEnglish ? 'Muxway home' : 'Muxway 首页'"><img :src="logoUrl" alt="" /><span><strong>Muxway</strong><small>· 模枢</small></span></RouterLink>
+      <nav id="home-primary-nav" class="home-nav" :class="{ 'is-open': mobileMenuOpen }" :aria-label="isEnglish ? 'Primary navigation' : '首页导航'">
+        <a href="#capabilities" :class="{ 'is-current': activeSection === 'capabilities' }" :aria-current="activeSection === 'capabilities' ? 'location' : undefined" @click="mobileMenuOpen = false">{{ copy.nav[0] }}</a>
+        <a href="#tools" :class="{ 'is-current': activeSection === 'tools' }" :aria-current="activeSection === 'tools' ? 'location' : undefined" @click="mobileMenuOpen = false">{{ copy.nav[1] }}</a>
+        <a href="#pricing" :class="{ 'is-current': activeSection === 'pricing' }" :aria-current="activeSection === 'pricing' ? 'location' : undefined" @click="mobileMenuOpen = false">{{ copy.nav[2] }}</a>
+        <a href="#faq" :class="{ 'is-current': activeSection === 'faq' }" :aria-current="activeSection === 'faq' ? 'location' : undefined" @click="mobileMenuOpen = false">{{ copy.nav[3] }}</a>
+      </nav>
+      <div class="home-actions"><template v-if="isAuthenticated"><HomeTopbarControls /><HomeAccountMenu variant="toolbar" /></template><template v-else><button class="home-language-toggle" type="button" :aria-label="isEnglish ? '切换至中文' : 'Switch to English'" :title="isEnglish ? '切换至中文' : 'Switch to English'" @click="toggleLocale">{{ isEnglish ? '中文' : 'EN' }}</button><button class="home-theme-toggle" type="button" :aria-label="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" :title="isEnglish ? 'Toggle dark mode' : '切换暗夜模式'" @click="toggleTheme"><svg v-if="interfacePreferences.resolvedTheme === 'dark'" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z" /></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg></button><RouterLink to="/login">{{ isEnglish ? 'Log in' : '登录' }}</RouterLink><RouterLink class="home-register" to="/register">{{ isEnglish ? 'Sign up' : '注册' }}</RouterLink></template><button class="home-menu" type="button" aria-controls="home-primary-nav" :aria-expanded="mobileMenuOpen" :aria-label="isEnglish ? 'Toggle menu' : '展开或收起导航'" @click="mobileMenuOpen = !mobileMenuOpen">{{ isEnglish ? 'Menu' : '菜单' }}</button></div>
       <span class="home-reading-progress" aria-hidden="true"></span>
     </header>
     <main>
