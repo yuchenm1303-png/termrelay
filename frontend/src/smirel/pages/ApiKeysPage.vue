@@ -3,6 +3,7 @@ import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
+import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
 
@@ -411,6 +412,34 @@ onBeforeUnmount(() => {
 
     <p v-if="error" class="keys-inline-error">{{ error }}</p>
 
+    <AsyncDataReveal :ready="!loading" :content-motion="false" class="key-data-boundary">
+      <template #loading>
+        <section class="keys-overview keys-overview--loading" aria-hidden="true">
+          <article v-for="index in 3" :key="index" class="keys-overview-loading-metric">
+            <i class="async-data-skeleton keys-loading-metric-label" />
+            <i class="async-data-skeleton keys-loading-metric-value" />
+          </article>
+        </section>
+        <section class="keys-library">
+          <header class="keys-library-heading"><div><strong>{{ copy.keys }}</strong><span>—</span></div></header>
+          <div
+            class="keys-loading-state"
+            role="status"
+            :aria-label="isZh ? '正在加载 API 密钥' : 'Loading API keys'"
+          >
+            <div v-for="index in 2" :key="index" class="api-key-card keys-loading-card" aria-hidden="true">
+              <div class="keys-loading-head">
+                <i class="keys-loading-icon" />
+                <div class="keys-loading-title"><i /><i /></div>
+                <i class="keys-loading-badge" />
+              </div>
+              <div class="keys-loading-secret"><i /><i /></div>
+              <div class="keys-loading-meta"><i v-for="field in 4" :key="field" /></div>
+              <div class="keys-loading-foot"><i /><i /></div>
+            </div>
+          </div>
+        </section>
+      </template>
     <section class="keys-overview" aria-label="API key overview">
       <article class="keys-overview-card keys-overview-card--keys">
         <span class="keys-metric-icon" aria-hidden="true">
@@ -485,24 +514,7 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <div
-        v-if="loading && !keys.length"
-        class="keys-loading-state"
-        role="status"
-        :aria-label="isZh ? '正在加载 API 密钥' : 'Loading API keys'"
-      >
-        <div v-for="index in 2" :key="index" class="api-key-card keys-loading-card" aria-hidden="true">
-          <div class="keys-loading-head">
-            <i class="keys-loading-icon" />
-            <div class="keys-loading-title"><i /><i /></div>
-            <i class="keys-loading-badge" />
-          </div>
-          <div class="keys-loading-secret"><i /><i /></div>
-          <div class="keys-loading-meta"><i v-for="field in 4" :key="field" /></div>
-          <div class="keys-loading-foot"><i /><i /></div>
-        </div>
-      </div>
-      <TransitionGroup v-else-if="keys.length" appear name="key-card" tag="div" class="api-key-grid">
+      <TransitionGroup v-if="keys.length" appear name="key-card" tag="div" class="api-key-grid">
         <ApiKeyCredentialCard
           v-for="(item, index) in keys"
           :key="item.id"
@@ -519,6 +531,7 @@ onBeforeUnmount(() => {
         <button class="keys-primary-button" type="button" @click="openCreate">{{ copy.create }}</button>
       </div>
     </section>
+    </AsyncDataReveal>
 
     <div v-if="createOpen" class="keys-modal-backdrop" @mousedown.self="closeCreate">
       <section class="keys-create-modal" role="dialog" aria-modal="true" :aria-label="copy.createTitle">
@@ -680,6 +693,30 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Overview and credential cards enter only after API data and route settle.
+ * No parent opacity stack over the per-card stagger. */
+.key-data-boundary[data-resolved='true'] .keys-overview-card {
+  animation: key-overview-ready 350ms cubic-bezier(.18, .8, .3, 1) both;
+}
+.key-data-boundary[data-resolved='true'] .keys-overview-card:nth-child(2) { animation-delay: 38ms; }
+.key-data-boundary[data-resolved='true'] .keys-overview-card:nth-child(3) { animation-delay: 76ms; }
+@keyframes key-overview-ready {
+  from { opacity: .3; transform: translate3d(0, 7px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.keys-overview--loading .keys-overview-loading-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 13px;
+}
+.keys-loading-metric-label { width: 66px; height: 10px; }
+.keys-loading-metric-value { width: 46px; height: 25px; }
+@media (prefers-reduced-motion: reduce) {
+  .key-data-boundary[data-resolved='true'] .keys-overview-card { animation: none; }
+}
+
 .api-keys-page {
   width: 100%;
 }

@@ -19,8 +19,9 @@ function declarations(root: ReturnType<typeof postcss.parse>, selector: string) 
 describe('API credential card entrance', () => {
   it('animates cards after async loading, including the initial group mount', () => {
     expect(page).toContain('const loading = ref(true)')
-    expect(page).toContain('<TransitionGroup v-else-if="keys.length" appear name="key-card"')
+    expect(page).toContain('<TransitionGroup v-if="keys.length" appear name="key-card"')
     expect(page).toContain(':style="{ \'--key-enter-index\': Math.min(index, 7) }"')
+    expect(page).toContain('<AsyncDataReveal :ready="!loading" :content-motion="false"')
     expect(page).toContain('class="api-key-card keys-loading-card"')
     expect(page).toContain('keys-loading-secret')
   })
