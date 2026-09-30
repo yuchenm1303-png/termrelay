@@ -20,27 +20,35 @@ function gradient(root: postcss.Root, selector: string) {
 }
 
 function maxCloudAlpha(background: string) {
-  const alphas = [...background.matchAll(/rgba\([^()]+?,\s*(0?\.\d+|1(?:\.0+)?)\)/g)]
-    .map((match) => Number(match[1]))
+  // Exclude neutral hero-to-page fade, evaluate tinted stops only.
+  const alphas = [...background.matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*(0?\.\d+|1(?:\.0+)?)\)/g)]
+    .filter((match) => {
+      const rgb = [Number(match[1]), Number(match[2]), Number(match[3])]
+      return Math.max(...rgb) - Math.min(...rgb) > 20
+    })
+    .map((match) => Number(match[4]))
   expect(alphas.length).toBeGreaterThan(0)
   return Math.max(...alphas)
 }
 
 describe('subtle existing hero mist', () => {
   it('uses low-alpha static color, including the actual important storytelling layers', () => {
-    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero'))).toBeLessThanOrEqual(.12)
-    expect(maxCloudAlpha(gradient(storytelling, '.home-page .home-hero'))).toBeLessThanOrEqual(.12)
+    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero'))).toBeLessThanOrEqual(.055)
+    expect(maxCloudAlpha(gradient(storytelling, '.home-page .home-hero'))).toBeLessThanOrEqual(.055)
     expect(maxCloudAlpha(gradient(storytelling, "html.smirel-app[data-theme='dark'] .home-page .home-hero")))
-      .toBeLessThanOrEqual(.08)
+      .toBeLessThanOrEqual(.040)
   })
   it('preserves the original animated cloud elements while reducing their saturation', () => {
-    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero::before'))).toBeLessThanOrEqual(.20)
-    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero::after'))).toBeLessThanOrEqual(.115)
+    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero::before'))).toBeLessThanOrEqual(.092)
+    expect(maxCloudAlpha(gradient(aurora, '.home-page .home-hero::after'))).toBeLessThanOrEqual(.057)
     expect(maxCloudAlpha(gradient(aurora, "html.smirel-app[data-theme='dark'] .home-page .home-hero::before")))
-      .toBeLessThanOrEqual(.22)
+      .toBeLessThanOrEqual(.11)
     expect(maxCloudAlpha(gradient(aurora, "html.smirel-app[data-theme='dark'] .home-page .home-hero::after")))
-      .toBeLessThanOrEqual(.145)
-    expect(homepage).toContain("const opacity = Math.max(.62, .86 - current.scroll * .15)")
+      .toBeLessThanOrEqual(.074)
+    expect(homepage).toContain("const opacity = Math.max(.54, .76 - current.scroll * .13)")
+    expect(aurora.toString()).toContain("width: min(2160px, 150vw)")
+    expect(aurora.toString()).toContain("width: min(1920px, 142vw)")
+    expect(aurora.toString()).toContain("width: 174vw")
   })
   it('keeps secondary section atmosphere restrained rather than a separate color wall', () => {
     expect(maxCloudAlpha(gradient(storytelling, '.home-page .home-capabilities::before')))

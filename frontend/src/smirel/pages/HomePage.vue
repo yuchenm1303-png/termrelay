@@ -138,7 +138,7 @@ function initHeroAuroraMotion() {
     hero.style.setProperty('--hero-aurora-rotate', '0deg')
     hero.style.setProperty('--hero-aurora-scale', '1')
     hero.style.setProperty('--hero-aurora-tail-scale', '1')
-    hero.style.setProperty('--hero-aurora-opacity', '.86')
+    hero.style.setProperty('--hero-aurora-opacity', '.76')
     return
   }
 
@@ -175,7 +175,7 @@ function initHeroAuroraMotion() {
     const rotate = current.x * 3.4 + current.page * 3.4
     const scale = 1 + current.scroll * .08 + Math.abs(current.x) * .022
     const tailScale = 1 + current.scroll * .12 + Math.abs(current.y) * .018
-    const opacity = Math.max(.62, .86 - current.scroll * .15)
+    const opacity = Math.max(.54, .76 - current.scroll * .13)
 
     hero.style.setProperty('--hero-aurora-x', `${x.toFixed(2)}px`)
     hero.style.setProperty('--hero-aurora-y', `${y.toFixed(2)}px`)
