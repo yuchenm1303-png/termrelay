@@ -10,7 +10,7 @@ describe('registration password strength guidance', () => {
     expect(estimatePasswordStrength('').level).toBe(0)
     expect(estimatePasswordStrength('bird').level).toBe(1)
     expect(estimatePasswordStrength('midnight').level).toBe(2)
-    expect(estimatePasswordStrength('midnightSun42').level).toBe(3)
+    expect(estimatePasswordStrength('midnightmoon42').level).toBe(3)
     expect(estimatePasswordStrength('midnightSun42!').level).toBe(4)
     expect(estimatePasswordStrength('little violet forest morning').level).toBe(4)
   })
