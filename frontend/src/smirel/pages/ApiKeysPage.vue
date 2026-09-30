@@ -248,7 +248,19 @@ function normalizeKeys(data: KeyListPayload) {
   return Array.isArray(data) ? data : (data.items || [])
 }
 
+let groupRateRequestId = 0
+
+async function loadGroupRates(requestId: number) {
+  try {
+    const response = await api.get<Record<string, number>>('/groups/rates')
+    if (requestId === groupRateRequestId) groupRates.value = response.data || {}
+  } catch {
+    if (requestId === groupRateRequestId) groupRates.value = {}
+  }
+}
+
 async function loadPage() {
+  const requestId = ++groupRateRequestId
   loading.value = true
   error.value = ''
 
@@ -273,12 +285,9 @@ async function loadPage() {
     keys.value = normalizeKeys(keyResponse.data)
     groups.value = Array.isArray(groupResponse.data) ? groupResponse.data : []
 
-    try {
-      const ratesResponse = await api.get<Record<string, number>>('/groups/rates')
-      groupRates.value = ratesResponse.data || {}
-    } catch {
-      groupRates.value = {}
-    }
+    // The card grid depends on keys + groups, not the secondary rate API.
+    // Resolve the visible cards now; refresh rates independently afterward.
+    void loadGroupRates(requestId)
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -386,6 +395,7 @@ async function copyCreatedCredential() {
 
 onMounted(() => void loadPage())
 onBeforeUnmount(() => {
+  groupRateRequestId += 1
   if (copiedTimer) window.clearTimeout(copiedTimer)
 })
 </script>
