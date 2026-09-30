@@ -430,8 +430,13 @@ async function submit() {
             type="submit"
             :disabled="loading || turnstilePending || Boolean(turnstileLoadError)"
           >
-            <span>{{ loading ? '处理中…' : (previewMode ? '进入预览控制台' : (turnstilePending ? '完成安全验证' : submitLabel)) }}</span>
-            <b aria-hidden="true">→</b>
+            <span class="auth-submit-label">{{ loading ? '处理中…' : (previewMode ? '进入预览控制台' : (turnstilePending ? '完成安全验证' : submitLabel)) }}</span>
+            <span class="auth-submit-direction" aria-hidden="true">
+              <span v-if="loading" class="auth-submit-spinner"></span>
+              <svg v-else viewBox="0 0 24 24" fill="none" focusable="false">
+                <path d="M5 12h14m-6-6 6 6-6 6" />
+              </svg>
+            </span>
           </button>
         </form>
 
@@ -912,7 +917,6 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   width: 100%;
   min-height: 52px;
   margin-top: 2px;
@@ -935,8 +939,54 @@ async function submit() {
 }
 .auth-submit:active:not(:disabled) { transform: translateY(0); }
 .auth-submit:disabled { cursor: wait; opacity: .58; box-shadow: none; }
-.auth-submit b { font-size: 1.05rem; font-weight: 500; transition: transform .22s ease; }
-.auth-submit:hover:not(:disabled) b { transform: translateX(4px); }
+/* Center the label independently from the icon, so the text never shifts
+ * when the CTA switches between an arrow and the in-flight indicator. */
+.auth-submit-label {
+  display: block;
+  max-width: calc(100% - 54px);
+  text-align: center;
+}
+.auth-submit-direction {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .17);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .12);
+  transform: translateY(-50%);
+  transition: background-color .25s ease, border-color .25s ease;
+}
+.auth-submit-direction svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+}
+.auth-submit:hover:not(:disabled) .auth-submit-direction {
+  border-color: rgba(255, 255, 255, .29);
+  background: rgba(255, 255, 255, .19);
+}
+.auth-submit:hover:not(:disabled) .auth-submit-direction svg {
+  transform: translateX(2px);
+}
+.auth-submit-spinner {
+  width: 13px;
+  height: 13px;
+  border: 1.6px solid rgba(255, 255, 255, .42);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: auth-submit-spin .75s linear infinite;
+}
+@keyframes auth-submit-spin {
+  to { transform: rotate(360deg); }
+}
 .form-error,
 .form-success {
   margin: 0;
@@ -1063,5 +1113,6 @@ async function submit() {
   .auth-intro,
   .auth-card { animation: none; }
   .auth-page *, .auth-page *::before, .auth-page *::after { transition-duration: .01ms !important; }
+  .auth-submit-spinner { animation: none; border-color: rgba(255, 255, 255, .55); border-top-color: #fff; }
 }
 </style>
