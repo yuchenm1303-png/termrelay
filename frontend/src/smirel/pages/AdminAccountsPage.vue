@@ -117,6 +117,13 @@ function platformMark(value?: string) {
   return marks[key] || platformLabel(value).slice(0, 1).toUpperCase()
 }
 
+// The shared provider-logo stylesheet keys off data-provider, not data-platform.
+function providerLogoKey(value?: string) {
+  const key = String(value || '').toLowerCase()
+  const aliases: Record<string, string> = { gemini: 'google', grok: 'xai' }
+  return aliases[key] || key
+}
+
 function accountTypeLabel(value?: string) {
   const labels: Record<string, string> = {
     oauth: 'OAuth',
@@ -612,7 +619,7 @@ onMounted(() => {
             </button>
 
             <span class="upstream-identity">
-              <i class="provider-mark" :data-platform="String(item.platform || '').toLowerCase()">{{ platformMark(item.platform) }}</i>
+              <i class="provider-mark" :data-platform="String(item.platform || '').toLowerCase()" :data-provider="providerLogoKey(item.platform)" :title="platformLabel(item.platform)">{{ platformMark(item.platform) }}</i>
               <span>
                 <strong>{{ item.name || `Account #${item.id}` }}</strong>
                 <small>{{ platformLabel(item.platform) }}<b>·</b>{{ accountTypeLabel(item.type) }}<b>·</b>#{{ item.id }}</small>
@@ -640,7 +647,7 @@ onMounted(() => {
 
             <span class="upstream-groups">
               <template v-if="item.group_ids?.length">
-                <b v-for="id in item.group_ids.slice(0, 2)" :key="id">{{ groupName(id) }}</b>
+                <b v-for="id in item.group_ids.slice(0, 2)" :key="id" :title="groupName(id)">{{ groupName(id) }}</b>
                 <b v-if="item.group_ids.length > 2">+{{ item.group_ids.length - 2 }}</b>
               </template>
               <small v-else>未分组</small>

@@ -1,0 +1,490 @@
+/* Upstream account workspace: one restrained visual system across both themes.
+ * Loaded after the shared admin styles to avoid accumulating local overrides.
+ * No data or interaction behavior is changed here.
+ */
+.workspace-root .admin-accounts-page {
+  --ac-panel: #151b27;
+  --ac-panel-soft: #192130;
+  --ac-ink: #edf3fa;
+  --ac-secondary: #bac7d6;
+  --ac-muted: #99a8ba;
+  --ac-hairline: #303a4b;
+  --ac-track: #303b4b;
+  --ac-accent: #819ee9;
+  --ac-accent-hover: #9cb4f3;
+  --ac-accent-soft: rgba(129, 158, 233, .13);
+  --ac-good: #74d0af;
+  --ac-good-soft: rgba(86, 202, 158, .12);
+  --ac-warn: #e9bf7c;
+  --ac-warn-soft: rgba(225, 172, 94, .10);
+  --ac-danger: #ed9ba2;
+  --ac-danger-soft: rgba(226, 111, 126, .10);
+  --ac-shadow: 0 6px 26px rgba(0, 0, 0, .12);
+  position: relative;
+  isolation: isolate;
+  color: var(--ac-ink);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page {
+  --ac-panel: #fff;
+  --ac-panel-soft: #f8faff;
+  --ac-ink: #202b3d;
+  --ac-secondary: #485970;
+  --ac-muted: #64758b;
+  --ac-hairline: #e5eaf3;
+  --ac-track: #edf1f7;
+  --ac-accent: #486ed6;
+  --ac-accent-hover: #3359bc;
+  --ac-accent-soft: #eef2ff;
+  --ac-good: #198b68;
+  --ac-good-soft: #eaf8f1;
+  --ac-warn: #9b6b27;
+  --ac-warn-soft: #fff7e9;
+  --ac-danger: #b84d59;
+  --ac-danger-soft: #fff1f1;
+  --ac-shadow: 0 3px 7px rgba(32, 49, 78, .025), 0 18px 45px rgba(57, 77, 110, .055);
+}
+
+/* A very low-contrast atmospheric highlight behind the existing content. */
+.workspace-root .admin-accounts-page::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -32px;
+  left: -26px;
+  right: -26px;
+  height: 278px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 55% at 15% 4%, rgba(117, 141, 220, .12), transparent 95%),
+              radial-gradient(ellipse 54% 53% at 85% 7%, rgba(91, 171, 172, .065), transparent 95%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 32%, transparent 100%);
+}
+
+html.smirel-app[data-theme='light'] .workspace-root .admin-accounts-page::before {
+  background: radial-gradient(ellipse 57% 55% at 12% 0%, rgba(131, 151, 230, .075), transparent 94%),
+              radial-gradient(ellipse 50% 52% at 89% 1%, rgba(110, 192, 202, .047), transparent 94%);
+}
+
+.workspace-root .admin-accounts-page .accounts-heading {
+  min-height: 116px;
+  padding: 9px 2px 26px;
+  gap: 20px;
+}
+.workspace-root .admin-accounts-page .accounts-kicker {
+  margin-bottom: 10px;
+  color: var(--ac-muted);
+  font-size: 11px;
+  letter-spacing: .10em;
+  font-weight: 690;
+}
+.workspace-root .admin-accounts-page .accounts-title-line { gap: 14px; flex-wrap: wrap; }
+.workspace-root .admin-accounts-page .accounts-heading h1 {
+  color: var(--ac-ink);
+  font-size: clamp(27px, 2.1vw, 33px);
+  line-height: 1.16;
+  letter-spacing: -.044em;
+  font-weight: 735;
+}
+.workspace-root .admin-accounts-page .accounts-heading p {
+  margin-top: 9px;
+  color: var(--ac-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.workspace-root .admin-accounts-page .accounts-heading-actions { gap: 9px; padding-top: 5px; }
+.workspace-root .admin-accounts-page .fleet-state {
+  min-height: 27px;
+  border-color: color-mix(in srgb, var(--ac-good) 25%, transparent);
+  background: var(--ac-good-soft);
+  color: var(--ac-good);
+  font-size: 11px;
+  font-weight: 665;
+}
+.workspace-root .admin-accounts-page .fleet-state.attention {
+  border-color: color-mix(in srgb, var(--ac-warn) 24%, transparent);
+  color: var(--ac-warn);
+  background: var(--ac-warn-soft);
+}
+.workspace-root .admin-accounts-page .create-account-button,
+.workspace-root .admin-accounts-page .refresh-button {
+  min-height: 42px;
+  border-radius: 12px;
+  font-size: 12px;
+  letter-spacing: .005em;
+  transition: transform .22s cubic-bezier(.2,.7,.25,1), box-shadow .22s ease,
+              border-color .22s ease, background .22s ease, color .22s ease;
+}
+.workspace-root .admin-accounts-page .create-account-button {
+  padding-inline: 16px;
+  border-color: var(--ac-accent);
+  color: #fff;
+  background: var(--ac-accent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-accent) 17%, transparent);
+}
+.workspace-root .admin-accounts-page .create-account-button:hover {
+  border-color: var(--ac-accent-hover);
+  background: var(--ac-accent-hover);
+  box-shadow: 0 7px 17px color-mix(in srgb, var(--ac-accent) 22%, transparent);
+}
+.workspace-root .admin-accounts-page .refresh-button {
+  padding-inline: 15px;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel);
+  color: var(--ac-secondary);
+  box-shadow: 0 2px 6px rgba(35, 48, 72, .025);
+}
+.workspace-root .admin-accounts-page .refresh-button:hover:not(:disabled) {
+  border-color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+  color: var(--ac-accent);
+}
+
+/* Quiet overview: softer gradient dividers, clear numbers, visible utilization. */
+.workspace-root .admin-accounts-page .fleet-overview,
+.workspace-root .admin-accounts-page .accounts-panel {
+  border: 1px solid var(--ac-hairline);
+  border-radius: 17px;
+  background: var(--ac-panel);
+  box-shadow: var(--ac-shadow);
+}
+.workspace-root .admin-accounts-page .fleet-overview { min-height: 132px; }
+.workspace-root .admin-accounts-page .fleet-overview article { padding: 22px 23px; }
+.workspace-root .admin-accounts-page .fleet-overview article + article::before {
+  inset: 18px auto 18px 0;
+  background: linear-gradient(180deg, transparent, var(--ac-hairline) 18% 82%, transparent);
+}
+.workspace-root .admin-accounts-page .metric-label,
+.workspace-root .admin-accounts-page .fleet-metric > span,
+.workspace-root .admin-accounts-page .fleet-metric-head > span {
+  color: var(--ac-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.workspace-root .admin-accounts-page .fleet-primary-value { margin-top: 11px; }
+.workspace-root .admin-accounts-page .fleet-primary-value strong {
+  color: var(--ac-ink);
+  font-size: 33px;
+  letter-spacing: -.045em;
+}
+.workspace-root .admin-accounts-page .fleet-primary-value span,
+.workspace-root .admin-accounts-page .fleet-metric > strong small { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .fleet-primary > small,
+.workspace-root .admin-accounts-page .provider-metric > small {
+  color: var(--ac-muted);
+  font-size: 11px;
+  margin-top: 9px;
+}
+.workspace-root .admin-accounts-page .fleet-metric-head > b { color: var(--ac-muted); font-size: 11px; }
+.workspace-root .admin-accounts-page .fleet-metric > strong {
+  color: var(--ac-ink);
+  font-size: 22px;
+  line-height: 1.1;
+}
+.workspace-root .admin-accounts-page .provider-metric > strong { font-size: 25px; }
+.workspace-root .admin-accounts-page .fleet-progress {
+  height: 5px;
+  margin-top: 13px;
+  background: var(--ac-track);
+}
+.workspace-root .admin-accounts-page .fleet-progress > b {
+  background: var(--ac-accent);
+  transition: width .4s cubic-bezier(.2,.7,.25,1);
+}
+.workspace-root .admin-accounts-page .health-metric .fleet-progress > b { background: #50bd98; }
+
+/* Toolbar and filters scale together instead of fighting over horizontal space. */
+.workspace-root .admin-accounts-page .accounts-panel {
+  margin-top: 17px;
+  overflow: hidden;
+}
+.workspace-root .admin-accounts-page .accounts-toolbar {
+  min-height: 80px;
+  padding: 14px 18px;
+  gap: 14px;
+  background: var(--ac-panel);
+  border-color: var(--ac-hairline);
+}
+.workspace-root .admin-accounts-page .toolbar-title { flex: 0 0 auto; }
+.workspace-root .admin-accounts-page .toolbar-title strong { color: var(--ac-ink); font-size: 14px; }
+.workspace-root .admin-accounts-page .toolbar-title span,
+.workspace-root .admin-accounts-page .toolbar-title small {
+  color: var(--ac-muted);
+  font-size: 11px;
+}
+.workspace-root .admin-accounts-page .toolbar-title small {
+  border-color: var(--ac-hairline);
+}
+.workspace-root .admin-accounts-page .toolbar-controls { flex: 1 1 auto; gap: 9px; }
+.workspace-root .admin-accounts-page .search-control {
+  width: clamp(220px, 24vw, 370px);
+  height: 42px;
+  border-radius: 11px;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel-soft);
+  color: var(--ac-muted);
+}
+.workspace-root .admin-accounts-page .search-control:focus-within {
+  border-color: var(--ac-accent);
+  box-shadow: 0 0 0 3px var(--ac-accent-soft);
+}
+.workspace-root .admin-accounts-page .search-control input { color: var(--ac-ink); font-size: 12px; }
+.workspace-root .admin-accounts-page .search-control input::placeholder { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .toolbar-controls .ui-select__trigger {
+  min-height: 42px;
+  height: 42px;
+  border-radius: 11px;
+}
+.workspace-root .admin-accounts-page .clear-button {
+  border-radius: 11px;
+  border-color: var(--ac-hairline);
+  color: var(--ac-secondary);
+  background: var(--ac-panel-soft);
+}
+.workspace-root .admin-accounts-page .clear-button:hover { color: var(--ac-accent); border-color: var(--ac-accent); }
+
+/* Rows: the account and its state are the visual anchors; avoid black bars. */
+.workspace-root .admin-accounts-page .upstream-table-head {
+  min-height: 46px;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel-soft);
+  color: var(--ac-muted);
+  font-size: 11px;
+  letter-spacing: .025em;
+}
+.workspace-root .admin-accounts-page .upstream-row {
+  min-height: 84px;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel);
+  transition: background .19s ease;
+}
+.workspace-root .admin-accounts-page .upstream-row:hover,
+.workspace-root .admin-accounts-page .upstream-row.expanded {
+  background: var(--ac-panel-soft);
+}
+.workspace-root .admin-accounts-page .upstream-row.selected {
+  background: var(--ac-accent-soft);
+}
+.workspace-root .admin-accounts-page .upstream-row:hover::before,
+.workspace-root .admin-accounts-page .upstream-row.expanded::before,
+.workspace-root .admin-accounts-page .upstream-row.selected::before { background: var(--ac-accent); }
+.workspace-root .admin-accounts-page .provider-mark {
+  width: 41px;
+  height: 41px;
+  flex: 0 0 41px;
+  border: 1px solid var(--ac-hairline);
+  border-radius: 13px;
+  color: var(--ac-secondary);
+  background: var(--ac-panel-soft);
+}
+.workspace-root .admin-accounts-page .provider-mark::before { width: 21px; height: 21px; }
+.workspace-root .admin-accounts-page .provider-mark[data-provider='openai'] { color: var(--ac-ink); }
+.workspace-root .admin-accounts-page .provider-mark[data-provider='anthropic'] { color: #ca8c6a; }
+.workspace-root .admin-accounts-page .provider-mark[data-provider='google'] { color: #769bdb; }
+.workspace-root .admin-accounts-page .provider-mark[data-provider='xai'] { color: var(--ac-ink); }
+.workspace-root .admin-accounts-page .upstream-identity { gap: 12px; }
+.workspace-root .admin-accounts-page .upstream-identity strong {
+  color: var(--ac-ink);
+  font-size: 14px;
+  font-weight: 710;
+}
+.workspace-root .admin-accounts-page .upstream-identity small,
+.workspace-root .admin-accounts-page .upstream-identity em {
+  color: var(--ac-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.workspace-root .admin-accounts-page .upstream-identity small b { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .upstream-health { gap: 6px; }
+.workspace-root .admin-accounts-page .upstream-health > small,
+.workspace-root .admin-accounts-page .upstream-models > small,
+.workspace-root .admin-accounts-page .upstream-last-used > small { color: var(--ac-muted); font-size: 11px; }
+.workspace-root .admin-accounts-page .upstream-models > b,
+.workspace-root .admin-accounts-page .load-values > b,
+.workspace-root .admin-accounts-page .upstream-last-used > b {
+  color: var(--ac-secondary);
+  font-size: 12px;
+}
+.workspace-root .admin-accounts-page .upstream-models > b { color: var(--ac-ink); font-size: 15px; }
+.workspace-root .admin-accounts-page .load-track {
+  max-width: 120px;
+  height: 5px;
+  background: var(--ac-track);
+}
+.workspace-root .admin-accounts-page .load-track > b {
+  background: var(--ac-accent);
+  transition: width .35s ease;
+}
+.workspace-root .admin-accounts-page .load-values > small { color: var(--ac-muted); font-size: 11px; }
+.workspace-root .admin-accounts-page .upstream-groups {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 5px;
+}
+.workspace-root .admin-accounts-page .upstream-groups > b {
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: 26px;
+  padding-inline: 9px;
+  border-radius: 8px;
+  border: 1px solid var(--ac-hairline);
+  background: var(--ac-panel-soft);
+  color: var(--ac-secondary);
+}
+.workspace-root .admin-accounts-page .upstream-groups > b { font: inherit; font-size: 11px; font-weight: 600; line-height: 24px; }
+.workspace-root .admin-accounts-page .upstream-groups > small { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .health-badge {
+  height: 25px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 660;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel-soft);
+  color: var(--ac-secondary);
+}
+.workspace-root .admin-accounts-page .health-badge.good { border-color: color-mix(in srgb, var(--ac-good) 24%, transparent); background: var(--ac-good-soft); color: var(--ac-good); }
+.workspace-root .admin-accounts-page .health-badge.muted { border-color: color-mix(in srgb, var(--ac-warn) 25%, transparent); background: var(--ac-warn-soft); color: var(--ac-warn); }
+.workspace-root .admin-accounts-page .health-badge.danger { border-color: color-mix(in srgb, var(--ac-danger) 23%, transparent); background: var(--ac-danger-soft); color: var(--ac-danger); }
+.workspace-root .admin-accounts-page .health-badge.good i { background: var(--ac-good); }
+.workspace-root .admin-accounts-page .health-badge.muted i { background: var(--ac-warn); }
+.workspace-root .admin-accounts-page .health-badge.danger i { background: var(--ac-danger); }
+.workspace-root .admin-accounts-page .selection-toggle > span {
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel);
+}
+.workspace-root .admin-accounts-page .selection-toggle.selected > span { background: var(--ac-accent); border-color: var(--ac-accent); }
+.workspace-root .admin-accounts-page .selection-toggle.selected > span::after { border-color: #fff; }
+.workspace-root .admin-accounts-page .quick-actions { gap: 6px; }
+.workspace-root .admin-accounts-page .quick-button,
+.workspace-root .admin-accounts-page .expand-button {
+  min-height: 33px;
+  height: 33px;
+  border-radius: 10px;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel);
+  color: var(--ac-secondary);
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.workspace-root .admin-accounts-page .quick-button { padding-inline: 10px; font-size: 11px; }
+.workspace-root .admin-accounts-page .quick-button.power.active {
+  border-color: color-mix(in srgb, var(--ac-good) 25%, transparent);
+  background: var(--ac-good-soft);
+  color: var(--ac-good);
+}
+.workspace-root .admin-accounts-page .quick-button:hover:not(:disabled),
+.workspace-root .admin-accounts-page .expand-button:hover {
+  color: var(--ac-accent);
+  border-color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+  transform: translateY(-1px);
+}
+.workspace-root .admin-accounts-page .expand-button { width: 33px; }
+.workspace-root .admin-accounts-page .expand-button.open {
+  color: var(--ac-accent);
+  border-color: color-mix(in srgb, var(--ac-accent) 34%, transparent);
+  background: var(--ac-accent-soft);
+}
+
+/* Keep expanded details a continuation of the row, not a separate gray slab. */
+.workspace-root .admin-accounts-page .upstream-detail {
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel-soft);
+}
+.workspace-root .admin-accounts-page .upstream-detail > .detail-card,
+.workspace-root .admin-accounts-page .models-detail {
+  border: 1px solid var(--ac-hairline);
+  border-radius: 11px;
+  background: var(--ac-panel);
+}
+.workspace-root .admin-accounts-page .upstream-detail span,
+.workspace-root .admin-accounts-page .models-detail > header span,
+.workspace-root .admin-accounts-page .models-detail p { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .upstream-detail strong,
+.workspace-root .admin-accounts-page .models-detail > header strong { color: var(--ac-secondary); }
+.workspace-root .admin-accounts-page .model-chips span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel-soft);
+  color: var(--ac-secondary);
+}
+.workspace-root .admin-accounts-page .accounts-footer {
+  border-color: var(--ac-hairline);
+  background: var(--ac-panel);
+}
+.workspace-root .admin-accounts-page .accounts-footer > span { color: var(--ac-muted); font-size: 11px; }
+.workspace-root .admin-accounts-page .accounts-footer button,
+.workspace-root .admin-accounts-page .batch-actions button,
+.workspace-root .admin-accounts-page .detail-actions button,
+.workspace-root .admin-accounts-page .models-detail button,
+.workspace-root .admin-accounts-page .edit-account-button {
+  border-color: var(--ac-hairline);
+  border-radius: 9px;
+  color: var(--ac-secondary);
+  background: var(--ac-panel);
+}
+.workspace-root .admin-accounts-page .accounts-footer button:hover:not(:disabled),
+.workspace-root .admin-accounts-page .batch-actions button:hover:not(:disabled),
+.workspace-root .admin-accounts-page .detail-actions button:hover:not(:disabled),
+.workspace-root .admin-accounts-page .models-detail button:hover:not(:disabled),
+.workspace-root .admin-accounts-page .edit-account-button:hover {
+  border-color: var(--ac-accent);
+  color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+}
+.workspace-root .admin-accounts-page .batch-toolbar {
+  border-color: var(--ac-hairline);
+  border-radius: 12px;
+  background: var(--ac-accent-soft);
+}
+.workspace-root .admin-accounts-page .batch-count { background: var(--ac-accent); color: #fff; }
+.workspace-root .admin-accounts-page .batch-toolbar strong { color: var(--ac-ink); }
+.workspace-root .admin-accounts-page .batch-toolbar small { color: var(--ac-muted); }
+.workspace-root .admin-accounts-page .accounts-error { color: var(--ac-danger); border-color: color-mix(in srgb, var(--ac-danger) 23%, transparent); background: var(--ac-danger-soft); }
+
+/* Unify focus affordance across buttons and the searchable table. */
+.workspace-root .admin-accounts-page button:focus-visible,
+.workspace-root .admin-accounts-page .ui-select__trigger:focus-visible {
+  outline: 2px solid var(--ac-accent);
+  outline-offset: 2px;
+}
+
+/* Responsive columns must agree with the existing SFC's progressive hiding. */
+@media (max-width: 1380px) {
+  .workspace-root .admin-accounts-page .accounts-toolbar { align-items: flex-start; flex-wrap: wrap; }
+  .workspace-root .admin-accounts-page .toolbar-controls { justify-content: flex-start; flex-wrap: wrap; }
+  .workspace-root .admin-accounts-page .search-control { flex: 1 1 260px; width: auto; max-width: 410px; }
+}
+@media (max-width: 1120px) {
+  .workspace-root .admin-accounts-page .toolbar-title small { display: none; }
+  .workspace-root .admin-accounts-page .accounts-toolbar { flex-direction: column; }
+  .workspace-root .admin-accounts-page .toolbar-controls { width: 100%; }
+}
+@media (max-width: 860px) {
+  .workspace-root .admin-accounts-page .fleet-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workspace-root .admin-accounts-page .fleet-overview article:nth-child(3)::before { display: none; }
+  .workspace-root .admin-accounts-page .fleet-overview article:nth-child(n + 3) { border-top: 1px solid var(--ac-hairline); }
+  .workspace-root .admin-accounts-page .upstream-row { min-height: 79px; }
+}
+@media (max-width: 640px) {
+  .workspace-root .admin-accounts-page .accounts-heading { flex-direction: column; align-items: stretch; }
+  .workspace-root .admin-accounts-page .accounts-heading-actions { width: 100%; padding-top: 0; }
+  .workspace-root .admin-accounts-page .fleet-overview { grid-template-columns: 1fr; }
+  .workspace-root .admin-accounts-page .fleet-overview article + article::before { display: none; }
+  .workspace-root .admin-accounts-page .fleet-overview article + article { border-top: 1px solid var(--ac-hairline); }
+  .workspace-root .admin-accounts-page .search-control { flex: 1 1 100%; max-width: none; }
+  .workspace-root .admin-accounts-page .upstream-identity em { max-width: 180px; }
+  .workspace-root .admin-accounts-page .batch-toolbar { flex-wrap: wrap; }
+  .workspace-root .admin-accounts-page .accounts-footer { padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-root .admin-accounts-page .create-account-button,
+  .workspace-root .admin-accounts-page .refresh-button,
+  .workspace-root .admin-accounts-page .quick-button,
+  .workspace-root .admin-accounts-page .expand-button,
+  .workspace-root .admin-accounts-page .fleet-progress > b,
+  .workspace-root .admin-accounts-page .load-track > b { transition: none; }
+}
