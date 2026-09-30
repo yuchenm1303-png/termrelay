@@ -70,7 +70,7 @@ const homeSnapshot = `<main class="seo-snapshot" aria-label="Muxway 模枢">
     <h3>如何管理团队或项目用量？</h3>
     <p>可以为不同项目创建独立 Key，在控制台查看请求、Token 和费用记录。</p>
   </section>
-  <footer><a href="/home#faq">查看完整常见问题</a><a href="/register">注册 Muxway</a></footer>
+  <footer><a href="/ai-guide.html">AI 接入说明</a><a href="/home#faq">查看完整常见问题</a><a href="/register">注册 Muxway</a></footer>
 </main>`
 
 func decorateHomeHTML(body []byte, requestPath string) []byte {
