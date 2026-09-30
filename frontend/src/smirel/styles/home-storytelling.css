@@ -534,7 +534,17 @@ html.smirel-app[data-theme='dark'] .home-page .home-section { background: transp
 html.smirel-app[data-theme='dark'] .home-page .home-capabilities {
   background: transparent !important;
 }
+/* The legacy dark rules give the hero width:100% and oversized left/right
+   padding, but the shared full-bleed rule adds negative viewport margins.
+   Together they left only ~2/3 of the screen painted and wrapped the title.
+   Resolve the whole geometry at the SAME specificity as the dark rules. */
 html.smirel-app[data-theme='dark'] .home-page .home-hero {
+  width: 100vw;
+  max-width: none;
+  box-sizing: border-box;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: max(24px, calc((100vw - 1320px) / 2));
+  overflow: visible;
   background:
     linear-gradient(180deg,
       rgba(11, 16, 24, 0) 0%,
@@ -546,6 +556,16 @@ html.smirel-app[data-theme='dark'] .home-page .home-hero {
     radial-gradient(ellipse 70% 57% at 51% 72%, rgba(78, 79, 201, .034), transparent 75%),
     radial-gradient(ellipse 70% 54% at 98% 68%, rgba(171, 62, 142, .028), transparent 75%),
     linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #0b1018 100%) !important;
+}
+/* Match the light mobile layout: return the hero to the column rather
+   than leaving desktop viewport margins active on narrow displays. */
+@media (max-width: 820px) {
+  html.smirel-app[data-theme='dark'] .home-page .home-hero {
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
 }
 html.smirel-app[data-theme='dark'] .home-page .home-capabilities::before {
   background:

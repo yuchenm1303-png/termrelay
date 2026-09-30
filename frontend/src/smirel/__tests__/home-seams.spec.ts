@@ -49,6 +49,32 @@ describe('homepage transitions', () => {
       .toBe('none')
   })
 
+  it('keeps dark hero geometry full-bleed instead of cropping at the main column', () => {
+    // Legacy dark CSS sets width:100% and big viewport padding but the
+    // light hero has viewport-sized negative margins. Match those values
+    // at the dark selector's higher specificity or the title wraps and
+    // a hard vertical seam appears at the right edge of the hero.
+    const dark = "html.smirel-app[data-theme='dark'] .home-page .home-hero"
+    const lightLayout = '.home-page .home-hero'
+    const fullBleedMargin = 'calc(50% - 50vw)'
+    expect(declaration(dark, 'width').value).toBe('100vw')
+    expect(declaration(dark, 'margin-inline').value).toBe(fullBleedMargin)
+    expect(declaration(dark, 'padding-inline').value)
+      .toBe('max(24px, calc((100vw - 1320px) / 2))')
+    expect(declaration(dark, 'overflow').value).toBe('visible')
+    // The basic hero rule still has its responsive spacing and atmospheric
+    // fade; dark mode corrects geometry without creating new cloud layers.
+    expect(declaration(lightLayout, 'padding-top').value).toContain('clamp(')
+    const mobile = stylesheet.nodes
+      .filter((node) => node.type === 'atrule' && node.name === 'media' && node.params.includes('820px'))
+      .flatMap((node) => node.nodes ?? [])
+      .find((node): node is Rule => node.type === 'rule' && node.selector === dark)
+    const mobileValues = mobile?.nodes.filter((node): node is Declaration => node.type === 'decl')
+    expect(mobileValues?.find((node) => node.prop === 'width')?.value).toBe('auto')
+    expect(mobileValues?.find((node) => node.prop === 'margin-inline')?.value).toBe('0')
+    expect(mobileValues?.find((node) => node.prop === 'padding-inline')?.value).toBe('0')
+  })
+
   it('lets the capabilities atmosphere extend and fade without moving its content', () => {
     const stage = '.home-page .home-capabilities'
     const wash = '.home-page .home-capabilities::before'
