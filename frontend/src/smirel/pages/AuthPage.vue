@@ -351,11 +351,12 @@ async function submit() {
         </div>
 
         <form :class="{ 'with-oauth': showOAuth }" @submit.prevent="submit">
-          <label>
-            <span>邮箱</span>
+          <div class="auth-field">
+            <label for="auth-email">邮箱</label>
             <span class="auth-field-control">
               <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4.5 7 7.5 6 7.5-6"/></svg>
               <input
+                id="auth-email"
                 v-model="email"
                 type="email"
                 autocomplete="email"
@@ -363,13 +364,14 @@ async function submit() {
                 placeholder="name@example.com"
               />
             </span>
-          </label>
+          </div>
 
-          <label v-if="kind !== 'forgot'">
-            <span>密码</span>
+          <div v-if="kind !== 'forgot'" class="auth-field">
+            <label for="auth-password">密码</label>
             <span class="auth-field-control">
               <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
               <input
+                id="auth-password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 :autocomplete="kind === 'login' ? 'current-password' : 'new-password'"
@@ -381,13 +383,14 @@ async function submit() {
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4 20 20M10.7 6.1A11 11 0 0 1 12 6c6 0 9.5 6 9.5 6a15.8 15.8 0 0 1-3.1 3.5M6.8 7.8C4.1 9.4 2.5 12 2.5 12s3.5 6 9.5 6c1.5 0 2.8-.4 4-1"/><path d="M10 10a3 3 0 0 0 4 4"/></svg>
               </button>
             </span>
-          </label>
+          </div>
 
-          <label v-if="kind === 'register'">
-            <span>确认密码</span>
+          <div v-if="kind === 'register'" class="auth-field">
+            <label for="auth-confirm-password">确认密码</label>
             <span class="auth-field-control">
               <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
               <input
+                id="auth-confirm-password"
                 v-model="confirmPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
                 autocomplete="new-password"
@@ -399,14 +402,14 @@ async function submit() {
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4 20 20M10.7 6.1A11 11 0 0 1 12 6c6 0 9.5 6 9.5 6a15.8 15.8 0 0 1-3.1 3.5M6.8 7.8C4.1 9.4 2.5 12 2.5 12s3.5 6 9.5 6c1.5 0 2.8-.4 4-1"/><path d="M10 10a3 3 0 0 0 4 4"/></svg>
               </button>
             </span>
-          </label>
+          </div>
 
-          <label v-if="kind === 'reset'">
-            <span>重置令牌</span>
+          <div v-if="kind === 'reset'" class="auth-field">
+            <label for="auth-token">重置令牌</label>
             <span class="auth-field-control">
-              <input v-model="token" type="text" required placeholder="Reset token" />
+              <input id="auth-token" v-model="token" type="text" required placeholder="Reset token" />
             </span>
-          </label>
+          </div>
 
           <div v-if="needsTurnstile" class="turnstile-official">
             <div
@@ -800,15 +803,19 @@ async function submit() {
 .oauth-divider::after { content: ''; height: 1px; flex: 1; background: var(--auth-line); }
 .auth-card form { display: flex; flex-direction: column; gap: 17px; margin-top: 27px; }
 .auth-card form.with-oauth { margin-top: 20px; }
-.auth-card label {
+.auth-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.auth-field > label {
+  align-self: flex-start;
+  padding-left: 1px;
   color: var(--auth-ink);
   font-size: .80rem;
   font-weight: 680;
+  cursor: pointer;
 }
-.auth-card label > span:first-child { padding-left: 1px; }
 .auth-field-control {
   display: flex;
   align-items: center;
