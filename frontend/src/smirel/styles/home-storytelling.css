@@ -49,10 +49,10 @@
       rgba(249, 251, 255, .16) 73%,
       rgba(249, 251, 255, .83) 92%,
       #f9fbff 100%),
-    radial-gradient(ellipse 58% 42% at 8% 72%, rgba(50, 154, 255, .29), transparent 70%),
-    radial-gradient(ellipse 52% 44% at 50% 70%, rgba(98, 101, 255, .25), transparent 72%),
-    radial-gradient(ellipse 48% 42% at 91% 60%, rgba(224, 103, 199, .23), transparent 71%),
-    linear-gradient(180deg, #f9fcff 0%, #f7f9ff 48%, #f9fbff 100%) !important;
+    radial-gradient(ellipse 58% 42% at 8% 72%, rgba(50, 154, 255, .12), transparent 73%),
+    radial-gradient(ellipse 52% 44% at 50% 70%, rgba(98, 101, 255, .105), transparent 74%),
+    radial-gradient(ellipse 48% 42% at 91% 60%, rgba(224, 103, 199, .085), transparent 74%),
+    linear-gradient(180deg, #f9fcff 0%, #f8faff 48%, #f9fbff 100%) !important;
 }
 .home-page .home-hero h1 {
   letter-spacing: -.052em;
@@ -109,8 +109,8 @@
   animation-direction: alternate-reverse;
 }
 @keyframes home-cloud-idle {
-  from { opacity: calc(var(--hero-aurora-opacity, .98) * .83); }
-  to { opacity: var(--hero-aurora-opacity, .98); }
+  from { opacity: calc(var(--hero-aurora-opacity, .86) * .82); }
+  to { opacity: var(--hero-aurora-opacity, .86); }
 }
 /* A continuous reading canvas replaces abrupt full-width section stripes. */
 .home-page .home-section {
@@ -209,9 +209,9 @@
   opacity: 1 !important;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(91, 191, 247, .17), transparent 80%),
-    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(127, 121, 244, .12), transparent 81%),
-    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(222, 126, 205, .13), transparent 83%);
+    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(91, 191, 247, .085), transparent 80%),
+    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(127, 121, 244, .062), transparent 81%),
+    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(222, 126, 205, .06), transparent 83%);
   -webkit-mask-image: linear-gradient(to bottom,
     transparent 0%, #000 22%, #000 74%, transparent 100%);
   mask-image: linear-gradient(to bottom,
@@ -535,16 +535,16 @@ html.smirel-app[data-theme='dark'] .home-page .home-hero {
       rgba(11, 16, 24, .17) 72%,
       rgba(11, 16, 24, .84) 92%,
       #0b1018 100%),
-    radial-gradient(ellipse 62% 46% at 7% 77%, rgba(29, 127, 211, .16), transparent 72%),
-    radial-gradient(ellipse 54% 46% at 51% 70%, rgba(78, 79, 201, .12), transparent 72%),
-    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .10), transparent 72%),
+    radial-gradient(ellipse 62% 46% at 7% 77%, rgba(29, 127, 211, .08), transparent 74%),
+    radial-gradient(ellipse 54% 46% at 51% 70%, rgba(78, 79, 201, .065), transparent 75%),
+    radial-gradient(ellipse 50% 44% at 92% 60%, rgba(171, 62, 142, .052), transparent 75%),
     linear-gradient(180deg, #080c12 0%, #0a0f17 54%, #0b1018 100%) !important;
 }
 html.smirel-app[data-theme='dark'] .home-page .home-capabilities::before {
   background:
-    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(48, 141, 208, .105), transparent 80%),
-    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(105, 89, 202, .075), transparent 81%),
-    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(172, 76, 151, .088), transparent 83%);
+    radial-gradient(ellipse 42% 58% at 0% 38%, rgba(48, 141, 208, .055), transparent 80%),
+    radial-gradient(ellipse 40% 58% at 52% 47%, rgba(105, 89, 202, .042), transparent 81%),
+    radial-gradient(ellipse 43% 58% at 100% 62%, rgba(172, 76, 151, .045), transparent 83%);
 }
 html.smirel-app[data-theme='dark'] .home-page .home-footer::before {
   background: linear-gradient(90deg,

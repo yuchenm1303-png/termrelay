@@ -138,7 +138,7 @@ function initHeroAuroraMotion() {
     hero.style.setProperty('--hero-aurora-rotate', '0deg')
     hero.style.setProperty('--hero-aurora-scale', '1')
     hero.style.setProperty('--hero-aurora-tail-scale', '1')
-    hero.style.setProperty('--hero-aurora-opacity', '.98')
+    hero.style.setProperty('--hero-aurora-opacity', '.86')
     return
   }
 
@@ -166,14 +166,16 @@ function initHeroAuroraMotion() {
     current.page += (target.page - current.page) * smoothing
 
     const drift = Math.sin(current.page * Math.PI * 2.1)
-    const x = current.x * 118 + drift * 38
-    const y = current.y * 48 - current.scroll * 138
-    const reverseX = current.x * -84 - drift * 28
-    const reverseY = current.y * -34 + current.scroll * 82
-    const rotate = current.x * 4.6 + current.page * 4.5
-    const scale = 1 + current.scroll * .12 + Math.abs(current.x) * .035
-    const tailScale = 1 + current.scroll * .18 + Math.abs(current.y) * .025
-    const opacity = Math.max(.66, .99 - current.scroll * .18)
+    // Lower amplitude keeps the existing clouds responsive without washing
+    // over the copy or revealing broad bands at the hero's bottom edge.
+    const x = current.x * 82 + drift * 26
+    const y = current.y * 34 - current.scroll * 98
+    const reverseX = current.x * -58 - drift * 20
+    const reverseY = current.y * -24 + current.scroll * 58
+    const rotate = current.x * 3.4 + current.page * 3.4
+    const scale = 1 + current.scroll * .08 + Math.abs(current.x) * .022
+    const tailScale = 1 + current.scroll * .12 + Math.abs(current.y) * .018
+    const opacity = Math.max(.62, .86 - current.scroll * .15)
 
     hero.style.setProperty('--hero-aurora-x', `${x.toFixed(2)}px`)
     hero.style.setProperty('--hero-aurora-y', `${y.toFixed(2)}px`)
