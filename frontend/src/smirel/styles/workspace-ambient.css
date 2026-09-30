@@ -1,116 +1,102 @@
-/* Authenticated workspace ambient: a quiet continuation of the homepage aurora.
- * The atmosphere belongs to the shared shell, NOT individual route cards.
- * Fixed behind the scrolling canvas, clipped at the chrome boundary, and
- * independent of async page loading and sidebar/topbar interactions.
+/* A single atmospheric plane for every authenticated workspace route.
+ * Earlier revisions painted three competing layers: a fixed mist, a
+ * full-width gradient on workspace-main, and route-specific pseudo-elements.
+ * Their rectangular bounds were visible behind the cards. The real main
+ * now owns only a continuous neutral paper color; the one fixed plane below
+ * the transparent canvas owns all the color and ambient motion.
  */
-/* The legacy canvas paints an opaque background, so keep a deliberately
- * faint static fallback on the real scrolling surface. The former fallback
- * used viewport-wide, 15-20% gradients; combined with the animated layer
- * it tinted the entire dashboard blue/purple. These corner washes fade well
- * before the central cards, with almost no color at the lower edge. */
 .workspace-root .workspace-main {
-  --ambient-blue: rgba(80, 165, 242, .085);
-  --ambient-violet: rgba(126, 131, 231, .038);
-  --ambient-pink: rgba(224, 143, 207, .080);
-  --ambient-mint: rgba(103, 207, 204, .025);
-  --ambient-surface-blue: rgba(80, 165, 242, .065);
-  --ambient-surface-violet: rgba(126, 131, 231, .016);
-  --ambient-surface-pink: rgba(224, 143, 207, .053);
+  --workspace-ambient-paper: #0d121b;
+  --workspace-ambient-blue: rgba(71, 142, 224, .12);
+  --workspace-ambient-pink: rgba(179, 93, 175, .105);
+  --workspace-ambient-violet: rgba(112, 106, 214, .07);
+  --workspace-ambient-mint: rgba(61, 177, 177, .035);
   position: relative;
-  background-image:
-    radial-gradient(ellipse 44% 47% at 4% 3%, var(--ambient-surface-blue), transparent 79%),
-    radial-gradient(ellipse 42% 42% at 98% 4%, var(--ambient-surface-pink), transparent 80%),
-    radial-gradient(ellipse 32% 31% at 54% 105%, var(--ambient-surface-violet), transparent 84%) !important;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background: var(--workspace-ambient-paper) !important;
 }
+
+html.smirel-app[data-theme='light'] .workspace-root .workspace-main {
+  --workspace-ambient-paper: #f8faff;
+  --workspace-ambient-blue: rgba(89, 171, 242, .118);
+  --workspace-ambient-pink: rgba(222, 139, 200, .105);
+  --workspace-ambient-violet: rgba(121, 126, 224, .058);
+  --workspace-ambient-mint: rgba(87, 185, 187, .035);
+}
+
 .workspace-root .workspace-main > .workspace-atmosphere {
   position: fixed;
   z-index: 0;
   inset: 58px 0 0 var(--workspace-sidebar-width, 232px);
+  pointer-events: none;
   overflow: hidden;
   contain: paint;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
+  isolation: isolate;
+  /* This quiet static wash is also the fallback with motion disabled.
+   * It has no inset box or separate page-level color, so it cannot make
+   * a rectangle at the header/route boundary. */
+  background:
+    radial-gradient(ellipse 49% 50% at 0% 0%,
+      var(--workspace-ambient-blue), transparent 80%),
+    radial-gradient(ellipse 45% 48% at 100% 0%,
+      var(--workspace-ambient-pink), transparent 82%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 39%, rgba(0,0,0,.68) 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 39%, rgba(0,0,0,.68) 72%, transparent 100%);
 }
-/* Two translucent surfaces move independently. No new scrolling container,
- * blur filter, image asset, or full-page overlay over the actual controls.
- */
+
 .workspace-root .workspace-main > .workspace-atmosphere::before,
 .workspace-root .workspace-main > .workspace-atmosphere::after {
   content: '';
   position: absolute;
-  inset: -5% -7%;
+  inset: -12% -15%;
   pointer-events: none;
   background-repeat: no-repeat;
   transform: translate3d(0, 0, 0);
 }
+
+/* Opposing layers drift very slowly; center of the page stays neutral, and
+ * the cards never acquire an additional translucent color overlay. */
 .workspace-root .workspace-main > .workspace-atmosphere::before {
   background:
-    radial-gradient(ellipse 42% 49% at 5% 5%, var(--ambient-blue), transparent 81%),
-    radial-gradient(ellipse 40% 47% at 96% 10%, var(--ambient-pink), transparent 82%);
+    radial-gradient(ellipse 35% 50% at 9% 10%,
+      var(--workspace-ambient-blue), transparent 81%),
+    radial-gradient(ellipse 36% 49% at 92% 10%,
+      var(--workspace-ambient-pink), transparent 83%);
   animation: workspace-ambient-breathe 31s ease-in-out infinite alternate;
 }
+
 .workspace-root .workspace-main > .workspace-atmosphere::after {
-  inset: -9% -9%;
   background:
-    radial-gradient(ellipse 38% 43% at 22% 82%, var(--ambient-mint), transparent 85%),
-    radial-gradient(ellipse 40% 49% at 78% 27%, var(--ambient-violet), transparent 86%);
-  opacity: .62;
+    radial-gradient(ellipse 37% 43% at 73% 25%,
+      var(--workspace-ambient-violet), transparent 84%),
+    radial-gradient(ellipse 35% 48% at 13% 55%,
+      var(--workspace-ambient-mint), transparent 86%);
   animation: workspace-ambient-counterflow 41s ease-in-out infinite alternate;
 }
-/* The old light-mode tail paints an opaque canvas. Preserve all actual
- * surface/card colors but clear only that shell canvas paint, so BOTH the
- * direct fallback and the drifting layers can be seen between the cards. */
+
+/* This is the sole legacy override required to reveal the atmosphere.
+ * Neither actual panel fills nor the topbar/sidebar paints are touched. */
 .workspace-root .workspace-main > .workspace-canvas {
   position: relative;
   z-index: 1;
   background: transparent !important;
 }
+
 @keyframes workspace-ambient-breathe {
-  from { transform: translate3d(-1.5%, 1%, 0) scale(1.015); opacity: .65; }
-  to { transform: translate3d(1.7%, -1.2%, 0) scale(1.045); opacity: .9; }
+  from { transform: translate3d(-1.8%, 1%, 0) scale(1.015); opacity: .48; }
+  to { transform: translate3d(1.8%, -1.3%, 0) scale(1.045); opacity: .74; }
 }
 @keyframes workspace-ambient-counterflow {
-  from { transform: translate3d(1.8%, -1.5%, 0) scale(1.02); opacity: .45; }
-  to { transform: translate3d(-1.8%, 1.7%, 0) scale(1.055); opacity: .68; }
+  from { transform: translate3d(1.5%, -1.7%, 0) scale(1.02); opacity: .38; }
+  to { transform: translate3d(-2%, 1.3%, 0) scale(1.055); opacity: .62; }
 }
-/* The sidebar and topbar retain their original clean, opaque appearance.
- * The glow exists exclusively behind the route canvas, not inside widgets.
- */
-html.smirel-app[data-theme='dark'] .workspace-root .workspace-main {
-  --ambient-blue: rgba(45, 133, 222, .105);
-  --ambient-violet: rgba(102, 102, 232, .050);
-  --ambient-pink: rgba(194, 91, 170, .087);
-  --ambient-mint: rgba(50, 164, 177, .032);
-  --ambient-surface-blue: rgba(45, 133, 222, .071);
-  --ambient-surface-violet: rgba(102, 102, 232, .025);
-  --ambient-surface-pink: rgba(194, 91, 170, .057);
-}
-/* In drawer mode there is no permanent sidebar; the ambient field fills
- * the main viewport without shifting the responsive layout.
- */
+
 @media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
-  .workspace-root .workspace-main > .workspace-atmosphere {
-    left: 0;
-  }
+  .workspace-root .workspace-main > .workspace-atmosphere { left: 0; }
 }
 @media (max-width: 720px) {
-  .workspace-root .workspace-main {
-    /* Fixed backgrounds behave inconsistently in several mobile browsers. */
-    background-attachment: scroll;
-  }
-  .workspace-root .workspace-main > .workspace-atmosphere {
-    top: 56px;
-  }
-  .workspace-root .workspace-main > .workspace-atmosphere::before {
-    inset: -10% -55%;
-    opacity: .62;
-  }
-  .workspace-root .workspace-main > .workspace-atmosphere::after {
-    display: none;
-  }
+  .workspace-root .workspace-main > .workspace-atmosphere { top: 56px; }
+  .workspace-root .workspace-main > .workspace-atmosphere::before { inset: -11% -46%; }
+  .workspace-root .workspace-main > .workspace-atmosphere::after { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace-root .workspace-main > .workspace-atmosphere::before,

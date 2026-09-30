@@ -1,107 +1,93 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import postcss from 'postcss'
+import postcss, { type Declaration, type Rule } from 'postcss'
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8')
-const css = postcss.parse(read('src/smirel/styles/workspace-ambient.css'))
+const stylesheet = postcss.parse(read('src/smirel/styles/workspace-ambient.css'))
+const legacyLight = read('src/smirel/styles/workspace-light-tail.css')
+const accountStyles = read('src/smirel/styles/admin-accounts-polish.css')
 const shell = read('src/smirel/components/WorkspaceShell.vue')
 const entry = read('src/main.ts')
-const legacyLight = postcss.parse(read('src/smirel/styles/workspace-light-tail.css'))
+const plane = '.workspace-root .workspace-main > .workspace-atmosphere'
 
-function findRule(selector: string, context?: string) {
-  let found: postcss.Rule | undefined
-  css.walkRules((rule) => {
-    if (!postcss.list.comma(rule.selector).some((part) => part.trim() === selector)) return
-    if (context && rule.parent?.type === 'atrule' && rule.parent.params !== context) return
+function ruleFor(selector: string, context?: string): Rule {
+  let found: Rule | undefined
+  stylesheet.walkRules((rule) => {
+    if (!postcss.list.comma(rule.selector).some(part => part.trim() === selector)) return
+    if (context && (rule.parent?.type !== 'atrule' || rule.parent.params !== context)) return
     if (!context && rule.parent?.type === 'atrule') return
     found = rule
   })
-  expect(found, `${selector} should exist in ${context ?? 'base'}`).toBeDefined()
+  expect(found, `Missing ${selector} in ${context || 'base'}`).toBeDefined()
+  return found!
+}
+function declaration(selector: string, name: string, context?: string): Declaration {
+  const found = ruleFor(selector, context).nodes.filter(
+    (node): node is Declaration => node.type === 'decl' && node.prop === name,
+  ).at(-1)
+  expect(found, `Missing ${name} for ${selector}`).toBeDefined()
   return found!
 }
 
-function property(selector: string, prop: string, context?: string) {
-  const rule = findRule(selector, context)
-  const value = rule.nodes.find((node): node is postcss.Declaration =>
-    node.type === 'decl' && node.prop === prop)
-  expect(value, `${selector} must define ${prop}`).toBeDefined()
-  return value!
-}
-
-describe('authenticated workspace ambient layers', () => {
-  const atmosphere = '.workspace-root .workspace-main > .workspace-atmosphere'
-  it('lives once inside the shared shell, behind all route content', () => {
+describe('single-plane workspace aurora', () => {
+  it('uses one shared layer, not a stack of rectangular route backgrounds', () => {
     expect(shell.match(/class="workspace-atmosphere"/g)).toHaveLength(1)
-    expect(shell.indexOf('class="workspace-atmosphere"'))
-      .toBeGreaterThan(shell.indexOf('class="workspace-main"'))
     expect(shell.indexOf('class="workspace-atmosphere"'))
       .toBeLessThan(shell.indexOf('class="workspace-canvas"'))
     expect(entry).toContain("import './smirel/styles/workspace-ambient.css'")
-    expect(property(atmosphere, 'pointer-events').value).toBe('none')
-    expect(property(atmosphere, 'position').value).toBe('fixed')
-    expect(property(atmosphere, 'contain').value).toBe('paint')
-    expect(property('.workspace-root .workspace-main > .workspace-canvas', 'background').value)
-      .toBe('transparent')
-    expect(property('.workspace-root .workspace-main > .workspace-canvas', 'background').important)
-      .toBe(true)
-    // Reproduce the original light-theme conflict: legacy CSS paints the
-    // canvas and main opaque. Our direct main gradient wins explicitly,
-    // while the actual canvas remains transparent above it.
-    const legacyText = legacyLight.toString()
-    expect(legacyText).toContain('.workspace-root .workspace-main,')
-    expect(legacyText).toContain('.workspace-root .workspace-canvas {')
+    expect(legacyLight).toContain('.workspace-root .workspace-canvas {')
     const main = '.workspace-root .workspace-main'
-    const background = property(main, 'background-image')
-    expect(background.important).toBe(true)
-    for (const tone of ['blue', 'violet', 'pink']) {
-      expect(background.value).toContain(`var(--ambient-surface-${tone})`)
-    }
-    expect(property(main, 'background-attachment').value).toBe('fixed')
-    // The screenshot regression: the previous 70%-wide static washes plus
-    // 60%-wide animated gradients combined into a blue/purple page-sized veil.
-    // Never reintroduce broad or high-alpha fallback colors.
-    const staticColors = ['--ambient-surface-blue', '--ambient-surface-violet', '--ambient-surface-pink']
-    for (const token of staticColors) {
-      const stop = property(main, token).value.match(/rgba\([^)]*,\s*([.0-9]+)\)/)
-      expect(stop, token).not.toBeNull()
-      expect(Number(stop![1]), token).toBeLessThanOrEqual(.075)
-    }
-    expect(background.value).toContain('ellipse 44% 47%')
-    expect(background.value).toContain('ellipse 42% 42%')
-    expect(background.value).not.toContain('ellipse 72% 76%')
+    const paper = declaration(main, 'background')
+    expect(paper.value).toBe('var(--workspace-ambient-paper)')
+    expect(paper.important).toBe(true)
+    expect(ruleFor(main).nodes.some(node =>
+      node.type === 'decl' && ['background-image','background-attachment'].includes(node.prop),
+    )).toBe(false)
+    expect(declaration('.workspace-root .workspace-main > .workspace-canvas', 'background').value)
+      .toBe('transparent')
+    expect(declaration('.workspace-root .workspace-main > .workspace-canvas', 'background').important)
+      .toBe(true)
+    expect(accountStyles).not.toMatch(/\.admin-accounts-page::before\s*\{/)
   })
-  it('uses quiet blue violet and pink washes with two independent ambient loops', () => {
-    const colors = findRule('.workspace-root .workspace-main')
-    for (const token of ['--ambient-blue', '--ambient-violet', '--ambient-pink']) {
-      expect(colors.nodes.some((node) => node.type === 'decl' && node.prop === token)).toBe(true)
+  it('feathers the glow inside the chrome and keeps table content interactive', () => {
+    expect(declaration(plane, 'position').value).toBe('fixed')
+    expect(declaration(plane, 'z-index').value).toBe('0')
+    expect(declaration(plane, 'pointer-events').value).toBe('none')
+    expect(declaration(plane, 'inset').value).toContain('58px')
+    expect(declaration(plane, 'background').value).toContain('ellipse 49% 50%')
+    expect(declaration(plane, 'background').value).toContain('ellipse 45% 48%')
+    expect(declaration(plane, 'mask-image').value).toContain('transparent 100%')
+    expect(declaration(plane, '-webkit-mask-image').value).toContain('transparent 100%')
+    const light = "html.smirel-app[data-theme='light'] .workspace-root .workspace-main"
+    const dark = '.workspace-root .workspace-main'
+    expect(declaration(light, '--workspace-ambient-paper').value).toBe('#f8faff')
+    expect(declaration(dark, '--workspace-ambient-paper').value).toBe('#0d121b')
+    for (const token of ['blue', 'pink', 'violet', 'mint']) {
+      const color = declaration(light, `--workspace-ambient-${token}`).value
+      const stop = color.match(/rgba\([^)]*,\s*([.\d]+)\)/)
+      expect(stop, token).not.toBeNull()
+      expect(Number(stop![1]), token).toBeLessThanOrEqual(.12)
     }
-    expect(property(`${atmosphere}::before`, 'animation').value).toContain('workspace-ambient-breathe')
-    expect(property(`${atmosphere}::after`, 'animation').value).toContain('workspace-ambient-counterflow')
-    const cloud = property(`${atmosphere}::before`, 'background').value
-    expect(cloud).toContain('ellipse 42% 49%')
-    expect(cloud).not.toContain('ellipse 65% 70%')
+  })
+  it('runs counter-moving clouds with responsive and reduced-motion behavior', () => {
+    const first = declaration(`${plane}::before`, 'background').value
+    const second = declaration(`${plane}::after`, 'background').value
+    expect(first).toContain('ellipse 35% 50%')
+    expect(second).toContain('ellipse 37% 43%')
+    expect(declaration(`${plane}::before`, 'animation').value).toContain('workspace-ambient-breathe')
+    expect(declaration(`${plane}::after`, 'animation').value).toContain('workspace-ambient-counterflow')
     const names: string[] = []
-    css.walkAtRules('keyframes', (rule) => names.push(rule.params))
+    stylesheet.walkAtRules('keyframes', rule => names.push(rule.params))
     expect(names).toContain('workspace-ambient-breathe')
     expect(names).toContain('workspace-ambient-counterflow')
-    expect(property('.workspace-root .workspace-main', '--ambient-blue').value)
-      .toBe('rgba(80, 165, 242, .085)')
-    const dark = "html.smirel-app[data-theme='dark'] .workspace-root .workspace-main"
-    expect(property(dark, '--ambient-blue').value).toBe('rgba(45, 133, 222, .105)')
-    expect(property(dark, '--ambient-surface-pink').value)
-      .toBe('rgba(194, 91, 170, .057)')
-  })
-  it('keeps mobile gutters safe and removes animation for reduced-motion users', () => {
-    const mobile = '(max-width: 1279px), (max-width: 1366px) and (pointer: coarse)'
-    expect(property(atmosphere, 'left', mobile).value).toBe('0')
-    expect(property('.workspace-root .workspace-main', 'background-attachment', '(max-width: 720px)').value).toBe('scroll')
-    expect(property(`${atmosphere}::after`, 'display', '(max-width: 720px)').value).toBe('none')
+    expect(declaration(plane, 'left', '(max-width: 1279px), (max-width: 1366px) and (pointer: coarse)').value).toBe('0')
+    expect(declaration(`${plane}::after`, 'display', '(max-width: 720px)').value).toBe('none')
     const reduced = '(prefers-reduced-motion: reduce)'
-    for (const ending of ['::before', '::after']) {
-      const selector = '.workspace-root .workspace-main > .workspace-atmosphere' + ending
-      expect(property(selector, 'animation', reduced).value).toBe('none')
-      expect(property(selector, 'animation', reduced).important).toBe(true)
+    for (const pseudo of ['::before', '::after']) {
+      const animation = declaration(`${plane}${pseudo}`, 'animation', reduced)
+      expect(animation.value).toBe('none')
+      expect(animation.important).toBe(true)
     }
   })
 })
