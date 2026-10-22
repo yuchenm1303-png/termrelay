@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldGroupID holds the string denoting the group_id field in the database.
 	FieldGroupID = "group_id"
+	// FieldGroupBound holds the string denoting the group_bound field in the database.
+	FieldGroupBound = "group_bound"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -49,6 +51,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldGroupID,
+	FieldGroupBound,
 	FieldName,
 	FieldDescription,
 	FieldPrice,
@@ -75,6 +78,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultGroupBound holds the default value on creation for the "group_bound" field.
+	DefaultGroupBound bool
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultDescription holds the default value on creation for the "description" field.
@@ -118,6 +123,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByGroupID orders the results by the group_id field.
 func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGroupID, opts...).ToFunc()
+}
+
+// ByGroupBound orders the results by the group_bound field.
+func ByGroupBound(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroupBound, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

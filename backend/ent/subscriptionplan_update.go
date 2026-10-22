@@ -49,6 +49,20 @@ func (_u *SubscriptionPlanUpdate) AddGroupID(v int64) *SubscriptionPlanUpdate {
 	return _u
 }
 
+// SetGroupBound sets the "group_bound" field.
+func (_u *SubscriptionPlanUpdate) SetGroupBound(v bool) *SubscriptionPlanUpdate {
+	_u.mutation.SetGroupBound(v)
+	return _u
+}
+
+// SetNillableGroupBound sets the "group_bound" field if the given value is not nil.
+func (_u *SubscriptionPlanUpdate) SetNillableGroupBound(v *bool) *SubscriptionPlanUpdate {
+	if v != nil {
+		_u.SetGroupBound(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *SubscriptionPlanUpdate) SetName(v string) *SubscriptionPlanUpdate {
 	_u.mutation.SetName(v)
@@ -327,6 +341,9 @@ func (_u *SubscriptionPlanUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.AddedGroupID(); ok {
 		_spec.AddField(subscriptionplan.FieldGroupID, field.TypeInt64, value)
 	}
+	if value, ok := _u.mutation.GroupBound(); ok {
+		_spec.SetField(subscriptionplan.FieldGroupBound, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(subscriptionplan.FieldName, field.TypeString, value)
 	}
@@ -416,6 +433,20 @@ func (_u *SubscriptionPlanUpdateOne) SetNillableGroupID(v *int64) *SubscriptionP
 // AddGroupID adds value to the "group_id" field.
 func (_u *SubscriptionPlanUpdateOne) AddGroupID(v int64) *SubscriptionPlanUpdateOne {
 	_u.mutation.AddGroupID(v)
+	return _u
+}
+
+// SetGroupBound sets the "group_bound" field.
+func (_u *SubscriptionPlanUpdateOne) SetGroupBound(v bool) *SubscriptionPlanUpdateOne {
+	_u.mutation.SetGroupBound(v)
+	return _u
+}
+
+// SetNillableGroupBound sets the "group_bound" field if the given value is not nil.
+func (_u *SubscriptionPlanUpdateOne) SetNillableGroupBound(v *bool) *SubscriptionPlanUpdateOne {
+	if v != nil {
+		_u.SetGroupBound(*v)
+	}
 	return _u
 }
 
@@ -726,6 +757,9 @@ func (_u *SubscriptionPlanUpdateOne) sqlSave(ctx context.Context) (_node *Subscr
 	}
 	if value, ok := _u.mutation.AddedGroupID(); ok {
 		_spec.AddField(subscriptionplan.FieldGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.GroupBound(); ok {
+		_spec.SetField(subscriptionplan.FieldGroupBound, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(subscriptionplan.FieldName, field.TypeString, value)

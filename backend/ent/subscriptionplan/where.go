@@ -59,6 +59,11 @@ func GroupID(v int64) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldEQ(FieldGroupID, v))
 }
 
+// GroupBound applies equality check predicate on the "group_bound" field. It's identical to GroupBoundEQ.
+func GroupBound(v bool) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldEQ(FieldGroupBound, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldEQ(FieldName, v))
@@ -162,6 +167,16 @@ func GroupIDLT(v int64) predicate.SubscriptionPlan {
 // GroupIDLTE applies the LTE predicate on the "group_id" field.
 func GroupIDLTE(v int64) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldLTE(FieldGroupID, v))
+}
+
+// GroupBoundEQ applies the EQ predicate on the "group_bound" field.
+func GroupBoundEQ(v bool) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldEQ(FieldGroupBound, v))
+}
+
+// GroupBoundNEQ applies the NEQ predicate on the "group_bound" field.
+func GroupBoundNEQ(v bool) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldNEQ(FieldGroupBound, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

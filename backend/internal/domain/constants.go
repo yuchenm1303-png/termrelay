@@ -23,7 +23,13 @@ const (
 	PlatformGemini      = "gemini"
 	PlatformAntigravity = "antigravity"
 	PlatformGrok        = "grok"
-	PlatformComposite   = "composite"
+	// 国产 OpenAI 兼容供应商平台标识。本 fork 暂未接入这些平台的调度/额度
+	// 监控能力，仅用于渠道定价（channel model_pricing）按平台匹配 LiteLLM
+	// 定价目录中的条目，因此这里只声明标识与定价映射所需常量。
+	PlatformKimi      = "kimi"     // Kimi (月之暗面 / Moonshot)
+	PlatformZhipu     = "zhipu"    // 智谱 GLM (bigmodel)
+	PlatformDeepseek  = "deepseek" // DeepSeek
+	PlatformComposite = "composite"
 )
 
 // Account type constants

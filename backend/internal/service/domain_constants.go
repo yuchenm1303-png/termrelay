@@ -44,6 +44,10 @@ const (
 	PlatformAntigravity = domain.PlatformAntigravity
 	PlatformGrok        = domain.PlatformGrok
 	PlatformComposite   = domain.PlatformComposite
+	// 国产 OpenAI 兼容供应商平台标识（仅用于渠道定价匹配 LiteLLM 目录）。
+	PlatformKimi     = domain.PlatformKimi
+	PlatformZhipu    = domain.PlatformZhipu
+	PlatformDeepseek = domain.PlatformDeepseek
 )
 
 // AllowedQuotaPlatforms 是允许设置 user × platform quota 的平台列表（单一权威来源）。

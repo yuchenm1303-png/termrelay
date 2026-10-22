@@ -394,6 +394,59 @@ func getGroupPlatform(c *gin.Context) string {
 	return apiKey.Group.Platform
 }
 
+// modelEntitlementMiddleware enforces the group's own model allowlist
+// (group.models_list_config) on real inference requests.
+//
+// The same allowlist already shapes what /v1/models advertises. Without this
+// middleware a client could bypass the UI and hand-craft a request for a model
+// that the group intentionally hides, so the allowlist is enforced here as well.
+//
+// Backwards compatible: when a group does not enable a custom model list,
+// Group.AllowsModel returns true and the request passes through untouched.
+func modelEntitlementMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		apiKey, ok := middleware.GetAPIKeyFromContext(c)
+		if !ok || apiKey == nil || apiKey.Group == nil {
+			c.Next()
+			return
+		}
+		// Only inference requests carry a model in the body. GET requests such
+		// as /v1/models are not restricted by this middleware.
+		if c.Request == nil || c.Request.Method == http.MethodGet {
+			c.Next()
+			return
+		}
+
+		body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
+		if err != nil {
+			// Let the downstream handler report the body error; failing open
+			// here keeps the error message consistent with other routes.
+			c.Next()
+			return
+		}
+
+		model := compositeRequestModelFromBody(c.GetHeader("Content-Type"), body)
+		if model == "" {
+			c.Next()
+			return
+		}
+
+		if !apiKey.Group.AllowsModel(model) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": gin.H{
+					"type":    "model_not_allowed",
+					"message": "Model not available for this API key",
+					"model":   model,
+				},
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func compositeTargetPlatformMiddleware(resolver *service.CompositeRouteResolver) gin.HandlerFunc {
 	if resolver == nil {
 		resolver = service.NewCompositeRouteResolver(nil)

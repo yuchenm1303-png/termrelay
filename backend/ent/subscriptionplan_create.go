@@ -28,6 +28,20 @@ func (_c *SubscriptionPlanCreate) SetGroupID(v int64) *SubscriptionPlanCreate {
 	return _c
 }
 
+// SetGroupBound sets the "group_bound" field.
+func (_c *SubscriptionPlanCreate) SetGroupBound(v bool) *SubscriptionPlanCreate {
+	_c.mutation.SetGroupBound(v)
+	return _c
+}
+
+// SetNillableGroupBound sets the "group_bound" field if the given value is not nil.
+func (_c *SubscriptionPlanCreate) SetNillableGroupBound(v *bool) *SubscriptionPlanCreate {
+	if v != nil {
+		_c.SetGroupBound(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *SubscriptionPlanCreate) SetName(v string) *SubscriptionPlanCreate {
 	_c.mutation.SetName(v)
@@ -229,6 +243,10 @@ func (_c *SubscriptionPlanCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *SubscriptionPlanCreate) defaults() {
+	if _, ok := _c.mutation.GroupBound(); !ok {
+		v := subscriptionplan.DefaultGroupBound
+		_c.mutation.SetGroupBound(v)
+	}
 	if _, ok := _c.mutation.Description(); !ok {
 		v := subscriptionplan.DefaultDescription
 		_c.mutation.SetDescription(v)
@@ -275,6 +293,9 @@ func (_c *SubscriptionPlanCreate) defaults() {
 func (_c *SubscriptionPlanCreate) check() error {
 	if _, ok := _c.mutation.GroupID(); !ok {
 		return &ValidationError{Name: "group_id", err: errors.New(`ent: missing required field "SubscriptionPlan.group_id"`)}
+	}
+	if _, ok := _c.mutation.GroupBound(); !ok {
+		return &ValidationError{Name: "group_bound", err: errors.New(`ent: missing required field "SubscriptionPlan.group_bound"`)}
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "SubscriptionPlan.name"`)}
@@ -362,6 +383,10 @@ func (_c *SubscriptionPlanCreate) createSpec() (*SubscriptionPlan, *sqlgraph.Cre
 	if value, ok := _c.mutation.GroupID(); ok {
 		_spec.SetField(subscriptionplan.FieldGroupID, field.TypeInt64, value)
 		_node.GroupID = value
+	}
+	if value, ok := _c.mutation.GroupBound(); ok {
+		_spec.SetField(subscriptionplan.FieldGroupBound, field.TypeBool, value)
+		_node.GroupBound = value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(subscriptionplan.FieldName, field.TypeString, value)
@@ -482,6 +507,18 @@ func (u *SubscriptionPlanUpsert) UpdateGroupID() *SubscriptionPlanUpsert {
 // AddGroupID adds v to the "group_id" field.
 func (u *SubscriptionPlanUpsert) AddGroupID(v int64) *SubscriptionPlanUpsert {
 	u.Add(subscriptionplan.FieldGroupID, v)
+	return u
+}
+
+// SetGroupBound sets the "group_bound" field.
+func (u *SubscriptionPlanUpsert) SetGroupBound(v bool) *SubscriptionPlanUpsert {
+	u.Set(subscriptionplan.FieldGroupBound, v)
+	return u
+}
+
+// UpdateGroupBound sets the "group_bound" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsert) UpdateGroupBound() *SubscriptionPlanUpsert {
+	u.SetExcluded(subscriptionplan.FieldGroupBound)
 	return u
 }
 
@@ -722,6 +759,20 @@ func (u *SubscriptionPlanUpsertOne) AddGroupID(v int64) *SubscriptionPlanUpsertO
 func (u *SubscriptionPlanUpsertOne) UpdateGroupID() *SubscriptionPlanUpsertOne {
 	return u.Update(func(s *SubscriptionPlanUpsert) {
 		s.UpdateGroupID()
+	})
+}
+
+// SetGroupBound sets the "group_bound" field.
+func (u *SubscriptionPlanUpsertOne) SetGroupBound(v bool) *SubscriptionPlanUpsertOne {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.SetGroupBound(v)
+	})
+}
+
+// UpdateGroupBound sets the "group_bound" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsertOne) UpdateGroupBound() *SubscriptionPlanUpsertOne {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.UpdateGroupBound()
 	})
 }
 
@@ -1157,6 +1208,20 @@ func (u *SubscriptionPlanUpsertBulk) AddGroupID(v int64) *SubscriptionPlanUpsert
 func (u *SubscriptionPlanUpsertBulk) UpdateGroupID() *SubscriptionPlanUpsertBulk {
 	return u.Update(func(s *SubscriptionPlanUpsert) {
 		s.UpdateGroupID()
+	})
+}
+
+// SetGroupBound sets the "group_bound" field.
+func (u *SubscriptionPlanUpsertBulk) SetGroupBound(v bool) *SubscriptionPlanUpsertBulk {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.SetGroupBound(v)
+	})
+}
+
+// UpdateGroupBound sets the "group_bound" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsertBulk) UpdateGroupBound() *SubscriptionPlanUpsertBulk {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.UpdateGroupBound()
 	})
 }
 

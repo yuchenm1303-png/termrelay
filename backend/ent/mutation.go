@@ -40188,6 +40188,7 @@ type SubscriptionPlanMutation struct {
 	id                *int64
 	group_id          *int64
 	addgroup_id       *int64
+	group_bound       *bool
 	name              *string
 	description       *string
 	price             *float64
@@ -40363,6 +40364,42 @@ func (m *SubscriptionPlanMutation) AddedGroupID() (r int64, exists bool) {
 func (m *SubscriptionPlanMutation) ResetGroupID() {
 	m.group_id = nil
 	m.addgroup_id = nil
+}
+
+// SetGroupBound sets the "group_bound" field.
+func (m *SubscriptionPlanMutation) SetGroupBound(b bool) {
+	m.group_bound = &b
+}
+
+// GroupBound returns the value of the "group_bound" field in the mutation.
+func (m *SubscriptionPlanMutation) GroupBound() (r bool, exists bool) {
+	v := m.group_bound
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupBound returns the old "group_bound" field's value of the SubscriptionPlan entity.
+// If the SubscriptionPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SubscriptionPlanMutation) OldGroupBound(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupBound is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupBound requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupBound: %w", err)
+	}
+	return oldValue.GroupBound, nil
+}
+
+// ResetGroupBound resets all changes to the "group_bound" field.
+func (m *SubscriptionPlanMutation) ResetGroupBound() {
+	m.group_bound = nil
 }
 
 // SetName sets the "name" field.
@@ -40961,9 +40998,12 @@ func (m *SubscriptionPlanMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubscriptionPlanMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.group_id != nil {
 		fields = append(fields, subscriptionplan.FieldGroupID)
+	}
+	if m.group_bound != nil {
+		fields = append(fields, subscriptionplan.FieldGroupBound)
 	}
 	if m.name != nil {
 		fields = append(fields, subscriptionplan.FieldName)
@@ -41014,6 +41054,8 @@ func (m *SubscriptionPlanMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case subscriptionplan.FieldGroupID:
 		return m.GroupID()
+	case subscriptionplan.FieldGroupBound:
+		return m.GroupBound()
 	case subscriptionplan.FieldName:
 		return m.Name()
 	case subscriptionplan.FieldDescription:
@@ -41051,6 +41093,8 @@ func (m *SubscriptionPlanMutation) OldField(ctx context.Context, name string) (e
 	switch name {
 	case subscriptionplan.FieldGroupID:
 		return m.OldGroupID(ctx)
+	case subscriptionplan.FieldGroupBound:
+		return m.OldGroupBound(ctx)
 	case subscriptionplan.FieldName:
 		return m.OldName(ctx)
 	case subscriptionplan.FieldDescription:
@@ -41092,6 +41136,13 @@ func (m *SubscriptionPlanMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGroupID(v)
+		return nil
+	case subscriptionplan.FieldGroupBound:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupBound(v)
 		return nil
 	case subscriptionplan.FieldName:
 		v, ok := value.(string)
@@ -41307,6 +41358,9 @@ func (m *SubscriptionPlanMutation) ResetField(name string) error {
 	switch name {
 	case subscriptionplan.FieldGroupID:
 		m.ResetGroupID()
+		return nil
+	case subscriptionplan.FieldGroupBound:
+		m.ResetGroupBound()
 		return nil
 	case subscriptionplan.FieldName:
 		m.ResetName()

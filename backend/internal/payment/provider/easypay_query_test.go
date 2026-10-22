@@ -64,12 +64,6 @@ func TestEasyPayQueryOrderStatusMapping(t *testing.T) {
 			wantAmount:  3.21,
 		},
 		{
-			name:        "query failure with missing status is pending",
-			body:        `{"code":0,"msg":"订单不存在"}`,
-			wantStatus:  payment.ProviderStatusPending,
-			wantTradeNo: orderID,
-		},
-		{
 			name:        "missing fields are pending",
 			body:        `{}`,
 			wantStatus:  payment.ProviderStatusPending,
@@ -127,5 +121,24 @@ func TestEasyPayQueryOrderStatusMapping(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestEasyPayQueryOrderFailureCodeIsQueryError locks in the hardened
+// semantics: an explicit non-success code is a query failure, not an unpaid
+// order. Reporting "pending" for a failed lookup would let the upstream
+// confirmation step treat an unknown order as merely unpaid.
+func TestEasyPayQueryOrderFailureCodeIsQueryError(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":0,"msg":"order not found"}`))
+	}))
+	defer server.Close()
+
+	provider := newTestEasyPay(t, server.URL)
+	if _, err := provider.QueryOrder(context.Background(), "order-123"); err == nil {
+		t.Fatal("QueryOrder must fail when the upstream returns a non-success code")
 	}
 }
