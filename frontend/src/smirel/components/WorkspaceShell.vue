@@ -300,7 +300,7 @@ defineExpose({ resetScroll })
 <template>
   <div class="workspace-root">
     <div class="site-environment" aria-hidden="true"></div>
-    <aside class="workspace-sidebar glass" :class="{ open: mobileOpen }">
+    <aside id="workspace-sidebar" class="workspace-sidebar glass" :class="{ open: mobileOpen }">
       <div class="workspace-brand-row">
         <RouterLink to="/home" class="brand-link" @click="mobileOpen = false">
           <span class="workspace-brand-mark" aria-hidden="true">
@@ -316,7 +316,9 @@ defineExpose({ resetScroll })
             </small>
           </span>
         </RouterLink>
-        <button class="mobile-close" type="button" :aria-label="t('shell.closeNav')" @click="mobileOpen = false">×</button>
+        <button class="mobile-close" type="button" :aria-label="t('shell.closeNav')" @click="mobileOpen = false">
+          <WorkspaceNavIcon name="panel-left-close" />
+        </button>
       </div>
 
       <nav class="workspace-nav">
@@ -344,7 +346,16 @@ defineExpose({ resetScroll })
       <div class="workspace-atmosphere" aria-hidden="true"></div>
       <header class="workspace-topbar workspace-topbar--contextual">
         <div class="workspace-topbar-left">
-          <button class="mobile-menu" type="button" :aria-label="t('shell.openNav')" @click="mobileOpen = true"><span></span><span></span><span></span></button>
+          <button
+            class="mobile-menu"
+            type="button"
+            :aria-label="t('shell.openNav')"
+            :aria-expanded="mobileOpen"
+            aria-controls="workspace-sidebar"
+            @click="mobileOpen = true"
+          >
+            <WorkspaceNavIcon name="panel-left-open" />
+          </button>
           <nav :key="route.path" class="workspace-breadcrumb" :aria-label="t('shell.currentLocation')">
             <span class="workspace-breadcrumb-home" aria-hidden="true">
               <WorkspaceNavIcon name="dashboard" />

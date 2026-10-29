@@ -175,6 +175,19 @@ defineProps<{ name: string }>()
       <path d="M9 7h8v8" />
     </template>
 
+    <!-- Drawer toggles: the chevron is classed so the button can nudge it. -->
+    <template v-else-if="name === 'panel-left-open'">
+      <rect width="18" height="18" x="3" y="3" rx="3.5" />
+      <path d="M9 3v18" />
+      <path class="workspace-nav-icon-chevron" d="m14 9.5 2.5 2.5-2.5 2.5" />
+    </template>
+
+    <template v-else-if="name === 'panel-left-close'">
+      <rect width="18" height="18" x="3" y="3" rx="3.5" />
+      <path d="M9 3v18" />
+      <path class="workspace-nav-icon-chevron" d="m16.5 14.5-2.5-2.5 2.5-2.5" />
+    </template>
+
     <circle v-else cx="12" cy="12" r="4" />
   </svg>
 </template>
