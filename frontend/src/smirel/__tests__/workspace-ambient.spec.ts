@@ -68,19 +68,21 @@ describe('full-shell shared aurora', () => {
       const side = `${theme} ${root} .workspace-sidebar`
       const top = `${theme} ${root} .workspace-main .workspace-topbar.workspace-topbar--contextual`
       const sidebarPaint = decl(side, 'background')
-      const topbarPaint = decl(top, 'background')
       expect(sidebarPaint.value).toMatch(/^rgba\(/)
-      expect(topbarPaint.value).toMatch(/^rgba\(/)
+      expect(decl(top, '--workspace-topbar-glass').value).toMatch(/^rgba\(/)
       expect(sidebarPaint.important).toBe(true)
-      expect(topbarPaint.important).toBe(true)
       expect(decl(side, 'border-right').value).toMatch(/rgba\(/)
       expect(decl(side, 'box-shadow').value).toBe('none')
       expect(decl(top, 'box-shadow').value).toBe('none')
     }
     expect(decl(`${light} ${root} .workspace-sidebar`, 'background').value)
       .toBe('rgba(251, 252, 255, .73)')
-    expect(decl(`${light} ${root} .workspace-main .workspace-topbar.workspace-topbar--contextual`, 'background').value)
-      .toBe('rgba(251, 252, 255, .82)')
+    // Frosted glass sits on ::before so the bar never contains fixed children.
+    const bar = `${root} .workspace-main .workspace-topbar.workspace-topbar--contextual`
+    expect(decl(bar, 'background').value).toBe('transparent')
+    expect(rule(bar).toString()).not.toContain('backdrop-filter')
+    expect(decl(`${bar}::before`, 'backdrop-filter').value).toContain('blur(')
+    expect(decl(`${bar}::before`, 'z-index').value).toBe('-1')
     expect(decl(`${light} body:has(.workspace-root)`, 'background').value).toBe('#f8faff')
     expect(decl(`${dark} body:has(.workspace-root)`, 'background').value).toBe('#0d121b')
   })

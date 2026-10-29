@@ -109,9 +109,27 @@ html.smirel-app[data-theme='light'] .workspace-root .workspace-sidebar {
   border-right: 1px solid rgba(142, 165, 201, .13) !important;
   box-shadow: none !important;
 }
+/* Frosted topbar. The glass lives on ::before rather than the bar itself:
+ * backdrop-filter on the bar would make it the containing block for the
+ * position: fixed account menu teleported into it. The bar is already a
+ * stacking context (positioned + z-index), so z-index: -1 keeps the glass
+ * behind its content but above the page. */
+.workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
+  background: transparent !important;
+}
+.workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--workspace-topbar-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+}
 html.smirel-app[data-theme='light'] .workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
-  background: rgba(251, 252, 255, .82) !important;
-  border-bottom-color: rgba(142, 165, 201, .15) !important;
+  --workspace-topbar-glass: rgba(251, 252, 255, .66);
+  border-bottom-color: rgba(142, 165, 201, .18) !important;
   box-shadow: none !important;
 }
 html.smirel-app[data-theme='light'] .workspace-root .workspace-brand-row {
@@ -123,7 +141,7 @@ html.smirel-app[data-theme='dark'] .workspace-root .workspace-sidebar {
   box-shadow: none !important;
 }
 html.smirel-app[data-theme='dark'] .workspace-root .workspace-main .workspace-topbar.workspace-topbar--contextual {
-  background: rgba(14, 20, 33, .87) !important;
+  --workspace-topbar-glass: rgba(14, 20, 33, .7);
   border-bottom-color: rgba(129, 155, 208, .12) !important;
   box-shadow: none !important;
 }
