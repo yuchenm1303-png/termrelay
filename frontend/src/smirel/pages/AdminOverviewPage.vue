@@ -53,6 +53,12 @@ function percent(part: unknown, total: unknown) {
   return Math.max(0, Math.min(100, Math.round((Number(part || 0) / denominator) * 100)))
 }
 
+const managementLinks = [
+  { to: '/admin/ops', icon: 'activity', kicker: 'OPERATIONS', label: 'nav.adminOps', description: 'workspace.descriptions.adminOps' },
+  { to: '/admin/groups', icon: 'layers', kicker: 'ROUTING', label: 'nav.adminGroups', description: 'workspace.descriptions.adminGroups' },
+  { to: '/admin/orders/dashboard', icon: 'wallet', kicker: 'PAYMENT', label: 'nav.adminPayment', description: 'workspace.descriptions.adminPayment' },
+]
+
 const activeUserRate = computed(() => percent(stats.value.active_users, stats.value.total_users))
 const accountAvailabilityRate = computed(() => percent(stats.value.active_accounts, stats.value.total_accounts))
 const generatedLabel = computed(() => {
@@ -192,10 +198,6 @@ onMounted(() => void load())
           <span>{{ t('admin.realtimeLoad') }}</span>
           <b>RPM {{ compact(stats.rpm) }}</b>
         </footer>
-        <div class="admin-request-context">
-          <span><small>{{ t('admin.todayToken') }}</small><b>{{ compact(stats.today_tokens) }}</b></span>
-          <span><small>{{ t('admin.averageResponse') }}</small><b>{{ duration(stats.average_duration_ms) }}</b></span>
-        </div>
       </RouterLink>
     </div>
 
@@ -234,22 +236,9 @@ onMounted(() => void load())
         <RouterLink to="/admin/ops">{{ t('admin.viewOperations') }} <b>→</b></RouterLink>
       </header>
       <div class="admin-management-links">
-        <RouterLink to="/admin/accounts">
-          <span class="admin-management-icon"><WorkspaceNavIcon name="server" /></span>
-          <span class="admin-management-copy"><small>UPSTREAM</small><strong>{{ t('admin.upstreamScheduling') }}</strong><b>{{ t('admin.availableInline', { active: stats.active_accounts || 0, total: stats.total_accounts || 0 }) }}</b></span>
-          <span class="admin-management-meta">{{ accountAvailabilityRate }}%</span>
-          <i>→</i>
-        </RouterLink>
-        <RouterLink to="/admin/ops">
-          <span class="admin-management-icon"><WorkspaceNavIcon name="activity" /></span>
-          <span class="admin-management-copy"><small>OPERATIONS</small><strong>{{ t('admin.operationsMonitor') }}</strong><b>{{ t('admin.averageResponseInline', { value: duration(stats.average_duration_ms) }) }}</b></span>
-          <span class="admin-management-meta">RPM {{ compact(stats.rpm) }}</span>
-          <i>→</i>
-        </RouterLink>
-        <RouterLink to="/admin/usage">
-          <span class="admin-management-icon"><WorkspaceNavIcon name="chart" /></span>
-          <span class="admin-management-copy"><small>USAGE</small><strong>{{ t('admin.usageRecords') }}</strong><b>{{ compact(stats.today_tokens) }} Token</b></span>
-          <span class="admin-management-meta">{{ money(stats.today_actual_cost) }}</span>
+        <RouterLink v-for="link in managementLinks" :key="link.to" :to="link.to">
+          <span class="admin-management-icon"><WorkspaceNavIcon :name="link.icon" /></span>
+          <span class="admin-management-copy"><small>{{ link.kicker }}</small><strong>{{ t(link.label) }}</strong><b>{{ t(link.description) }}</b></span>
           <i>→</i>
         </RouterLink>
       </div>
@@ -301,7 +290,7 @@ onMounted(() => void load())
   align-items: center;
   gap: 8px;
   color: #66717e;
-  font: 700 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .66rem/1 var(--font-mono);
   letter-spacing: .11em;
 }
 
@@ -398,7 +387,7 @@ onMounted(() => void load())
 
 .admin-summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, .92fr) minmax(0, .92fr) minmax(0, 1.16fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -422,7 +411,7 @@ onMounted(() => void load())
 .admin-metric-card::before { content: ''; position: absolute; inset: 0 auto auto 0; z-index: -1; width: 46%; height: 1px; background: linear-gradient(90deg, var(--metric-accent), transparent); opacity: .72; }
 .admin-metric-card::after { content: ''; position: absolute; z-index: -1; top: -52px; right: -42px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--metric-accent) 10%, transparent), transparent 68%); pointer-events: none; }
 .admin-metric-upstream { --metric-accent: #49c89a; }
-.admin-metric-requests { --metric-accent: #789df4; min-height: 188px; background: #0f1218; }
+.admin-metric-requests { --metric-accent: #789df4; background: #0f1218; }
 
 .admin-metric-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .admin-metric-head > span:first-child { color: #8b939e; font-size: .8rem; font-weight: 590; }
@@ -456,7 +445,6 @@ onMounted(() => void load())
 .admin-metric-card:hover .admin-metric-arrow :deep(.workspace-nav-icon) { transform: translate(1px, -1px); }
 
 .admin-metric-card > strong { margin-top: 17px; color: #f6f7f9; font-size: 2.02rem; font-weight: 690; line-height: 1; letter-spacing: -.04em; }
-.admin-metric-requests > strong { font-size: 2.28rem; }
 
 .admin-metric-card footer { margin-top: auto; padding-top: 17px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #66707b; font-size: .71rem; }
 .admin-metric-card footer b { padding: 4px 7px; border: 1px solid #262c34; border-radius: 999px; color: #88939f; background: #11141a; font-size: .64rem; font-weight: 600; white-space: nowrap; }
@@ -464,10 +452,6 @@ onMounted(() => void load())
 .admin-metric-progress { height: 3px; margin-top: 13px; overflow: hidden; border-radius: 999px; background: #1b2027; }
 .admin-metric-progress i { display: block; height: 100%; border-radius: inherit; background: var(--metric-accent); opacity: .72; transition: width .35s ease; }
 
-.admin-request-context { margin-top: 13px; padding-top: 12px; border-top: 1px solid #232932; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.admin-request-context span { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.admin-request-context small { color: #5d6672; font-size: .62rem; }
-.admin-request-context b { color: #aeb8c4; font-size: .69rem; font-weight: 620; white-space: nowrap; }
 
 .admin-ops-panel { position: relative; margin-top: 14px; padding: 0; overflow: hidden; border-color: #222730; border-radius: 13px; background: #0d0f13; }
 .admin-ops-panel::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 72%); }
@@ -488,7 +472,7 @@ onMounted(() => void load())
 .admin-health-stat > div { min-width: 0; display: flex; flex-direction: column; }
 .admin-health-stat > div > span { color: #77818c; font-size: .71rem; font-weight: 560; }
 .admin-health-stat strong { margin-top: 6px; color: #edf0f3; font-size: 1.22rem; font-weight: 650; line-height: 1.05; letter-spacing: -.025em; }
-.admin-health-stat small { margin-top: 7px; color: #4f5863; font: 650 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }
+.admin-health-stat small { margin-top: 7px; color: #4f5863; font: 650 .56rem/1 var(--font-mono); letter-spacing: .1em; }
 
 .admin-management-panel { margin-top: 14px; overflow: hidden; border: 1px solid #222730; border-radius: 13px; background: #0d0f13; }
 .admin-management-head { min-height: 66px; padding: 0 20px 0 22px; border-bottom: 1px solid #22272e; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
@@ -500,25 +484,21 @@ onMounted(() => void load())
 .admin-management-head > a b { font-size: .8rem; font-weight: 500; }
 
 .admin-management-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.admin-management-links > a { min-width: 0; min-height: 112px; padding: 19px 20px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto 18px; align-items: center; gap: 12px; color: inherit; background: transparent; transition: background-color .15s ease; }
+.admin-management-links > a { min-width: 0; min-height: 112px; padding: 19px 20px; display: grid; grid-template-columns: 38px minmax(0, 1fr) 18px; align-items: center; gap: 12px; color: inherit; background: transparent; transition: background-color .15s ease; }
 .admin-management-links > a + a { border-left: 1px solid #232830; }
 .admin-management-links > a:hover { background: #11141a; }
 .admin-management-icon { width: 38px; height: 38px; border: 1px solid #29313a; border-radius: 9px; display: grid; place-items: center; color: #74899c; background: #11151a; }
 .admin-management-icon :deep(.workspace-nav-icon) { width: 17px; height: 17px; }
 .admin-management-copy { min-width: 0; display: flex; flex-direction: column; }
-.admin-management-copy small { color: #4f5964; font: 650 .54rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; }
+.admin-management-copy small { color: #4f5964; font: 650 .54rem/1 var(--font-mono); letter-spacing: .09em; }
 .admin-management-copy strong { margin-top: 6px; color: #dce0e5; font-size: .79rem; font-weight: 620; }
 .admin-management-copy b { margin-top: 4px; overflow: hidden; color: #69737e; font-size: .65rem; font-weight: 520; text-overflow: ellipsis; white-space: nowrap; }
-.admin-management-meta { color: #8c99a6; font-size: .67rem; font-weight: 600; white-space: nowrap; }
 .admin-management-links > a > i { color: #4d5864; font-style: normal; font-size: .9rem; transition: color .15s ease, transform .15s ease; }
 .admin-management-links > a:hover > i { color: #aabfce; transform: translateX(2px); }
 
 @media (max-width: 1120px) {
   .admin-page-heading { align-items: flex-start; }
   .admin-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .admin-metric-requests > strong { font-size: 2.02rem; }
-  .admin-management-links > a { grid-template-columns: 38px minmax(0, 1fr) 18px; }
-  .admin-management-meta { display: none; }
 }
 
 @media (max-width: 920px) {
@@ -532,8 +512,7 @@ onMounted(() => void load())
   .admin-health-stat:nth-child(n + 3) { border-top: 1px solid #232830; }
   .admin-management-links { grid-template-columns: 1fr; }
   .admin-management-links > a + a { border-left: 0; border-top: 1px solid #232830; }
-  .admin-management-links > a { min-height: 92px; grid-template-columns: 38px minmax(0, 1fr) auto 18px; }
-  .admin-management-meta { display: inline; }
+  .admin-management-links > a { min-height: 92px; }
 }
 
 @media (max-width: 620px) {
@@ -543,14 +522,11 @@ onMounted(() => void load())
   .admin-refresh { justify-content: center; }
   .admin-summary-grid { grid-template-columns: 1fr; }
   .admin-metric-requests { grid-column: auto; }
-  .admin-request-context { grid-template-columns: 1fr; gap: 7px; }
   .admin-ops-head { min-height: 86px; align-items: flex-start; flex-direction: column; justify-content: center; gap: 10px; }
   .admin-health-grid { grid-template-columns: 1fr; }
   .admin-health-stat, .admin-health-stat:nth-child(odd) { border-left: 0; }
   .admin-health-stat + .admin-health-stat, .admin-health-stat:nth-child(n + 3) { border-top: 1px solid #232830; }
   .admin-management-head { min-height: 80px; align-items: flex-start; flex-direction: column; justify-content: center; gap: 8px; }
-  .admin-management-links > a { grid-template-columns: 38px minmax(0, 1fr) 18px; }
-  .admin-management-meta { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

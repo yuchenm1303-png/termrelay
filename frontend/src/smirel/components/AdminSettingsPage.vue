@@ -601,7 +601,7 @@ onMounted(() => void loadSettings())
 .settings-context > strong { color: #dde1e6; font-size: .8rem; }
 .settings-context > div { color: #81908e; font-size: .69rem; display: flex; align-items: center; gap: 6px; }
 .settings-context > div i { width: 6px; height: 6px; border-radius: 50%; background: #42ce99; }
-.settings-context code { margin-top: 2px; color: #677381; font: .64rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+.settings-context code { margin-top: 2px; color: #677381; font: .64rem/1.45 var(--font-mono); word-break: break-all; }
 .settings-content { min-width: 0; }
 .settings-card { margin-bottom: 16px; border-radius: 11px; overflow: hidden; }
 .settings-card-head { min-height: 92px; padding: 18px 20px; border-bottom: 1px solid #252930; display: flex; align-items: center; justify-content: space-between; gap: 18px; background: #0f1115; }
@@ -660,7 +660,7 @@ onMounted(() => void loadSettings())
 .route-preview-list > div { min-height: 58px; border-bottom: 1px solid #22262c; display: grid; grid-template-columns: 112px minmax(0,1fr) auto; gap: 12px; align-items: center; }
 .route-preview-list > div:last-child { border-bottom: 0; }
 .route-preview-list span { color: #7d8690; font-size: .69rem; }
-.route-preview-list code { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #a7b3bf; font: .68rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+.route-preview-list code { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #a7b3bf; font: .68rem/1.4 var(--font-mono); white-space: nowrap; }
 .route-preview-list button { min-height: 30px; padding: 0 9px; border: 1px solid #2b3037; border-radius: 6px; background: #121419; color: #818a95; font-size: .64rem; cursor: pointer; }
 .security-toggle-list { padding-top: 2px; }
 .turnstile-form { border-bottom: 0; }

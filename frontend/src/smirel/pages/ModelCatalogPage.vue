@@ -942,7 +942,7 @@ onBeforeUnmount(() => {
   place-items: center;
   color: #aeb5bd;
   background: #15181d;
-  font: 700 .47rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .47rem/1 var(--font-mono);
   font-style: normal;
 }
 
@@ -964,7 +964,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   color: #8eaed2;
   background: #15181d;
-  font: .57rem/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .57rem/1.25 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -1473,7 +1473,7 @@ onBeforeUnmount(() => {
   display: block;
   overflow-wrap: anywhere;
   color: #c5d5e3;
-  font: .81rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: .81rem/1.55 var(--font-mono);
 }
 
 .keys-created-credential button {

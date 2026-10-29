@@ -263,7 +263,7 @@
   border-top: 1px solid #292e36;
   border-bottom: 1px solid #292e36;
   color: #f4f6f8;
-  font: 1.03rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 1.03rem/1.55 var(--font-mono);
   letter-spacing: -.012em;
   white-space: nowrap;
   overflow: hidden;
@@ -444,7 +444,7 @@
 .user-lifetime-panel dd {
   margin: 0;
   color: #eceff2;
-  font: 650 .93rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 650 .93rem/1 var(--font-mono);
 }
 
 .user-quick-panel nav {
@@ -474,7 +474,7 @@
 
 .user-quick-panel nav span {
   color: #626c78;
-  font: 650 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 650 .72rem/1 var(--font-mono);
 }
 
 .user-quick-panel nav strong {

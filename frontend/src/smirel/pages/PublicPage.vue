@@ -404,7 +404,7 @@ const copy = computed(() => {
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.075);
   border-radius: 6px;
-  font: 0.54rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 0.54rem/1 var(--font-mono);
   color: rgba(255, 255, 255, 0.36);
 }
 
@@ -564,7 +564,7 @@ const copy = computed(() => {
 }
 
 .catalog-table code {
-  font: 0.57rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 0.57rem/1.45 var(--font-mono);
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -631,7 +631,7 @@ const copy = computed(() => {
 }
 
 .pricing-note-meta b {
-  font: 0.5rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 0.5rem/1 var(--font-mono);
   color: rgba(255, 255, 255, 0.28);
 }
 

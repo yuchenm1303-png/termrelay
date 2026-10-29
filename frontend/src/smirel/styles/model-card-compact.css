@@ -346,7 +346,7 @@
 
 .workspace-root .model-market-card .mapped-model-list code {
   color: #91b4ce;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .workspace-root .model-market-card .model-group-section {

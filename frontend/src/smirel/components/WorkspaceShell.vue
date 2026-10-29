@@ -331,8 +331,8 @@ watch(() => route.path, () => {
             v-for="item in group.items"
             :key="item.path"
             :to="item.path"
-            :class="{ active: route.path === item.path || route.path.startsWith(`${item.path}/`) }"
-            :aria-current="route.path === item.path || route.path.startsWith(`${item.path}/`) ? 'page' : undefined"
+            :class="{ active: activeItem?.path === item.path }"
+            :aria-current="activeItem?.path === item.path ? 'page' : undefined"
             @click="mobileOpen = false"
           >
             <WorkspaceNavIcon :name="navIconByFeature[item.feature] || 'circle'" />

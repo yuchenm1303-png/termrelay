@@ -239,7 +239,7 @@
   border: 1px solid #2b2f36;
   border-radius: 7px;
   color: var(--mc-subtle);
-  font: .64rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .64rem/1 var(--font-mono);
 }
 
 #app .models-public-page .provider-switch button.active .provider-index {
@@ -351,7 +351,7 @@
 
 #app .catalog-table code {
   color: #aeb4bd;
-  font: .70rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .70rem/1.45 var(--font-mono);
 }
 
 #app .rate-label {
@@ -402,7 +402,7 @@
 
 #app .pricing-note-meta b {
   color: var(--mc-subtle);
-  font: .60rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .60rem/1 var(--font-mono);
 }
 
 @media (max-width: 1080px) {

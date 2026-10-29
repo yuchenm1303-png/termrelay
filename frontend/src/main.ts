@@ -45,6 +45,7 @@ import './smirel/styles/workspace-ambient.css'
 import './smirel/styles/admin-channels-polish.css'
 import './smirel/styles/model-card-finish.css'
 import './smirel/styles/admin-ops-polish.css'
+import './smirel/styles/admin-consistency.css'
 
 async function bootstrap() {
   document.documentElement.classList.add('smirel-app')

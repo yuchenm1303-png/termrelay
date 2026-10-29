@@ -290,7 +290,7 @@ function userName(u: TopUserStat): string {
 .payment-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; gap: 24px; }
 .payment-heading h1 { margin: 0; color: #f7f8fa; font-size: clamp(1.9rem, 2.4vw, 2.35rem); line-height: 1.08; font-weight: 680; letter-spacing: -.043em; }
 .payment-heading p { max-width: 640px; margin: 10px 0 0; color: #858d97; font-size: .88rem; line-height: 1.6; }
-.payment-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; }
+.payment-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 var(--font-mono); letter-spacing: .13em; }
 .payment-eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: #6ec0f5; }
 .payment-heading-actions { display: inline-flex; align-items: center; gap: 12px; }
 .refresh-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: #16191f; border: 1px solid #2a2f37; color: #d6dbe1; font: 500 .8rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: border-color .2s; }
@@ -316,7 +316,7 @@ function userName(u: TopUserStat): string {
 .payment-panel { padding: 22px 24px; border-radius: 14px; background: #11141a; border: 1px solid #1d2128; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
 .panel-heading h2 { margin: 4px 0 0; color: #f7f8fa; font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; }
-.panel-kicker { color: #6ec0f5; font: 700 .65rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
+.panel-kicker { color: #6ec0f5; font: 700 .65rem/1 var(--font-mono); letter-spacing: .12em; }
 .trend-total { text-align: right; }
 .trend-total span { display: block; color: #6c727b; font-size: .7rem; }
 .trend-total strong { color: #f7f8fa; font: 600 1rem/1 ui-sans-serif, system-ui, sans-serif; }
@@ -338,11 +338,11 @@ function userName(u: TopUserStat): string {
 .recent-table th { text-align: left; padding: 8px 10px; color: #6c727b; font: 500 .72rem/1 ui-sans-serif, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid #1d2128; }
 .recent-table td { padding: 10px; color: #d6dbe1; font-size: .82rem; border-bottom: 1px solid #161a20; }
 .recent-table tr:last-child td { border-bottom: 0; }
-.mono { font: 500 .78rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b8bfc7; }
+.mono { font: 500 .78rem/1.2 var(--font-mono); color: #b8bfc7; }
 .top-users-list { list-style: none; padding: 0; margin: 0; }
 .top-users-list li { display: grid; grid-template-columns: 24px 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #161a20; }
 .top-users-list li:last-child { border-bottom: 0; }
-.top-users-list .rank { color: #6c727b; font: 600 .85rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.top-users-list .rank { color: #6c727b; font: 600 .85rem/1 var(--font-mono); }
 .top-users-list .user { color: #d6dbe1; font-size: .85rem; }
 .top-users-list .amount { color: #6ec0f5; font: 500 .85rem/1 ui-sans-serif, system-ui, sans-serif; }
 .top-users-list .count { color: #6c727b; font-size: .72rem; }

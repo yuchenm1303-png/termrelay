@@ -391,7 +391,7 @@
 .workspace-root .summary-meta strong {
   margin-top: 9px;
   color: #d8dce2;
-  font: .86rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .86rem/1.45 var(--font-mono);
   font-weight: 560;
 }
 

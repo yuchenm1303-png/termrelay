@@ -119,7 +119,7 @@
   margin: 0;
   overflow: hidden;
   color: #f4f6f8;
-  font: 680 clamp(1.28rem, 1.55vw, 1.62rem)/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 680 clamp(1.28rem, 1.55vw, 1.62rem)/1 var(--font-mono);
   letter-spacing: -.04em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -167,7 +167,7 @@
   justify-content: center;
   color: #798592;
   background: #12151a;
-  font: 680 .64rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 680 .64rem/1 var(--font-mono);
 }
 
 .user-console-lower .user-quick-panel nav strong {

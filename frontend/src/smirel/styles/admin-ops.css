@@ -157,7 +157,7 @@
   align-items: center;
   gap: 7px;
   color: #68717d;
-  font: 700 .63rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .63rem/1 var(--font-mono);
   letter-spacing: .09em;
 }
 
@@ -185,7 +185,7 @@
 
 .admin-ops-workspace .ops-metric-strip article > div small {
   color: #6b7480;
-  font: 700 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .62rem/1 var(--font-mono);
   letter-spacing: .08em;
 }
 
@@ -229,7 +229,7 @@
 
 .admin-ops-workspace .ops-panel-head span {
   color: #5d6672;
-  font: 700 .61rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .61rem/1 var(--font-mono);
   letter-spacing: .09em;
 }
 
@@ -370,7 +370,7 @@
 .admin-ops-workspace .ops-volume-secondary small {
   margin-top: 8px;
   color: #59636e;
-  font: 700 .59rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .59rem/1 var(--font-mono);
   letter-spacing: .09em;
 }
 
@@ -437,7 +437,7 @@
 
 .admin-ops-workspace .ops-shortcuts small {
   color: #59636f;
-  font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .58rem/1 var(--font-mono);
   letter-spacing: .08em;
 }
 

@@ -427,7 +427,7 @@ html.smirel-app .workspace-root .user-usage-page .trend-chart-meta span + span::
 
 html.smirel-app .workspace-root .user-usage-page .trend-chart-meta em {
   color: #667481;
-  font: 700 .55rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .55rem/1 var(--font-mono);
   font-style: normal;
   letter-spacing: .11em;
 }
@@ -493,7 +493,7 @@ html.smirel-app .workspace-root .user-usage-page .trend-y-axis small {
   padding-left: 8px;
   color: #63717d;
   background: linear-gradient(90deg, transparent 0%, rgba(13, 16, 20, .82) 24%, rgba(13, 16, 20, .94) 100%);
-  font: 570 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 570 .58rem/1 var(--font-mono);
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

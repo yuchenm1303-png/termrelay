@@ -307,7 +307,7 @@
 
 .workspace-root .market-result-head code {
   color: #9ea5ae;
-  font: .68rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: .68rem/1.2 var(--font-mono);
 }
 
 .workspace-root .model-market-grid {
@@ -424,7 +424,7 @@
 
 .workspace-root .model-rank {
   color: #515861;
-  font: .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: .62rem/1 var(--font-mono);
 }
 
 .workspace-root .model-price-grid {
@@ -534,7 +534,7 @@
   min-width: 0;
   overflow: hidden;
   color: #99b8dc;
-  font: .66rem/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: .66rem/1.3 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

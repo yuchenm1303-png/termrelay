@@ -1,0 +1,91 @@
+/* Shared rhythm for workspace pages. Individual pages grew their own title
+ * scales (30–41px, weights 680–735); keep one scale so switching pages in the
+ * sidebar doesn't make the heading jump. Loaded last so it wins ties. */
+.smirel-app .workspace-root .workspace-canvas h1 {
+  font-size: 2rem;
+  font-weight: 680;
+  line-height: 1.1;
+  letter-spacing: -.035em;
+}
+
+/* The light theme only recoloured the divider's border, leaving the dark
+ * 1px background fill visible as a black bar. */
+html.smirel-app[data-theme='light'] .workspace-root .workspace-main .workspace-topbar-divider {
+  background: var(--ws-border, #e3e7ec);
+}
+
+/* One surface radius and one header-control size. Pages had drifted to
+ * 10–17px corners and 30–42px heading buttons; these are the measured
+ * top-level surfaces and heading actions of each admin page. */
+.smirel-app {
+  --ws-radius-surface: 14px;
+  --ws-radius-banner: 10px;
+  --ws-control-height: 38px;
+  --ws-control-radius: 9px;
+}
+
+.smirel-app .workspace-root .workspace-canvas :is(
+  .admin-overview .admin-metric-card,
+  .admin-overview .admin-ops-panel,
+  .admin-overview .admin-management-panel,
+  .admin-users-summary-card,
+  .admin-users-panel,
+  .fleet-overview,
+  .accounts-panel,
+  .groups-page .overview,
+  .groups-page .panel,
+  .channels-page .stats,
+  .channels-page .panel,
+  .ops-snapshot-bar,
+  .ops-metric-strip,
+  .ops-trend-panel,
+  .ops-period-panel,
+  .ops-shortcuts,
+  .payment-summary-card,
+  .payment-panel,
+  .orders-panel,
+  .config-card,
+  .revenue-split .card,
+  .settings-command,
+  .settings-card
+) {
+  border-radius: var(--ws-radius-surface);
+}
+
+.smirel-app .workspace-root .workspace-canvas :is(
+  .error-banner,
+  .legal-banner,
+  .groups-page .alert,
+  .channels-page .alert
+) {
+  border-radius: var(--ws-radius-banner);
+}
+
+.smirel-app .workspace-root .workspace-canvas :is(
+  .admin-users-heading,
+  .accounts-heading,
+  .groups-page .page-head,
+  .channels-page .head,
+  .payment-heading,
+  .orders-heading,
+  .plans-heading,
+  .providers-heading,
+  .config-heading,
+  .rs-heading
+) :is(button, a.outline-link) {
+  box-sizing: border-box;
+  height: var(--ws-control-height);
+  min-height: var(--ws-control-height);
+  padding-block: 0;
+  padding-inline: 15px;
+  border-radius: var(--ws-control-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: .78rem;
+}
+
+@media (max-width: 620px) {
+  .smirel-app .workspace-root .workspace-canvas h1 { font-size: 1.75rem; }
+}

@@ -793,7 +793,7 @@ onMounted(() => void refreshAll())
   align-items: center;
   gap: 8px;
   color: #66707c;
-  font: 700 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .66rem/1 var(--font-mono);
   letter-spacing: .12em;
 }
 .admin-users-eyebrow > span { width: 18px; height: 1px; background: #3199ea; }

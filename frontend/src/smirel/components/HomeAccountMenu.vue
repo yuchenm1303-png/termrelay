@@ -424,7 +424,7 @@ html.smirel-app[data-theme='light'] .home-account-menu--toolbar .home-account-di
   align-self: start;
   margin-top: 4px;
   color: #58626f;
-  font: 700 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .56rem/1 var(--font-mono);
   letter-spacing: .08em;
 }
 

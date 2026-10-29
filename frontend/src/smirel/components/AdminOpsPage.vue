@@ -374,7 +374,7 @@ onMounted(() => void load())
   color: #67717d;
   background: transparent;
   cursor: pointer;
-  font: 700 .61rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .61rem/1 var(--font-mono);
   letter-spacing: .06em;
 }
 
@@ -403,7 +403,7 @@ onMounted(() => void load())
 
 .ops-range-label {
   color: #69737e;
-  font: 600 .65rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 600 .65rem/1 var(--font-mono);
   letter-spacing: .02em;
 }
 
@@ -433,7 +433,7 @@ onMounted(() => void load())
 
 .ops-trend-copy > span {
   color: #59636f;
-  font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .58rem/1 var(--font-mono);
   letter-spacing: .09em;
 }
 
@@ -461,7 +461,7 @@ onMounted(() => void load())
 
 .ops-trend-copy div small {
   color: #68727d;
-  font: 700 .55rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 700 .55rem/1 var(--font-mono);
   letter-spacing: .07em;
 }
 
@@ -509,7 +509,7 @@ onMounted(() => void load())
   display: flex;
   justify-content: space-between;
   color: #555f6b;
-  font: 600 .57rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 600 .57rem/1 var(--font-mono);
 }
 
 .ops-trend-empty {
@@ -572,7 +572,7 @@ onMounted(() => void load())
 .ops-period-total small {
   margin-top: 9px;
   color: #58626d;
-  font: 600 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 600 .58rem/1 var(--font-mono);
 }
 
 .ops-period-list {

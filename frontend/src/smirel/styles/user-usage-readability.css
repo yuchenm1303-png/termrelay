@@ -863,7 +863,7 @@ html.smirel-app .user-usage-page .usage-row code {
 
 html.smirel-app .user-usage-page .usage-number {
   color: #aeb8c2;
-  font: 590 .76rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 590 .76rem/1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -878,7 +878,7 @@ html.smirel-app .user-usage-page .usage-cost {
   justify-content: center;
   color: #9fd7bf;
   background: rgba(69, 166, 127, .07);
-  font: 680 .75rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 680 .75rem/1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1091,7 +1091,7 @@ html.smirel-app .user-usage-page .endpoint-panel .distribution-head code {
   align-items: center;
   color: #c1ccd5;
   background: rgba(var(--endpoint-accent), .045);
-  font: 650 .73rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 650 .73rem/1 var(--font-mono);
   letter-spacing: -.012em;
 }
 
@@ -1217,7 +1217,7 @@ html.smirel-app .user-usage-page .overview-panel .usage-profile-list dd code {
   overflow: hidden;
   color: #aebbc6;
   background: #12171c;
-  font: 620 .71rem/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 620 .71rem/1 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -1314,7 +1314,7 @@ onMounted(() => {
   color: #b2b8c0;
   display: grid;
   place-items: center;
-  font: 680 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 680 .67rem/1 var(--font-mono);
   font-style: normal;
 }
 
@@ -1474,7 +1474,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font: 650 .66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 650 .66rem/1 var(--font-mono);
 }
 
 .upstream-groups {
@@ -1494,7 +1494,7 @@ onMounted(() => {
   color: #89919b;
   display: inline-flex;
   align-items: center;
-  font: 560 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 560 .62rem/1 var(--font-mono);
 }
 
 .upstream-groups > small,
@@ -2224,7 +2224,7 @@ onMounted(() => {
   border-radius: 6px;
   background: #0d0f13;
   color: #9fa8b1;
-  font: 570 .60rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 570 .60rem/1.2 var(--font-mono);
 }
 
 .account-warning {

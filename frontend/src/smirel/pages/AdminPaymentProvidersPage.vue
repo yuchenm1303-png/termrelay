@@ -368,7 +368,7 @@ const modeOptions: { key: PaymentMode; label: string }[] = [
 .providers-heading { display: flex; align-items: center; justify-content: space-between; min-height: 92px; margin-bottom: 22px; gap: 24px; }
 .providers-heading h1 { margin: 0; color: #f7f8fa; font-size: clamp(1.9rem, 2.4vw, 2.35rem); line-height: 1.08; font-weight: 680; letter-spacing: -.043em; }
 .providers-heading p { max-width: 640px; margin: 10px 0 0; color: #858d97; font-size: .88rem; line-height: 1.6; }
-.providers-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; }
+.providers-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 var(--font-mono); letter-spacing: .13em; }
 .providers-eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: #6ec0f5; }
 .primary-btn { padding: 8px 16px; border-radius: 8px; background: #4a93c5; border: 1px solid #4a93c5; color: #0d0f12; font: 600 .82rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
 .primary-btn:hover { background: #5fa3d5; border-color: #5fa3d5; }
@@ -379,7 +379,7 @@ const modeOptions: { key: PaymentMode; label: string }[] = [
 .provider-card.disabled { opacity: .65; }
 .provider-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .provider-card-head h3 { margin: 6px 0 0; color: #f7f8fa; font-size: 1.05rem; font-weight: 600; }
-.provider-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; background: rgba(110, 192, 245, .12); color: #6ec0f5; font: 600 .68rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
+.provider-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; background: rgba(110, 192, 245, .12); color: #6ec0f5; font: 600 .68rem/1 var(--font-mono); letter-spacing: .04em; }
 .provider-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 14px; background: #16191f; border: 1px solid #2a2f37; color: #858d97; font: 500 .72rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
 .provider-toggle.on { color: #48bb99; border-color: rgba(72, 187, 153, .35); background: rgba(72, 187, 153, .08); }
 .provider-toggle.busy { opacity: .5; }

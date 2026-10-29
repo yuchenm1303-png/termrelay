@@ -991,7 +991,7 @@ const ledgerGapHint = computed(() => {
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 

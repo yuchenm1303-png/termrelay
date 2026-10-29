@@ -934,7 +934,7 @@ function viewOrder(o: PaymentOrder) {
   color: rgba(255, 255, 255, 0.95);
 }
 .orders-table code {
-  font: 0.74rem ui-monospace, monospace;
+  font: 0.74rem var(--font-mono);
   color: rgba(255, 255, 255, 0.7);
 }
 .orders-table .actions {
@@ -1034,11 +1034,11 @@ function viewOrder(o: PaymentOrder) {
 }
 .modal-sub code,
 .refund-grid dd code {
-  font: 0.76rem ui-monospace, monospace;
+  font: 0.76rem var(--font-mono);
   color: rgba(255, 255, 255, 0.72);
 }
 .mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .refund-grid {

@@ -260,7 +260,7 @@
   margin-top: 7px;
   overflow: hidden;
   color: #aab8c6;
-  font: .82rem/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: .82rem/1.4 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -438,7 +438,7 @@ function formatValidity(p: AdminSubscriptionPlan): string {
 .plans-heading { display: flex; align-items: center; justify-content: space-between; min-height: 92px; margin-bottom: 22px; gap: 24px; }
 .plans-heading h1 { margin: 0; color: #f7f8fa; font-size: clamp(1.9rem, 2.4vw, 2.35rem); line-height: 1.08; font-weight: 680; letter-spacing: -.043em; }
 .plans-heading p { max-width: 640px; margin: 10px 0 0; color: #858d97; font-size: .88rem; line-height: 1.6; }
-.plans-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; }
+.plans-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #6ec0f5; font: 700 .67rem/1 var(--font-mono); letter-spacing: .13em; }
 .plans-eyebrow i { width: 5px; height: 5px; border-radius: 50%; background: #6ec0f5; }
 .primary-btn { padding: 8px 16px; border-radius: 8px; background: #4a93c5; border: 1px solid #4a93c5; color: #0d0f12; font: 600 .82rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
 .primary-btn:hover { background: #5fa3d5; border-color: #5fa3d5; }
@@ -492,7 +492,7 @@ function formatValidity(p: AdminSubscriptionPlan): string {
 .relation-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .relation-head h3 { margin: 5px 0 0; }
 .relation-head p { margin: 6px 0 0; color: #858d97; font-size: .78rem; }
-.modal-eyebrow { color: #6ec0f5; font: 700 .63rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
+.modal-eyebrow { color: #6ec0f5; font: 700 .63rem/1 var(--font-mono); letter-spacing: .12em; }
 .modal-close { width: 34px; height: 34px; border: 1px solid #2a2f37; border-radius: 9px; background: #16191f; color: #9ca3ad; font-size: 1.15rem; cursor: pointer; }
 .current-binding { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 18px 0 12px; padding: 12px 14px; border: 1px solid #242a32; border-radius: 10px; background: #0d1015; }
 .current-binding span { color: #737d88; font-size: .72rem; }
