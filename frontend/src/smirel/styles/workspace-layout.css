@@ -1071,7 +1071,9 @@
 
   .workspace-root .workspace-canvas {
     transform-origin: 50% 18%;
-    animation: ws-shell-canvas-in 820ms cubic-bezier(.22, 1, .36, 1) 120ms both;
+    /* backwards, not both: a retained transform/filter turns the canvas into
+     * the containing block for position: fixed and traps page modals in it. */
+    animation: ws-shell-canvas-in 820ms cubic-bezier(.22, 1, .36, 1) 120ms backwards;
   }
 }
 

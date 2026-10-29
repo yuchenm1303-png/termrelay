@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import UiSelect from '../components/ui/UiSelect.vue'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import AsyncDataReveal from '../components/AsyncDataReveal.vue'
@@ -244,6 +244,17 @@ function closeCreate() {
   resetForm()
 }
 
+function onModalKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeCreate()
+}
+
+// The modal is teleported out of the page, so lock the page scroll behind it.
+watch(createOpen, (open) => {
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  if (open) window.addEventListener('keydown', onModalKeydown)
+  else window.removeEventListener('keydown', onModalKeydown)
+})
+
 function normalizeKeys(data: KeyListPayload) {
   return Array.isArray(data) ? data : (data.items || [])
 }
@@ -395,6 +406,8 @@ async function copyCreatedCredential() {
 
 onMounted(() => void loadPage())
 onBeforeUnmount(() => {
+  document.documentElement.style.overflow = ''
+  window.removeEventListener('keydown', onModalKeydown)
   groupRateRequestId += 1
   if (copiedTimer) window.clearTimeout(copiedTimer)
 })
@@ -543,7 +556,9 @@ onBeforeUnmount(() => {
     </section>
     </AsyncDataReveal>
 
-    <div v-if="createOpen" class="keys-modal-backdrop" @mousedown.self="closeCreate">
+    <!-- #app, not body: theme overrides for the modal are scoped under #app. -->
+    <Teleport v-if="createOpen" to="#app">
+    <div class="keys-modal-backdrop" @mousedown.self="closeCreate">
       <section class="keys-create-modal" role="dialog" aria-modal="true" :aria-label="copy.createTitle">
         <template v-if="createdKey">
           <header class="keys-modal-header keys-success-header">
@@ -699,6 +714,7 @@ onBeforeUnmount(() => {
         </template>
       </section>
     </div>
+    </Teleport>
   </section>
 </template>
 
