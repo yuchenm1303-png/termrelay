@@ -2,18 +2,12 @@
 
 /* Shared route motion language.
  *
- * The shell stays anchored; only page content moves. App.vue classifies every
- * workspace navigation (core/route-motion.ts) and exposes it on
- * .workspace-route-motion, which sets the travel variables below:
+ * The shell stays anchored; only page content moves, and every workspace page
+ * moves the same way regardless of where it sits in the sidebar: the old page
+ * lifts away, the next one rises from below, and its first few major sections
+ * follow with a short upward stagger. A single direction keeps navigation
+ * calm; mixed lateral/vertical entrances read as inconsistent.
  *
- * - section   different sidebar section: vertical travel that follows the
- *             sidebar (moving down the nav, content rises from below).
- * - sibling   same section (e.g. subscriptions <-> orders): a short lateral
- *             slide, like switching tabs; no blur so it stays crisp and quick.
- * - workspace user <-> admin: a depth change (scale + soft blur), no direction.
- *
- * Old content leaves quickly in the opposite direction, the next page
- * resolves, and its first few major sections follow with a short stagger.
  * Only opacity/transform/filter animate; the previous clip-path reveal read as
  * a pale frame sliding over the page and is gone.
  */
@@ -26,63 +20,9 @@
   --sm-motion-ease-in: cubic-bezier(.4, 0, 1, 1);
 }
 
-.workspace-route-motion {
-  display: contents;
-  --route-travel: 1;
-  --route-enter: var(--sm-motion-route-enter);
-  --route-leave: var(--sm-motion-route-leave);
-  --route-from-x: 0px;
-  --route-from-y: 18px;
-  --route-from-scale: .994;
-  --route-from-blur: 2px;
-  --route-to-x: 0px;
-  --route-to-y: -8px;
-  --route-to-scale: .997;
-  --route-to-blur: 1px;
-  --route-stagger-x: 0px;
-  --route-stagger-y: 8px;
-}
-
-.workspace-route-motion[data-route-motion='section'][data-route-direction='back'] {
-  --route-from-y: -14px;
-  --route-to-y: 8px;
-  --route-stagger-y: -6px;
-}
-
-.workspace-route-motion[data-route-motion='sibling'] {
-  --route-enter: 320ms;
-  --route-leave: 90ms;
-  --route-from-x: 22px;
-  --route-from-y: 0px;
-  --route-from-scale: 1;
-  --route-from-blur: 0px;
-  --route-to-x: -12px;
-  --route-to-y: 0px;
-  --route-to-scale: 1;
-  --route-to-blur: 0px;
-  --route-stagger-x: 10px;
-  --route-stagger-y: 0px;
-}
-
-.workspace-route-motion[data-route-motion='sibling'][data-route-direction='back'] {
-  --route-from-x: -22px;
-  --route-to-x: 12px;
-  --route-stagger-x: -10px;
-}
-
-.workspace-route-motion[data-route-motion='workspace'] {
-  --route-enter: 460ms;
-  --route-leave: 130ms;
-  --route-from-y: 6px;
-  --route-from-scale: .972;
-  --route-from-blur: 3px;
-  --route-to-y: 0px;
-  --route-to-scale: 1.012;
-  --route-to-blur: 2px;
-  --route-stagger-y: 6px;
-}
-
 .workspace-route-stage {
+  --route-travel: 1;
+  --route-from-blur: 2px;
   position: relative;
   width: 100%;
   min-width: 0;
@@ -98,26 +38,24 @@
 
 .workspace-route-enter-active {
   transition:
-    opacity calc(var(--route-enter) * .78) var(--sm-motion-ease-out),
-    transform var(--route-enter) var(--sm-motion-ease-out),
-    filter calc(var(--route-enter) * .82) var(--sm-motion-ease-out);
+    opacity 300ms var(--sm-motion-ease-out),
+    transform var(--sm-motion-route-enter) var(--sm-motion-ease-out),
+    filter 310ms var(--sm-motion-ease-out);
   will-change: opacity, transform, filter;
 }
 
 .workspace-route-leave-active {
   transition:
-    opacity var(--route-leave) linear,
-    transform var(--route-leave) var(--sm-motion-ease-in),
-    filter var(--route-leave) var(--sm-motion-ease-in);
+    opacity var(--sm-motion-route-leave) linear,
+    transform var(--sm-motion-route-leave) var(--sm-motion-ease-in),
+    filter var(--sm-motion-route-leave) var(--sm-motion-ease-in);
   will-change: opacity, transform, filter;
   pointer-events: none;
 }
 
 .workspace-route-enter-from {
   opacity: 0;
-  transform:
-    translate3d(calc(var(--route-from-x) * var(--route-travel)), calc(var(--route-from-y) * var(--route-travel)), 0)
-    scale(var(--route-from-scale));
+  transform: translate3d(0, calc(18px * var(--route-travel)), 0) scale(.994);
   filter: blur(var(--route-from-blur));
 }
 
@@ -135,10 +73,8 @@
 
 .workspace-route-leave-to {
   opacity: 0;
-  transform:
-    translate3d(calc(var(--route-to-x) * var(--route-travel)), calc(var(--route-to-y) * var(--route-travel)), 0)
-    scale(var(--route-to-scale));
-  filter: blur(var(--route-to-blur));
+  transform: translate3d(0, calc(-8px * var(--route-travel)), 0) scale(.997);
+  filter: blur(1px);
 }
 
 /* Keys resolve asynchronously: their two credential cards get a separate
@@ -153,7 +89,7 @@
 
 .workspace-route-enter-from.workspace-route-stage--keys {
   opacity: 0;
-  transform: translate3d(calc(var(--route-from-x) * .4), calc(var(--route-from-y) * .45), 0);
+  transform: translate3d(0, 8px, 0);
   filter: none;
   clip-path: none;
 }
@@ -166,7 +102,7 @@
 }
 
 .workspace-route-leave-active.workspace-route-stage--keys {
-  transition: opacity var(--route-leave) linear;
+  transition: opacity var(--sm-motion-route-leave) linear;
   will-change: opacity;
 }
 
@@ -180,11 +116,10 @@
   animation: none;
 }
 
-/* The first major blocks on a page arrive just after the stage itself, along
- * the same axis as the stage. Capped at five children to avoid animating long
- * tables. */
+/* The first major blocks on a page rise just after the stage itself. Capped
+ * at five children to avoid animating long tables. */
 .workspace-route-enter-active > :first-child > :nth-child(-n + 5) {
-  animation: sm-route-section-in calc(var(--route-enter) + 40ms) var(--sm-motion-ease-out) both;
+  animation: sm-route-section-in 420ms var(--sm-motion-ease-out) both;
 }
 
 .workspace-route-enter-active > :first-child > :nth-child(1) { animation-delay: 40ms; }
@@ -230,7 +165,7 @@
 @keyframes sm-route-section-in {
   from {
     opacity: .5;
-    transform: translate3d(var(--route-stagger-x, 0px), var(--route-stagger-y, 8px), 0);
+    transform: translate3d(0, 8px, 0);
   }
   to {
     opacity: 1;
@@ -239,13 +174,9 @@
 }
 
 @media (max-width: 720px) {
-  .workspace-route-motion {
+  .workspace-route-stage {
     --route-travel: .65;
     --route-from-blur: 1.4px;
-  }
-
-  .workspace-route-motion[data-route-motion='sibling'] {
-    --route-from-blur: 0px;
   }
 
   .workspace-route-enter-active > :first-child > :nth-child(-n + 5) {

@@ -63,8 +63,7 @@ export const adminNavigation: NavItem[] = [
   { path: '/admin/settings', name: 'AdminSettings', label: '平台设置', feature: 'admin-settings', short: 'ST' },
 ]
 
-// Sidebar sections, in display order. Shared by the shell (labels) and route
-// motion (sibling vs. cross-section transitions), so both agree on grouping.
+// Sidebar sections, in display order; the shell attaches translated labels.
 export interface NavGroupSpec {
   key: 'console' | 'resources' | 'billing' | 'account' | 'support' | 'operations' | 'transactions' | 'system'
   features: string[]
