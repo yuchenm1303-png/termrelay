@@ -83,6 +83,9 @@ describe('full-shell shared aurora', () => {
     expect(rule(bar).toString()).not.toContain('backdrop-filter')
     expect(decl(`${bar}::before`, 'backdrop-filter').value).toContain('blur(')
     expect(decl(`${bar}::before`, 'z-index').value).toBe('-1')
+    // A filled opacity/filter animation would turn the bar into a backdrop root.
+    expect(read('src/smirel/styles/workspace-layout.css'))
+      .toContain('animation: ws-shell-topbar-in 600ms cubic-bezier(.22, 1, .36, 1) 70ms backwards;')
     expect(decl(`${light} body:has(.workspace-root)`, 'background').value).toBe('#f8faff')
     expect(decl(`${dark} body:has(.workspace-root)`, 'background').value).toBe('#0d121b')
   })

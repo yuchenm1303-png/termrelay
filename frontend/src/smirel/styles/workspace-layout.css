@@ -1066,7 +1066,10 @@
   }
 
   .workspace-root .workspace-topbar {
-    animation: ws-shell-topbar-in 600ms cubic-bezier(.22, 1, .36, 1) 70ms both;
+    /* backwards, not both: an opacity/filter animation that stays in effect
+     * makes the bar a backdrop root, so its frosted ::before would only blur
+     * the bar itself instead of the page scrolling underneath. */
+    animation: ws-shell-topbar-in 600ms cubic-bezier(.22, 1, .36, 1) 70ms backwards;
   }
 
   .workspace-root .workspace-canvas {
