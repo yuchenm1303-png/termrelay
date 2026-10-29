@@ -108,7 +108,11 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior: () => ({ top: 0 }),
+  // Workspace → workspace navigations reset scroll from the route transition
+  // (App.vue) once the old page has left, instead of jumping it mid-fade.
+  scrollBehavior: (to, from) => (
+    to.meta.shell === 'workspace' && from.meta.shell === 'workspace' ? false : { top: 0 }
+  ),
 })
 
 router.beforeEach((to) => {

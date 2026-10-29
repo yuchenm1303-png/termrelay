@@ -320,7 +320,8 @@ html.smirel-app[data-theme='light'] .workspace-root .workspace-main,
 html.smirel-app[data-theme='light'] .workspace-root .workspace-sidebar,
 html.smirel-app[data-theme='light'] .workspace-root .workspace-topbar,
 html.smirel-app[data-theme='light'] .workspace-root .workspace-canvas,
-html.smirel-app[data-theme='light'] .workspace-root .workspace-route-stage {
+/* Settled stage only: the !important would otherwise freeze route fades/blur. */
+html.smirel-app[data-theme='light'] .workspace-root .workspace-route-stage:not(.workspace-route-enter-active):not(.workspace-route-leave-active) {
   opacity: 1 !important;
   filter: none !important;
 }

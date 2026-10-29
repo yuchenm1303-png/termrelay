@@ -62,3 +62,29 @@ export const adminNavigation: NavItem[] = [
   { path: '/admin/backup', name: 'AdminBackup', label: '备份', feature: 'admin-backup', short: 'BK' },
   { path: '/admin/settings', name: 'AdminSettings', label: '平台设置', feature: 'admin-settings', short: 'ST' },
 ]
+
+// Sidebar sections, in display order. Shared by the shell (labels) and route
+// motion (sibling vs. cross-section transitions), so both agree on grouping.
+export interface NavGroupSpec {
+  key: 'console' | 'resources' | 'billing' | 'account' | 'support' | 'operations' | 'transactions' | 'system'
+  features: string[]
+}
+
+export const userNavigationGroups: NavGroupSpec[] = [
+  { key: 'console', features: ['dashboard', 'keys', 'usage', 'usage-records'] },
+  { key: 'resources', features: ['model-catalog', 'experience', 'monitor'] },
+  { key: 'billing', features: ['wallet', 'subscriptions', 'purchase', 'orders', 'redeem'] },
+  { key: 'account', features: ['affiliate', 'profile'] },
+  { key: 'support', features: ['announcements', 'support', 'tickets'] },
+]
+
+export const adminNavigationGroups: NavGroupSpec[] = [
+  { key: 'console', features: ['admin-dashboard', 'keys', 'admin-users'] },
+  { key: 'resources', features: ['admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog'] },
+  { key: 'operations', features: ['admin-usage', 'admin-ops'] },
+  { key: 'transactions', features: ['admin-payment-dashboard', 'admin-orders', 'admin-plans'] },
+  { key: 'system', features: ['admin-settings'] },
+]
+
+// Routes that belong to whichever workspace (user/admin) the visitor is in.
+export const neutralWorkspacePaths = ['/keys', '/model-plaza', '/profile']

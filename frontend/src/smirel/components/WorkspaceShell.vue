@@ -3,7 +3,14 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import WorkspaceNavIcon from './WorkspaceNavIcon.vue'
-import { adminNavigation, userNavigation, type NavItem } from '../core/navigation'
+import {
+  adminNavigation,
+  adminNavigationGroups,
+  neutralWorkspacePaths,
+  userNavigation,
+  userNavigationGroups,
+  type NavItem,
+} from '../core/navigation'
 import { type SmirelLocale } from '../core/i18n'
 import {
   clearNotifications,
@@ -58,7 +65,6 @@ const sharedKeysNavigation = userNavigation.find((item) => item.feature === 'key
 const MODE_STORAGE_KEY = 'smirel.workspace.mode'
 const LAST_ADMIN_ROUTE_KEY = 'smirel.workspace.last-admin-route'
 const LAST_USER_ROUTE_KEY = 'smirel.workspace.last-user-route'
-const neutralWorkspacePaths = ['/keys', '/model-plaza', '/profile']
 
 function readSessionValue(key: string, fallback: string) {
   if (typeof window === 'undefined') return fallback
@@ -175,24 +181,10 @@ function take(items: NavItem[], features: string[]) {
 
 const navigationGroups = computed<NavGroup[]>(() => {
   const items = navigation.value
-
-  if (!isAdminWorkspace.value) {
-    return [
-      { label: t('groups.console'), items: take(items, ['dashboard', 'keys', 'usage', 'usage-records']) },
-      { label: t('groups.resources'), items: take(items, ['model-catalog', 'experience', 'monitor']) },
-      { label: t('groups.billing'), items: take(items, ['wallet', 'subscriptions', 'purchase', 'orders', 'redeem']) },
-      { label: t('groups.account'), items: take(items, ['affiliate', 'profile']) },
-      { label: t('groups.support'), items: take(items, ['announcements', 'support', 'tickets']) },
-    ].filter((group) => group.items.length)
-  }
-
-  return [
-    { label: t('groups.console'), items: take(items, ['admin-dashboard', 'keys', 'admin-users']) },
-    { label: t('groups.resources'), items: take(items, ['admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog']) },
-    { label: t('groups.operations'), items: take(items, ['admin-usage', 'admin-ops']) },
-    { label: t('groups.transactions'), items: take(items, ['admin-payment-dashboard', 'admin-orders', 'admin-plans']) },
-    { label: t('groups.system'), items: take(items, ['admin-settings']) },
-  ].filter((group) => group.items.length)
+  const specs = isAdminWorkspace.value ? adminNavigationGroups : userNavigationGroups
+  return specs
+    .map((spec) => ({ label: t(`groups.${spec.key}`), items: take(items, spec.features) }))
+    .filter((group) => group.items.length)
 })
 
 const activeItem = computed(() => navigation.value
@@ -296,10 +288,13 @@ watch(() => route.fullPath, (fullPath) => {
   writeSessionValue(workspaceMode.value === 'admin' ? LAST_ADMIN_ROUTE_KEY : LAST_USER_ROUTE_KEY, fullPath)
 }, { immediate: true })
 
-watch(() => route.path, () => {
+// Called by the route transition once the outgoing page has faded, so the old
+// page never visibly jumps to the top while it is leaving.
+function resetScroll() {
   workspaceMain.value?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   if (typeof window !== 'undefined') window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-})
+}
+defineExpose({ resetScroll })
 </script>
 
 <template>
