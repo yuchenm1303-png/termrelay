@@ -192,6 +192,67 @@
   }
 }
 
+/* Compact topbar: the drawer button matches the right-hand utility buttons
+ * (36px, 10px radius, flat surface, no drop shadow) and the page title is
+ * plain, vertically centred text rather than a second boxed chip, so the
+ * bar reads as one row of controls. [data-theme] lifts these above the
+ * theme-specific chip/button rules loaded earlier. */
+@media (max-width: 1279px), (max-width: 1366px) and (pointer: coarse) {
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .mobile-menu {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
+    flex-basis: 36px;
+    border-color: var(--ws-border);
+    border-radius: 10px !important;
+    color: var(--ws-muted);
+    background: var(--ws-surface);
+    box-shadow: none;
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .mobile-menu::before {
+    width: 16px;
+    height: 14px;
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .mobile-menu::after {
+    left: 15.5px;
+    top: 14.5px;
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .mobile-menu:hover {
+    border-color: var(--ws-border-strong);
+    color: var(--ws-text-soft);
+    background: var(--ws-surface);
+    box-shadow: none;
+    transform: none;
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .mobile-menu:active {
+    box-shadow: none;
+    transform: scale(.96);
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .workspace-topbar-title {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: var(--ws-text);
+    background: none;
+    box-shadow: none;
+    font-size: .98rem !important;
+    line-height: 36px;
+    font-weight: 680;
+    letter-spacing: -.01em;
+  }
+
+  html.smirel-app[data-theme] .workspace-root .workspace-main .workspace-topbar--contextual .workspace-topbar-title::before {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .workspace-root .mobile-menu,
   .workspace-root .mobile-close {

@@ -33,6 +33,9 @@
   .workspace-root {
     display: block !important;
     grid-template-columns: minmax(0, 1fr) !important;
+    /* Legacy app.css pads the root (8-10px); the compact bar must run edge
+     * to edge, and the canvas already carries its own gutter. */
+    padding: 0 !important;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
