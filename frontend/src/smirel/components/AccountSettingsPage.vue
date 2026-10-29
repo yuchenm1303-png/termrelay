@@ -377,9 +377,10 @@ onMounted(() => void loadProfile())
       </div>
 
       <dl class="account-metrics">
-        <div>
+        <div class="account-metric-balance">
           <dt>可用余额</dt>
           <dd>${{ balance.toFixed(2) }}</dd>
+          <RouterLink class="account-metric-action" to="/subscriptions">充值</RouterLink>
         </div>
         <div>
           <dt>注册时间</dt>
@@ -397,25 +398,30 @@ onMounted(() => void loadProfile())
     <div v-else class="account-grid">
       <section class="account-card account-profile-card">
         <header class="account-card-head">
+          <span class="account-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8.6" r="3.6"/><path d="M5.2 19.4c1.2-3.3 3.7-5 6.8-5s5.6 1.7 6.8 5"/></svg>
+          </span>
           <div>
-            <span class="account-card-kicker">PROFILE</span>
             <h3>个人资料</h3>
             <p>管理你在 Muxway 中显示的基础账户信息。</p>
           </div>
         </header>
 
         <div class="avatar-editor">
-          <div class="avatar-editor-preview">
+          <button class="avatar-editor-preview" type="button" aria-label="更换头像" @click="openAvatarPicker">
             <img v-if="avatarSrc" :src="avatarSrc" alt="头像预览" />
             <span v-else>{{ initials }}</span>
-          </div>
+            <i aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4.5 8.6c0-1 .8-1.8 1.8-1.8h2l1.4-2h4.6l1.4 2h2c1 0 1.8.8 1.8 1.8v8.6c0 1-.8 1.8-1.8 1.8H6.3c-1 0-1.8-.8-1.8-1.8V8.6Z"/><circle cx="12" cy="12.6" r="3.2"/></svg>
+            </i>
+          </button>
           <div class="avatar-editor-copy">
             <strong>头像</strong>
-            <span>自动裁剪为正方形，建议使用清晰图片。</span>
-            <div class="avatar-editor-actions">
-              <button class="account-button secondary" type="button" @click="openAvatarPicker">更换头像</button>
-              <button v-if="avatarSrc" class="account-text-button" type="button" @click="removeAvatar">移除</button>
-            </div>
+            <span>支持 JPG / PNG，自动裁剪为正方形。</span>
+          </div>
+          <div class="avatar-editor-actions">
+            <button v-if="avatarSrc" class="account-text-button" type="button" @click="removeAvatar">移除</button>
+            <button class="account-button secondary" type="button" @click="openAvatarPicker">更换头像</button>
           </div>
           <input ref="avatarInput" class="account-file-input" type="file" accept="image/*" @change="handleAvatarChange" />
         </div>
@@ -423,7 +429,8 @@ onMounted(() => void loadProfile())
         <div class="account-form-grid">
           <label class="account-field">
             <span>用户名</span>
-            <input v-model="username" autocomplete="nickname" maxlength="64" placeholder="输入用户名" />
+            <input v-model="username" autocomplete="off" maxlength="64" placeholder="设置一个用户名" />
+            <small v-if="!displayProfile.username">未设置时显示为邮箱前缀「{{ displayName }}」。</small>
           </label>
           <label class="account-field">
             <span>邮箱地址</span>
@@ -443,44 +450,51 @@ onMounted(() => void loadProfile())
 
       <section class="account-card account-security-card">
         <header class="account-card-head">
+          <span class="account-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3.2 5.2 6v5.1c0 4.5 2.6 7.8 6.8 9.7 4.2-1.9 6.8-5.2 6.8-9.7V6L12 3.2Z"/><path d="m9.3 12.1 1.8 1.8 3.8-4"/></svg>
+          </span>
           <div>
-            <span class="account-card-kicker">SECURITY</span>
             <h3>账户安全</h3>
             <p>更新登录密码。OAuth 登录账户可继续使用原登录方式。</p>
           </div>
-          <div class="security-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M12 3.2 5.2 6v5.1c0 4.5 2.6 7.8 6.8 9.7 4.2-1.9 6.8-5.2 6.8-9.7V6L12 3.2Z"/><path d="m9.3 12.1 1.8 1.8 3.8-4"/></svg>
-          </div>
         </header>
 
-        <div class="password-fields">
-          <label class="account-field">
-            <span>当前密码</span>
-            <input v-model="oldPassword" type="password" autocomplete="current-password" placeholder="输入当前密码" />
-          </label>
-          <label class="account-field">
-            <span>新密码</span>
-            <input v-model="newPassword" type="password" autocomplete="new-password" placeholder="至少 6 位" />
-          </label>
-          <label class="account-field">
-            <span>确认新密码</span>
-            <input v-model="confirmPassword" type="password" autocomplete="new-password" placeholder="再次输入新密码" @keydown.enter="changePassword" />
-          </label>
-        </div>
+        <form class="password-form" novalidate @submit.prevent="changePassword">
+          <!-- Lets password managers pair the saved login with this form instead of the username field. -->
+          <input class="account-file-input" type="email" :value="displayProfile.email" autocomplete="username" tabindex="-1" aria-hidden="true" readonly />
+          <div class="password-fields">
+            <label class="account-field">
+              <span>当前密码</span>
+              <input v-model="oldPassword" type="password" autocomplete="current-password" placeholder="输入当前密码" />
+            </label>
+            <div class="password-pair">
+              <label class="account-field">
+                <span>新密码</span>
+                <input v-model="newPassword" type="password" autocomplete="new-password" placeholder="至少 6 位" />
+              </label>
+              <label class="account-field">
+                <span>确认新密码</span>
+                <input v-model="confirmPassword" type="password" autocomplete="new-password" placeholder="再次输入新密码" />
+              </label>
+            </div>
+          </div>
 
-        <p v-if="passwordError" class="account-error">{{ passwordError }}</p>
-        <footer class="account-card-footer">
-          <RouterLink class="account-link" to="/forgot-password">忘记当前密码？</RouterLink>
-          <button class="account-button secondary" type="button" :disabled="savingPassword" @click="changePassword">
-            {{ savingPassword ? '更新中…' : '修改密码' }}
-          </button>
-        </footer>
+          <p v-if="passwordError" class="account-error">{{ passwordError }}</p>
+          <footer class="account-card-footer">
+            <RouterLink class="account-link" to="/forgot-password">忘记当前密码？</RouterLink>
+            <button class="account-button secondary" type="submit" :disabled="savingPassword">
+              {{ savingPassword ? '更新中…' : '修改密码' }}
+            </button>
+          </footer>
+        </form>
       </section>
 
       <section class="account-card account-notification-card">
-        <header class="account-card-head compact">
+        <header class="account-card-head">
+          <span class="account-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6.5 10.2a5.5 5.5 0 0 1 11 0v3.5l1.6 2.7H4.9l1.6-2.7v-3.5Z"/><path d="M10 19.2a2.2 2.2 0 0 0 4 0"/></svg>
+          </span>
           <div>
-            <span class="account-card-kicker">NOTIFICATION</span>
             <h3>余额提醒</h3>
             <p>余额较低时通过账户通知渠道提醒你及时充值。</p>
           </div>
@@ -496,6 +510,7 @@ onMounted(() => void loadProfile())
             :class="{ 'is-on': balanceNotifyEnabled }"
             type="button"
             role="switch"
+            aria-label="低余额提醒"
             :aria-checked="balanceNotifyEnabled"
             @click="balanceNotifyEnabled = !balanceNotifyEnabled"
           >
@@ -518,21 +533,21 @@ onMounted(() => void loadProfile())
       </section>
 
       <section class="account-card account-session-card">
-        <header class="account-card-head compact">
+        <header class="account-card-head">
+          <span class="account-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="2"/><path d="M8.5 20h7M12 17v3"/></svg>
+          </span>
           <div>
-            <span class="account-card-kicker">SESSION</span>
             <h3>当前会话</h3>
             <p>管理当前浏览器的登录状态。</p>
           </div>
         </header>
 
         <div class="session-row">
-          <div class="session-device-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="2"/><path d="M8.5 20h7M12 17v3"/></svg>
-          </div>
+          <span class="session-pulse" aria-hidden="true"></span>
           <div class="session-copy">
             <strong>当前浏览器</strong>
-            <span>Web Console · 已认证</span>
+            <span>Web Console · 已认证 · 最近活动 {{ lastActiveAt }}</span>
           </div>
           <span class="session-current">当前</span>
         </div>
@@ -550,18 +565,13 @@ onMounted(() => void loadProfile())
       </section>
 
       <section class="account-card account-danger-card">
-        <header class="account-card-head compact">
-          <div>
-            <span class="account-card-kicker danger-kicker">DANGER ZONE</span>
-            <h3>注销账户</h3>
-            <p>永久停止使用当前 Muxway 账户。此操作与“退出登录”不同。</p>
-          </div>
-        </header>
-
         <div class="delete-account-row">
+          <span class="account-card-icon danger" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 4.2 3.6 18.8h16.8L12 4.2Z"/><path d="M12 10v4.2M12 16.8v.1"/></svg>
+          </span>
           <div>
-            <strong>注销当前账户</strong>
-            <span v-if="!isAdminAccount">注销后将无法再次登录，当前 API 密钥会立即失效；必要的计费与审计历史会按平台规则保留。</span>
+            <strong>注销账户</strong>
+            <span v-if="!isAdminAccount">永久停止使用当前账户。注销后无法再次登录，API 密钥立即失效；必要的计费与审计历史按平台规则保留。</span>
             <span v-else>管理员账户为避免误删不能直接注销，请先转移管理员权限。</span>
           </div>
           <button class="account-button delete-account-button" type="button" :disabled="isAdminAccount" @click="openDeleteAccountDialog">
@@ -629,13 +639,29 @@ onMounted(() => void loadProfile())
 }
 
 .account-hero {
+  position: relative;
+  overflow: hidden;
   min-height: 136px;
-  padding: 20px 24px;
-  border-radius: 12px;
+  padding: 22px 24px;
+  border-radius: 14px;
   display: grid;
-  grid-template-columns: minmax(320px, .92fr) minmax(540px, 1.08fr);
-  gap: clamp(28px, 4vw, 64px);
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 1.25fr);
+  gap: clamp(24px, 3vw, 48px);
   align-items: center;
+}
+
+/* Soft brand wash behind the identity block, echoing the logo gradient. */
+.account-hero::before {
+  content: '';
+  position: absolute;
+  inset: -40% auto -40% -10%;
+  width: 52%;
+  background: radial-gradient(closest-side, rgba(88, 132, 255, .13), rgba(176, 102, 255, .05) 60%, transparent);
+  pointer-events: none;
+}
+
+.account-hero > * {
+  position: relative;
 }
 
 .account-identity {
@@ -766,17 +792,20 @@ onMounted(() => void loadProfile())
 }
 
 .account-metrics {
-  width: min(100%, 760px);
+  width: 100%;
   margin: 0;
-  justify-self: end;
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .account-metrics > div {
+  position: relative;
   min-width: 0;
-  padding: 2px 20px;
-  border-left: 1px solid var(--account-border);
+  padding: 14px 16px;
+  border: 1px solid var(--account-border-soft);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .02);
 }
 
 .account-metrics dt {
@@ -787,7 +816,7 @@ onMounted(() => void loadProfile())
 }
 
 .account-metrics dd {
-  margin: 7px 0 0;
+  margin: 8px 0 0;
   overflow: hidden;
   color: #dce3ea;
   text-overflow: ellipsis;
@@ -795,12 +824,34 @@ onMounted(() => void loadProfile())
   font-size: .92rem;
   line-height: 1.35;
   font-weight: 640;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -.01em;
 }
 
-.account-metrics > div:first-child dd {
-  font-size: 1rem;
-  font-weight: 680;
+.account-metrics > .account-metric-balance dd {
+  font-size: 1.22rem;
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+.account-metric-action {
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  padding: 3px 9px;
+  border: 1px solid rgba(110, 182, 232, .28);
+  border-radius: 999px;
+  background: rgba(70, 149, 209, .1);
+  color: #8cc8f2;
+  font-size: .68rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background .16s ease, border-color .16s ease;
+}
+
+.account-metric-action:hover {
+  border-color: rgba(110, 182, 232, .5);
+  background: rgba(70, 149, 209, .18);
 }
 
 .account-loading {
@@ -814,66 +865,63 @@ onMounted(() => void loadProfile())
 
 .account-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .account-card {
   min-width: 0;
-  border-radius: 12px;
-  padding: 22px;
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Paired cards share a row height; push each footer to the bottom so actions line up. */
+.account-card > .account-card-footer,
+.account-card > .signout-zone,
+.password-form > .account-card-footer {
+  margin-top: auto;
+}
+
+.account-card > :nth-last-child(2),
+.password-form > :nth-last-child(2) {
+  margin-bottom: 18px;
+}
+
+.password-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .account-card-head {
-  min-height: 56px;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
 }
 
-.account-card-head.compact {
-  min-height: 50px;
-}
-
-.account-card-kicker {
-  display: block;
-  margin-bottom: 7px;
-  color: #557184;
-  font-size: .62rem;
-  font-weight: 760;
-  letter-spacing: .14em;
-}
-
-.account-card-head h3 {
-  margin: 0;
-  color: var(--account-text);
-  font-size: 1rem;
-  font-weight: 670;
-}
-
-.account-card-head p {
-  margin: 6px 0 0;
-  color: var(--account-muted);
-  font-size: .76rem;
-  line-height: 1.55;
-}
-
-.security-icon {
+.account-card-icon {
   width: 38px;
   height: 38px;
   flex: 0 0 auto;
   border: 1px solid #283949;
-  border-radius: 9px;
-  background: rgba(70, 149, 209, .07);
+  border-radius: 10px;
+  background: rgba(70, 149, 209, .08);
   color: #6eb6e8;
   display: grid;
   place-items: center;
 }
 
-.security-icon svg,
-.session-device-icon svg,
+.account-card-icon.danger {
+  border-color: #5a2f38;
+  background: rgba(135, 45, 58, .14);
+  color: #f19aa2;
+}
+
+.account-card-icon svg,
+.avatar-editor-preview i svg,
 .account-button.danger svg {
   fill: none;
   stroke: currentColor;
@@ -882,32 +930,73 @@ onMounted(() => void loadProfile())
   stroke-linejoin: round;
 }
 
-.security-icon svg {
+.account-card-icon svg {
   width: 19px;
   height: 19px;
 }
 
+.account-card-head h3 {
+  margin: 1px 0 0;
+  color: var(--account-text);
+  font-size: 1rem;
+  line-height: 1.3;
+  font-weight: 670;
+}
+
+.account-card-head p {
+  margin: 4px 0 0;
+  color: var(--account-muted);
+  font-size: .76rem;
+  line-height: 1.55;
+}
+
 .avatar-editor {
   position: relative;
-  margin-top: 18px;
-  padding: 16px;
-  border: 1px solid var(--account-border-soft);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, .014);
+  margin-top: 20px;
+  padding: 18px 0;
+  border-top: 1px solid var(--account-border-soft);
+  border-bottom: 1px solid var(--account-border-soft);
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
 .avatar-editor-preview {
-  width: 54px;
-  height: 54px;
+  position: relative;
+  width: 56px;
+  height: 56px;
   flex: 0 0 auto;
-  border-radius: 11px;
-  font-size: 1rem;
+  padding: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar-editor-preview i {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 16, 24, .52);
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity .16s ease;
+}
+
+.avatar-editor-preview i svg {
+  width: 20px;
+  height: 20px;
+}
+
+.avatar-editor-preview:hover i,
+.avatar-editor-preview:focus-visible i {
+  opacity: 1;
 }
 
 .avatar-editor-copy {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -933,10 +1022,10 @@ onMounted(() => void loadProfile())
 }
 
 .avatar-editor-actions {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 12px;
 }
 
 .account-file-input {
@@ -951,15 +1040,22 @@ onMounted(() => void loadProfile())
 .password-fields {
   display: grid;
   gap: 14px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
-.account-form-grid {
+.account-form-grid,
+.password-pair {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .password-fields {
   grid-template-columns: 1fr;
+  margin-top: 20px;
+}
+
+.password-pair {
+  display: grid;
+  gap: 14px;
 }
 
 .account-field {
@@ -1004,6 +1100,16 @@ onMounted(() => void loadProfile())
   cursor: default;
 }
 
+/* Keep browser-autofilled fields on the page palette instead of the UA's pale blue. */
+.account-field input:-webkit-autofill,
+.account-field input:-webkit-autofill:hover,
+.account-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--account-text);
+  -webkit-box-shadow: 0 0 0 40px var(--account-input) inset;
+  caret-color: var(--account-text);
+  transition: background-color 9999s ease-out;
+}
+
 .account-field small {
   color: #626b76;
   font-size: .67rem;
@@ -1020,7 +1126,6 @@ onMounted(() => void loadProfile())
 }
 
 .account-card-footer {
-  margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--account-border-soft);
   display: flex;
@@ -1097,7 +1202,7 @@ onMounted(() => void loadProfile())
 
 .setting-row {
   min-height: 64px;
-  margin-top: 18px;
+  margin-top: 20px;
   padding: 12px 0;
   border-top: 1px solid var(--account-border-soft);
   border-bottom: 1px solid var(--account-border-soft);
@@ -1174,32 +1279,25 @@ onMounted(() => void loadProfile())
 }
 
 .session-row {
-  min-height: 72px;
-  margin-top: 18px;
+  min-height: 64px;
+  margin-top: 20px;
   padding: 13px 14px;
   border: 1px solid var(--account-border-soft);
-  border-radius: 9px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, .013);
   display: grid;
-  grid-template-columns: 38px 1fr auto;
+  grid-template-columns: 10px 1fr auto;
   align-items: center;
   gap: 12px;
 }
 
-.session-device-icon {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #2d3945;
-  border-radius: 8px;
-  background: rgba(73, 132, 175, .06);
-  color: #7da9c8;
-  display: grid;
-  place-items: center;
-}
-
-.session-device-icon svg {
-  width: 18px;
-  height: 18px;
+.session-pulse {
+  width: 8px;
+  height: 8px;
+  margin-left: 1px;
+  border-radius: 50%;
+  background: #43c487;
+  box-shadow: 0 0 0 4px rgba(67, 196, 135, .16);
 }
 
 .session-copy {
@@ -1220,7 +1318,6 @@ onMounted(() => void loadProfile())
 }
 
 .signout-zone {
-  margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--account-border-soft);
   display: flex;
@@ -1265,26 +1362,23 @@ onMounted(() => void loadProfile())
   background: linear-gradient(180deg, rgba(28, 18, 21, .9), rgba(18, 15, 18, .96));
 }
 
-.danger-kicker {
-  color: #9d5f67;
+.account-danger-card {
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .delete-account-row {
-  min-height: 78px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(108, 55, 64, .32);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 14px;
 }
 
 .delete-account-row > div {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .delete-account-row strong {
@@ -1470,14 +1564,9 @@ onMounted(() => void loadProfile())
     gap: 20px;
   }
 
-  .account-metrics {
-    width: 100%;
-    justify-self: stretch;
-  }
-
-  .account-metrics > div:first-child {
-    border-left: 0;
-    padding-left: 0;
+  .account-hero::before {
+    width: 90%;
+    inset: -60% auto 40% -20%;
   }
 
   .account-grid {
@@ -1496,26 +1585,35 @@ onMounted(() => void loadProfile())
   }
 
   .account-metrics {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .account-metrics > div,
-  .account-metrics > div:first-child {
-    padding: 9px 0;
-    border-left: 0;
-    border-top: 1px solid var(--account-border-soft);
+  .account-metrics > .account-metric-balance {
+    grid-column: 1 / -1;
   }
 
-  .account-form-grid {
+  .account-form-grid,
+  .password-pair {
     grid-template-columns: 1fr;
+  }
+
+  .avatar-editor {
+    flex-wrap: wrap;
+  }
+
+  .avatar-editor-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .account-card-footer,
-  .signout-zone,
-  .delete-account-row {
+  .signout-zone {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .delete-account-row {
+    flex-wrap: wrap;
   }
 
   .account-card-footer .account-button,
@@ -1544,18 +1642,8 @@ onMounted(() => void loadProfile())
     border-radius: 13px;
   }
 
-  .avatar-editor {
-    align-items: flex-start;
-  }
-
-  .avatar-editor-actions {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
-
   .session-row {
-    grid-template-columns: 36px 1fr;
+    grid-template-columns: 10px 1fr;
   }
 
   .session-current {
