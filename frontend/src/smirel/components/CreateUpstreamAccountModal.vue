@@ -320,8 +320,6 @@ async function submit() {
       // Without this, the backend silently attaches an account with no
       // group IDs to openai-default, making unpriced models routable.
       skip_default_group_bind: isCangyuan.value,
-      // Backend otherwise auto-binds a blank list to openai-default.
-      skip_default_group_bind: isCangyuan.value,
     })
 
     apiKey.value = ''
