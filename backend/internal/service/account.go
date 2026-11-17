@@ -1591,6 +1591,12 @@ func (a *Account) openAIEndpointCapabilitySet() (map[string]bool, bool) {
 }
 
 func (a *Account) SupportsOpenAIImageCapability(capability OpenAIImagesCapability) bool {
+	// The Cangyuan preset currently supports chat only. Its image endpoint
+	// returns async task IDs and needs different completion-based billing.
+	// Do not schedule media as synchronous OpenAI Images until adapted.
+	if isCangyuanAccount(a) {
+		return false
+	}
 	if capability == "" {
 		return true
 	}
