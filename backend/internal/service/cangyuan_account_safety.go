@@ -24,26 +24,26 @@ func validateCangyuanAccount(account *Account) error {
 		return nil
 	}
 	if account.Platform != PlatformOpenAI || account.Type != AccountTypeAPIKey {
-		return fmt.Errorf("Cangyuan upstream must use the OpenAI API-key protocol")
+		return fmt.Errorf("cangyuan upstream must use the OpenAI API-key protocol")
 	}
 	base, err := url.Parse(strings.TrimSpace(account.GetCredential("base_url")))
 	if err != nil || base.Scheme != "https" || base.Host == "" || base.User != nil {
-		return fmt.Errorf("Cangyuan upstream requires an HTTPS base URL")
+		return fmt.Errorf("cangyuan upstream requires an HTTPS base URL")
 	}
 	if account.IsOpenAIPassthroughEnabled() {
-		return fmt.Errorf("Cangyuan upstream cannot enable unrestricted OpenAI passthrough")
+		return fmt.Errorf("cangyuan upstream cannot enable unrestricted OpenAI passthrough")
 	}
 	if openai_compat.ShouldUseResponsesAPI(account.Extra) {
-		return fmt.Errorf("Cangyuan chat upstream must use force_chat_completions mode")
+		return fmt.Errorf("cangyuan chat upstream must use force_chat_completions mode")
 	}
 	mapping := account.GetModelMapping()
 	if len(mapping) == 0 {
-		return fmt.Errorf("Cangyuan upstream requires at least one explicit model mapping")
+		return fmt.Errorf("cangyuan upstream requires at least one explicit model mapping")
 	}
 	for requested, upstream := range mapping {
 		if strings.TrimSpace(requested) == "" || strings.TrimSpace(upstream) == "" ||
 			strings.ContainsAny(requested, "*?") || strings.ContainsAny(upstream, "*?") {
-			return fmt.Errorf("Cangyuan upstream model mapping must use exact, non-wildcard model IDs")
+			return fmt.Errorf("cangyuan upstream model mapping must use exact, non-wildcard model IDs")
 		}
 	}
 	return nil
