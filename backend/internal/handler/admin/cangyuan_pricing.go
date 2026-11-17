@@ -73,7 +73,7 @@ func filterCangyuanChatModels(models []string, rawPricing []byte) ([]string, map
 			Tiered:      entry.BillingMode == "tiered_expr" || strings.TrimSpace(entry.BillingExpr) != "",
 		}
 	}
-	
+
 	// Preserve upstream model order, deduplicate names, and never add models
 	// the supplied API key did not explicitly authorize.
 	filtered := make([]string, 0, len(models))
