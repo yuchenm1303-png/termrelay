@@ -107,7 +107,7 @@ function cleanBaseUrl(value: string) {
 function validateBaseUrl(value: string) {
   try {
     const url = new URL(cleanBaseUrl(value))
-    return url.protocol === 'http:' || url.protocol === 'https:'
+    return isCangyuan.value ? url.protocol === 'https:' : (url.protocol === 'http:' || url.protocol === 'https:')
   } catch {
     return false
   }
@@ -183,7 +183,7 @@ async function loadGroups() {
       groups.value = received.filter((item) => String(item.platform || '').toLowerCase() === requestedPlatform)
     }
 
-    if (!groupIds.value.length && groups.value.length) {
+    if (!groupIds.value.length && groups.value.length && !isCangyuan.value) {
       const preferred = groups.value.find((item) => String(item.name || '').toLowerCase().includes('default')) || groups.value[0]
       groupIds.value = [preferred.id]
     }
@@ -209,6 +209,8 @@ function onPresetChange() {
   if (isCangyuan.value) {
     baseUrl.value = CANGYUAN_BASE_URL
     if (!name.value.trim()) name.value = '沧元算力'
+    // Remain out of live routing until an administrator has checked pricing and usage.
+    groupIds.value = []
   } else if (baseUrl.value === CANGYUAN_BASE_URL) {
     baseUrl.value = ''
   }
@@ -472,7 +474,7 @@ watch(
           <section class="form-section group-section">
             <div class="section-heading">
               <span>03</span>
-              <div><strong>调度分组</strong><small>选择允许该账户参与调度的 {{ selectedPlatform.label }} 分组</small></div>
+              <div><strong>调度分组</strong><small>{{ isCangyuan ? '默认不绑定分组；核对接口与售价后再开放' : `选择允许该账户参与调度的 ${selectedPlatform.label} 分组` }}</small></div>
             </div>
 
             <div v-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
