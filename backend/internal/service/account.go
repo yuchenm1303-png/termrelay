@@ -791,6 +791,14 @@ func resolveRequestedModelInMapping(mapping map[string]string, requestedModel st
 // 请求卡死在该账号上、无法 failover 到真正支持该模型的 API Key 账号（#3662）。
 // 未知/自定义别名仍保持允许（兼容渠道级映射），见 isOpenAIOAuthServableModel。
 func (a *Account) IsModelSupported(requestedModel string) bool {
+	// Cangyuan's account allowlist must survive all administrative update
+	// paths, including bulk or extra-only changes. Never allow an empty or
+	// wildcard mapping to expose unverified media models as chat models.
+	if isCangyuanAccount(a) {
+		mapping := a.GetModelMapping()
+		mapped, exists := mapping[requestedModel]
+		return exists && strings.TrimSpace(mapped) != "" && !strings.ContainsAny(requestedModel, "*?") && !strings.ContainsAny(mapped, "*?")
+	}
 	// 透传模式仅替换认证、模型语义完全交由上游决定，因此放行所有模型。
 	// 该短路必须在 model_mapping 判定之前：账号从"白名单模式"切换到透传后，
 	// credentials 里常残留旧的非空 model_mapping，若不在此放行，透传账号会被
@@ -1679,6 +1687,11 @@ func (a *Account) IsOveragesEnabled() bool {
 // 兼容字段：accounts.extra.openai_oauth_passthrough（历史 OAuth 开关）。
 // 字段缺失或类型不正确时，按 false（关闭）处理。
 func (a *Account) IsOpenAIPassthroughEnabled() bool {
+	// Enforce this at routing time too: an extra-only/bulk account update must
+	// not bypass a Cangyuan model allowlist.
+	if isCangyuanAccount(a) {
+		return false
+	}
 	if a == nil || !a.IsOpenAI() || a.Extra == nil {
 		return false
 	}
