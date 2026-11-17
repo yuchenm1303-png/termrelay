@@ -64,6 +64,9 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		account := valid()
 		account.Extra["openai_passthrough"] = true
 		require.ErrorContains(t, validateCangyuanAccount(account), "unrestricted")
+		require.False(t, account.IsOpenAIPassthroughEnabled(), "runtime must ignore unsafe extra-only changes")
+		require.True(t, account.IsModelSupported("safe-model"))
+		require.False(t, account.IsModelSupported("unlisted-model"))
 	})
 	t.Run("responses mode", func(t *testing.T) {
 		account := valid()
@@ -74,6 +77,7 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		account := valid()
 		delete(account.Credentials, "model_mapping")
 		require.ErrorContains(t, validateCangyuanAccount(account), "explicit")
+		require.False(t, account.IsModelSupported("any-model"), "empty Cangyuan mapping must fail closed")
 	})
 	t.Run("wildcard model mapping", func(t *testing.T) {
 		account := valid()
