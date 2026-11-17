@@ -236,6 +236,10 @@ async function syncModels() {
   syncing.value = true
   try {
     if (previewMode) {
+      if (isCangyuan.value) {
+        error.value = '静态预览无法验证沧元 API Key；请在正式控制台同步真实模型。'
+        return
+      }
       syncedModels.value = [...selectedPlatform.value.previewModels]
       return
     }
@@ -367,6 +371,15 @@ watch(
                 <small>协议会同时决定模型探测、可选分组和请求转发；账户创建后不可直接修改。</small>
               </label>
 
+              <label v-if="platform === 'openai'" class="field field-wide">
+                <span>上游供应商</span>
+                <select v-model="upstreamPreset" class="protocol-select" :disabled="saving || syncing" @change="onPresetChange">
+                  <option value="custom">自定义 OpenAI 兼容上游</option>
+                  <option value="cangyuan">沧元算力 · New API</option>
+                </select>
+                <small>沧元使用 OpenAI 兼容协议，仍归属 OpenAI 分组；选择后自动填写官方入口，不会创建新协议分组。</small>
+              </label>
+
               <label class="field field-wide">
                 <span>账户名称</span>
                 <input v-model="name" type="text" maxlength="80" :placeholder="`例如 ${selectedPlatform.label} Primary`" autocomplete="off" />
@@ -376,16 +389,16 @@ watch(
                 <span>Base URL</span>
                 <div class="input-with-prefix">
                   <b>URL</b>
-                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="syncedModels = []; selectedModels = []" />
                 </div>
-                <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。</small>
+                <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。{{ isCangyuan ? '这里预填沧元主站入口。' : '' }}</small>
               </label>
 
               <label class="field field-wide">
                 <span>API Key</span>
                 <div class="secret-input">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7" cy="10" r="3" /><path d="m9.7 8.3 6-6M13 5l2 2" /></svg>
-                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="syncedModels = []; selectedModels = []" />
                   <button type="button" @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button>
                 </div>
               </label>
@@ -398,7 +411,7 @@ watch(
                 </span>
                 <div>
                   <strong>{{ syncedModels.length ? `已发现 ${syncedModels.length} 个模型` : '检测上游模型' }}</strong>
-                  <small>{{ syncedModels.length ? '模型目录已验证，创建后保持原始模型 ID 透传。' : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
+                  <small>{{ syncedModels.length ? (isCangyuan ? '检测成功；只会开放你手动勾选的模型。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
                 </div>
               </div>
               <button type="button" :disabled="!canSync" @click="syncModels">
@@ -407,7 +420,23 @@ watch(
               </button>
             </div>
 
-            <div v-if="syncedModels.length" class="model-preview">
+            <div v-if="isCangyuan && syncedModels.length" class="cangyuan-model-select">
+              <div class="cangyuan-warning">
+                <strong>选择要开放的模型 · {{ selectedModels.length }} / {{ syncedModels.length }}</strong>
+                <small>上游包含图片、视频和异步模型，不能按普通对话模型直接转发或收费。请只勾选已经核对 Chat Completions 协议与价格的模型。默认不开放任何模型。</small>
+              </div>
+              <input v-model="modelFilter" type="search" placeholder="搜索上游模型 ID" autocomplete="off" aria-label="搜索上游模型" />
+              <div class="cangyuan-model-list">
+                <label v-for="model in filteredModels" :key="model" class="cangyuan-model">
+                  <input type="checkbox" :checked="selectedModels.includes(model)" @change="toggleModel(model)" />
+                  <code>{{ model }}</code>
+                </label>
+                <p v-if="!filteredModels.length" class="cangyuan-no-model">没有匹配的模型</p>
+              </div>
+              <small>每次最多显示 60 个搜索结果。已勾选的模型在切换搜索词时保持选中。创建后请单独设置销售价格、验证失败不扣费。</small>
+            </div>
+
+            <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
               <code v-for="model in syncedModels.slice(0, 8)" :key="model">{{ model }}</code>
               <span v-if="syncedModels.length > 8">+{{ syncedModels.length - 8 }}</span>
             </div>
@@ -647,6 +676,17 @@ watch(
 .model-preview code, .model-preview span { min-height: 23px; padding: 0 7px; border: 1px solid #292e35; border-radius: 6px; background: #121419; color: #858e99; display: inline-flex; align-items: center; font: 560 .58rem/1 var(--font-mono); }
 .model-preview span { color: #6e7782; }
 
+.cangyuan-model-select { display: grid; gap: 10px; margin-top: 12px; }
+.cangyuan-warning { display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid #4a382b; border-radius: 9px; background: #221a15; }
+.cangyuan-warning strong { color: #e9c7a6; font-size: .71rem; }
+.cangyuan-warning small, .cangyuan-model-select > small { color: #a39a91; font-size: .62rem; line-height: 1.55; }
+.cangyuan-model-select > input { width: 100%; height: 38px; padding: 0 11px; border: 1px solid #343941; border-radius: 8px; outline: 0; background: #0c0e12; color: #e6e9ed; }
+.cangyuan-model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 230px; overflow-y: auto; gap: 5px; }
+.cangyuan-model { display: flex; align-items: center; min-width: 0; gap: 8px; padding: 8px 10px; border: 1px solid #292e35; border-radius: 7px; color: #c5cbd2; cursor: pointer; }
+.cangyuan-model input { accent-color: #43cd98; }
+.cangyuan-model code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; }
+.cangyuan-no-model { margin: 4px; color: #858e99; font-size: .67rem; }
+
 .schedule-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .group-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .group-options > button {
@@ -695,7 +735,7 @@ watch(
   .create-dialog-head p { max-width: 520px; }
   .create-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .create-dialog-body { padding: 18px; }
-  .form-grid, .schedule-grid, .group-options { grid-template-columns: 1fr; }
+  .form-grid, .schedule-grid, .group-options, .cangyuan-model-list { grid-template-columns: 1fr; }
   .model-probe { align-items: flex-start; flex-direction: column; }
   .model-probe > button { width: 100%; justify-content: center; }
   .create-dialog-foot { padding: 12px 18px; align-items: stretch; flex-direction: column; }
