@@ -44,3 +44,21 @@
 - 使用正式令牌可见的模型 ID 与官方单模型文档，不根据市场宣传推断支持范围。
 
 接入期间**不要修改正在运行的生产容器、数据库、环境文件，也不要将 API Key 写入 Git**。
+
+## 与官方 Relay 文档核对的多模态协议（2026-11-17）
+
+官方参考：[沧元 Relay 指南](https://ai.cangyuansuanli.cn/docs/relay) 和公开的 `/docs-static/getting-started/clients/relay.md`。这些是**第二阶段的验收依据**，并不表示下列能力在 TermRelay 已经交付：
+
+| 能力 | 上游提交 | 上游查询 | 成功后返回 | 计费注意 |
+|---|---|---|---|---|
+| 图像生成 | `POST /v1/images/generations`，`async:true` | `GET /v1/images/generations/{task_id}` | `data[0].url` | 按张、按档、按量，需匹配模型页 |
+| 图像编辑 | `POST /v1/images/edits`，`async:true` | `GET /v1/images/edits/{task_id}` | `data[0].url` | 参考图和蒙版需可访问的 HTTPS |
+| 视频 | `POST /v1/videos` | `GET /v1/videos/{task_id}` | `video_url` 或 `data[0].url` | 以模型定价为准，不能擅自再乘视频秒数 |
+| 音乐 | `POST /v1/music` | `GET /v1/music/{task_id}` | `music_url` 数组 | `extra` 与结果数组逐项对应 |
+| 三维 | `POST /v1/3d/generations` | `GET /v1/3d/generations/{task_id}` | `data[].url` | 异步按实际任务完结结算 |
+
+异步任务通用状态为 `queued`、`in_progress`、`completed`、`failed`；建议 5–10 秒轮询，视频任务客户端总等待需支持 30 分钟以上。不得把任务创建成功当成模型生成成功，也不得重复提交同一任务或根据 `GET /content` 拼结果链接。
+
+官方明确：只调用 `GET /v1/models` 能确认**令牌权限内**的模型，`/api/pricing` 则是价格源，二者不可混为一谈。价格可能含 `n`、`vs`、`tok`、`vref` 等分档变量；原价和本站用户实际扣费必须分开计算。未经模型逐档验证不可上架，也不可沿用 OpenAI Token 计费给按张/条模型。
+
+**当前实现的保护**：沧元预设被限定为经过明确选择的对话模型，不接收普通 OpenAI Images 同步分流；媒体能力必须新建独立调度与费用结算流程后再开放。不得因为模型 ID 在 `/v1/models` 中出现就直接视为可售。
