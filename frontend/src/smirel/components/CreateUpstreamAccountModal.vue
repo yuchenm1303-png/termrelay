@@ -317,6 +317,9 @@ async function submit() {
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
       group_ids: groupIds.value,
+      // Without this, the backend silently attaches an account with no
+      // group IDs to openai-default, making unpriced models routable.
+      skip_default_group_bind: isCangyuan.value,
       // Backend otherwise auto-binds a blank list to openai-default.
       skip_default_group_bind: isCangyuan.value,
     })
