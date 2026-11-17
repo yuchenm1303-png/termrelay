@@ -2745,6 +2745,7 @@ func (h *AccountHandler) SyncUpstreamModels(c *gin.Context) {
 func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 	var req struct {
 		Platform string `json:"platform" binding:"required"`
+		Vendor   string `json:"vendor"`
 		Type     string `json:"type" binding:"required"`
 		BaseURL  string `json:"base_url"`
 		APIKey   string `json:"api_key" binding:"required"`
@@ -2752,6 +2753,15 @@ func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
+	}
+	if req.Vendor == "cangyuan" {
+		// A branded preset must not query arbitrary API-key targets. The
+		// non-branded compatible provider remains unchanged.
+		if req.Platform != service.PlatformOpenAI || req.Type != service.AccountTypeAPIKey ||
+			strings.TrimSuffix(req.BaseURL, "/") != "https://ai.cangyuansuanli.cn" {
+			response.BadRequest(c, "Cangyuan preview requires the official HTTPS API address and OpenAI API-key protocol")
+			return
+		}
 	}
 
 	tempAccount := &service.Account{
@@ -2784,6 +2794,23 @@ func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 
 		slog.Warn("sync_upstream_models_preview_failed", "platform", req.Platform)
 		response.Error(c, http.StatusBadGateway, "Failed to sync upstream models from upstream")
+		return
+	}
+
+	if req.Vendor == "cangyuan" {
+		rawPricing, pricingErr := fetchCangyuanPublicPricing(c.Request.Context())
+		if pricingErr != nil {
+			slog.Warn("cangyuan_public_pricing_unavailable", "error", pricingErr)
+			response.Error(c, http.StatusBadGateway, "Cangyuan model pricing is temporarily unavailable; refusing unclassified model discovery")
+			return
+		}
+		approved, pricing, pricingErr := filterCangyuanChatModels(models, rawPricing)
+		if pricingErr != nil {
+			slog.Warn("cangyuan_public_pricing_invalid", "error", pricingErr)
+			response.Error(c, http.StatusBadGateway, "Cangyuan model pricing cannot be verified")
+			return
+		}
+		response.Success(c, gin.H{"models": approved, "pricing": pricing, "filtered_count": len(models) - len(approved)})
 		return
 	}
 
