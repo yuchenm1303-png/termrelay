@@ -32,6 +32,8 @@ func TestCangyuanUpstreamPresetRoutingAndModelAllowlist(t *testing.T) {
 		"OpenAI passthrough disables the account's model allowlist")
 	require.True(t, account.IsModelSupported("verified-chat-model"))
 	require.False(t, account.IsModelSupported("unverified-video-or-image-model"))
+	require.False(t, account.SupportsOpenAIImageCapability(OpenAIImagesCapabilityBasic))
+	require.False(t, account.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
 	require.False(t, openai_compat.ShouldUseResponsesAPI(account.Extra),
 		"Cangyuan chat calls must not be sent to an unverified Responses endpoint")
 	require.Equal(t, base+"/v1/models", buildOpenAIModelsURL(base))
@@ -93,5 +95,6 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		delete(account.Extra, "upstream_vendor")
 		account.Extra["openai_passthrough"] = true
 		require.NoError(t, validateCangyuanAccount(account))
+		require.True(t, account.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
 	})
 }
