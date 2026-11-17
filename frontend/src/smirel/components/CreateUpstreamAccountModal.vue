@@ -317,6 +317,8 @@ async function submit() {
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
       group_ids: groupIds.value,
+      // Backend otherwise auto-binds a blank list to openai-default.
+      skip_default_group_bind: isCangyuan.value,
     })
 
     apiKey.value = ''
