@@ -102,3 +102,31 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		require.True(t, account.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
 	})
 }
+
+func TestCangyuanAccountCreationStartsUnschedulable(t *testing.T) {
+	t.Parallel()
+	input := &CreateAccountInput{
+		Name:     "Cangyuan staging",
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"api_key":       "test-only",
+			"base_url":      "https://ai.cangyuansuanli.cn",
+			"model_mapping": map[string]any{"safe-chat": "safe-chat"},
+		},
+	}
+	extra := map[string]any{
+		"upstream_vendor":       "cangyuan",
+		"openai_passthrough":    false,
+		"openai_responses_mode": "force_chat_completions",
+	}
+	account, err := buildAccountForCreate(input, extra)
+	require.NoError(t, err)
+	require.False(t, account.Schedulable, "an ungrouped Cangyuan account must not receive live traffic")
+
+	input.Platform = PlatformAnthropic
+	extra = nil
+	account, err = buildAccountForCreate(input, extra)
+	require.NoError(t, err)
+	require.True(t, account.Schedulable, "existing providers retain their normal defaults")
+}
