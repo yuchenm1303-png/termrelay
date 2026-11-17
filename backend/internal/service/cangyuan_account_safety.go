@@ -1,0 +1,50 @@
+package service
+
+import (
+	"fmt"
+	"net/url"
+	"strings"
+
+	"github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat"
+)
+
+// isCangyuanAccount keeps New API vendor-specific guardrails scoped to the
+// explicit admin preset. Ordinary OpenAI-compatible accounts are unaffected.
+func isCangyuanAccount(account *Account) bool {
+	return account != nil && strings.EqualFold(
+		strings.TrimSpace(account.GetExtraString("upstream_vendor")), "cangyuan",
+	)
+}
+
+// validateCangyuanAccount prevents accidentally exposing image/video/async
+// products through the generic chat relay. These safeguards are enforced on
+// the server in addition to the admin form, which can be bypassed by API calls.
+func validateCangyuanAccount(account *Account) error {
+	if !isCangyuanAccount(account) {
+		return nil
+	}
+	if account.Platform != PlatformOpenAI || account.Type != AccountTypeAPIKey {
+		return fmt.Errorf("Cangyuan upstream must use the OpenAI API-key protocol")
+	}
+	base, err := url.Parse(strings.TrimSpace(account.GetCredential("base_url")))
+	if err != nil || base.Scheme != "https" || base.Host == "" || base.User != nil {
+		return fmt.Errorf("Cangyuan upstream requires an HTTPS base URL")
+	}
+	if account.IsOpenAIPassthroughEnabled() {
+		return fmt.Errorf("Cangyuan upstream cannot enable unrestricted OpenAI passthrough")
+	}
+	if openai_compat.ShouldUseResponsesAPI(account.Extra) {
+		return fmt.Errorf("Cangyuan chat upstream must use force_chat_completions mode")
+	}
+	mapping := account.GetModelMapping()
+	if len(mapping) == 0 {
+		return fmt.Errorf("Cangyuan upstream requires at least one explicit model mapping")
+	}
+	for requested, upstream := range mapping {
+		if strings.TrimSpace(requested) == "" || strings.TrimSpace(upstream) == "" ||
+			strings.ContainsAny(requested, "*?") || strings.ContainsAny(upstream, "*?") {
+			return fmt.Errorf("Cangyuan upstream model mapping must use exact, non-wildcard model IDs")
+		}
+	}
+	return nil
+}
