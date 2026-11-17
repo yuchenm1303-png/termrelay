@@ -117,6 +117,12 @@ func (s *AccountTestService) ProbeOpenAIAPIKeyResponsesSupport(ctx context.Conte
 		// 仅 OpenAI APIKey 账号需要探测；其他账号类型无能力差异。
 		return
 	}
+	// This explicit vendor preset already forces Chat Completions.
+	// The Responses probe sends a real, potentially billable generation;
+	// never spend a Cangyuan API key merely to check an unused endpoint.
+	if isCangyuanAccount(account) {
+		return
+	}
 
 	apiKey := account.GetOpenAIApiKey()
 	if apiKey == "" {
