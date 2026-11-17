@@ -14,15 +14,15 @@ func TestCangyuanUpstreamPresetRoutingAndModelAllowlist(t *testing.T) {
 	const base = "https://ai.cangyuansuanli.cn"
 	account := &Account{
 		Platform: PlatformOpenAI,
-		Type: AccountTypeAPIKey,
+		Type:     AccountTypeAPIKey,
 		Credentials: map[string]any{
-			"api_key": "test-key-not-a-real-credential",
-			"base_url": base,
+			"api_key":       "test-key-not-a-real-credential",
+			"base_url":      base,
 			"model_mapping": map[string]any{"verified-chat-model": "verified-chat-model"},
 		},
 		Extra: map[string]any{
-			"upstream_vendor": "cangyuan",
-			"openai_passthrough": false,
+			"upstream_vendor":       "cangyuan",
+			"openai_passthrough":    false,
 			"openai_responses_mode": "force_chat_completions",
 		},
 	}
@@ -44,15 +44,15 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 	valid := func() *Account {
 		return &Account{
 			Platform: PlatformOpenAI,
-			Type: AccountTypeAPIKey,
+			Type:     AccountTypeAPIKey,
 			Credentials: map[string]any{
-				"api_key": "test-key",
-				"base_url": "https://ai.cangyuansuanli.cn",
+				"api_key":       "test-key",
+				"base_url":      "https://ai.cangyuansuanli.cn",
 				"model_mapping": map[string]any{"safe-model": "safe-model"},
 			},
 			Extra: map[string]any{
-				"upstream_vendor": "cangyuan",
-				"openai_passthrough": false,
+				"upstream_vendor":       "cangyuan",
+				"openai_passthrough":    false,
 				"openai_responses_mode": "force_chat_completions",
 			},
 		}
