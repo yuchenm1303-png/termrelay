@@ -30,7 +30,7 @@ func validateCangyuanAccount(account *Account) error {
 	if err != nil || base.Scheme != "https" || base.Host == "" || base.User != nil {
 		return fmt.Errorf("cangyuan upstream requires an HTTPS base URL")
 	}
-	if account.IsOpenAIPassthroughEnabled() {
+	if enabled, _ := account.Extra["openai_passthrough"].(bool); enabled {
 		return fmt.Errorf("cangyuan upstream cannot enable unrestricted OpenAI passthrough")
 	}
 	if openai_compat.ShouldUseResponsesAPI(account.Extra) {
