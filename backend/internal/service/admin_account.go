@@ -472,6 +472,11 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
 		Status:      StatusActive,
 		Schedulable: true,
 	}
+	// An unverified Cangyuan key must not be picked by the ungrouped-account
+	// fallback scheduler. A dedicated admin action can enable it after testing.
+	if isCangyuanAccount(account) {
+		account.Schedulable = false
+	}
 	if input.ProbeEnabled != nil && *input.ProbeEnabled {
 		if !isUpstreamBillingProbeAccount(account) {
 			return nil, ErrUpstreamBillingProbeAccountInvalid
