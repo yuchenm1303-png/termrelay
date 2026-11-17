@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 
 type UpstreamPlatform = 'openai' | 'anthropic' | 'gemini' | 'grok'
+type UpstreamPreset = 'custom' | 'cangyuan'
+const CANGYUAN_BASE_URL = 'https://ai.cangyuansuanli.cn'
 
 interface GroupOption {
   id: number
@@ -71,6 +73,7 @@ const emit = defineEmits<{
 }>()
 
 const platform = ref<UpstreamPlatform>('openai')
+const upstreamPreset = ref<UpstreamPreset>('custom')
 const name = ref('')
 const baseUrl = ref('')
 const apiKey = ref('')
@@ -86,10 +89,16 @@ const syncing = ref(false)
 const saving = ref(false)
 const error = ref('')
 const syncedModels = ref<string[]>([])
+const selectedModels = ref<string[]>([])
+const modelFilter = ref('')
+
+const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
+const filteredModels = computed(() => { const q = modelFilter.value.trim().toLowerCase(); return syncedModels.value.filter(m => !q || m.toLowerCase().includes(q)).slice(0, 60) })
+const modelsToPublish = computed(() => isCangyuan.value ? syncedModels.value.filter(m => selectedModels.value.includes(m)) : syncedModels.value)
 
 const selectedPlatform = computed(() => platformOptions.find((item) => item.value === platform.value) || platformOptions[0])
 const canSync = computed(() => Boolean(baseUrl.value.trim() && apiKey.value.trim()) && !syncing.value)
-const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value)
+const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value && (!isCangyuan.value || selectedModels.value.length > 0))
 
 function cleanBaseUrl(value: string) {
   return value.trim().replace(/\/+$/, '')
@@ -105,13 +114,14 @@ function validateBaseUrl(value: string) {
 }
 
 function passthroughExtra() {
-  if (platform.value === 'openai') return { openai_passthrough: true }
+  if (platform.value === 'openai') return { openai_passthrough: true, ...(isCangyuan.value ? { upstream_vendor: 'cangyuan' } : {}) }
   if (platform.value === 'anthropic') return { anthropic_passthrough: true }
   return {}
 }
 
 function resetForm() {
   platform.value = 'openai'
+  upstreamPreset.value = 'custom'
   name.value = ''
   baseUrl.value = ''
   apiKey.value = ''
@@ -126,6 +136,8 @@ function resetForm() {
   saving.value = false
   error.value = ''
   syncedModels.value = []
+  selectedModels.value = []
+  modelFilter.value = ''
 }
 
 function close() {
@@ -181,16 +193,37 @@ async function loadGroups() {
 }
 
 function onPlatformChange() {
+  upstreamPreset.value = 'custom'
   groupIds.value = []
   groups.value = []
   syncedModels.value = []
+  selectedModels.value = []
+  modelFilter.value = ''
   error.value = ''
   void loadGroups()
+}
+
+function onPresetChange() {
+  if (isCangyuan.value) {
+    baseUrl.value = CANGYUAN_BASE_URL
+    if (!name.value.trim()) name.value = '沧元算力'
+  } else if (baseUrl.value === CANGYUAN_BASE_URL) {
+    baseUrl.value = ''
+  }
+  syncedModels.value = []
+  selectedModels.value = []
+  modelFilter.value = ''
+  error.value = ''
+}
+
+function toggleModel(model: string) {
+  selectedModels.value = selectedModels.value.includes(model) ? selectedModels.value.filter(m => m !== model) : [...selectedModels.value, model]
 }
 
 async function syncModels() {
   error.value = ''
   syncedModels.value = []
+  selectedModels.value = []
   if (!validateBaseUrl(baseUrl.value)) {
     error.value = '请输入有效的 Base URL，例如 https://api.example.com'
     return
@@ -244,6 +277,12 @@ async function submit() {
     if (!syncedModels.value.length) return
   }
 
+  // Cangyuan includes non-chat/async models. Never auto-advertise its entire catalog.
+  if (isCangyuan.value && !modelsToPublish.value.length) {
+    error.value = '请选择已核对接口和价格的对话模型；图片、视频需单独适配。'
+    return
+  }
+
   saving.value = true
   try {
     if (previewMode) {
@@ -252,7 +291,7 @@ async function submit() {
       return
     }
 
-    const modelMapping = Object.fromEntries(syncedModels.value.map((model) => [model, model]))
+    const modelMapping = Object.fromEntries(modelsToPublish.value.map((model) => [model, model]))
     await api.post<CreateAccountResult>('/admin/accounts', {
       name: name.value.trim(),
       notes: notes.value.trim() || undefined,
