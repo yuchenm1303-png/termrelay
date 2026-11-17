@@ -4,6 +4,7 @@ import { api, getErrorMessage, previewMode } from '../core/api'
 
 type UpstreamPlatform = 'openai' | 'anthropic' | 'gemini' | 'grok'
 type UpstreamPreset = 'custom' | 'cangyuan'
+type CangyuanPricingInfo = { billing_mode: string; tiered: boolean }
 const CANGYUAN_BASE_URL = 'https://ai.cangyuansuanli.cn'
 
 interface GroupOption {
@@ -91,10 +92,13 @@ const error = ref('')
 const syncedModels = ref<string[]>([])
 const selectedModels = ref<string[]>([])
 const modelFilter = ref('')
+const modelPricing = ref<Record<string, CangyuanPricingInfo>>({})
+const excludedModels = ref(0)
 
 const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
 const filteredModels = computed(() => { const q = modelFilter.value.trim().toLowerCase(); return syncedModels.value.filter(m => !q || m.toLowerCase().includes(q)).slice(0, 60) })
 const modelsToPublish = computed(() => isCangyuan.value ? syncedModels.value.filter(m => selectedModels.value.includes(m)) : syncedModels.value)
+const tieredSelected = computed(() => modelsToPublish.value.filter(model => modelPricing.value[model]?.tiered).length)
 
 const selectedPlatform = computed(() => platformOptions.find((item) => item.value === platform.value) || platformOptions[0])
 const canSync = computed(() => Boolean(baseUrl.value.trim() && apiKey.value.trim()) && !syncing.value)
@@ -140,6 +144,8 @@ function resetForm() {
   syncedModels.value = []
   selectedModels.value = []
   modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
 }
 
 function close() {
@@ -202,6 +208,8 @@ function onPlatformChange() {
   syncedModels.value = []
   selectedModels.value = []
   modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
   error.value = ''
   void loadGroups()
 }
@@ -218,6 +226,8 @@ function onPresetChange() {
   syncedModels.value = []
   selectedModels.value = []
   modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
   error.value = ''
 }
 
@@ -229,6 +239,8 @@ async function syncModels() {
   error.value = ''
   syncedModels.value = []
   selectedModels.value = []
+  modelPricing.value = {}
+  excludedModels.value = 0
   if (!validateBaseUrl(baseUrl.value)) {
     error.value = '请输入有效的 Base URL，例如 https://api.example.com'
     return
@@ -248,14 +260,19 @@ async function syncModels() {
       syncedModels.value = [...selectedPlatform.value.previewModels]
       return
     }
-    const response = await api.post<{ models?: unknown[] }>('/admin/accounts/models/sync-upstream-preview', {
+    const response = await api.post<{ models?: unknown[]; pricing?: Record<string, CangyuanPricingInfo>; filtered_count?: number }>('/admin/accounts/models/sync-upstream-preview', {
       platform: platform.value,
       type: 'apikey',
+      ...(isCangyuan.value ? { vendor: 'cangyuan' } : {}),
       base_url: cleanBaseUrl(baseUrl.value),
       api_key: apiKey.value.trim(),
     })
     syncedModels.value = normalizeModels(response.data?.models)
-    if (!syncedModels.value.length) error.value = '连接成功，但上游没有返回可用模型。'
+    modelPricing.value = isCangyuan.value ? (response.data?.pricing || {}) : {}
+    excludedModels.value = isCangyuan.value ? Math.max(0, Number(response.data?.filtered_count || 0)) : 0
+    if (!syncedModels.value.length) error.value = isCangyuan.value
+      ? '该密钥没有可安全接入当前对话协议的模型，或官方价格表没有匹配记录。'
+      : '连接成功，但上游没有返回可用模型。'
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -430,18 +447,20 @@ watch(
 
             <div v-if="isCangyuan && syncedModels.length" class="cangyuan-model-select">
               <div class="cangyuan-warning">
-                <strong>选择要开放的模型 · {{ selectedModels.length }} / {{ syncedModels.length }}</strong>
-                <small>上游包含图片、视频和异步模型，不能按普通对话模型直接转发或收费。请只勾选已经核对 Chat Completions 协议与价格的模型。默认不开放任何模型。</small>
+                <strong>选择对话模型 · {{ selectedModels.length }} / {{ syncedModels.length }}</strong>
+                <small>已按这把 API Key 的模型目录和沧元官方价格表交叉筛选；排除了 {{ excludedModels }} 个图片、视频、按次计费或未分类模型。分档报价仍须单独验价，不会自动转成本站销售价格。</small>
               </div>
               <input v-model="modelFilter" type="search" placeholder="搜索上游模型 ID" autocomplete="off" aria-label="搜索上游模型" />
               <div class="cangyuan-model-list">
                 <label v-for="model in filteredModels" :key="model" class="cangyuan-model">
                   <input type="checkbox" :checked="selectedModels.includes(model)" @change="toggleModel(model)" />
                   <code>{{ model }}</code>
+                  <small v-if="modelPricing[model]?.tiered" class="cangyuan-pricing-tier">分档计费</small>
+                  <small v-else class="cangyuan-pricing-standard">按量计费</small>
                 </label>
                 <p v-if="!filteredModels.length" class="cangyuan-no-model">没有匹配的模型</p>
               </div>
-              <small>每次最多显示 60 个搜索结果。已勾选的模型在切换搜索词时保持选中。创建后请单独设置销售价格、验证失败不扣费。</small>
+              <small>每次最多显示 60 个搜索结果。已选中 {{ tieredSelected }} 个分档价格模型，需先校验各档成本和用户售价。创建后默认暂停调度，不会自动上架。</small>
             </div>
 
             <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
@@ -693,6 +712,8 @@ watch(
 .cangyuan-model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 230px; overflow-y: auto; gap: 5px; }
 .cangyuan-model { display: flex; align-items: center; min-width: 0; gap: 8px; padding: 8px 10px; border: 1px solid #292e35; border-radius: 7px; color: #c5cbd2; cursor: pointer; }
 .cangyuan-model input { accent-color: #43cd98; }
+.cangyuan-model .cangyuan-pricing-tier { white-space: nowrap; margin-left: auto; color: #edc58e; font-size: .59rem; }
+.cangyuan-model .cangyuan-pricing-standard { white-space: nowrap; margin-left: auto; color: #829897; font-size: .59rem; }
 .cangyuan-model code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; }
 .cangyuan-no-model { margin: 4px; color: #858e99; font-size: .67rem; }
 
