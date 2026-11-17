@@ -114,7 +114,9 @@ function validateBaseUrl(value: string) {
 }
 
 function passthroughExtra() {
-  if (platform.value === 'openai') return { openai_passthrough: true, ...(isCangyuan.value ? { upstream_vendor: 'cangyuan' } : {}) }
+  if (platform.value === 'openai') return isCangyuan.value
+    ? { upstream_vendor: 'cangyuan', openai_passthrough: false, openai_responses_mode: 'force_chat_completions' }
+    : { openai_passthrough: true }
   if (platform.value === 'anthropic') return { anthropic_passthrough: true }
   return {}
 }
