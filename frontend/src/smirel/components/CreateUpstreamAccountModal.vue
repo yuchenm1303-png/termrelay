@@ -148,6 +148,7 @@ function close() {
 }
 
 function toggleGroup(id: number) {
+  if (isCangyuan.value) return
   groupIds.value = groupIds.value.includes(id)
     ? groupIds.value.filter((item) => item !== id)
     : [...groupIds.value, id]
@@ -316,7 +317,7 @@ async function submit() {
       concurrency: Math.max(1, Math.round(Number(concurrency.value) || 1)),
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
-      group_ids: groupIds.value,
+      group_ids: isCangyuan.value ? [] : groupIds.value,
       // Without this, the backend silently attaches an account with no
       // group IDs to openai-default, making unpriced models routable.
       skip_default_group_bind: isCangyuan.value,
@@ -480,7 +481,8 @@ watch(
               <div><strong>调度分组</strong><small>{{ isCangyuan ? '默认不绑定分组；核对接口与售价后再开放' : `选择允许该账户参与调度的 ${selectedPlatform.label} 分组` }}</small></div>
             </div>
 
-            <div v-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
+            <p v-if="isCangyuan" class="group-empty">沧元账号创建时不会绑定任何生产分组。完成价格校验、失败扣费测试后，在编辑账号中手动绑定。</p>
+            <div v-else-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
             <div v-else-if="groups.length" class="group-options">
               <button
                 v-for="group in groups"
