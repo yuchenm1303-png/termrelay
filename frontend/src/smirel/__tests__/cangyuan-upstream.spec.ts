@@ -37,7 +37,7 @@ describe('Cangyuan New API setup', () => {
     } as never)
     post.mockImplementation(async (url) => {
       if (url === '/admin/accounts/models/sync-upstream-preview') {
-        return { data: { models: ['verified-chat-model', 'unverified-image-model'] } } as never
+        return { data: { models: ['verified-chat-model'], filtered_count: 1, pricing: { 'verified-chat-model': { billing_mode: 'tiered_expr', tiered: true } } } } as never
       }
       return { data: { id: 14 } } as never
     })
@@ -74,6 +74,7 @@ describe('Cangyuan New API setup', () => {
       expect.objectContaining({
         platform: 'openai',
         type: 'apikey',
+        vendor: 'cangyuan',
         base_url: 'https://ai.cangyuansuanli.cn',
         api_key: 'test-not-a-real-key',
       }),
@@ -81,6 +82,9 @@ describe('Cangyuan New API setup', () => {
     expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
 
     const choices = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-model'))
+    expect(choices).toHaveLength(1)
+    expect(choices[0].textContent).toContain('分档计费')
+    expect(document.querySelector('.cangyuan-warning')?.textContent).toContain('排除了 1 个')
     const selected = choices.find((label) => label.textContent?.includes('verified-chat-model'))
     expect(selected).toBeDefined()
     selected!.querySelector<HTMLInputElement>('input')!.click()
