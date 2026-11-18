@@ -15,9 +15,10 @@ import (
 )
 
 type cangyuanAdminPriceTestStore struct {
-	mu sync.Mutex
+	mu   sync.Mutex
 	data map[string]string
 }
+
 func (s *cangyuanAdminPriceTestStore) Set(_ context.Context, key, value string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -28,7 +29,9 @@ func (s *cangyuanAdminPriceTestStore) GetAll(_ context.Context) (map[string]stri
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	values := make(map[string]string, len(s.data))
-	for key, value := range s.data { values[key] = value }
+	for key, value := range s.data {
+		values[key] = value
+	}
 	return values, nil
 }
 func (s *cangyuanAdminPriceTestStore) Delete(_ context.Context, key string) error {
@@ -83,15 +86,15 @@ func TestCangyuanMediaAdminPriceCreateListDelete(t *testing.T) {
 	require.True(t, result.Data[0].Snapshot.VerifiedByAdmin)
 	require.Equal(t, "720p-five-seconds", result.Data[0].Snapshot.Tier)
 
-	for _, tc := range []struct{
+	for _, tc := range []struct {
 		name string
-		url string
+		url  string
 		body []byte
 	}{
 		{"wrong ID", "/admin/cangyuan-media/prices/another", valid},
-		{"unknown JSON key", "/admin/cangyuan-media/prices/video-tier-720", append(append([]byte{}, valid[:len(valid)-1]...), []byte(`,"untrusted":true}`)... )},
+		{"unknown JSON key", "/admin/cangyuan-media/prices/video-tier-720", append(append([]byte{}, valid[:len(valid)-1]...), []byte(`,"untrusted":true}`)...)},
 	} {
-		t.Run(tc.name, func(t *testing.T){
+		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPut, tc.url, bytes.NewReader(tc.body))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
