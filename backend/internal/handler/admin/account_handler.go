@@ -2810,7 +2810,18 @@ func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 			response.Error(c, http.StatusBadGateway, "Cangyuan model pricing cannot be verified")
 			return
 		}
-		response.Success(c, gin.H{"models": approved, "pricing": pricing, "filtered_count": len(models) - len(approved)})
+		media, mediaErr := classifyCangyuanMediaModels(models, rawPricing)
+		if mediaErr != nil {
+			slog.Warn("cangyuan_public_media_catalog_invalid", "error", mediaErr)
+			response.Error(c, http.StatusBadGateway, "Cangyuan media catalog could not be verified")
+			return
+		}
+		response.Success(c, gin.H{
+			"models": approved,
+			"pricing": pricing,
+			"filtered_count": len(models) - len(approved),
+			"media_models": media,
+		})
 		return
 	}
 
