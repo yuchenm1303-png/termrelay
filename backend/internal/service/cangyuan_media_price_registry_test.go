@@ -11,30 +11,38 @@ import (
 )
 
 type cangyuanPriceSettingsFixture struct {
-	mu sync.Mutex
+	mu     sync.Mutex
 	values map[string]string
-	err error
+	err    error
 }
 
 func (f *cangyuanPriceSettingsFixture) Set(_ context.Context, key, value string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.err != nil { return f.err }
+	if f.err != nil {
+		return f.err
+	}
 	f.values[key] = value
 	return nil
 }
 func (f *cangyuanPriceSettingsFixture) GetAll(_ context.Context) (map[string]string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.err != nil { return nil, f.err }
+	if f.err != nil {
+		return nil, f.err
+	}
 	copy := make(map[string]string, len(f.values))
-	for key, value := range f.values { copy[key] = value }
+	for key, value := range f.values {
+		copy[key] = value
+	}
 	return copy, nil
 }
 func (f *cangyuanPriceSettingsFixture) Delete(_ context.Context, key string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.err != nil { return f.err }
+	if f.err != nil {
+		return f.err
+	}
 	delete(f.values, key)
 	return nil
 }
@@ -71,14 +79,14 @@ func TestCangyuanMediaPriceRegistryRejectsUnpricedTiersAndUnknownFields(t *testi
 	require.True(t, quote.VerifiedByAdmin)
 
 	for name, raw := range map[string]string{
-		"higher-resolution": `{"model":"video-model","prompt":"a rainbow","resolution":"1080p","duration":5}`,
-		"longer-video": `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":10}`,
+		"higher-resolution":       `{"model":"video-model","prompt":"a rainbow","resolution":"1080p","duration":5}`,
+		"longer-video":            `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":10}`,
 		"unknown-expensive-field": `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"cost_multiplier":5}`,
-		"wrong-model": `{"model":"other-model","prompt":"a rainbow","resolution":"720p","duration":5}`,
-		"unsupported-response": `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"response_format":"b64_json"}`,
-		"missing-duration": `{"model":"video-model","prompt":"a rainbow","resolution":"720p"}`,
-		"invalid-image-count": `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"n":2}`,
-		"unexpected-callback": `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"webhook_url":"https://capture.test"}`,
+		"wrong-model":             `{"model":"other-model","prompt":"a rainbow","resolution":"720p","duration":5}`,
+		"unsupported-response":    `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"response_format":"b64_json"}`,
+		"missing-duration":        `{"model":"video-model","prompt":"a rainbow","resolution":"720p"}`,
+		"invalid-image-count":     `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"n":2}`,
+		"unexpected-callback":     `{"model":"video-model","prompt":"a rainbow","resolution":"720p","duration":5,"webhook_url":"https://capture.test"}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := registry.Quote(ctx, CangyuanVideoGeneration, "video-model", []byte(raw))
@@ -100,9 +108,9 @@ func TestCangyuanMediaPriceRegistryImageCountAndSourceCounts(t *testing.T) {
 	rule.Model = "image-model"
 	rule.Kind = CangyuanImageEdit
 	rule.Options = map[string]json.RawMessage{
-		"n": json.RawMessage("2"),
+		"n":            json.RawMessage("2"),
 		"images_count": json.RawMessage("1"),
-		"size": json.RawMessage(`"1024x1024"`),
+		"size":         json.RawMessage(`"1024x1024"`),
 	}
 	rule.Snapshot.Tier = "1024x1024-two"
 	rule.Snapshot.Units = 2
