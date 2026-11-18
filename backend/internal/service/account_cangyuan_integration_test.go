@@ -89,6 +89,16 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		account.Credentials["base_url"] = "http://ai.cangyuansuanli.cn"
 		require.ErrorContains(t, validateCangyuanAccount(account), "HTTPS")
 	})
+	t.Run("untrusted HTTPS host", func(t *testing.T) {
+		account := valid()
+		account.Credentials["base_url"] = "https://unrelated.example.com"
+		require.ErrorContains(t, validateCangyuanAccount(account), "official HTTPS API root")
+	})
+	t.Run("unexpected URL query", func(t *testing.T) {
+		account := valid()
+		account.Credentials["base_url"] = "https://ai.cangyuansuanli.cn?redirect=elsewhere"
+		require.ErrorContains(t, validateCangyuanAccount(account), "official HTTPS API root")
+	})
 	t.Run("wrong protocol", func(t *testing.T) {
 		account := valid()
 		account.Platform = PlatformAnthropic
