@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -112,6 +113,9 @@ func (c *CangyuanMediaClient) Submit(ctx context.Context, kind CangyuanMediaKind
 	if err := json.Unmarshal(request["prompt"], &prompt); err != nil || strings.TrimSpace(prompt) == "" {
 		return nil, errors.New("cangyuan media request requires prompt")
 	}
+	if err := validateCangyuanMediaReferences(request); err != nil {
+		return nil, err
+	}
 	if kind != CangyuanVideoGeneration {
 		// The upstream defaults to an asynchronous media lifecycle. Force the
 		// explicit contract so both synchronous and async clients can use the
@@ -134,6 +138,9 @@ func (c *CangyuanMediaClient) Submit(ctx context.Context, kind CangyuanMediaKind
 	}
 	if task.Status != "queued" && task.Status != "in_progress" && task.Status != "completed" && task.Status != "failed" {
 		return nil, errors.New("cangyuan media submission returned unknown task status")
+	}
+	if task.Status == "completed" && len(task.ResultURLs(kind)) == 0 {
+		return nil, errors.New("cangyuan media submission completed without result URL")
 	}
 	return task, nil
 }
@@ -204,6 +211,56 @@ func (c *CangyuanMediaClient) Wait(ctx context.Context, kind CangyuanMediaKind, 
 		case <-timer.C:
 		}
 	}
+}
+
+// validateCangyuanMediaReferences fails closed on inline/local/private
+// reference material. The upstream expects an independently accessible HTTPS
+// URL; signed upload URLs are handled by a separate upload capability.
+func validateCangyuanMediaReferences(request map[string]json.RawMessage) error {
+	arrayKeys := []string{"images", "reference_image_urls", "reference_videos", "reference_audios"}
+	singleKeys := []string{"mask", "first_image_url", "last_image_url"}
+	for _, key := range arrayKeys {
+		raw, exists := request[key]
+		if !exists {
+			continue
+		}
+		var values []string
+		if err := json.Unmarshal(raw, &values); err != nil || len(values) == 0 {
+			return fmt.Errorf("cangyuan media %s must be a non-empty HTTPS URL array", key)
+		}
+		for _, value := range values {
+			if !isPublicCangyuanMediaReference(value) {
+				return fmt.Errorf("cangyuan media %s requires publicly accessible HTTPS references", key)
+			}
+		}
+	}
+	for _, key := range singleKeys {
+		raw, exists := request[key]
+		if !exists {
+			continue
+		}
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil || !isPublicCangyuanMediaReference(value) {
+			return fmt.Errorf("cangyuan media %s requires a publicly accessible HTTPS reference", key)
+		}
+	}
+	return nil
+}
+
+func isPublicCangyuanMediaReference(value string) bool {
+	u, err := url.Parse(strings.TrimSpace(value))
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.Fragment != "" {
+		return false
+	}
+	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
+	if host == "localhost" || strings.HasSuffix(host, ".localhost") ||
+		strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
+		return false
+	}
+	if addr := net.ParseIP(host); addr != nil && (!addr.IsGlobalUnicast() || addr.IsPrivate()) {
+		return false
+	}
+	return true
 }
 
 func (c *CangyuanMediaClient) do(ctx context.Context, method, path string, payload []byte) (*CangyuanMediaTask, error) {
