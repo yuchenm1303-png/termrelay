@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -41,6 +42,38 @@ func validateCangyuanMediaPriceSnapshot(kind CangyuanMediaKind, q *CangyuanMedia
 	provider, err := parseCangyuanMediaMoney(q.UnitProviderCostUSD)
 	if err != nil || provider.IsNegative() {
 		return errors.New("cangyuan media provider cost must be explicitly quoted")
+	}
+	return nil
+}
+
+// validateCangyuanMediaRequestQuantity prevents a billable upstream job
+// from generating more images than the immutable approved price covers.
+// The upstream defaults to one image when "n" is absent. Video jobs always
+// represent exactly one output, never an image count.
+func validateCangyuanMediaRequestQuantity(kind CangyuanMediaKind, request map[string]json.RawMessage, quote *CangyuanMediaPriceSnapshot) error {
+	if quote == nil {
+		return errors.New("paid cangyuan media requires a frozen price")
+	}
+	switch kind {
+	case CangyuanImageGeneration, CangyuanImageEdit:
+		n := 1
+		if raw, exists := request["n"]; exists {
+			if err := json.Unmarshal(raw, &n); err != nil || n < 1 || n > 16 {
+				return errors.New("cangyuan image count must be an integer from 1 to 16")
+			}
+		}
+		if n != quote.Units {
+			return errors.New("cangyuan requested image count does not match approved price")
+		}
+	case CangyuanVideoGeneration:
+		if _, exists := request["n"]; exists {
+			return errors.New("cangyuan video requests cannot specify image count")
+		}
+		if quote.Units != 1 {
+			return errors.New("cangyuan video jobs require exactly one priced output")
+		}
+	default:
+		return errors.New("unsupported cangyuan media capability")
 	}
 	return nil
 }
