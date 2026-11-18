@@ -51,7 +51,8 @@ func (h *CangyuanMediaHandler) get(c *gin.Context, expectedKind service.Cangyuan
 	job, err := h.jobs.Get(c.Request.Context(),
 		service.CangyuanMediaJobOwner{UserID: apiKey.UserID, APIKeyID: apiKey.ID},
 		c.Param(pathParam))
-	if errors.Is(err, service.ErrCangyuanMediaJobNotFound) || (err == nil && job.Kind != expectedKind) {
+	if errors.Is(err, service.ErrCangyuanMediaJobNotFound) ||
+		(err == nil && (job == nil || job.Kind != expectedKind || job.BillingState == "disabled")) {
 		// Do not reveal whether another user's job ID exists.
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": gin.H{"type": "not_found_error", "message": "Media task not found"},
@@ -61,6 +62,19 @@ func (h *CangyuanMediaHandler) get(c *gin.Context, expectedKind service.Cangyuan
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{
 			"error": gin.H{"type": "api_error", "message": "Media task storage is unavailable"},
+		})
+		return
+	}
+	// An upstream completion is not itself proof of local payment. Never
+	// expose expensive image/video URLs while SQL settlement is pending.
+	// Disabled/unpriced jobs are hidden entirely by the owner check above.
+	if job.Status == service.CangyuanMediaJobCompleted && job.BillingState != "settled" {
+		c.Header("Retry-After", "6")
+		c.JSON(http.StatusAccepted, gin.H{
+			"id": job.ID,
+			"task_id": job.ID,
+			"status": "in_progress",
+			"message": "Media result is being finalized",
 		})
 		return
 	}
