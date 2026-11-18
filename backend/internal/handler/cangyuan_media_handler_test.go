@@ -61,8 +61,8 @@ func TestCangyuanMediaReadRoutesOnlyReturnOwnedResults(t *testing.T) {
 	job := &service.CangyuanMediaJob{
 		ID: testCangyuanJobID, UserID: 8, APIKeyID: 13, AccountID: 29,
 		Model: "image-fixture", Kind: service.CangyuanImageGeneration,
-		Status: service.CangyuanMediaJobCompleted,
-		ResultURLs: []string{"https://cdn.example.org/output.png"},
+		Status:       service.CangyuanMediaJobCompleted,
+		ResultURLs:   []string{"https://cdn.example.org/output.png"},
 		BillingState: "pending", CreatedAt: 1700000000, ExpiresAt: 1700200000,
 	}
 	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}})
