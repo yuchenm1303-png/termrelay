@@ -229,7 +229,10 @@ func (c *CangyuanMediaClient) do(ctx context.Context, method, path string, paylo
 	if err != nil {
 		// Do not embed raw HTTP client errors: proxy errors and URLs can
 		// include sensitive infrastructure details.
-		if ctx.Err() != nil {\n\t\t\treturn nil, ctx.Err()\n\t\t}\n\t\treturn nil, errors.New("cangyuan media upstream transport failed")
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, errors.New("cangyuan media upstream transport failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
