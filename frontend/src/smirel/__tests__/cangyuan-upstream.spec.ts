@@ -157,4 +157,64 @@ describe('Cangyuan New API setup', () => {
     wrapper.unmount()
   })
 
+  it('creates an isolated media-only upstream account without any chat model', async () => {
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return { data: {
+          models: [],
+          filtered_count: 2,
+          media_models: {
+            image: [{ id: 'image-test', billing_mode: 'tiered_expr', tiered: true }],
+            video: [{ id: 'video-test', billing_mode: 'per_request', tiered: false }],
+          },
+        } } as never
+      }
+      return { data: { id: 25 } } as never
+    })
+    const wrapper = mount(CreateUpstreamAccountModal, {
+      props: { show: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find((select) => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+    change(element<HTMLInputElement>('.secret-input input'), 'fixture-media-only-key')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    const choices = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-media-choice'))
+    expect(choices).toHaveLength(2)
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+    for (const choice of choices) choice.querySelector<HTMLInputElement>('input')!.click()
+    await nextTick()
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(false)
+
+    element<HTMLButtonElement>('.save-button').click()
+    await flushPromises()
+    const create = post.mock.calls.find(([url]) => url === '/admin/accounts')
+    expect(create).toBeDefined()
+    expect(create![1]).toEqual(expect.objectContaining({
+      platform: 'openai',
+      type: 'apikey',
+      group_ids: [],
+      skip_default_group_bind: true,
+      credentials: {
+        api_key: 'fixture-media-only-key',
+        base_url: 'https://ai.cangyuansuanli.cn',
+        model_mapping: {},
+      },
+      extra: {
+        upstream_vendor: 'cangyuan',
+        openai_passthrough: false,
+        openai_responses_mode: 'force_chat_completions',
+        cangyuan_media_only: true,
+        cangyuan_media_models: { image: ['image-test'], video: ['video-test'] },
+      },
+    }))
+    wrapper.unmount()
+  })
+
 })
