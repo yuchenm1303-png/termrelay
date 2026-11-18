@@ -64,7 +64,7 @@ type Handlers struct {
 	AvailableChannel *AvailableChannelHandler
 	ModelPlaza       *ModelPlazaHandler
 	AsyncImage       *AsyncImageHandler
-	CangyuanMedia   *CangyuanMediaHandler
+	CangyuanMedia    *CangyuanMediaHandler
 	BatchImage       *BatchImageHandler
 }
 
