@@ -187,3 +187,38 @@ func TestCangyuanMediaRejectsMalformedRequestsAndTransportErrors(t *testing.T) {
 		t.Fatalf("unsafe transport error: %v", err)
 	}
 }
+
+func TestCangyuanMediaReferencesRejectLocalAndInlineContent(t *testing.T) {
+	t.Parallel()
+	var networkCalls atomic.Int32
+	client := &CangyuanMediaClient{
+		APIKey: "test-key",
+		HTTP: cangyuanMediaTestHTTPClient(func(_ *http.Request) (*http.Response, error) {
+			networkCalls.Add(1)
+			return cangyuanMediaTestResponse(http.StatusOK, `{"id":"task_1","status":"queued"}`), nil
+		}),
+	}
+	for _, invalid := range []string{
+		`{"model":"img","prompt":"scene","images":["data:image/png;base64,AA=="]}`,
+		`{"model":"img","prompt":"scene","mask":"http://example.com/mask.png"}`,
+		`{"model":"img","prompt":"scene","images":["https://127.0.0.1/photo.png"]}`,
+		`{"model":"img","prompt":"scene","images":["https://localhost/photo.png"]}`,
+		`{"model":"img","prompt":"scene","images":["https://10.0.0.2/private.png"]}`,
+		`{"model":"vid","prompt":"scene","reference_image_urls":["file:///tmp/pic.png"]}`,
+		`{"model":"vid","prompt":"scene","reference_videos":["https://media.internal/clip.mp4"]}`,
+		`{"model":"vid","prompt":"scene","first_image_url":"https://user:pw@example.com/pic.png"}`,
+	} {
+		if _, err := client.Submit(context.Background(), CangyuanImageEdit, []byte(invalid)); err == nil {
+			t.Errorf("unsafe reference unexpectedly accepted: %s", invalid)
+		}
+	}
+	if networkCalls.Load() != 0 {
+		t.Fatalf("unsafe references must never be submitted: %d", networkCalls.Load())
+	}
+	_, err := client.Submit(context.Background(), CangyuanImageEdit, []byte(
+		`{"model":"img","prompt":"scene","images":["https://cdn.example.com/approved.png?signature=test"]}`,
+	))
+	if err != nil || networkCalls.Load() != 1 {
+		t.Fatalf("safe signed HTTPS reference should pass validation: err=%v calls=%d", err, networkCalls.Load())
+	}
+}
