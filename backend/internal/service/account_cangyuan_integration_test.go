@@ -79,6 +79,16 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 		require.ErrorContains(t, validateCangyuanAccount(account), "explicit")
 		require.False(t, account.IsModelSupported("any-model"), "empty Cangyuan mapping must fail closed")
 	})
+	t.Run("official host without vendor marker still fail-closes", func(t *testing.T) {
+		account := valid()
+		delete(account.Extra, "upstream_vendor")
+		require.True(t, isCangyuanAccount(account))
+		require.True(t, account.IsModelSupported("safe-model"))
+		require.False(t, account.IsModelSupported("unlisted-model"))
+		account.Extra["openai_passthrough"] = true
+		require.False(t, account.IsOpenAIPassthroughEnabled())
+		require.ErrorContains(t, validateCangyuanAccount(account), "unrestricted")
+	})
 	t.Run("wildcard model mapping", func(t *testing.T) {
 		account := valid()
 		account.Credentials["model_mapping"] = map[string]any{"*": "safe-model"}
@@ -107,6 +117,7 @@ func TestCangyuanAccountRejectsUnsafeConfiguration(t *testing.T) {
 	t.Run("unrelated OpenAI accounts retain existing compatibility", func(t *testing.T) {
 		account := valid()
 		delete(account.Extra, "upstream_vendor")
+		account.Credentials["base_url"] = "https://third-party.example.com"
 		account.Extra["openai_passthrough"] = true
 		require.NoError(t, validateCangyuanAccount(account))
 		require.True(t, account.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
@@ -191,6 +202,14 @@ func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
 		a := media()
 		a.Extra["cangyuan_media_models"] = map[string]any{"image": []any{}, "video": []any{}}
 		require.ErrorContains(t, validateCangyuanAccount(a), "at least one model")
+	})
+	t.Run("media safety survives vendor flag removal", func(t *testing.T) {
+		a := media()
+		delete(a.Extra, "upstream_vendor")
+		require.True(t, isCangyuanAccount(a))
+		require.True(t, isCangyuanMediaOnlyAccount(a))
+		require.NoError(t, validateCangyuanAccount(a))
+		require.False(t, a.IsModelSupported("image-model"))
 	})
 	t.Run("media wildcard", func(t *testing.T) {
 		a := media()
