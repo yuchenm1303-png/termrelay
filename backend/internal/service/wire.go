@@ -551,6 +551,12 @@ func ProvideImageTaskService(store ImageTaskStore, settings *ImageStorageSetting
 	return NewImageTaskServiceWithResolver(store, settings.Resolver(), defaultImageTaskTTL, defaultImageTaskExecutionTimeout)
 }
 
+// ProvideCangyuanMediaJobService constructs a private, authenticated task
+// registry; it does not register submission or payment endpoints.
+func ProvideCangyuanMediaJobService(store CangyuanMediaJobStore) *CangyuanMediaJobService {
+	return &CangyuanMediaJobService{Store: store}
+}
+
 // ProvideBackupService creates and starts BackupService
 func ProvideBackupService(
 	settingRepo SettingRepository,
@@ -698,6 +704,7 @@ var ProviderSet = wire.NewSet(
 	NewOpenAIGatewayService,
 	ProvideImageStorageSettingService,
 	ProvideImageTaskService,
+	ProvideCangyuanMediaJobService,
 	ProvideBatchImageModelPricingResolver,
 	NewBatchImagePublicService,
 	NewBatchImageDownloadService,
