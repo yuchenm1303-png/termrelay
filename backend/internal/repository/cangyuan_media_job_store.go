@@ -182,12 +182,11 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 		if current.PriceSnapshot != nil && *current.PriceSnapshot != *job.PriceSnapshot {
 			return service.ErrCangyuanMediaJobConflict
 		}
-		if current.BillingState != job.BillingState {
-			if !(current.BillingState == "pending" && job.BillingState == "settled" &&
-				current.Status == service.CangyuanMediaJobCompleted && job.Status == service.CangyuanMediaJobCompleted &&
-				current.PriceSnapshot != nil) {
-				return service.ErrCangyuanMediaJobConflict
-			}
+		if current.BillingState != job.BillingState &&
+			(current.BillingState != "pending" || job.BillingState != "settled" ||
+				current.Status != service.CangyuanMediaJobCompleted || job.Status != service.CangyuanMediaJobCompleted ||
+				current.PriceSnapshot == nil) {
+			return service.ErrCangyuanMediaJobConflict
 		}
 		_, err := tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			// Retain TTL; polling must not extend job lifetime indefinitely.
