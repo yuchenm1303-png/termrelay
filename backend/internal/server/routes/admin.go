@@ -41,6 +41,7 @@ func RegisterAdminRoutes(
 
 		// 账号管理
 		registerAccountRoutes(admin, h, stepUpAuth)
+		registerCangyuanMediaPricingRoutes(admin, h, stepUpAuth)
 
 		// 公告管理
 		registerAnnouncementRoutes(admin, h)
@@ -781,4 +782,13 @@ func registerAffiliateRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 			users.DELETE("/:user_id", h.Admin.Affiliate.ClearUserSettings)
 		}
 	}
+}
+
+// These routes inherit panel admin authentication, compliance guard, and
+// audit logging. Every write/delete additionally requires step-up 2FA.
+func registerCangyuanMediaPricingRoutes(admin *gin.RouterGroup, h *handler.Handlers, stepUpAuth middleware.StepUpAuthMiddleware) {
+	prices := admin.Group("/cangyuan-media/prices")
+	prices.GET("", h.Admin.CangyuanMediaPrices.List)
+	prices.PUT("/:id", gin.HandlerFunc(stepUpAuth), h.Admin.CangyuanMediaPrices.Upsert)
+	prices.DELETE("/:id", gin.HandlerFunc(stepUpAuth), h.Admin.CangyuanMediaPrices.Delete)
 }
