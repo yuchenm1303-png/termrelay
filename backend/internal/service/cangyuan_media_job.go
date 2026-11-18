@@ -191,7 +191,18 @@ func (s *CangyuanMediaJobService) Observe(ctx context.Context, owner CangyuanMed
 			return job, nil
 		}
 		return nil, ErrCangyuanMediaJobState
-	case CangyuanMediaJobQueued, CangyuanMediaJobProcessing:
+	case CangyuanMediaJobQueued:
+		if task.Status == "queued" {
+			return job, nil
+		}
+		return s.persistTransition(ctx, job, CangyuanMediaJobState(task.Status), job.UpstreamTaskID, task.ResultURLs(job.Kind))
+	case CangyuanMediaJobProcessing:
+		if task.Status == "queued" {
+			return nil, ErrCangyuanMediaJobState
+		}
+		if task.Status == "in_progress" {
+			return job, nil
+		}
 		return s.persistTransition(ctx, job, CangyuanMediaJobState(task.Status), job.UpstreamTaskID, task.ResultURLs(job.Kind))
 	default:
 		return nil, ErrCangyuanMediaJobState
