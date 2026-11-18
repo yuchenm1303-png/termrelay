@@ -93,11 +93,15 @@ const saving = ref(false)
 const error = ref('')
 const syncedModels = ref<string[]>([])
 const selectedModels = ref<string[]>([])
+const selectedMediaModels = ref<string[]>([])
 const modelFilter = ref('')
 const modelPricing = ref<Record<string, CangyuanPricingInfo>>({})
 const excludedModels = ref(0)
 const mediaModels = ref<CangyuanMediaGroups>({ image: [], video: [] })
 const mediaCount = computed(() => mediaModels.value.image.length + mediaModels.value.video.length)
+const selectedMediaImages = computed(() => mediaModels.value.image.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
+const selectedMediaVideos = computed(() => mediaModels.value.video.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
+const isMediaOnly = computed(() => isCangyuan.value && selectedMediaModels.value.length > 0)
 
 const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
 const filteredModels = computed(() => { const q = modelFilter.value.trim().toLowerCase(); return syncedModels.value.filter(m => !q || m.toLowerCase().includes(q)).slice(0, 60) })
@@ -106,7 +110,7 @@ const tieredSelected = computed(() => modelsToPublish.value.filter(model => mode
 
 const selectedPlatform = computed(() => platformOptions.find((item) => item.value === platform.value) || platformOptions[0])
 const canSync = computed(() => Boolean(baseUrl.value.trim() && apiKey.value.trim()) && !syncing.value)
-const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value && (!isCangyuan.value || selectedModels.value.length > 0))
+const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value && (!isCangyuan.value || selectedModels.value.length > 0 || selectedMediaModels.value.length > 0))
 
 function cleanBaseUrl(value: string) {
   return value.trim().replace(/\/+$/, '')
@@ -122,9 +126,16 @@ function validateBaseUrl(value: string) {
 }
 
 function passthroughExtra() {
-  if (platform.value === 'openai') return isCangyuan.value
-    ? { upstream_vendor: 'cangyuan', openai_passthrough: false, openai_responses_mode: 'force_chat_completions' }
-    : { openai_passthrough: true }
+  if (platform.value === 'openai') {
+    if (!isCangyuan.value) return { openai_passthrough: true }
+    const base = { upstream_vendor: 'cangyuan', openai_passthrough: false, openai_responses_mode: 'force_chat_completions' }
+    if (isMediaOnly.value) return {
+      ...base,
+      cangyuan_media_only: true,
+      cangyuan_media_models: { image: selectedMediaImages.value, video: selectedMediaVideos.value },
+    }
+    return base
+  }
   if (platform.value === 'anthropic') return { anthropic_passthrough: true }
   return {}
 }
@@ -147,6 +158,7 @@ function resetForm() {
   error.value = ''
   syncedModels.value = []
   selectedModels.value = []
+  selectedMediaModels.value = []
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -212,6 +224,7 @@ function onPlatformChange() {
   groups.value = []
   syncedModels.value = []
   selectedModels.value = []
+  selectedMediaModels.value = []
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -231,6 +244,7 @@ function onPresetChange() {
   }
   syncedModels.value = []
   selectedModels.value = []
+  selectedMediaModels.value = []
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -241,19 +255,29 @@ function onPresetChange() {
 function invalidateModelDiscovery() {
   syncedModels.value = []
   selectedModels.value = []
+  selectedMediaModels.value = []
   modelPricing.value = {}
   excludedModels.value = 0
   mediaModels.value = { image: [], video: [] }
 }
 
 function toggleModel(model: string) {
+  if (!selectedModels.value.includes(model)) selectedMediaModels.value = []
   selectedModels.value = selectedModels.value.includes(model) ? selectedModels.value.filter(m => m !== model) : [...selectedModels.value, model]
+}
+
+function toggleMediaModel(model: string) {
+  if (!selectedMediaModels.value.includes(model)) selectedModels.value = []
+  selectedMediaModels.value = selectedMediaModels.value.includes(model)
+    ? selectedMediaModels.value.filter(m => m !== model)
+    : [...selectedMediaModels.value, model]
 }
 
 async function syncModels() {
   error.value = ''
   syncedModels.value = []
   selectedModels.value = []
+  selectedMediaModels.value = []
   modelPricing.value = {}
   excludedModels.value = 0
   mediaModels.value = { image: [], video: [] }
@@ -291,9 +315,9 @@ async function syncModels() {
       image: Array.isArray(discoveredMedia?.image) ? discoveredMedia.image : [],
       video: Array.isArray(discoveredMedia?.video) ? discoveredMedia.video : [],
     } : { image: [], video: [] }
-    if (!syncedModels.value.length) error.value = mediaCount.value
-      ? '已检测到沧元图片与视频模型。媒体渠道需要单独完成异步任务和计费适配，此处暂不允许作为普通对话账号保存。'
-      : (isCangyuan.value ? '这把密钥没有符合当前对话协议且已分类的模型。' : '连接成功，但上游没有返回可用模型。')
+    if (!syncedModels.value.length && !mediaCount.value) error.value = isCangyuan.value
+      ? '这把密钥没有符合当前协议且已分类的对话、图片或视频模型。'
+      : '连接成功，但上游没有返回可用模型。'
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -319,14 +343,15 @@ async function submit() {
   // Always verify the live upstream before persisting the account. Besides
   // validating the credentials, this gives us the exact model whitelist that
   // should be advertised by TermRelay for this relay account.
-  if (!syncedModels.value.length) {
+  if (!syncedModels.value.length && !mediaCount.value) {
     await syncModels()
-    if (!syncedModels.value.length) return
+    if (!syncedModels.value.length && !mediaCount.value) return
   }
 
-  // Cangyuan includes non-chat/async models. Never auto-advertise its entire catalog.
-  if (isCangyuan.value && !modelsToPublish.value.length) {
-    error.value = '请选择已核对接口和价格的对话模型；图片、视频需单独适配。'
+  // Media-only accounts are accepted but remain unschedulable until the
+  // dedicated image/video gateway and verified pricing are fully enabled.
+  if (isCangyuan.value && !modelsToPublish.value.length && !selectedMediaModels.value.length) {
+    error.value = '请选择至少一个已分类的对话、图片或视频模型。'
     return
   }
 
@@ -486,24 +511,32 @@ watch(
 
             <div v-if="isCangyuan && mediaCount" class="cangyuan-media-preview">
               <div class="cangyuan-media-heading">
-                <strong>图片与视频 · 检测到 {{ mediaCount }} 个</strong>
-                <small>已确认模型属于当前密钥可用范围；此处仅展示，不会自动创建收费渠道。</small>
+                <strong>图片与视频 · 已选 {{ selectedMediaModels.length }} / {{ mediaCount }}</strong>
+                <small>可单独创建图片/视频上游测试账号，默认暂停调度，未配置售价前不会提供生成或收费。选择媒体模型时会取消对话模型的选择。</small>
               </div>
               <div class="cangyuan-media-groups">
                 <div class="cangyuan-media-group">
                   <strong>图像生成 / 编辑 <span>{{ mediaModels.image.length }}</span></strong>
-                  <code v-for="item in mediaModels.image.slice(0, 6)" :key="item.id">{{ item.id }}<span>{{ item.tiered ? '分档' : '按次' }}</span></code>
+                  <label v-for="item in mediaModels.image.slice(0, 6)" :key="item.id" class="cangyuan-media-choice">
+                    <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
+                    <code>{{ item.id }}</code>
+                    <span>{{ item.tiered ? '分档' : '按次' }}</span>
+                  </label>
                   <small v-if="mediaModels.image.length > 6">另有 {{ mediaModels.image.length - 6 }} 个</small>
                   <small v-if="!mediaModels.image.length">未发现已分类的生图模型</small>
                 </div>
                 <div class="cangyuan-media-group">
                   <strong>视频生成 <span>{{ mediaModels.video.length }}</span></strong>
-                  <code v-for="item in mediaModels.video.slice(0, 6)" :key="item.id">{{ item.id }}<span>{{ item.tiered ? '分档' : '按次' }}</span></code>
+                  <label v-for="item in mediaModels.video.slice(0, 6)" :key="item.id" class="cangyuan-media-choice">
+                    <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
+                    <code>{{ item.id }}</code>
+                    <span>{{ item.tiered ? '分档' : '按次' }}</span>
+                  </label>
                   <small v-if="mediaModels.video.length > 6">另有 {{ mediaModels.video.length - 6 }} 个</small>
                   <small v-if="!mediaModels.video.length">未发现已分类的视频模型</small>
                 </div>
               </div>
-              <small>下一阶段接入任务提交、GET 轮询及任务成功后扣费。完成前账号不能通过这个对话预设上架媒体模型。</small>
+              <small>已选择媒体模型可以保存为独立的非调度账号；正式生成仍须接通任务提交、上游轮询和成功结算。不会自动上架。</small>
             </div>
 
             <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
@@ -825,7 +858,9 @@ watch(
 .cangyuan-media-group { min-width: 0; display: grid; align-content: start; gap: 7px; border: 1px solid rgba(144, 159, 158, .18); border-radius: 12px; padding: 12px; }
 .cangyuan-media-group > strong { font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
 .cangyuan-media-group > strong span { opacity: .65; }
-.cangyuan-media-group code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; }
-.cangyuan-media-group code span { font-size: 10px; opacity: .6; }
+.cangyuan-media-choice { min-width: 0; display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 11px; }
+.cangyuan-media-choice input { accent-color: #43cd98; flex-shrink: 0; }
+.cangyuan-media-choice code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.cangyuan-media-choice span { flex-shrink: 0; font-size: 10px; opacity: .6; }
 @media (max-width: 620px) { .cangyuan-media-groups { grid-template-columns: 1fr; } }
 </style>
