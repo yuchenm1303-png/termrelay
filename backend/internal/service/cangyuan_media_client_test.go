@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -220,5 +221,26 @@ func TestCangyuanMediaReferencesRejectLocalAndInlineContent(t *testing.T) {
 	))
 	if err != nil || networkCalls.Load() != 1 {
 		t.Fatalf("safe signed HTTPS reference should pass validation: err=%v calls=%d", err, networkCalls.Load())
+	}
+}
+
+func TestCangyuanMediaVideoCanonicalAndLegacyURLsCountAsOneOutput(t *testing.T) {
+	t.Parallel()
+	var task CangyuanMediaTask
+	err := json.Unmarshal([]byte(`{"id":"video_done","status":"completed","video_url":"https://cdn.example.com/primary.mp4","data":[{"url":"https://cdn.example.com/primary.mp4"}]}`), &task)
+	if err != nil {
+		t.Fatal(err)
+	}
+	urls := task.ResultURLs(CangyuanVideoGeneration)
+	if len(urls) != 1 || urls[0] != "https://cdn.example.com/primary.mp4" {
+		t.Fatalf("one video must be counted once, got %#v", urls)
+	}
+	task.VideoURL = ""
+	urls = task.ResultURLs(CangyuanVideoGeneration)
+	if len(urls) != 1 || urls[0] != "https://cdn.example.com/primary.mp4" {
+		t.Fatalf("legacy video URL must be supported, got %#v", urls)
+	}
+	if len(task.ResultURLs(CangyuanImageGeneration)) != 1 {
+		t.Fatal("image mode must still retain data results")
 	}
 }
