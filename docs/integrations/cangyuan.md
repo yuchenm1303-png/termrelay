@@ -126,3 +126,17 @@
 - **状态不回退**：`queued → in_progress → completed/failed`，迟到的 `queued` 不会覆盖 `in_progress`，重复状态不重复写 Redis。上游结果网址必须是公网 HTTPS，避免恶意或无效产物触发结算。
 
 **上线前尚缺**：站内可信定价管理界面、请求参数与档位匹配、任务与账号路由、API Key 分组权限、生成前余额/额度预留、完整用量/退款日志、取消/超时任务策略，以及真实 API Key 的隔离小额付费测试。当前结算接口没有被任何外部路由调用，因此不会对用户产生扣费。
+
+## 只读任务查询路由（开发阶段已接入）
+
+现已把媒体任务 Redis 查询接入 `/v1` 原有 API Key 鉴权链和 Wire 依赖注入：
+
+- `GET /v1/images/generations/{cyjob_id}`：按用户和 API Key 检查文生图任务；
+- `GET /v1/images/edits/{cyjob_id}`：按用户和 API Key 检查图片编辑任务；
+- `GET /v1/videos/{cyjob_id}`：识别 `cyjob_` 前缀并读取本站视频任务，其他视频任务沿用原 Grok 路由；
+- 返回 `id`、`task_id`、`status`、`model`、时间和允许展示的 `data[].url` / `video_url`；不返回用户内部 ID、上游账号 ID、价格快照、密钥或上游 task ID；
+- 非任务所有者与错误类型统一为 404；未鉴权为 401；Redis 不可用为 503；结果不缓存；
+- **账单尚未确认时不放出成果**：`billing_state=pending` 且生成完成，暂返回 HTTP 202 / `in_progress`，不包含产物 URL；只有幂等 SQL 结算确认写为 `settled` 才展示成果；`billing_state=disabled` 的无价测试任务直接隐藏。
+
+**重要限制**：上述 GET 目前读取的是已持久化在 Redis 的本站任务状态，**并不自行调用沧元上游 GET 更新任务**；完整的自动轮询和结算仍需通过已经实现的内部 `PollJob` / `SettleCompleted`，在补齐权限、余额预留、运营定价和任务恢复工作进程后接入。**没有公开 POST 媒体生成入口**，也没有开启对外收费。
+
