@@ -52,6 +52,7 @@ type CangyuanMediaJob struct {
 	Status         CangyuanMediaJobState `json:"status"`
 	ResultURLs     []string              `json:"result_urls,omitempty"`
 	BillingState   string                `json:"billing_state"`
+	PriceSnapshot *CangyuanMediaPriceSnapshot `json:"price_snapshot,omitempty"`
 	Version        int64                 `json:"version"`
 	CreatedAt      int64                 `json:"created_at"`
 	UpdatedAt      int64                 `json:"updated_at"`
@@ -71,7 +72,7 @@ type CangyuanMediaJobService struct {
 	TTL   time.Duration
 }
 
-func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMediaJobOwner, accountID int64, kind CangyuanMediaKind, model string) (*CangyuanMediaJob, error) {
+func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMediaJobOwner, accountID int64, kind CangyuanMediaKind, model string, quotes ...CangyuanMediaPriceSnapshot) (*CangyuanMediaJob, error) {
 	if s == nil || s.Store == nil {
 		return nil, errors.New("cangyuan media job storage unavailable")
 	}
@@ -83,6 +84,19 @@ func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMed
 	}
 	if _, err := kind.path(); err != nil {
 		return nil, err
+	}
+	if len(quotes) > 1 {
+		return nil, errors.New("cangyuan media reservation accepts at most one price snapshot")
+	}
+	var snapshot *CangyuanMediaPriceSnapshot
+	billingState := "disabled"
+	if len(quotes) == 1 {
+		quote := quotes[0]
+		if err := validateCangyuanMediaPriceSnapshot(kind, &quote); err != nil {
+			return nil, err
+		}
+		snapshot = &quote
+		billingState = "pending"
 	}
 	ttl := s.TTL
 	if ttl <= 0 {
@@ -97,7 +111,8 @@ func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMed
 		Kind:         kind,
 		Model:        strings.TrimSpace(model),
 		Status:       CangyuanMediaJobReserved,
-		BillingState: "disabled",
+		BillingState: billingState,
+		PriceSnapshot: snapshot,
 		Version:      1,
 		CreatedAt:    now.Unix(),
 		UpdatedAt:    now.Unix(),
