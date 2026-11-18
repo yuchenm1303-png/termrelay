@@ -277,6 +277,13 @@ func (s *CangyuanMediaJobService) SubmitReserved(ctx context.Context, owner Cang
 	if err := validateCangyuanMediaReferences(refs); err != nil {
 		return nil, nil, err
 	}
+	// Check again immediately before the single upstream POST. A request
+	// cannot change quantity after the job's approved price was frozen.
+	if job.PriceSnapshot != nil {
+		if err := validateCangyuanMediaRequestQuantity(job.Kind, refs, job.PriceSnapshot); err != nil {
+			return nil, nil, err
+		}
+	}
 	if _, err := s.ClaimSubmission(ctx, owner, id); err != nil {
 		return nil, nil, err
 	}
