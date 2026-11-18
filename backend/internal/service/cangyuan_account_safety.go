@@ -27,8 +27,10 @@ func validateCangyuanAccount(account *Account) error {
 		return fmt.Errorf("cangyuan upstream must use the OpenAI API-key protocol")
 	}
 	base, err := url.Parse(strings.TrimSpace(account.GetCredential("base_url")))
-	if err != nil || base.Scheme != "https" || base.Host == "" || base.User != nil {
-		return fmt.Errorf("cangyuan upstream requires an HTTPS base URL")
+	if err != nil || base.Scheme != "https" || base.Hostname() != "ai.cangyuansuanli.cn" ||
+		base.Port() != "" || base.User != nil || (base.Path != "" && base.Path != "/") ||
+		base.RawQuery != "" || base.Fragment != "" {
+		return fmt.Errorf("cangyuan upstream requires the official HTTPS API root")
 	}
 	if enabled, _ := account.Extra["openai_passthrough"].(bool); enabled {
 		return fmt.Errorf("cangyuan upstream cannot enable unrestricted OpenAI passthrough")
