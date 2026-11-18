@@ -80,10 +80,21 @@ func (t *CangyuanMediaTask) ResultURLs(kind CangyuanMediaKind) []string {
 	if t == nil || t.Status != "completed" {
 		return nil
 	}
-	result := make([]string, 0, len(t.Data)+1)
-	if kind == CangyuanVideoGeneration && isPublicCangyuanMediaReference(t.VideoURL) {
-		result = append(result, t.VideoURL)
+	// Video providers sometimes return both the canonical video_url and a
+	// legacy data[0].url alias for the SAME result. Counting both as outputs
+	// incorrectly blocks one-video settlement (and could distort pricing).
+	if kind == CangyuanVideoGeneration {
+		if isPublicCangyuanMediaReference(t.VideoURL) {
+			return []string{t.VideoURL}
+		}
+		for _, item := range t.Data {
+			if isPublicCangyuanMediaReference(item.URL) {
+				return []string{item.URL}
+			}
+		}
+		return nil
 	}
+	result := make([]string, 0, len(t.Data))
 	for _, item := range t.Data {
 		if isPublicCangyuanMediaReference(item.URL) {
 			result = append(result, item.URL)
