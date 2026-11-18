@@ -180,6 +180,13 @@ func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
 	approved := media()
 	require.NoError(t, validateCangyuanAccount(approved))
 	require.True(t, isCangyuanMediaOnlyAccount(approved))
+	require.True(t, approved.AllowsCangyuanMediaModel(CangyuanImageGeneration, "image-model"))
+	require.True(t, approved.AllowsCangyuanMediaModel(CangyuanImageEdit, "image-model"))
+	require.True(t, approved.AllowsCangyuanMediaModel(CangyuanVideoGeneration, "video-model"))
+	require.False(t, approved.AllowsCangyuanMediaModel(CangyuanVideoGeneration, "image-model"))
+	require.False(t, approved.AllowsCangyuanMediaModel(CangyuanImageGeneration, "video-model"))
+	require.False(t, approved.AllowsCangyuanMediaModel(CangyuanImageGeneration, "unknown"))
+	require.False(t, approved.AllowsCangyuanMediaModel("music", "image-model"))
 	for _, model := range []string{"image-model", "video-model", "arbitrary-chat", "gpt-5.6"} {
 		require.False(t, approved.IsModelSupported(model), "media-only accounts must never enter chat scheduling")
 	}
@@ -210,6 +217,12 @@ func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
 		require.True(t, isCangyuanMediaOnlyAccount(a))
 		require.NoError(t, validateCangyuanAccount(a))
 		require.False(t, a.IsModelSupported("image-model"))
+	})
+	t.Run("corrupt media metadata fails closed for every capability", func(t *testing.T) {
+		a := media()
+		a.Extra["cangyuan_media_models"] = map[string]any{"image": []any{"image-*"}, "video": []any{"video-model"}}
+		require.False(t, a.AllowsCangyuanMediaModel(CangyuanImageGeneration, "image-model"))
+		require.False(t, a.AllowsCangyuanMediaModel(CangyuanVideoGeneration, "video-model"))
 	})
 	t.Run("media wildcard", func(t *testing.T) {
 		a := media()
