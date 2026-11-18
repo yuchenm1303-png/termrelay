@@ -115,7 +115,7 @@ function cleanBaseUrl(value: string) {
 function validateBaseUrl(value: string) {
   try {
     const url = new URL(cleanBaseUrl(value))
-    return isCangyuan.value ? url.protocol === 'https:' : (url.protocol === 'http:' || url.protocol === 'https:')
+    return isCangyuan.value ? cleanBaseUrl(value) === CANGYUAN_BASE_URL : (url.protocol === 'http:' || url.protocol === 'https:')
   } catch {
     return false
   }
@@ -236,6 +236,14 @@ function onPresetChange() {
   excludedModels.value = 0
   mediaModels.value = { image: [], video: [] }
   error.value = ''
+}
+
+function invalidateModelDiscovery() {
+  syncedModels.value = []
+  selectedModels.value = []
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
 }
 
 function toggleModel(model: string) {
@@ -427,7 +435,7 @@ watch(
                 <span>Base URL</span>
                 <div class="input-with-prefix">
                   <b>URL</b>
-                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="syncedModels = []; selectedModels = []" />
+                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="invalidateModelDiscovery" />
                 </div>
                 <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。{{ isCangyuan ? '这里预填沧元主站入口。' : '' }}</small>
               </label>
@@ -436,7 +444,7 @@ watch(
                 <span>API Key</span>
                 <div class="secret-input">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7" cy="10" r="3" /><path d="m9.7 8.3 6-6M13 5l2 2" /></svg>
-                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="syncedModels = []; selectedModels = []" />
+                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="invalidateModelDiscovery" />
                   <button type="button" @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button>
                 </div>
               </label>
