@@ -217,4 +217,58 @@ describe('Cangyuan New API setup', () => {
     wrapper.unmount()
   })
 
+  it('can search and select media models beyond the former six-item limit', async () => {
+    const imageModels = Array.from({ length: 12 }, (_, i) => ({
+      id: `photo-model-${i + 1}`, billing_mode: 'per_request', tiered: false,
+    }))
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return { data: {
+          models: [],
+          media_models: { image: imageModels, video: [] },
+        } } as never
+      }
+      return { data: { id: 55 } } as never
+    })
+
+    const wrapper = mount(CreateUpstreamAccountModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find(select => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+    change(element<HTMLInputElement>('.secret-input input'), 'fixture-key-for-model-search')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    expect(document.querySelectorAll('.cangyuan-media-choice')).toHaveLength(12)
+    const filter = element<HTMLInputElement>('.cangyuan-media-search')
+    change(filter, 'photo-model-12')
+    await nextTick()
+    const results = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-media-choice'))
+    expect(results).toHaveLength(1)
+    expect(results[0].textContent).toContain('photo-model-12')
+    results[0].querySelector<HTMLInputElement>('input')!.click()
+    await nextTick()
+    change(filter, 'photo-model-8')
+    await nextTick()
+    expect(document.querySelectorAll('.cangyuan-media-choice')).toHaveLength(1)
+    expect(document.querySelector('.cangyuan-media-heading')?.textContent).toContain('已选 1')
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(false)
+
+    element<HTMLButtonElement>('.save-button').click()
+    await flushPromises()
+    const created = post.mock.calls.find(([url]) => url === '/admin/accounts')
+    expect(created).toBeDefined()
+    expect(created![1]).toEqual(expect.objectContaining({
+      credentials: expect.objectContaining({ model_mapping: {} }),
+      extra: expect.objectContaining({
+        cangyuan_media_only: true,
+        cangyuan_media_models: { image: ['photo-model-12'], video: [] },
+      }),
+    }))
+    wrapper.unmount()
+  })
+
 })
