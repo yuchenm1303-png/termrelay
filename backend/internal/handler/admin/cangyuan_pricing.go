@@ -108,7 +108,7 @@ func fetchCangyuanPublicPricing(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fetch cangyuan public pricing: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("cangyuan public pricing returned HTTP %d", resp.StatusCode)
 	}
