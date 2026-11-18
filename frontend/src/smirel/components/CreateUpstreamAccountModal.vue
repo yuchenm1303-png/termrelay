@@ -5,6 +5,8 @@ import { api, getErrorMessage, previewMode } from '../core/api'
 type UpstreamPlatform = 'openai' | 'anthropic' | 'gemini' | 'grok'
 type UpstreamPreset = 'custom' | 'cangyuan'
 type CangyuanPricingInfo = { billing_mode: string; tiered: boolean }
+type CangyuanMediaPreview = { id: string; billing_mode: string; tiered: boolean }
+type CangyuanMediaGroups = { image: CangyuanMediaPreview[]; video: CangyuanMediaPreview[] }
 const CANGYUAN_BASE_URL = 'https://ai.cangyuansuanli.cn'
 
 interface GroupOption {
@@ -94,6 +96,8 @@ const selectedModels = ref<string[]>([])
 const modelFilter = ref('')
 const modelPricing = ref<Record<string, CangyuanPricingInfo>>({})
 const excludedModels = ref(0)
+const mediaModels = ref<CangyuanMediaGroups>({ image: [], video: [] })
+const mediaCount = computed(() => mediaModels.value.image.length + mediaModels.value.video.length)
 
 const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
 const filteredModels = computed(() => { const q = modelFilter.value.trim().toLowerCase(); return syncedModels.value.filter(m => !q || m.toLowerCase().includes(q)).slice(0, 60) })
@@ -146,6 +150,7 @@ function resetForm() {
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
 }
 
 function close() {
@@ -210,6 +215,7 @@ function onPlatformChange() {
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
   error.value = ''
   void loadGroups()
 }
@@ -228,6 +234,7 @@ function onPresetChange() {
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
   error.value = ''
 }
 
@@ -241,6 +248,7 @@ async function syncModels() {
   selectedModels.value = []
   modelPricing.value = {}
   excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
   if (!validateBaseUrl(baseUrl.value)) {
     error.value = '请输入有效的 Base URL，例如 https://api.example.com'
     return
@@ -260,7 +268,7 @@ async function syncModels() {
       syncedModels.value = [...selectedPlatform.value.previewModels]
       return
     }
-    const response = await api.post<{ models?: unknown[]; pricing?: Record<string, CangyuanPricingInfo>; filtered_count?: number }>('/admin/accounts/models/sync-upstream-preview', {
+    const response = await api.post<{ models?: unknown[]; pricing?: Record<string, CangyuanPricingInfo>; filtered_count?: number; media_models?: Partial<CangyuanMediaGroups> }>('/admin/accounts/models/sync-upstream-preview', {
       platform: platform.value,
       type: 'apikey',
       ...(isCangyuan.value ? { vendor: 'cangyuan' } : {}),
@@ -270,9 +278,14 @@ async function syncModels() {
     syncedModels.value = normalizeModels(response.data?.models)
     modelPricing.value = isCangyuan.value ? (response.data?.pricing || {}) : {}
     excludedModels.value = isCangyuan.value ? Math.max(0, Number(response.data?.filtered_count || 0)) : 0
-    if (!syncedModels.value.length) error.value = isCangyuan.value
-      ? '该密钥没有可安全接入当前对话协议的模型，或官方价格表没有匹配记录。'
-      : '连接成功，但上游没有返回可用模型。'
+    const discoveredMedia = response.data?.media_models
+    mediaModels.value = isCangyuan.value ? {
+      image: Array.isArray(discoveredMedia?.image) ? discoveredMedia.image : [],
+      video: Array.isArray(discoveredMedia?.video) ? discoveredMedia.video : [],
+    } : { image: [], video: [] }
+    if (!syncedModels.value.length) error.value = mediaCount.value
+      ? '已检测到沧元图片与视频模型。媒体渠道需要单独完成异步任务和计费适配，此处暂不允许作为普通对话账号保存。'
+      : (isCangyuan.value ? '这把密钥没有符合当前对话协议且已分类的模型。' : '连接成功，但上游没有返回可用模型。')
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -429,19 +442,19 @@ watch(
               </label>
             </div>
 
-            <div class="model-probe" :class="{ ready: syncedModels.length }">
+            <div class="model-probe" :class="{ ready: syncedModels.length || mediaCount }">
               <div class="probe-copy">
                 <span class="probe-icon">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h12M4 10h12M4 14.5h7" /></svg>
                 </span>
                 <div>
-                  <strong>{{ syncedModels.length ? `已发现 ${syncedModels.length} 个模型` : '检测上游模型' }}</strong>
-                  <small>{{ syncedModels.length ? (isCangyuan ? '检测成功；只会开放你手动勾选的模型。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
+                  <strong>{{ (syncedModels.length || mediaCount) ? `已发现 ${syncedModels.length + mediaCount} 个候选模型` : '检测上游模型' }}</strong>
+                  <small>{{ (syncedModels.length || mediaCount) ? (isCangyuan ? '已按官方价格类型区分对话、图片和视频；媒体模型暂不开放计费。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
                 </div>
               </div>
               <button type="button" :disabled="!canSync" @click="syncModels">
                 <svg :class="{ spinning: syncing }" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.2 6.1A7 7 0 1 0 17 12" /><path d="M16.3 2.9v3.6h-3.6" /></svg>
-                {{ syncing ? '检测中' : syncedModels.length ? '重新检测' : '同步模型' }}
+                {{ syncing ? '检测中' : (syncedModels.length || mediaCount) ? '重新检测' : '同步模型' }}
               </button>
             </div>
 
@@ -461,6 +474,28 @@ watch(
                 <p v-if="!filteredModels.length" class="cangyuan-no-model">没有匹配的模型</p>
               </div>
               <small>每次最多显示 60 个搜索结果。已选中 {{ tieredSelected }} 个分档价格模型，需先校验各档成本和用户售价。创建后默认暂停调度，不会自动上架。</small>
+            </div>
+
+            <div v-if="isCangyuan && mediaCount" class="cangyuan-media-preview">
+              <div class="cangyuan-media-heading">
+                <strong>图片与视频 · 检测到 {{ mediaCount }} 个</strong>
+                <small>已确认模型属于当前密钥可用范围；此处仅展示，不会自动创建收费渠道。</small>
+              </div>
+              <div class="cangyuan-media-groups">
+                <div class="cangyuan-media-group">
+                  <strong>图像生成 / 编辑 <span>{{ mediaModels.image.length }}</span></strong>
+                  <code v-for="item in mediaModels.image.slice(0, 6)" :key="item.id">{{ item.id }}<span>{{ item.tiered ? '分档' : '按次' }}</span></code>
+                  <small v-if="mediaModels.image.length > 6">另有 {{ mediaModels.image.length - 6 }} 个</small>
+                  <small v-if="!mediaModels.image.length">未发现已分类的生图模型</small>
+                </div>
+                <div class="cangyuan-media-group">
+                  <strong>视频生成 <span>{{ mediaModels.video.length }}</span></strong>
+                  <code v-for="item in mediaModels.video.slice(0, 6)" :key="item.id">{{ item.id }}<span>{{ item.tiered ? '分档' : '按次' }}</span></code>
+                  <small v-if="mediaModels.video.length > 6">另有 {{ mediaModels.video.length - 6 }} 个</small>
+                  <small v-if="!mediaModels.video.length">未发现已分类的视频模型</small>
+                </div>
+              </div>
+              <small>下一阶段接入任务提交、GET 轮询及任务成功后扣费。完成前账号不能通过这个对话预设上架媒体模型。</small>
             </div>
 
             <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
@@ -773,4 +808,16 @@ watch(
   .create-dialog-foot > div:last-child { width: 100%; }
   .cancel-button, .save-button { flex: 1; justify-content: center; }
 }
+
+.cangyuan-media-preview { border: 1px solid rgba(144, 159, 158, .24); border-radius: 16px; padding: 16px; display: grid; gap: 12px; }
+.cangyuan-media-preview small { color: var(--text-secondary, #94a3a2); line-height: 1.5; font-size: 12px; }
+.cangyuan-media-heading { display: grid; gap: 5px; }
+.cangyuan-media-heading strong { font-size: 14px; }
+.cangyuan-media-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cangyuan-media-group { min-width: 0; display: grid; align-content: start; gap: 7px; border: 1px solid rgba(144, 159, 158, .18); border-radius: 12px; padding: 12px; }
+.cangyuan-media-group > strong { font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+.cangyuan-media-group > strong span { opacity: .65; }
+.cangyuan-media-group code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; }
+.cangyuan-media-group code span { font-size: 10px; opacity: .6; }
+@media (max-width: 620px) { .cangyuan-media-groups { grid-template-columns: 1fr; } }
 </style>
