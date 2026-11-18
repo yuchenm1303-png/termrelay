@@ -35,6 +35,9 @@ func (s *CangyuanMediaJobService) ReserveIdempotent(
 	clientKey string,
 	quote CangyuanMediaPriceSnapshot,
 ) (*CangyuanMediaJob, error) {
+	if s == nil || s.Store == nil {
+		return nil, errors.New("cangyuan media job storage unavailable")
+	}
 	store, ok := s.Store.(CangyuanMediaIdempotentJobStore)
 	if !ok {
 		return nil, errors.New("cangyuan media idempotency storage is required for paid requests")
