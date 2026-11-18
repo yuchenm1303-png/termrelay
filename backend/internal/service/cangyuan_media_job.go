@@ -29,6 +29,7 @@ type CangyuanMediaJobState string
 
 const (
 	CangyuanMediaJobReserved      CangyuanMediaJobState = "reserved"
+	CangyuanMediaJobSubmitting    CangyuanMediaJobState = "submitting"
 	CangyuanMediaJobSubmitUnknown CangyuanMediaJobState = "submit_unknown"
 	CangyuanMediaJobQueued        CangyuanMediaJobState = "queued"
 	CangyuanMediaJobProcessing    CangyuanMediaJobState = "in_progress"
@@ -127,6 +128,20 @@ func (s *CangyuanMediaJobService) Get(ctx context.Context, owner CangyuanMediaJo
 	return job, nil
 }
 
+// ClaimSubmission atomically reserves the right to send the one upstream POST.
+// A concurrent worker cannot claim the same job, even across instances.
+// A crash while submitting leaves it in "submitting" instead of retrying.
+func (s *CangyuanMediaJobService) ClaimSubmission(ctx context.Context, owner CangyuanMediaJobOwner, id string) (*CangyuanMediaJob, error) {
+	job, err := s.Get(ctx, owner, id)
+	if err != nil {
+		return nil, err
+	}
+	if job.Status != CangyuanMediaJobReserved {
+		return nil, ErrCangyuanMediaJobState
+	}
+	return s.persistTransition(ctx, job, CangyuanMediaJobSubmitting, "", nil)
+}
+
 // MarkSubmissionUnknown marks a reservation after an ambiguous transport
 // failure. Without an upstream task ID, the job MUST NEVER be auto-reposted.
 func (s *CangyuanMediaJobService) MarkSubmissionUnknown(ctx context.Context, owner CangyuanMediaJobOwner, id string) (*CangyuanMediaJob, error) {
@@ -137,7 +152,7 @@ func (s *CangyuanMediaJobService) MarkSubmissionUnknown(ctx context.Context, own
 	if job.Status == CangyuanMediaJobSubmitUnknown {
 		return job, nil
 	}
-	if job.Status != CangyuanMediaJobReserved {
+	if job.Status != CangyuanMediaJobSubmitting {
 		return nil, ErrCangyuanMediaJobState
 	}
 	return s.persistTransition(ctx, job, CangyuanMediaJobSubmitUnknown, "", nil)
@@ -150,7 +165,7 @@ func (s *CangyuanMediaJobService) AttachSubmitted(ctx context.Context, owner Can
 	if err != nil {
 		return nil, err
 	}
-	if job.Status != CangyuanMediaJobReserved || task == nil {
+	if job.Status != CangyuanMediaJobSubmitting || task == nil {
 		return nil, ErrCangyuanMediaJobState
 	}
 	if !cangyuanTaskIDPattern.MatchString(task.IDValue()) || !validCangyuanMediaJobTask(job.Kind, task) {
