@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -208,6 +209,77 @@ func (s *CangyuanMediaJobService) persistTransition(ctx context.Context, origina
 		return nil, err
 	}
 	return &next, nil
+}
+
+// SubmitReserved is the isolated job coordinator. It does not expose an API
+// route, charge customers, or create a channel: those must be added only after
+// pricing and user-entitlement checks. The local reservation is CAS-claimed
+// BEFORE the upstream POST, so concurrent workers cannot double-submit.
+//
+// A non-nil upstream task is returned even when persisting its ID failed:
+// operators can reconcile the ambiguous remote job without re-posting.
+func (s *CangyuanMediaJobService) SubmitReserved(ctx context.Context, owner CangyuanMediaJobOwner, id string, client *CangyuanMediaClient, payload []byte) (*CangyuanMediaJob, *CangyuanMediaTask, error) {
+	job, err := s.Get(ctx, owner, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	if job.Status != CangyuanMediaJobReserved || client == nil {
+		return nil, nil, ErrCangyuanMediaJobState
+	}
+	var input struct {
+		Model  string `json:"model"`
+		Prompt string `json:"prompt"`
+	}
+	if json.Unmarshal(payload, &input) != nil || input.Model != job.Model || strings.TrimSpace(input.Prompt) == "" {
+		return nil, nil, errors.New("cangyuan media job payload differs from reserved model or lacks prompt")
+	}
+	var refs map[string]json.RawMessage
+	if json.Unmarshal(payload, &refs) != nil || refs == nil {
+		return nil, nil, errors.New("cangyuan media job requires a JSON object")
+	}
+	if err := validateCangyuanMediaReferences(refs); err != nil {
+		return nil, nil, err
+	}
+	if _, err := s.ClaimSubmission(ctx, owner, id); err != nil {
+		return nil, nil, err
+	}
+	task, submitErr := client.Submit(ctx, job.Kind, payload)
+	// This update must survive client cancellation. On ambiguous upstream
+	// errors, a process must not leave the record looking ready to retry.
+	storeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	if submitErr != nil {
+		_, storeErr := s.MarkSubmissionUnknown(storeCtx, owner, id)
+		if storeErr != nil {
+			return nil, nil, errors.Join(submitErr, fmt.Errorf("record ambiguous cangyuan media submission: %w", storeErr))
+		}
+		return nil, nil, submitErr
+	}
+	attached, err := s.AttachSubmitted(storeCtx, owner, id, task)
+	if err != nil {
+		return nil, task, fmt.Errorf("upstream accepted job but task ID could not be persisted: %w", err)
+	}
+	return attached, task, nil
+}
+
+// PollJob reconciles an existing upstream GET with the private Redis state.
+// No request is sent for locally terminal or ambiguous-submission states.
+func (s *CangyuanMediaJobService) PollJob(ctx context.Context, owner CangyuanMediaJobOwner, id string, client *CangyuanMediaClient) (*CangyuanMediaJob, error) {
+	job, err := s.Get(ctx, owner, id)
+	if err != nil {
+		return nil, err
+	}
+	if job.Status == CangyuanMediaJobCompleted || job.Status == CangyuanMediaJobFailed {
+		return job, nil
+	}
+	if (job.Status != CangyuanMediaJobQueued && job.Status != CangyuanMediaJobProcessing) || client == nil {
+		return nil, ErrCangyuanMediaJobState
+	}
+	task, err := client.Poll(ctx, job.Kind, job.UpstreamTaskID)
+	if err != nil {
+		return nil, err
+	}
+	return s.Observe(ctx, owner, id, task)
 }
 
 func validCangyuanMediaJobTask(kind CangyuanMediaKind, task *CangyuanMediaTask) bool {
