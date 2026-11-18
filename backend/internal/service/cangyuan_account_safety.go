@@ -77,6 +77,47 @@ func validateCangyuanMediaOnlyModels(account *Account) error {
 	return nil
 }
 
+// AllowsCangyuanMediaModel is a dedicated media-only allowlist. It must never
+// be used as permission to schedule an OpenAI chat/image passthrough request.
+// Future media POST handlers must also enforce group entitlement, approved
+// prices, account status and balance reservation before invoking the client.
+func (account *Account) AllowsCangyuanMediaModel(kind CangyuanMediaKind, model string) bool {
+	if !isCangyuanMediaOnlyAccount(account) || strings.TrimSpace(model) != model || model == "" {
+		return false
+	}
+	if err := validateCangyuanAccount(account); err != nil {
+		return false
+	}
+	capability := ""
+	switch kind {
+	case CangyuanImageGeneration, CangyuanImageEdit:
+		capability = "image"
+	case CangyuanVideoGeneration:
+		capability = "video"
+	default:
+		return false
+	}
+	lists, ok := account.Extra["cangyuan_media_models"].(map[string]any)
+	if !ok {
+		return false
+	}
+	switch items := lists[capability].(type) {
+	case []string:
+		for _, candidate := range items {
+			if candidate == model {
+				return true
+			}
+		}
+	case []any:
+		for _, raw := range items {
+			if candidate, ok := raw.(string); ok && candidate == model {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // validateCangyuanAccount prevents accidentally exposing image/video/async
 // products through the generic chat relay. These safeguards are enforced on
 // the server in addition to the admin form, which can be bypassed by API calls.
