@@ -94,12 +94,21 @@ const error = ref('')
 const syncedModels = ref<string[]>([])
 const selectedModels = ref<string[]>([])
 const selectedMediaModels = ref<string[]>([])
+const mediaModelFilter = ref('')
 const modelFilter = ref('')
 const modelPricing = ref<Record<string, CangyuanPricingInfo>>({})
 const excludedModels = ref(0)
 const mediaModels = ref<CangyuanMediaGroups>({ image: [], video: [] })
 const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
 const mediaCount = computed(() => mediaModels.value.image.length + mediaModels.value.video.length)
+const filteredMediaImages = computed(() => {
+  const query = mediaModelFilter.value.trim().toLowerCase()
+  return mediaModels.value.image.filter(item => !query || item.id.toLowerCase().includes(query))
+})
+const filteredMediaVideos = computed(() => {
+  const query = mediaModelFilter.value.trim().toLowerCase()
+  return mediaModels.value.video.filter(item => !query || item.id.toLowerCase().includes(query))
+})
 const selectedMediaImages = computed(() => mediaModels.value.image.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
 const selectedMediaVideos = computed(() => mediaModels.value.video.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
 const isMediaOnly = computed(() => isCangyuan.value && selectedMediaModels.value.length > 0)
@@ -158,6 +167,7 @@ function resetForm() {
   syncedModels.value = []
   selectedModels.value = []
   selectedMediaModels.value = []
+  mediaModelFilter.value = ''
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -224,6 +234,7 @@ function onPlatformChange() {
   syncedModels.value = []
   selectedModels.value = []
   selectedMediaModels.value = []
+  mediaModelFilter.value = ''
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -244,6 +255,7 @@ function onPresetChange() {
   syncedModels.value = []
   selectedModels.value = []
   selectedMediaModels.value = []
+  mediaModelFilter.value = ''
   modelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
@@ -277,6 +289,7 @@ async function syncModels() {
   syncedModels.value = []
   selectedModels.value = []
   selectedMediaModels.value = []
+  mediaModelFilter.value = ''
   modelPricing.value = {}
   excludedModels.value = 0
   mediaModels.value = { image: [], video: [] }
@@ -513,29 +526,28 @@ watch(
                 <strong>图片与视频 · 已选 {{ selectedMediaModels.length }} / {{ mediaCount }}</strong>
                 <small>可单独创建图片/视频上游测试账号，默认暂停调度，未配置售价前不会提供生成或收费。选择媒体模型时会取消对话模型的选择。</small>
               </div>
+              <input v-model="mediaModelFilter" class="cangyuan-media-search" type="search" placeholder="搜索所有图片 / 视频模型 ID" autocomplete="off" aria-label="搜索沧元媒体模型" />
               <div class="cangyuan-media-groups">
                 <div class="cangyuan-media-group">
                   <strong>图像生成 / 编辑 <span>{{ mediaModels.image.length }}</span></strong>
-                  <label v-for="item in mediaModels.image.slice(0, 6)" :key="item.id" class="cangyuan-media-choice">
+                  <label v-for="item in filteredMediaImages" :key="item.id" class="cangyuan-media-choice">
                     <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
                     <code>{{ item.id }}</code>
                     <span>{{ item.tiered ? '分档' : '按次' }}</span>
                   </label>
-                  <small v-if="mediaModels.image.length > 6">另有 {{ mediaModels.image.length - 6 }} 个</small>
-                  <small v-if="!mediaModels.image.length">未发现已分类的生图模型</small>
+                  <small v-if="!filteredMediaImages.length">没有匹配的图片模型</small>
                 </div>
                 <div class="cangyuan-media-group">
                   <strong>视频生成 <span>{{ mediaModels.video.length }}</span></strong>
-                  <label v-for="item in mediaModels.video.slice(0, 6)" :key="item.id" class="cangyuan-media-choice">
+                  <label v-for="item in filteredMediaVideos" :key="item.id" class="cangyuan-media-choice">
                     <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
                     <code>{{ item.id }}</code>
                     <span>{{ item.tiered ? '分档' : '按次' }}</span>
                   </label>
-                  <small v-if="mediaModels.video.length > 6">另有 {{ mediaModels.video.length - 6 }} 个</small>
-                  <small v-if="!mediaModels.video.length">未发现已分类的视频模型</small>
+                  <small v-if="!filteredMediaVideos.length">没有匹配的视频模型</small>
                 </div>
               </div>
-              <small>已选择媒体模型可以保存为独立的非调度账号；正式生成仍须接通任务提交、上游轮询和成功结算。不会自动上架。</small>
+              <small>显示匹配的图片 {{ filteredMediaImages.length }} 个、视频 {{ filteredMediaVideos.length }} 个；搜索不影响已选 {{ selectedMediaModels.length }} 个模型。账号保存后仍暂停调度，未核价前不会上架。</small>
             </div>
 
             <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
@@ -862,4 +874,8 @@ watch(
 .cangyuan-media-choice code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .cangyuan-media-choice span { flex-shrink: 0; font-size: 10px; opacity: .6; }
 @media (max-width: 620px) { .cangyuan-media-groups { grid-template-columns: 1fr; } }
+
+.cangyuan-media-search { width: 100%; min-width: 0; padding: 11px 13px; border: 1px solid rgba(144, 159, 158, .24); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 12px; outline-offset: 2px; }
+.cangyuan-media-group { max-height: 300px; overflow-y: auto; }
+.cangyuan-media-choice { flex-shrink: 0; }
 </style>
