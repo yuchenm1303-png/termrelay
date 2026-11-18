@@ -11,9 +11,17 @@ import (
 // isCangyuanAccount keeps New API vendor-specific guardrails scoped to the
 // explicit admin preset. Ordinary OpenAI-compatible accounts are unaffected.
 func isCangyuanAccount(account *Account) bool {
-	return account != nil && strings.EqualFold(
-		strings.TrimSpace(account.GetExtraString("upstream_vendor")), "cangyuan",
-	)
+	if account == nil {
+		return false
+	}
+	if strings.EqualFold(strings.TrimSpace(account.GetExtraString("upstream_vendor")), "cangyuan") {
+		return true
+	}
+	// The official upstream URL is an independent safety signal. Deleting the
+	// vendor flag via an extra-only/bulk update must never silently turn a
+	// paused, allowlisted relay into unrestricted OpenAI passthrough.
+	base, err := url.Parse(strings.TrimSpace(account.GetCredential("base_url")))
+	return err == nil && strings.EqualFold(base.Hostname(), "ai.cangyuansuanli.cn")
 }
 
 // isCangyuanMediaOnlyAccount separates staged image/video accounts from
