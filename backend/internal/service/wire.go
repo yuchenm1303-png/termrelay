@@ -557,6 +557,12 @@ func ProvideCangyuanMediaJobService(store CangyuanMediaJobStore) *CangyuanMediaJ
 	return &CangyuanMediaJobService{Store: store}
 }
 
+// ProvideCangyuanMediaPriceRegistry uses the persistent admin settings DB.
+// No user-facing media endpoint may accept client-supplied approved pricing.
+func ProvideCangyuanMediaPriceRegistry(settings SettingRepository) *CangyuanMediaPriceRegistry {
+	return NewCangyuanMediaPriceRegistry(settings)
+}
+
 // ProvideBackupService creates and starts BackupService
 func ProvideBackupService(
 	settingRepo SettingRepository,
@@ -705,6 +711,7 @@ var ProviderSet = wire.NewSet(
 	ProvideImageStorageSettingService,
 	ProvideImageTaskService,
 	ProvideCangyuanMediaJobService,
+	ProvideCangyuanMediaPriceRegistry,
 	ProvideBatchImageModelPricingResolver,
 	NewBatchImagePublicService,
 	NewBatchImageDownloadService,
