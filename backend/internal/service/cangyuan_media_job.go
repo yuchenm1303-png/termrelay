@@ -42,21 +42,21 @@ const (
 // source media and arbitrary HTTP responses are deliberately not stored here.
 // BillingState remains "disabled" until a separate atomic ledger exists.
 type CangyuanMediaJob struct {
-	ID             string                `json:"id"`
-	UserID         int64                 `json:"user_id"`
-	APIKeyID       int64                 `json:"api_key_id"`
-	AccountID      int64                 `json:"account_id"`
-	Kind           CangyuanMediaKind     `json:"kind"`
-	Model          string                `json:"model"`
-	UpstreamTaskID string                `json:"upstream_task_id,omitempty"`
-	Status         CangyuanMediaJobState `json:"status"`
-	ResultURLs     []string              `json:"result_urls,omitempty"`
-	BillingState   string                `json:"billing_state"`
-	PriceSnapshot *CangyuanMediaPriceSnapshot `json:"price_snapshot,omitempty"`
-	Version        int64                 `json:"version"`
-	CreatedAt      int64                 `json:"created_at"`
-	UpdatedAt      int64                 `json:"updated_at"`
-	ExpiresAt      int64                 `json:"expires_at"`
+	ID             string                      `json:"id"`
+	UserID         int64                       `json:"user_id"`
+	APIKeyID       int64                       `json:"api_key_id"`
+	AccountID      int64                       `json:"account_id"`
+	Kind           CangyuanMediaKind           `json:"kind"`
+	Model          string                      `json:"model"`
+	UpstreamTaskID string                      `json:"upstream_task_id,omitempty"`
+	Status         CangyuanMediaJobState       `json:"status"`
+	ResultURLs     []string                    `json:"result_urls,omitempty"`
+	BillingState   string                      `json:"billing_state"`
+	PriceSnapshot  *CangyuanMediaPriceSnapshot `json:"price_snapshot,omitempty"`
+	Version        int64                       `json:"version"`
+	CreatedAt      int64                       `json:"created_at"`
+	UpdatedAt      int64                       `json:"updated_at"`
+	ExpiresAt      int64                       `json:"expires_at"`
 }
 
 // CangyuanMediaJobStore MUST atomically enforce uniqueness and version CAS,
@@ -104,19 +104,19 @@ func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMed
 	}
 	now := time.Now().UTC()
 	job := &CangyuanMediaJob{
-		ID:           "cyjob_" + strings.ReplaceAll(uuid.NewString(), "-", ""),
-		UserID:       owner.UserID,
-		APIKeyID:     owner.APIKeyID,
-		AccountID:    accountID,
-		Kind:         kind,
-		Model:        strings.TrimSpace(model),
-		Status:       CangyuanMediaJobReserved,
-		BillingState: billingState,
+		ID:            "cyjob_" + strings.ReplaceAll(uuid.NewString(), "-", ""),
+		UserID:        owner.UserID,
+		APIKeyID:      owner.APIKeyID,
+		AccountID:     accountID,
+		Kind:          kind,
+		Model:         strings.TrimSpace(model),
+		Status:        CangyuanMediaJobReserved,
+		BillingState:  billingState,
 		PriceSnapshot: snapshot,
-		Version:      1,
-		CreatedAt:    now.Unix(),
-		UpdatedAt:    now.Unix(),
-		ExpiresAt:    now.Add(ttl).Unix(),
+		Version:       1,
+		CreatedAt:     now.Unix(),
+		UpdatedAt:     now.Unix(),
+		ExpiresAt:     now.Add(ttl).Unix(),
 	}
 	if err := s.Store.Create(ctx, job, ttl); err != nil {
 		return nil, fmt.Errorf("reserve cangyuan media job: %w", err)
