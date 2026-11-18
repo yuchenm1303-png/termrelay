@@ -193,17 +193,17 @@ func TestCangyuanMediaSettlementRefusesUnpricedFailedOrTamperedOutput(t *testing
 func TestCangyuanMediaReservationRequiresExplicitApprovedPrice(t *testing.T) {
 	svc, owner, _ := cangyuanSettlementFixture(t, false)
 	quote := service.CangyuanMediaPriceSnapshot{
-		PricingVersion: "admin-reviewed-v1",
-		Currency: "USD",
-		Tier: "default",
-		Units: 1,
-		UnitSalePriceUSD: "1.23",
+		PricingVersion:      "admin-reviewed-v1",
+		Currency:            "USD",
+		Tier:                "default",
+		Units:               1,
+		UnitSalePriceUSD:    "1.23",
 		UnitProviderCostUSD: "0.67",
-		VerifiedByAdmin: true,
+		VerifiedByAdmin:     true,
 	}
 	ctx := context.Background()
-	cases := []struct{
-		name string
+	cases := []struct {
+		name   string
 		mutate func(*service.CangyuanMediaPriceSnapshot)
 	}{
 		{"unverified", func(q *service.CangyuanMediaPriceSnapshot) { q.VerifiedByAdmin = false }},
@@ -219,7 +219,7 @@ func TestCangyuanMediaReservationRequiresExplicitApprovedPrice(t *testing.T) {
 		{"too many units", func(q *service.CangyuanMediaPriceSnapshot) { q.Units = 17 }},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T){
+		t.Run(tc.name, func(t *testing.T) {
 			bad := quote
 			tc.mutate(&bad)
 			_, err := svc.Reserve(ctx, owner, 2, service.CangyuanImageGeneration, "image-approved", bad)
@@ -227,13 +227,13 @@ func TestCangyuanMediaReservationRequiresExplicitApprovedPrice(t *testing.T) {
 		})
 	}
 	_, err := svc.Reserve(ctx, owner, 2, service.CangyuanVideoGeneration, "video-approved", service.CangyuanMediaPriceSnapshot{
-		PricingVersion: "admin-reviewed-v1",
-		Currency: "USD",
-		Tier: "720p-5s",
-		Units: 2,
-		UnitSalePriceUSD: "1.23",
+		PricingVersion:      "admin-reviewed-v1",
+		Currency:            "USD",
+		Tier:                "720p-5s",
+		Units:               2,
+		UnitSalePriceUSD:    "1.23",
 		UnitProviderCostUSD: "0.67",
-		VerifiedByAdmin: true,
+		VerifiedByAdmin:     true,
 	})
 	require.Error(t, err, "one video job cannot be billed as two outputs")
 }
