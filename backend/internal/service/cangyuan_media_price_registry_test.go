@@ -153,7 +153,8 @@ func TestCangyuanMediaPriceRegistryRejectsDuplicateEnabledTierAndBadCatalog(t *t
 	bad.Kind = CangyuanImageGeneration
 	require.Error(t, registry.Put(ctx, bad), "image prices must specify n")
 
-	settings := registry.Settings.(*cangyuanPriceSettingsFixture)
+	settings, ok := registry.Settings.(*cangyuanPriceSettingsFixture)
+	require.True(t, ok)
 	settings.values["cangyuan_media_price_v1:malformed"] = "not JSON"
 	_, err = registry.Quote(ctx, CangyuanVideoGeneration, "video-model",
 		[]byte(`{"model":"video-model","prompt":"sunrise","resolution":"720p","duration":5}`))
