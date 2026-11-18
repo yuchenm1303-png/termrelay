@@ -140,3 +140,88 @@ func TestCangyuanAccountCreationStartsUnschedulable(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, account.Schedulable, "existing providers retain their normal defaults")
 }
+
+func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
+	t.Parallel()
+
+	media := func() *Account {
+		return &Account{
+			Platform: PlatformOpenAI,
+			Type:     AccountTypeAPIKey,
+			Credentials: map[string]any{
+				"api_key": "fixture-only",
+				"base_url": "https://ai.cangyuansuanli.cn",
+				"model_mapping": map[string]any{},
+			},
+			Extra: map[string]any{
+				"upstream_vendor": "cangyuan",
+				"cangyuan_media_only": true,
+				"cangyuan_media_models": map[string]any{
+					"image": []any{"image-model"},
+					"video": []any{"video-model"},
+				},
+				"openai_passthrough": false,
+				"openai_responses_mode": "force_chat_completions",
+			},
+		}
+	}
+
+	approved := media()
+	require.NoError(t, validateCangyuanAccount(approved))
+	require.True(t, isCangyuanMediaOnlyAccount(approved))
+	for _, model := range []string{"image-model", "video-model", "arbitrary-chat", "gpt-5.6"} {
+		require.False(t, approved.IsModelSupported(model), "media-only accounts must never enter chat scheduling")
+	}
+	require.False(t, approved.IsOpenAIPassthroughEnabled())
+	require.False(t, approved.SupportsOpenAIImageCapability(OpenAIImagesCapabilityBasic))
+	require.False(t, approved.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
+
+	input := &CreateAccountInput{
+		Name: "Staging media-only",
+		Platform: PlatformOpenAI,
+		Type: AccountTypeAPIKey,
+		Credentials: approved.Credentials,
+	}
+	created, err := buildAccountForCreate(input, approved.Extra)
+	require.NoError(t, err)
+	require.False(t, created.Schedulable, "unpriced media-only accounts cannot receive live traffic")
+	require.False(t, created.IsModelSupported("image-model"))
+
+	t.Run("no approved media", func(t *testing.T) {
+		a := media()
+		a.Extra["cangyuan_media_models"] = map[string]any{"image": []any{}, "video": []any{}}
+		require.ErrorContains(t, validateCangyuanAccount(a), "at least one model")
+	})
+	t.Run("media wildcard", func(t *testing.T) {
+		a := media()
+		a.Extra["cangyuan_media_models"] = map[string]any{"image": []any{"image-*"}}
+		require.ErrorContains(t, validateCangyuanAccount(a), "non-wildcard")
+	})
+	t.Run("mixed chat and media", func(t *testing.T) {
+		a := media()
+		a.Credentials["model_mapping"] = map[string]any{"chat": "chat"}
+		require.ErrorContains(t, validateCangyuanAccount(a), "cannot advertise chat models")
+		require.False(t, a.IsModelSupported("chat"))
+	})
+	t.Run("unsupported endpoint", func(t *testing.T) {
+		a := media()
+		a.Extra["cangyuan_media_models"] = map[string]any{"music": []any{"music-model"}}
+		require.ErrorContains(t, validateCangyuanAccount(a), "unsupported capability")
+	})
+	t.Run("invalid media-only flag type", func(t *testing.T) {
+		a := media()
+		a.Extra["cangyuan_media_only"] = "true"
+		require.ErrorContains(t, validateCangyuanAccount(a), "boolean")
+	})
+	t.Run("missing metadata", func(t *testing.T) {
+		a := media()
+		delete(a.Extra, "cangyuan_media_models")
+		require.ErrorContains(t, validateCangyuanAccount(a), "explicit image/video")
+	})
+	t.Run("ordinary chat cannot carry undeclared media", func(t *testing.T) {
+		a := media()
+		delete(a.Extra, "cangyuan_media_only")
+		a.Credentials["model_mapping"] = map[string]any{"chat": "chat"}
+		require.ErrorContains(t, validateCangyuanAccount(a), "cannot mix")
+	})
+}
