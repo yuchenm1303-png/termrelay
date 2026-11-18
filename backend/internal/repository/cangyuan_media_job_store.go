@@ -88,9 +88,23 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 			current.ID != job.ID || current.UserID != job.UserID ||
 			current.APIKeyID != job.APIKeyID || current.AccountID != job.AccountID ||
 			current.Kind != job.Kind || current.Model != job.Model ||
-			current.BillingState != "disabled" || job.BillingState != "disabled" ||
 			current.CreatedAt != job.CreatedAt || current.ExpiresAt != job.ExpiresAt {
 			return service.ErrCangyuanMediaJobConflict
+		}
+		// A quote is fixed at reservation time. Neither a concurrent worker
+		// nor the settlement path may change its unit amount or pricing tier.
+		if (current.PriceSnapshot == nil) != (job.PriceSnapshot == nil) {
+			return service.ErrCangyuanMediaJobConflict
+		}
+		if current.PriceSnapshot != nil && *current.PriceSnapshot != *job.PriceSnapshot {
+			return service.ErrCangyuanMediaJobConflict
+		}
+		if current.BillingState != job.BillingState {
+			if !(current.BillingState == "pending" && job.BillingState == "settled" &&
+				current.Status == service.CangyuanMediaJobCompleted && job.Status == service.CangyuanMediaJobCompleted &&
+				current.PriceSnapshot != nil) {
+				return service.ErrCangyuanMediaJobConflict
+			}
 		}
 		_, err := tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			// Retain TTL; polling must not extend job lifetime indefinitely.
