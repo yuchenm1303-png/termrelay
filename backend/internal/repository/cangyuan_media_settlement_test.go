@@ -237,3 +237,27 @@ func TestCangyuanMediaReservationRequiresExplicitApprovedPrice(t *testing.T) {
 	})
 	require.Error(t, err, "one video job cannot be billed as two outputs")
 }
+
+func TestCangyuanMediaSettlementRejectsPriceTamperingInRedis(t *testing.T) {
+	svc, owner, id := cangyuanSettlementFixture(t, true)
+	ctx := context.Background()
+	job, err := svc.Get(ctx, owner, id)
+	require.NoError(t, err)
+	require.NotNil(t, job.PriceSnapshot)
+
+	altered := *job
+	copiedQuote := *job.PriceSnapshot
+	copiedQuote.UnitSalePriceUSD = "0.000001"
+	altered.PriceSnapshot = &copiedQuote
+	altered.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &altered, job.Version), service.ErrCangyuanMediaJobConflict)
+
+	altered = *job
+	altered.PriceSnapshot = nil
+	altered.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &altered, job.Version), service.ErrCangyuanMediaJobConflict)
+
+	updated, err := svc.Get(ctx, owner, id)
+	require.NoError(t, err)
+	require.Equal(t, "0.15", updated.PriceSnapshot.UnitSalePriceUSD)
+}
