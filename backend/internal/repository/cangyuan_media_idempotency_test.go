@@ -115,3 +115,20 @@ func TestCangyuanMediaIdempotencyValidatesKeyAndExpiresTogether(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, first.ID, next.ID, "dedup lifespan is bounded by the retention TTL")
 }
+
+func TestCangyuanMediaPaidImageReservationRejectsUnderquotedOutputs(t *testing.T) {
+	svc, mr := newCangyuanMediaJobTestService(t)
+	owner := service.CangyuanMediaJobOwner{UserID: 83, APIKeyID: 91}
+	quote := cangyuanIdempotencyQuote()
+	quote.Tier = "standard"
+	raw := []byte(`{"model":"image-model","prompt":"three cats","n":3}`)
+	_, err := svc.ReserveIdempotent(context.Background(), owner, 61, service.CangyuanImageGeneration, "image-model", raw, "request-3-images", quote)
+	require.ErrorContains(t, err, "does not match approved price")
+	require.Empty(t, mr.Keys(), "a mispriced request must not reserve a paid task")
+
+	quote.Units = 3
+	job, err := svc.ReserveIdempotent(context.Background(), owner, 61, service.CangyuanImageGeneration, "image-model", raw, "request-3-images", quote)
+	require.NoError(t, err)
+	require.Equal(t, "pending", job.BillingState)
+	require.Equal(t, 3, job.PriceSnapshot.Units)
+}
