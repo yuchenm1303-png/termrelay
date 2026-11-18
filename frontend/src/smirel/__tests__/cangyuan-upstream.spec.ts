@@ -112,4 +112,49 @@ describe('Cangyuan New API setup', () => {
     }))
     wrapper.unmount()
   })
+  it('reports media models separately without enabling a media-only account', async () => {
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return {
+          data: {
+            models: [],
+            filtered_count: 2,
+            media_models: {
+              image: [{ id: 'photo-model', billing_mode: 'tiered_expr', tiered: true }],
+              video: [{ id: 'video-model', billing_mode: 'per_request', tiered: false }],
+            },
+          },
+        } as never
+      }
+      return { data: { id: 14 } } as never
+    })
+    const wrapper = mount(CreateUpstreamAccountModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find((select) => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+
+    const key = element<HTMLInputElement>('.secret-input input')
+    change(key, 'safe-test-only-key')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    const preview = element<HTMLElement>('.cangyuan-media-preview')
+    expect(preview.textContent).toContain('photo-model')
+    expect(preview.textContent).toContain('video-model')
+    expect(preview.textContent).toContain('分档')
+    expect(preview.textContent).toContain('按次')
+    expect(document.querySelectorAll('.cangyuan-model')).toHaveLength(0)
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+
+    change(key, 'a-different-key')
+    await nextTick()
+    expect(document.querySelector('.cangyuan-media-preview')).toBeNull()
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+    expect(post.mock.calls.filter(([url]) => url === '/admin/accounts')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
 })
