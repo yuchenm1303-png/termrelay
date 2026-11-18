@@ -154,3 +154,47 @@
 
 **提示**：媒体模型列表目前是账号级的待核验授权快照，不代表已经完成定价或生成验证。生产前仍需独立核对档位和真实任务的计费结果。
 
+
+## 后台审核售价规则（新增管理 API，仍不开放用户付费生成）
+
+管理端已接入审核后的独立媒体售价规则注册表，使用现有站点数据库 `settings` 存储；不使用沧元返回的价格表达式作为本站销售定价。
+
+- `GET /api/v1/admin/cangyuan-media/prices`：查询所有媒体价格档位，需管理员身份。
+- `PUT /api/v1/admin/cangyuan-media/prices/{rule-id}`：新增或修改审核规则，需管理员身份和 **step-up 2FA**。
+- `DELETE /api/v1/admin/cangyuan-media/prices/{rule-id}`：删除规则，需管理员身份和 **step-up 2FA**。
+- 所有接口走现有后台审计；价格数据不通过用户公开端点编辑。
+- 后端只接受精确模型 ID、媒体能力、请求选项和 USD 售价/上游成本；数据库存储的报价由受保护的管理员接口设为 `verified_by_admin=true`。
+- 用户任务的 `ReserveWithApprovedPricing` 从该规则库匹配报价，绝不接受用户提交的销售价格或 `verified_by_admin` 作为授权。
+- **不支持自动猜价格**：尺寸、分辨率、时长、生成张数和其他请求选项必须与一个已启用的规则完全匹配；未知参数或两条重复规则同时匹配都会拒绝。参考图/视频的具体 URL 不存进价格表，但其数量/是否存在参与匹配。
+
+以下只是**字段示例**，数字为示意值，**并非沧元官方报价，也不应直接用于上线**：
+
+```http
+PUT /api/v1/admin/cangyuan-media/prices/video-720p-5s
+Content-Type: application/json
+```
+
+```json
+{
+  "id": "video-720p-5s",
+  "model": "YOUR_VERIFIED_VIDEO_MODEL_ID",
+  "kind": "video_generation",
+  "options": {
+    "duration": 5,
+    "resolution": "720p"
+  },
+  "snapshot": {
+    "pricing_version": "manually-reviewed-v1",
+    "currency": "USD",
+    "tier": "720p-5s",
+    "units": 1,
+    "unit_sale_price_usd": "2.50",
+    "unit_provider_cost_usd": "1.25"
+  },
+  "enabled": false
+}
+```
+
+建议**先保存 `enabled:false`**，核实上游账单、每种视频长度/分辨率和自己的销售金额后，再启用相应档位。后续仍需给管理员添加可视化价格管理界面。
+
+**重要**：价格规则、任务预留和幂等结算是内部基础组件。尚未集成公开的图片/视频 **POST**，也未将分组权限、余额预留、失败退款、日志和真实模型价格联动，因此目前**不能对外提供付费生成**，也不应开启生产用户路由。
