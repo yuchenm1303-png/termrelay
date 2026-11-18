@@ -37,11 +37,16 @@ func TestCangyuanMediaJobStoreOwnershipAndDurableStatus(t *testing.T) {
 	_, err = svc.Get(ctx, service.CangyuanMediaJobOwner{UserID: 18, APIKeyID: 17}, job.ID)
 	require.ErrorIs(t, err, service.ErrCangyuanMediaJobNotFound)
 
+	claimed, err := svc.ClaimSubmission(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobSubmitting, claimed.Status)
+	_, err = svc.ClaimSubmission(ctx, owner, job.ID)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
 	attached, err := svc.AttachSubmitted(ctx, owner, job.ID, &service.CangyuanMediaTask{TaskID: "remote_task_123", Status: "queued"})
 	require.NoError(t, err)
 	require.Equal(t, service.CangyuanMediaJobQueued, attached.Status)
 	require.Equal(t, "remote_task_123", attached.UpstreamTaskID)
-	require.Equal(t, int64(2), attached.Version)
+	require.Equal(t, int64(3), attached.Version)
 	require.Equal(t, 48*time.Hour, mr.TTL(cangyuanMediaJobKeyPrefix+job.ID), "polling must not refresh TTL")
 
 	_, err = svc.Observe(ctx, owner, job.ID, &service.CangyuanMediaTask{ID: "someone_elses_task", Status: "completed"})
@@ -108,6 +113,10 @@ func TestCangyuanMediaJobStoreUncertainSubmitAndExpiry(t *testing.T) {
 	ctx := context.Background()
 	owner := service.CangyuanMediaJobOwner{UserID: 7, APIKeyID: 8}
 	job, err := svc.Reserve(ctx, owner, 6, service.CangyuanVideoGeneration, "video-model")
+	require.NoError(t, err)
+	_, err = svc.MarkSubmissionUnknown(ctx, owner, job.ID)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
+	_, err = svc.ClaimSubmission(ctx, owner, job.ID)
 	require.NoError(t, err)
 	unknown, err := svc.MarkSubmissionUnknown(ctx, owner, job.ID)
 	require.NoError(t, err)
