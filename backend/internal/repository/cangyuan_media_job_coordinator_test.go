@@ -1,0 +1,124 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"io"
+	"net/http"
+	"strings"
+	"sync/atomic"
+	"testing"
+
+	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/stretchr/testify/require"
+)
+
+type cangyuanCoordinatorTransport func(*http.Request) (*http.Response, error)
+
+func (f cangyuanCoordinatorTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+func cangyuanCoordinatorResponse(payload string) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     make(http.Header),
+		Body:       io.NopCloser(strings.NewReader(payload)),
+	}
+}
+
+func TestCangyuanMediaCoordinatorSubmitsExactlyOnceAndPollsDurably(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 17, APIKeyID: 29}
+	job, err := svc.Reserve(ctx, owner, 23, service.CangyuanVideoGeneration, "video-model")
+	require.NoError(t, err)
+
+	var submitted, polled atomic.Int32
+	client := &service.CangyuanMediaClient{
+		APIKey: "fixture-only",
+		HTTP: &http.Client{Transport: cangyuanCoordinatorTransport(func(req *http.Request) (*http.Response, error) {
+			require.Equal(t, "Bearer fixture-only", req.Header.Get("Authorization"))
+			switch req.Method {
+			case http.MethodPost:
+				submitted.Add(1)
+				require.Equal(t, "/v1/videos", req.URL.Path)
+				return cangyuanCoordinatorResponse(`{"id":"remote_video_9","status":"queued"}`), nil
+			case http.MethodGet:
+				polled.Add(1)
+				require.Equal(t, "/v1/videos/remote_video_9", req.URL.Path)
+				return cangyuanCoordinatorResponse(`{"id":"remote_video_9","status":"completed","video_url":"https://cdn.example.com/video.mp4"}`), nil
+			default:
+				t.Fatalf("unexpected request %s", req.Method)
+				return nil, errors.New("unexpected request")
+			}
+		})},
+	}
+	payload := []byte(`{"model":"video-model","prompt":"a night skyline","duration":5}`)
+	stored, upstream, err := svc.SubmitReserved(ctx, owner, job.ID, client, payload)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobQueued, stored.Status)
+	require.Equal(t, "remote_video_9", upstream.IDValue())
+	require.Equal(t, int32(1), submitted.Load())
+
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, payload)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
+	require.Equal(t, int32(1), submitted.Load(), "duplicate submit must never reach upstream")
+
+	done, err := svc.PollJob(ctx, owner, job.ID, client)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobCompleted, done.Status)
+	require.Equal(t, []string{"https://cdn.example.com/video.mp4"}, done.ResultURLs)
+	require.Equal(t, "disabled", done.BillingState)
+	require.Equal(t, int32(1), polled.Load())
+
+	again, err := svc.PollJob(ctx, owner, job.ID, client)
+	require.NoError(t, err)
+	require.Equal(t, done.Version, again.Version)
+	require.Equal(t, int32(1), polled.Load(), "terminal jobs must not be polled or billed again")
+}
+
+func TestCangyuanMediaCoordinatorTransportUnknownNeverRetries(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 12, APIKeyID: 15}
+	job, err := svc.Reserve(ctx, owner, 42, service.CangyuanImageGeneration, "image-model")
+	require.NoError(t, err)
+	var posts atomic.Int32
+	client := &service.CangyuanMediaClient{
+		APIKey: "fixture-only",
+		HTTP: &http.Client{Transport: cangyuanCoordinatorTransport(func(_ *http.Request) (*http.Response, error) {
+			posts.Add(1)
+			return nil, errors.New("upstream may have accepted the POST")
+		})},
+	}
+
+	payload := []byte(`{"model":"image-model","prompt":"blue sky"}`)
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, payload)
+	require.Error(t, err)
+	require.Equal(t, int32(1), posts.Load())
+	unknown, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobSubmitUnknown, unknown.Status)
+	require.Empty(t, unknown.UpstreamTaskID)
+
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, payload)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
+	_, err = svc.PollJob(ctx, owner, job.ID, client)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
+	require.Equal(t, int32(1), posts.Load(), "unknown remote task must never be re-submitted")
+}
+
+func TestCangyuanMediaCoordinatorValidatesModelBeforeClaim(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 2, APIKeyID: 3}
+	job, err := svc.Reserve(ctx, owner, 4, service.CangyuanImageGeneration, "approved-model")
+	require.NoError(t, err)
+	client := &service.CangyuanMediaClient{APIKey: "fixture-only"}
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, []byte(`{"model":"different-model","prompt":"cat"}`))
+	require.Error(t, err)
+	stored, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status, "bad request must not consume a paid submission")
+}
