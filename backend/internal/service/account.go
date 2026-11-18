@@ -795,6 +795,9 @@ func (a *Account) IsModelSupported(requestedModel string) bool {
 	// paths, including bulk or extra-only changes. Never allow an empty or
 	// wildcard mapping to expose unverified media models as chat models.
 	if isCangyuanAccount(a) {
+		if isCangyuanMediaOnlyAccount(a) {
+			return false // media models are never eligible for chat scheduling
+		}
 		mapping := a.GetModelMapping()
 		mapped, exists := mapping[requestedModel]
 		return exists && strings.TrimSpace(mapped) != "" && !strings.ContainsAny(requestedModel, "*?") && !strings.ContainsAny(mapped, "*?")
