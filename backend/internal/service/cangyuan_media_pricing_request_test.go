@@ -10,10 +10,10 @@ import (
 func TestCangyuanMediaPaidRequestQuantityMustMatchFrozenPrice(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name string
-		kind CangyuanMediaKind
-		quantity int
-		payload string
+		name      string
+		kind      CangyuanMediaKind
+		quantity  int
+		payload   string
 		wantError bool
 	}{
 		{"default image one", CangyuanImageGeneration, 1, `{"model":"image","prompt":"cat"}`, false},
