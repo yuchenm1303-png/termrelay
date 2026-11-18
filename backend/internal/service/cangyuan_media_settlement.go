@@ -70,19 +70,19 @@ func (s *CangyuanMediaJobService) SettleCompleted(
 		imageCount = 0
 	}
 	command := &UsageBillingCommand{
-		RequestID:             "cangyuan-media:" + job.ID,
-		APIKeyID:              job.APIKeyID,
-		UserID:                job.UserID,
-		AccountID:             job.AccountID,
-		AccountType:           AccountTypeAPIKey,
-		Model:                 job.Model,
-		MediaType:             mediaType,
-		ImageCount:            imageCount,
-		BalanceCost:           sale,
-		APIKeyQuotaCost:       sale,
-		APIKeyRateLimitCost:   sale,
-		AccountQuotaCost:      cost,
-		RequestPayloadHash:    HashUsageRequestPayload([]byte(quote.PricingVersion + "|" + quote.Tier + "|" + quote.UnitSalePriceUSD + "|" + quote.UnitProviderCostUSD)),
+		RequestID:           "cangyuan-media:" + job.ID,
+		APIKeyID:            job.APIKeyID,
+		UserID:              job.UserID,
+		AccountID:           job.AccountID,
+		AccountType:         AccountTypeAPIKey,
+		Model:               job.Model,
+		MediaType:           mediaType,
+		ImageCount:          imageCount,
+		BalanceCost:         sale,
+		APIKeyQuotaCost:     sale,
+		APIKeyRateLimitCost: sale,
+		AccountQuotaCost:    cost,
+		RequestPayloadHash:  HashUsageRequestPayload([]byte(quote.PricingVersion + "|" + quote.Tier + "|" + quote.UnitSalePriceUSD + "|" + quote.UnitProviderCostUSD)),
 	}
 	command.Normalize()
 	// Client disconnection must not interrupt the atomic SQL transaction
