@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -23,12 +23,12 @@ var ErrCangyuanMediaPriceNotFound = errors.New("no verified cangyuan media price
 // Client API requests cannot submit a verified sell price or an alternate
 // pricing version; both are resolved from this persisted registry.
 type CangyuanMediaPriceRule struct {
-	ID       string                    `json:"id"`
-	Model    string                    `json:"model"`
-	Kind     CangyuanMediaKind         `json:"kind"`
+	ID       string                     `json:"id"`
+	Model    string                     `json:"model"`
+	Kind     CangyuanMediaKind          `json:"kind"`
 	Options  map[string]json.RawMessage `json:"options"`
 	Snapshot CangyuanMediaPriceSnapshot `json:"snapshot"`
-	Enabled  bool                      `json:"enabled"`
+	Enabled  bool                       `json:"enabled"`
 }
 
 // SettingRepository satisfies this deliberately small port.
