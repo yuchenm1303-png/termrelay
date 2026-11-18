@@ -15,7 +15,7 @@ const defaultCangyuanMediaJobTTL = 48 * time.Hour
 var (
 	ErrCangyuanMediaJobNotFound = errors.New("cangyuan media job not found")
 	ErrCangyuanMediaJobConflict = errors.New("cangyuan media job changed concurrently")
-	ErrCangyuanMediaJobState = errors.New("invalid cangyuan media job state transition")
+	ErrCangyuanMediaJobState    = errors.New("invalid cangyuan media job state transition")
 )
 
 // CangyuanMediaJobOwner is the tenant-scoped identity checked on every read
