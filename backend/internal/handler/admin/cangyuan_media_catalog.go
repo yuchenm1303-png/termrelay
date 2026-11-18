@@ -53,9 +53,9 @@ func classifyCangyuanMediaModels(models []string, rawPricing []byte) (cangyuanMe
 			continue
 		}
 		media := cangyuanMediaModelPreview{
-			ID: entry.ModelName,
+			ID:          entry.ModelName,
 			BillingMode: entry.BillingMode,
-			Tiered: entry.BillingMode == "tiered_expr",
+			Tiered:      entry.BillingMode == "tiered_expr",
 		}
 		for _, endpoint := range entry.SupportedEndpointTypes {
 			key := entry.ModelName + ":" + endpoint
