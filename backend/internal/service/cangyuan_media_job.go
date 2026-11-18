@@ -73,27 +73,41 @@ type CangyuanMediaJobService struct {
 }
 
 func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMediaJobOwner, accountID int64, kind CangyuanMediaKind, model string, quotes ...CangyuanMediaPriceSnapshot) (*CangyuanMediaJob, error) {
+	job, ttl, err := s.newReservation(owner, accountID, kind, model, quotes...)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.Store.Create(ctx, job, ttl); err != nil {
+		return nil, fmt.Errorf("reserve cangyuan media job: %w", err)
+	}
+	return job, nil
+}
+
+// newReservation builds a complete private job without persisting it. This is
+// reused by the atomic client-idempotency reservation path below, avoiding a
+// two-phase create that could accidentally produce two local task records.
+func (s *CangyuanMediaJobService) newReservation(owner CangyuanMediaJobOwner, accountID int64, kind CangyuanMediaKind, model string, quotes ...CangyuanMediaPriceSnapshot) (*CangyuanMediaJob, time.Duration, error) {
 	if s == nil || s.Store == nil {
-		return nil, errors.New("cangyuan media job storage unavailable")
+		return nil, 0, errors.New("cangyuan media job storage unavailable")
 	}
 	if err := validateCangyuanMediaJobOwner(owner); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if accountID <= 0 || strings.TrimSpace(model) == "" || len(model) > 256 {
-		return nil, errors.New("cangyuan media job requires an account and a model")
+		return nil, 0, errors.New("cangyuan media job requires an account and a model")
 	}
 	if _, err := kind.path(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if len(quotes) > 1 {
-		return nil, errors.New("cangyuan media reservation accepts at most one price snapshot")
+		return nil, 0, errors.New("cangyuan media reservation accepts at most one price snapshot")
 	}
 	var snapshot *CangyuanMediaPriceSnapshot
 	billingState := "disabled"
 	if len(quotes) == 1 {
 		quote := quotes[0]
 		if err := validateCangyuanMediaPriceSnapshot(kind, &quote); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		snapshot = &quote
 		billingState = "pending"
@@ -118,10 +132,7 @@ func (s *CangyuanMediaJobService) Reserve(ctx context.Context, owner CangyuanMed
 		UpdatedAt:     now.Unix(),
 		ExpiresAt:     now.Add(ttl).Unix(),
 	}
-	if err := s.Store.Create(ctx, job, ttl); err != nil {
-		return nil, fmt.Errorf("reserve cangyuan media job: %w", err)
-	}
-	return job, nil
+	return job, ttl, nil
 }
 
 func (s *CangyuanMediaJobService) Get(ctx context.Context, owner CangyuanMediaJobOwner, id string) (*CangyuanMediaJob, error) {
