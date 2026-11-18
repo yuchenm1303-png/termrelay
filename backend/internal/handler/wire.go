@@ -212,7 +212,7 @@ func ProvideHandlers(
 		AvailableChannel: availableChannelHandler,
 		ModelPlaza:       modelPlazaHandler,
 		AsyncImage:       asyncImageHandler,
-		CangyuanMedia:   cangyuanMediaHandler,
+		CangyuanMedia:    cangyuanMediaHandler,
 		BatchImage:       batchImageHandler,
 	}
 }
