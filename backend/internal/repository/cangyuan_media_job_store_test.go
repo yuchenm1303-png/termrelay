@@ -52,6 +52,16 @@ func TestCangyuanMediaJobStoreOwnershipAndDurableStatus(t *testing.T) {
 	_, err = svc.Observe(ctx, owner, job.ID, &service.CangyuanMediaTask{ID: "someone_elses_task", Status: "completed"})
 	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
 
+	// Out-of-order GET responses must not regress an in-progress job.
+	progress, err := svc.Observe(ctx, owner, job.ID, &service.CangyuanMediaTask{ID: "remote_task_123", Status: "in_progress"})
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobProcessing, progress.Status)
+	_, err = svc.Observe(ctx, owner, job.ID, &service.CangyuanMediaTask{ID: "remote_task_123", Status: "queued"})
+	require.ErrorIs(t, err, service.ErrCangyuanMediaJobState)
+	duplicate, err := svc.Observe(ctx, owner, job.ID, &service.CangyuanMediaTask{ID: "remote_task_123", Status: "in_progress"})
+	require.NoError(t, err)
+	require.Equal(t, progress.Version, duplicate.Version, "repeated poll state should not rewrite the job")
+
 	// Use a real decoded completed payload to exercise ResultURLs.
 	var done service.CangyuanMediaTask
 	require.NoError(t, json.Unmarshal([]byte(`{"id":"remote_task_123","status":"completed","data":[{"url":"https://cdn.example.com/image.png"}]}`), &done))
