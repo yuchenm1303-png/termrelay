@@ -122,3 +122,27 @@ func TestCangyuanMediaCoordinatorValidatesModelBeforeClaim(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status, "bad request must not consume a paid submission")
 }
+
+func TestCangyuanMediaPaidSubmissionValidatesQuantityBeforeClaim(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 3, APIKeyID: 5}
+	quote := cangyuanIdempotencyQuote()
+	quote.Tier = "standard"
+	job, err := svc.Reserve(ctx, owner, 12, service.CangyuanImageGeneration, "image-model", quote)
+	require.NoError(t, err)
+	var posts atomic.Int32
+	client := &service.CangyuanMediaClient{
+		APIKey: "test-fixture",
+		HTTP: &http.Client{Transport: cangyuanCoordinatorTransport(func(_ *http.Request) (*http.Response, error) {
+			posts.Add(1)
+			return nil, errors.New("unexpected paid request")
+		})},
+	}
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, []byte(`{"model":"image-model","prompt":"two cats","n":2}`))
+	require.ErrorContains(t, err, "does not match approved price")
+	require.Equal(t, int32(0), posts.Load(), "underquoted media must never reach upstream")
+	stored, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status)
+}
