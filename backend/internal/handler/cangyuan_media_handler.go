@@ -71,9 +71,9 @@ func (h *CangyuanMediaHandler) get(c *gin.Context, expectedKind service.Cangyuan
 	if job.Status == service.CangyuanMediaJobCompleted && job.BillingState != "settled" {
 		c.Header("Retry-After", "6")
 		c.JSON(http.StatusAccepted, gin.H{
-			"id": job.ID,
+			"id":      job.ID,
 			"task_id": job.ID,
-			"status": "in_progress",
+			"status":  "in_progress",
 			"message": "Media result is being finalized",
 		})
 		return
