@@ -701,6 +701,7 @@ func TestExecuteBalanceFulfillmentRecoversAfterRedeemWithoutCreditingAgain(t *te
 	redeemRepo := &redeemCodeRepoStub{codesByCode: map[string]*RedeemCode{
 		order.RechargeCode: {
 			ID:     101,
+			UserID: order.UserID,
 			Code:   order.RechargeCode,
 			Type:   RedeemTypeBalance,
 			Value:  order.Amount,

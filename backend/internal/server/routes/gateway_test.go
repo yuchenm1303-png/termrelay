@@ -261,8 +261,19 @@ func TestGatewayRoutesNonGrokVideosAreRejectedAtPlatformGate(t *testing.T) {
 	}
 }
 
-func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireOpenAITarget(t *testing.T) {
+func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireResolvedTarget(t *testing.T) {
 	router := newGatewayRoutesTestRouter(service.PlatformComposite)
+	// This minimal test router deliberately has no composite resolver.
+	// The route must exist, but neither an unknown nor an OpenAI-like model
+	// may bypass target resolution simply by naming an OpenAI model.
+	registered := false
+	for _, route := range router.Routes() {
+		if route.Method == http.MethodPost && route.Path == "/v1/embeddings" {
+			registered = true
+			break
+		}
+	}
+	require.True(t, registered, "POST /v1/embeddings should be registered")
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/embeddings", strings.NewReader(`{"model":"gemini-2.5-pro","input":"hello"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -276,7 +287,7 @@ func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireOpenAITarget(t *testing
 	w = httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
-	require.NotEqual(t, http.StatusNotFound, w.Code)
+	require.Equal(t, http.StatusNotFound, w.Code, "a composite key with no resolver must fail closed")
 }
 
 func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
@@ -303,7 +314,10 @@ func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
 	}
 
 	countTokensRouter := newGatewayRoutesTestRouterWithConfig(&config.Config{
-		Gateway: config.GatewayConfig{MaxBodySize: 1024 * 1024},
+		Gateway: config.GatewayConfig{
+			MaxBodySize:     1024 * 1024,
+			TextMaxBodySize: 1024 * 1024,
+		},
 	}, service.PlatformGrok)
 	for _, path := range []string{"/v1/messages/count_tokens", "/messages/count_tokens"} {
 		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok","messages":[{"role":"user","content":"hi"}]}`))

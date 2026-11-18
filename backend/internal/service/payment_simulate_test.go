@@ -91,6 +91,7 @@ func TestSimulateOrderPaidCompletesPendingOrder(t *testing.T) {
 	redeemRepo := &redeemCodeRepoStub{codesByCode: map[string]*RedeemCode{
 		order.RechargeCode: {
 			ID:     501,
+			UserID: order.UserID,
 			Code:   order.RechargeCode,
 			Type:   RedeemTypeBalance,
 			Value:  order.Amount,
