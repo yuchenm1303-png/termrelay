@@ -81,11 +81,11 @@ func (t *CangyuanMediaTask) ResultURLs(kind CangyuanMediaKind) []string {
 		return nil
 	}
 	result := make([]string, 0, len(t.Data)+1)
-	if kind == CangyuanVideoGeneration && strings.TrimSpace(t.VideoURL) != "" {
+	if kind == CangyuanVideoGeneration && isPublicCangyuanMediaReference(t.VideoURL) {
 		result = append(result, t.VideoURL)
 	}
 	for _, item := range t.Data {
-		if strings.TrimSpace(item.URL) != "" {
+		if isPublicCangyuanMediaReference(item.URL) {
 			result = append(result, item.URL)
 		}
 	}
