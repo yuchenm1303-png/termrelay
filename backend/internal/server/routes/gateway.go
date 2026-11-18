@@ -107,6 +107,16 @@ func RegisterGatewayRoutes(
 		})
 	}
 	videoStatusHandler := func(c *gin.Context) {
+		// Cangyuan tasks have a private, owner-scoped cyjob_ identifier.
+		// Do not pass these through the existing Grok/Sora status path.
+		if strings.HasPrefix(c.Param("request_id"), "cyjob_") {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetVideo(c)
+			return
+		}
 		// Video status requests do not carry a model, so composite groups cannot
 		// be resolved by compositeTargetPlatformMiddleware. Route them through
 		// the Grok handler and let scheduler/account selection enforce capacity.
@@ -248,6 +258,22 @@ func RegisterGatewayRoutes(
 		gateway.POST("/images/generations/async", h.AsyncImage.Submit)
 		gateway.POST("/images/edits/async", h.AsyncImage.Submit)
 		gateway.GET("/images/tasks/:task_id", h.AsyncImage.Get)
+		// Read-only, API-key-owned Cangyuan media jobs. Submission routes are
+		// intentionally not registered until pricing/entitlements are enforced.
+		gateway.GET("/images/generations/:task_id", func(c *gin.Context) {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetImageGeneration(c)
+		})
+		gateway.GET("/images/edits/:task_id", func(c *gin.Context) {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetImageEdit(c)
+		})
 		gateway.POST("/images/batches", h.BatchImage.Submit)
 		gateway.GET("/images/batches", h.BatchImage.List)
 		gateway.GET("/images/batches/models", h.BatchImage.Models)
