@@ -76,7 +76,12 @@ func TestCangyuanMediaReadRoutesOnlyReturnOwnedResults(t *testing.T) {
 	var output map[string]any
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &output))
 	require.Equal(t, string(service.CangyuanMediaJobCompleted), output["status"])
-	require.Equal(t, "https://cdn.example.org/output.png", output["data"].([]any)[0].(map[string]any)["url"])
+	items, ok := output["data"].([]any)
+	require.True(t, ok)
+	require.NotEmpty(t, items)
+	image, ok := items[0].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "https://cdn.example.org/output.png", image["url"])
 	for _, private := range []string{"user_id", "api_key_id", "account_id", "billing_state", "price_snapshot", "upstream_task_id", "unit_sale_price_usd", "api_key"} {
 		require.NotContains(t, output, private)
 	}
