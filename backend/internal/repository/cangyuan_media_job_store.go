@@ -183,6 +183,36 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 		if current.PriceSnapshot != nil && *current.PriceSnapshot != *job.PriceSnapshot {
 			return service.ErrCangyuanMediaJobConflict
 		}
+		// The remote task ID must never be rebound to a different upstream
+		// generation. A stale or compromised worker cannot silently replace
+		// an already accepted billable task with another task ID.
+		if current.UpstreamTaskID != "" && job.UpstreamTaskID != current.UpstreamTaskID {
+			return service.ErrCangyuanMediaJobConflict
+		}
+		// Enforce one-way lifecycle constraints at the shared Redis boundary,
+		// not only in the worker. This also protects against accidentally
+		// replacing completed outputs after SQL settlement.
+		switch current.Status {
+		case service.CangyuanMediaJobCompleted, service.CangyuanMediaJobFailed,
+			service.CangyuanMediaJobSubmitUnknown:
+			if job.Status != current.Status || !equalCangyuanMediaResultURLs(current.ResultURLs, job.ResultURLs) {
+				return service.ErrCangyuanMediaJobConflict
+			}
+		case service.CangyuanMediaJobProcessing:
+			if job.Status == service.CangyuanMediaJobQueued ||
+				job.Status == service.CangyuanMediaJobSubmitting ||
+				job.Status == service.CangyuanMediaJobReserved {
+				return service.ErrCangyuanMediaJobConflict
+			}
+		case service.CangyuanMediaJobQueued:
+			if job.Status == service.CangyuanMediaJobSubmitting || job.Status == service.CangyuanMediaJobReserved {
+				return service.ErrCangyuanMediaJobConflict
+			}
+		case service.CangyuanMediaJobSubmitting:
+			if job.Status == service.CangyuanMediaJobReserved {
+				return service.ErrCangyuanMediaJobConflict
+			}
+		}
 		if current.BillingState != job.BillingState &&
 			(current.BillingState != "pending" || job.BillingState != "settled" ||
 				current.Status != service.CangyuanMediaJobCompleted || job.Status != service.CangyuanMediaJobCompleted ||
@@ -199,4 +229,16 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 		return service.ErrCangyuanMediaJobConflict
 	}
 	return err
+}
+
+func equalCangyuanMediaResultURLs(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

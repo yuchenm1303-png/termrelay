@@ -150,3 +150,59 @@ func TestCangyuanMediaJobStoreUncertainSubmitAndExpiry(t *testing.T) {
 		t.Fatal("validation errors must not masquerade as missing tasks")
 	}
 }
+
+func TestCangyuanMediaJobStoreCASRejectsUpstreamRebindingAndTerminalRegression(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 23, APIKeyID: 45}
+	job, err := svc.Reserve(ctx, owner, 51, service.CangyuanImageGeneration, "image-model")
+	require.NoError(t, err)
+
+	// Start from a legitimate remote submission.
+	_, err = svc.ClaimSubmission(ctx, owner, job.ID)
+	require.NoError(t, err)
+	_, err = svc.AttachSubmitted(ctx, owner, job.ID,
+		&service.CangyuanMediaTask{ID: "remote_immutable", Status: "queued"})
+	require.NoError(t, err)
+
+	current, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	rebound := *current
+	rebound.UpstreamTaskID = "other_remote_task"
+	rebound.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &rebound, current.Version),
+		service.ErrCangyuanMediaJobConflict)
+
+	progress, err := svc.Observe(ctx, owner, job.ID,
+		&service.CangyuanMediaTask{ID: "remote_immutable", Status: "in_progress"})
+	require.NoError(t, err)
+	rollback := *progress
+	rollback.Status = service.CangyuanMediaJobQueued
+	rollback.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &rollback, progress.Version),
+		service.ErrCangyuanMediaJobConflict)
+
+	var completedTask service.CangyuanMediaTask
+	require.NoError(t, json.Unmarshal([]byte(`{"id":"remote_immutable","status":"completed","data":[{"url":"https://cdn.example.com/final.png"}]}`), &completedTask))
+	done, err := svc.Observe(ctx, owner, job.ID, &completedTask)
+	require.NoError(t, err)
+
+	rollback = *done
+	rollback.Status = service.CangyuanMediaJobProcessing
+	rollback.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &rollback, done.Version),
+		service.ErrCangyuanMediaJobConflict)
+
+	// The final output is immutable: even keeping status=completed cannot
+	// substitute a different file URL after the customer was charged.
+	replaced := *done
+	replaced.ResultURLs = []string{"https://cdn.example.com/other.png"}
+	replaced.Version++
+	require.ErrorIs(t, svc.Store.CompareAndSwap(ctx, &replaced, done.Version),
+		service.ErrCangyuanMediaJobConflict)
+
+	stored, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, done.Version, stored.Version)
+	require.Equal(t, []string{"https://cdn.example.com/final.png"}, stored.ResultURLs)
+}
