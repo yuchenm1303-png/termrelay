@@ -146,3 +146,37 @@ func TestCangyuanMediaPaidSubmissionValidatesQuantityBeforeClaim(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status)
 }
+
+func TestCangyuanMediaPricedSubmissionRejectsAlteredPayloadBeforeClaim(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 52, APIKeyID: 61}
+	approved := []byte(`{"model":"image-model","prompt":"one kitten","n":1,"size":"1024x1024"}`)
+	quote := cangyuanIdempotencyQuote()
+	job, err := svc.ReserveIdempotent(ctx, owner, 14, service.CangyuanImageGeneration,
+		"image-model", approved, "locked-payload-1", quote)
+	require.NoError(t, err)
+
+	var posts atomic.Int32
+	client := &service.CangyuanMediaClient{
+		APIKey: "test-fixture",
+		HTTP: &http.Client{Transport: cangyuanCoordinatorTransport(func(_ *http.Request) (*http.Response, error) {
+			posts.Add(1)
+			return nil, errors.New("unapproved paid submission reached upstream")
+		})},
+	}
+	// Same model and n, but a different priced dimension and prompt.
+	mutated := []byte(`{"model":"image-model","prompt":"one kitten in 4K","n":1,"size":"4096x4096"}`)
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, mutated)
+	require.ErrorContains(t, err, "differs from the reserved priced request")
+	require.Zero(t, posts.Load(), "an altered paid request must not reach the upstream")
+	stored, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status)
+
+	// The approved payload is still eligible: a failed local validation has
+	// not consumed the one-and-only submission claim.
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, approved)
+	require.Error(t, err) // test transport intentionally rejects outbound POST
+	require.Equal(t, int32(1), posts.Load())
+}

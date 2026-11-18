@@ -33,6 +33,7 @@ func TestCangyuanMediaIdempotentReservationReusesOriginalJobAndState(t *testing.
 	require.Equal(t, service.CangyuanMediaJobReserved, first.Status)
 	require.Equal(t, "pending", first.BillingState)
 	require.NotNil(t, first.PriceSnapshot)
+	require.Len(t, first.PayloadSHA256, 64, "the priced original request must be pinned")
 	require.Equal(t, 48*time.Hour, mr.TTL(cangyuanMediaJobKeyPrefix+first.ID))
 
 	_, err = svc.ClaimSubmission(ctx, owner, first.ID)

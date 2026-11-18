@@ -67,6 +67,7 @@ func (s *CangyuanMediaJobService) ReserveIdempotent(
 	if err != nil {
 		return nil, err
 	}
+	job.PayloadSHA256 = cangyuanMediaPayloadDigest(job.ID, payload)
 	quotedBytes, err := json.Marshal(quote)
 	if err != nil {
 		return nil, fmt.Errorf("encode media price quote: %w", err)

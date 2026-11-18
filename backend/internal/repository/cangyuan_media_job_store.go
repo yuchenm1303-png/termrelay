@@ -171,6 +171,7 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 			current.ID != job.ID || current.UserID != job.UserID ||
 			current.APIKeyID != job.APIKeyID || current.AccountID != job.AccountID ||
 			current.Kind != job.Kind || current.Model != job.Model ||
+			current.PayloadSHA256 != job.PayloadSHA256 ||
 			current.CreatedAt != job.CreatedAt || current.ExpiresAt != job.ExpiresAt {
 			return service.ErrCangyuanMediaJobConflict
 		}

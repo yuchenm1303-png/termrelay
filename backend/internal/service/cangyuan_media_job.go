@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,6 +55,9 @@ type CangyuanMediaJob struct {
 	ResultURLs     []string                    `json:"result_urls,omitempty"`
 	BillingState   string                      `json:"billing_state"`
 	PriceSnapshot  *CangyuanMediaPriceSnapshot `json:"price_snapshot,omitempty"`
+	// The original priced payload is pinned without persisting its prompt.
+	// Every paid submission must match this digest before any upstream POST.
+	PayloadSHA256  string                      `json:"payload_sha256,omitempty"`
 	Version        int64                       `json:"version"`
 	CreatedAt      int64                       `json:"created_at"`
 	UpdatedAt      int64                       `json:"updated_at"`
@@ -283,6 +288,12 @@ func (s *CangyuanMediaJobService) SubmitReserved(ctx context.Context, owner Cang
 		if err := validateCangyuanMediaRequestQuantity(job.Kind, refs, job.PriceSnapshot); err != nil {
 			return nil, nil, err
 		}
+		// The price rule was matched against the *whole* original request.
+		// Checking only the model and quantity here would let a worker swap
+		// expensive dimensions or reference material after price approval.
+		if job.PayloadSHA256 == "" || job.PayloadSHA256 != cangyuanMediaPayloadDigest(job.ID, payload) {
+			return nil, nil, errors.New("cangyuan media payload differs from the reserved priced request")
+		}
 	}
 	if _, err := s.ClaimSubmission(ctx, owner, id); err != nil {
 		return nil, nil, err
@@ -338,6 +349,16 @@ func validCangyuanMediaJobTask(kind CangyuanMediaKind, task *CangyuanMediaTask) 
 	default:
 		return false
 	}
+}
+
+// cangyuanMediaPayloadDigest ties the payload to the randomly generated local
+// task ID, without storing the prompt or reference URLs in Redis.
+func cangyuanMediaPayloadDigest(jobID string, payload []byte) string {
+	sum := sha256.New()
+	_, _ = sum.Write([]byte(jobID))
+	_, _ = sum.Write([]byte{0})
+	_, _ = sum.Write(payload)
+	return hex.EncodeToString(sum.Sum(nil))
 }
 
 func validateCangyuanMediaJobOwner(owner CangyuanMediaJobOwner) error {
