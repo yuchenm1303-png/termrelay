@@ -145,7 +145,11 @@ func TestCangyuanAccountCreationStartsUnschedulable(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, account.Schedulable, "an ungrouped Cangyuan account must not receive live traffic")
 
+	// A different provider must use its own base URL. Reusing the official
+	// Cangyuan URL deliberately triggers the vendor safety guard even without
+	// the vendor flag.
 	input.Platform = PlatformAnthropic
+	input.Credentials["base_url"] = "https://api.anthropic.com"
 	extra = nil
 	account, err = buildAccountForCreate(input, extra)
 	require.NoError(t, err)
