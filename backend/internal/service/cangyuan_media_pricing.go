@@ -13,13 +13,13 @@ import (
 // and approve every tier/duration/size before reserving a paid job.
 // Prices are USD decimal strings to avoid floating-point quoting drift.
 type CangyuanMediaPriceSnapshot struct {
-	PricingVersion        string `json:"pricing_version"`
-	Currency              string `json:"currency"`
-	Tier                  string `json:"tier"`
-	Units                 int    `json:"units"`
-	UnitSalePriceUSD      string `json:"unit_sale_price_usd"`
-	UnitProviderCostUSD   string `json:"unit_provider_cost_usd"`
-	VerifiedByAdmin       bool   `json:"verified_by_admin"`
+	PricingVersion      string `json:"pricing_version"`
+	Currency            string `json:"currency"`
+	Tier                string `json:"tier"`
+	Units               int    `json:"units"`
+	UnitSalePriceUSD    string `json:"unit_sale_price_usd"`
+	UnitProviderCostUSD string `json:"unit_provider_cost_usd"`
+	VerifiedByAdmin     bool   `json:"verified_by_admin"`
 }
 
 func validateCangyuanMediaPriceSnapshot(kind CangyuanMediaKind, q *CangyuanMediaPriceSnapshot) error {
