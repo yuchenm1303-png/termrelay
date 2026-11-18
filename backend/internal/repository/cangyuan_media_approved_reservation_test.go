@@ -12,13 +12,16 @@ import (
 type approvedPriceFixture struct {
 	rules map[string]string
 }
+
 func (s *approvedPriceFixture) Set(_ context.Context, key, value string) error {
 	s.rules[key] = value
 	return nil
 }
 func (s *approvedPriceFixture) GetAll(_ context.Context) (map[string]string, error) {
 	out := map[string]string{}
-	for k, v := range s.rules { out[k] = v }
+	for k, v := range s.rules {
+		out[k] = v
+	}
 	return out, nil
 }
 func (s *approvedPriceFixture) Delete(_ context.Context, key string) error {
@@ -33,7 +36,7 @@ func TestCangyuanMediaReserveUsesApprovedServerPriceAndModelWhitelist(t *testing
 	rule := service.CangyuanMediaPriceRule{
 		ID: "video-720-5s", Model: "video-model", Kind: service.CangyuanVideoGeneration,
 		Options: map[string]json.RawMessage{
-			"duration": json.RawMessage("5"),
+			"duration":   json.RawMessage("5"),
 			"resolution": json.RawMessage(`"720p"`),
 		},
 		Snapshot: service.CangyuanMediaPriceSnapshot{
@@ -52,10 +55,10 @@ func TestCangyuanMediaReserveUsesApprovedServerPriceAndModelWhitelist(t *testing
 			"model_mapping": map[string]any{},
 		},
 		Extra: map[string]any{
-			"upstream_vendor": "cangyuan",
-			"cangyuan_media_only": true,
+			"upstream_vendor":       "cangyuan",
+			"cangyuan_media_only":   true,
 			"cangyuan_media_models": map[string]any{"image": []any{}, "video": []any{"video-model"}},
-			"openai_passthrough": false,
+			"openai_passthrough":    false,
 			"openai_responses_mode": "force_chat_completions",
 		},
 	}
@@ -77,8 +80,8 @@ func TestCangyuanMediaReserveUsesApprovedServerPriceAndModelWhitelist(t *testing
 
 	for name, changed := range map[string][]byte{
 		"costly high resolution": []byte(`{"model":"video-model","prompt":"sunrise","duration":5,"resolution":"1080p"}`),
-		"longer video": []byte(`{"model":"video-model","prompt":"sunrise","duration":10,"resolution":"720p"}`),
-		"missing dimension": []byte(`{"model":"video-model","prompt":"sunrise","duration":5}`),
+		"longer video":           []byte(`{"model":"video-model","prompt":"sunrise","duration":10,"resolution":"720p"}`),
+		"missing dimension":      []byte(`{"model":"video-model","prompt":"sunrise","duration":5}`),
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := jobs.ReserveWithApprovedPricing(ctx, owner, account, service.CangyuanVideoGeneration, "video-model", changed, "new-key-"+name, prices)
@@ -87,17 +90,23 @@ func TestCangyuanMediaReserveUsesApprovedServerPriceAndModelWhitelist(t *testing
 		})
 	}
 	for name, mutate := range map[string]func(*service.Account){
-		"wrong API key": func(a *service.Account){ a.Credentials["api_key"] = "" },
-		"not active": func(a *service.Account){ a.Status = "disabled" },
-		"missing model grant": func(a *service.Account){ a.Extra["cangyuan_media_models"] = map[string]any{"video":[]any{"different"}} },
-		"not media-only": func(a *service.Account){ a.Extra["cangyuan_media_only"] = false },
+		"wrong API key": func(a *service.Account) { a.Credentials["api_key"] = "" },
+		"not active":    func(a *service.Account) { a.Status = "disabled" },
+		"missing model grant": func(a *service.Account) {
+			a.Extra["cangyuan_media_models"] = map[string]any{"video": []any{"different"}}
+		},
+		"not media-only": func(a *service.Account) { a.Extra["cangyuan_media_only"] = false },
 	} {
 		t.Run(name, func(t *testing.T) {
 			cloned := *account
 			cloned.Credentials = map[string]any{}
-			for k,v := range account.Credentials { cloned.Credentials[k] = v }
+			for k, v := range account.Credentials {
+				cloned.Credentials[k] = v
+			}
 			cloned.Extra = map[string]any{}
-			for k,v := range account.Extra { cloned.Extra[k] = v }
+			for k, v := range account.Extra {
+				cloned.Extra[k] = v
+			}
 			mutate(&cloned)
 			_, err := jobs.ReserveWithApprovedPricing(ctx, owner, &cloned, service.CangyuanVideoGeneration, "video-model", request, "other-key-"+name, prices)
 			require.Error(t, err)
