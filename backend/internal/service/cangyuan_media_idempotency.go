@@ -60,6 +60,9 @@ func (s *CangyuanMediaJobService) ReserveIdempotent(
 	if err := validateCangyuanMediaReferences(request); err != nil {
 		return nil, err
 	}
+	if err := validateCangyuanMediaRequestQuantity(kind, request, &quote); err != nil {
+		return nil, err
+	}
 	job, ttl, err := s.newReservation(owner, accountID, kind, model, quote)
 	if err != nil {
 		return nil, err
