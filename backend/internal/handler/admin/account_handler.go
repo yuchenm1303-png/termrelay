@@ -2817,10 +2817,10 @@ func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 			return
 		}
 		response.Success(c, gin.H{
-			"models": approved,
-			"pricing": pricing,
+			"models":         approved,
+			"pricing":        pricing,
 			"filtered_count": len(models) - len(approved),
-			"media_models": media,
+			"media_models":   media,
 		})
 		return
 	}
