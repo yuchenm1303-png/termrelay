@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -11,6 +12,12 @@ import (
 )
 
 const cangyuanMediaJobKeyPrefix = "cangyuan_media_job:"
+const cangyuanMediaIdempotencyPrefix = "cangyuan_media_idempotency:"
+
+type cangyuanMediaIdempotencyEntry struct {
+	JobID       string `json:"job_id"`
+	Fingerprint string `json:"fingerprint"`
+}
 
 // Redis is the shared task registry for every TermRelay instance. CAS avoids
 // processing/completed regressions when two pollers observe the same task.
@@ -38,6 +45,82 @@ func (s *cangyuanMediaJobStore) Create(ctx context.Context, job *service.Cangyua
 		return service.ErrCangyuanMediaJobConflict
 	}
 	return nil
+}
+
+// CreateIdempotent atomically writes the private job and a client retry key.
+// A matching retry returns the original job, including its submission state.
+// Redis WATCH + MULTI/EXEC prevents concurrent identical requests from each
+// creating a new local task on different TermRelay workers.
+func (s *cangyuanMediaJobStore) CreateIdempotent(
+	ctx context.Context,
+	job *service.CangyuanMediaJob,
+	keyHash string,
+	fingerprint string,
+	ttl time.Duration,
+) (*service.CangyuanMediaJob, error) {
+	if s == nil || s.rdb == nil || job == nil || job.ID == "" || ttl <= 0 ||
+		len(keyHash) != 64 || len(fingerprint) != 64 ||
+		strings.ContainsAny(keyHash+fingerprint, ": /") {
+		return nil, errors.New("invalid cangyuan media idempotency reservation")
+	}
+	taskKey := cangyuanMediaJobKeyPrefix + job.ID
+	dedupKey := cangyuanMediaIdempotencyPrefix + keyHash
+	jobBytes, err := json.Marshal(job)
+	if err != nil {
+		return nil, err
+	}
+	mappingBytes, err := json.Marshal(cangyuanMediaIdempotencyEntry{JobID: job.ID, Fingerprint: fingerprint})
+	if err != nil {
+		return nil, err
+	}
+
+	for attempt := 0; attempt < 8; attempt++ {
+		var recorded *service.CangyuanMediaJob
+		err := s.rdb.Watch(ctx, func(tx *redis.Tx) error {
+			raw, readErr := tx.Get(ctx, dedupKey).Bytes()
+			if readErr == nil {
+				var entry cangyuanMediaIdempotencyEntry
+				if err := json.Unmarshal(raw, &entry); err != nil {
+					return service.ErrCangyuanMediaIdempotencyConflict
+				}
+				if entry.Fingerprint != fingerprint || entry.JobID == "" {
+					return service.ErrCangyuanMediaIdempotencyConflict
+				}
+				current, err := s.Get(ctx, entry.JobID)
+				if err != nil {
+					// An expired/corrupt task must never trigger a second POST
+					// while its idempotency key still exists.
+					return err
+				}
+				recorded = current
+				return nil
+			}
+			if !errors.Is(readErr, redis.Nil) {
+				return readErr
+			}
+			exists, err := tx.Exists(ctx, taskKey).Result()
+			if err != nil {
+				return err
+			}
+			if exists != 0 {
+				return service.ErrCangyuanMediaJobConflict
+			}
+			_, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+				pipe.Set(ctx, taskKey, jobBytes, ttl)
+				pipe.Set(ctx, dedupKey, mappingBytes, ttl)
+				return nil
+			})
+			if err == nil {
+				recorded = job
+			}
+			return err
+		}, dedupKey, taskKey)
+		if errors.Is(err, redis.TxFailedErr) {
+			continue
+		}
+		return recorded, err
+	}
+	return nil, service.ErrCangyuanMediaJobConflict
 }
 
 func (s *cangyuanMediaJobStore) Get(ctx context.Context, id string) (*service.CangyuanMediaJob, error) {
