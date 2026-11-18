@@ -63,7 +63,7 @@ func TestCangyuanMediaReadRoutesOnlyReturnOwnedResults(t *testing.T) {
 		Model: "image-fixture", Kind: service.CangyuanImageGeneration,
 		Status:       service.CangyuanMediaJobCompleted,
 		ResultURLs:   []string{"https://cdn.example.org/output.png"},
-		BillingState: "pending", CreatedAt: 1700000000, ExpiresAt: 1700200000,
+		BillingState: "settled", CreatedAt: 1700000000, ExpiresAt: 1700200000,
 	}
 	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}})
 	owner := service.CangyuanMediaJobOwner{UserID: 8, APIKeyID: 13}
@@ -108,7 +108,7 @@ func TestCangyuanMediaReadVideoAndPendingStatus(t *testing.T) {
 	job := &service.CangyuanMediaJob{
 		ID: testCangyuanJobID, UserID: 8, APIKeyID: 13, AccountID: 29,
 		Model: "video-fixture", Kind: service.CangyuanVideoGeneration,
-		Status: service.CangyuanMediaJobQueued, BillingState: "disabled",
+		Status: service.CangyuanMediaJobQueued, BillingState: "pending",
 	}
 	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}})
 	r := newCangyuanMediaHandlerTestRouter(handler, service.CangyuanMediaJobOwner{UserID: 8, APIKeyID: 13})
@@ -123,10 +123,23 @@ func TestCangyuanMediaReadVideoAndPendingStatus(t *testing.T) {
 	job.ResultURLs = []string{"https://cdn.example.org/output.mp4"}
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/videos/"+testCangyuanJobID, nil))
+	require.Equal(t, http.StatusAccepted, w.Code, "completed but unpaid media must remain hidden")
+	require.Equal(t, "6", w.Header().Get("Retry-After"))
+	require.NotContains(t, w.Body.String(), "cdn.example.org")
+	require.NotContains(t, w.Body.String(), "billing_state")
+
+	job.BillingState = "settled"
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/videos/"+testCangyuanJobID, nil))
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Empty(t, w.Header().Get("Retry-After"))
 	require.Contains(t, w.Body.String(), "https://cdn.example.org/output.mp4")
 	require.NotContains(t, w.Body.String(), "billing_state")
+
+	job.BillingState = "disabled"
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/videos/"+testCangyuanJobID, nil))
+	require.Equal(t, http.StatusNotFound, w.Code, "unpriced test jobs must not be exposed")
 }
 
 func TestCangyuanMediaReadStorageFailuresRemainPrivate(t *testing.T) {
