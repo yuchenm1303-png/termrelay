@@ -160,18 +160,18 @@ func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
 			Platform: PlatformOpenAI,
 			Type:     AccountTypeAPIKey,
 			Credentials: map[string]any{
-				"api_key": "fixture-only",
-				"base_url": "https://ai.cangyuansuanli.cn",
+				"api_key":       "fixture-only",
+				"base_url":      "https://ai.cangyuansuanli.cn",
 				"model_mapping": map[string]any{},
 			},
 			Extra: map[string]any{
-				"upstream_vendor": "cangyuan",
+				"upstream_vendor":     "cangyuan",
 				"cangyuan_media_only": true,
 				"cangyuan_media_models": map[string]any{
 					"image": []any{"image-model"},
 					"video": []any{"video-model"},
 				},
-				"openai_passthrough": false,
+				"openai_passthrough":    false,
 				"openai_responses_mode": "force_chat_completions",
 			},
 		}
@@ -188,9 +188,9 @@ func TestCangyuanMediaOnlyAccountIsolationAndValidation(t *testing.T) {
 	require.False(t, approved.SupportsOpenAIImageCapability(OpenAIImagesCapabilityNative))
 
 	input := &CreateAccountInput{
-		Name: "Staging media-only",
-		Platform: PlatformOpenAI,
-		Type: AccountTypeAPIKey,
+		Name:        "Staging media-only",
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeAPIKey,
 		Credentials: approved.Credentials,
 	}
 	created, err := buildAccountForCreate(input, approved.Extra)
