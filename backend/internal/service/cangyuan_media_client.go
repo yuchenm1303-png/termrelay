@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	cangyuanMediaBaseURL      = "https://ai.cangyuansuanli.cn"
-	cangyuanMediaResponseLimit = 2 << 20
-	cangyuanMediaRequestLimit  = 1 << 20
+	cangyuanMediaBaseURL        = "https://ai.cangyuansuanli.cn"
+	cangyuanMediaResponseLimit  = 2 << 20
+	cangyuanMediaRequestLimit   = 1 << 20
 	defaultCangyuanPollInterval = 6 * time.Second
 )
 
@@ -41,11 +41,11 @@ type CangyuanMediaClient struct {
 }
 
 type CangyuanMediaTask struct {
-	ID       string          `json:"id"`
-	TaskID   string          `json:"task_id,omitempty"`
-	Status   string          `json:"status"`
-	Model    string          `json:"model,omitempty"`
-	VideoURL string          `json:"video_url,omitempty"`
+	ID       string `json:"id"`
+	TaskID   string `json:"task_id,omitempty"`
+	Status   string `json:"status"`
+	Model    string `json:"model,omitempty"`
+	VideoURL string `json:"video_url,omitempty"`
 	Data     []struct {
 		URL string `json:"url"`
 	} `json:"data,omitempty"`
