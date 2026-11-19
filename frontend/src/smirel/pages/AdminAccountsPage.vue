@@ -3,6 +3,7 @@ import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import CreateUpstreamAccountModal from '../components/CreateUpstreamAccountModal.vue'
+import CangyuanMediaPricesModal from '../components/CangyuanMediaPricesModal.vue'
 import EditUpstreamAccountModal from '../components/EditUpstreamAccountModal.vue'
 
 interface UpstreamAccount {
@@ -52,6 +53,7 @@ const status = ref('')
 const accountType = ref('')
 const expandedAccountId = ref<number | null>(null)
 const showCreate = ref(false)
+const showCangyuanPrices = ref(false)
 const editingAccount = ref<UpstreamAccount | null>(null)
 const groups = ref<GroupSummary[]>([])
 const selectedIds = ref<number[]>([])
@@ -473,6 +475,7 @@ onMounted(() => {
         <p>管理接入账号、调度状态与实时负载。</p>
       </div>
       <div class="accounts-heading-actions">
+        <button class="refresh-button" type="button" @click="showCangyuanPrices = true">沧元媒体定价</button>
         <button class="create-account-button" type="button" @click="showCreate = true">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
           新增上游
@@ -775,6 +778,7 @@ onMounted(() => {
       </footer>
     </section>
     <CreateUpstreamAccountModal :show="showCreate" @close="showCreate = false" @created="handleCreated" />
+    <CangyuanMediaPricesModal :show="showCangyuanPrices" @close="showCangyuanPrices = false" />
     <EditUpstreamAccountModal :show="Boolean(editingAccount)" :account="editingAccount" @close="closeEdit" @updated="handleUpdated" />
   </section>
 </template>

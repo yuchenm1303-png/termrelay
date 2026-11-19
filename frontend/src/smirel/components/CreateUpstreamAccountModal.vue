@@ -494,7 +494,7 @@ watch(
                 </span>
                 <div>
                   <strong>{{ (syncedModels.length || mediaCount) ? `已发现 ${syncedModels.length + mediaCount} 个候选模型` : '检测上游模型' }}</strong>
-                  <small>{{ (syncedModels.length || mediaCount) ? (isCangyuan ? '已按官方价格类型区分对话、图片和视频；媒体模型暂不开放计费。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
+                  <small>{{ (syncedModels.length || mediaCount) ? (isCangyuan ? '已按官方价格类型区分对话、图片和视频；媒体账号需绑定测试分组、启用调度并配置审核售价后才可收费。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
                 </div>
               </div>
               <button type="button" :disabled="!canSync" @click="syncModels">
