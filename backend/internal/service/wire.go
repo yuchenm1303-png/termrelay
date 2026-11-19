@@ -557,6 +557,19 @@ func ProvideCangyuanMediaJobService(store CangyuanMediaJobStore) *CangyuanMediaJ
 	return &CangyuanMediaJobService{Store: store}
 }
 
+// ProvideCangyuanMediaRecoveryWorker starts the cross-instance background
+// GET poller only for already-funded media jobs in the private due index.
+// It never creates a generation or sends a paid POST.
+func ProvideCangyuanMediaRecoveryWorker(
+	jobs *CangyuanMediaJobService,
+	accounts AccountRepository,
+	billing UsageBillingRepository,
+) *CangyuanMediaRecoveryWorker {
+	worker := NewCangyuanMediaRecoveryWorker(jobs, accounts, billing)
+	worker.Start()
+	return worker
+}
+
 // ProvideCangyuanMediaPriceRegistry uses the persistent admin settings DB.
 // No user-facing media endpoint may accept client-supplied approved pricing.
 func ProvideCangyuanMediaPriceRegistry(settings SettingRepository) *CangyuanMediaPriceRegistry {
@@ -711,6 +724,7 @@ var ProviderSet = wire.NewSet(
 	ProvideImageStorageSettingService,
 	ProvideImageTaskService,
 	ProvideCangyuanMediaJobService,
+	ProvideCangyuanMediaRecoveryWorker,
 	ProvideCangyuanMediaPriceRegistry,
 	ProvideBatchImageModelPricingResolver,
 	NewBatchImagePublicService,
