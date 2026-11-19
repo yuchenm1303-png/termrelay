@@ -135,7 +135,9 @@ func TestCangyuanEscrowRetriesAfterQuotaFailureWithoutSecondCapture(t *testing.T
 	require.NoError(t, err)
 	_, err = svc.AttachSubmitted(ctx, owner, id, &service.CangyuanMediaTask{
 		ID: "remote_retry_1", Status: "completed",
-		Data: []struct{ URL string `json:"url"` }{{URL: "https://cdn.example.com/result.png"}},
+		Data: []struct {
+			URL string `json:"url"`
+		}{{URL: "https://cdn.example.com/result.png"}},
 	})
 	require.NoError(t, err)
 
