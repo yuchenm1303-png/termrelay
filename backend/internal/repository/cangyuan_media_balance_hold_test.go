@@ -13,8 +13,8 @@ import (
 // All payments here are simulated locally; the stub enforces SQL-like dedup.
 type cangyuanEscrowLedgerStub struct {
 	cangyuanBillingStub
-	muHold         sync.Mutex
-	holdRequests   map[string]bool
+	muHold          sync.Mutex
+	holdRequests    map[string]bool
 	captureRequests map[string]bool
 	releaseRequests map[string]bool
 	holdCalls       int
