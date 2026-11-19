@@ -36,8 +36,8 @@ func cangyuanReconciliationClient(t *testing.T, responses ...string) (*service.C
 			}
 			return &http.Response{
 				StatusCode: http.StatusOK,
-				Body: io.NopCloser(strings.NewReader(responses[n])),
-				Header: make(http.Header),
+				Body:       io.NopCloser(strings.NewReader(responses[n])),
+				Header:     make(http.Header),
 			}, nil
 		})},
 	}

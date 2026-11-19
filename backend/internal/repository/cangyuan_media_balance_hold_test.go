@@ -101,7 +101,9 @@ func TestCangyuanEscrowReservesOnceThenCapturesWithoutDoubleChargingBalance(t *t
 	require.NoError(t, err)
 	_, err = svc.AttachSubmitted(ctx, owner, id, &service.CangyuanMediaTask{
 		ID: "remote_escrow_1", Status: "completed",
-		Data: []struct{ URL string `json:"url"` }{{URL: "https://cdn.example.com/one.png"}},
+		Data: []struct {
+			URL string `json:"url"`
+		}{{URL: "https://cdn.example.com/one.png"}},
 	})
 	require.NoError(t, err)
 
