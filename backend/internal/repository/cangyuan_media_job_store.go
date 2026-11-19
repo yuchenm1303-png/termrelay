@@ -213,11 +213,32 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 				return service.ErrCangyuanMediaJobConflict
 			}
 		}
-		if current.BillingState != job.BillingState &&
-			(current.BillingState != "pending" || job.BillingState != "settled" ||
-				current.Status != service.CangyuanMediaJobCompleted || job.Status != service.CangyuanMediaJobCompleted ||
-				current.PriceSnapshot == nil) {
-			return service.ErrCangyuanMediaJobConflict
+		if current.BillingState != job.BillingState {
+			allowed := false
+			switch {
+			case current.BillingState == "pending" && job.BillingState == "held":
+				allowed = current.Status == service.CangyuanMediaJobReserved &&
+					job.Status == service.CangyuanMediaJobReserved &&
+					current.PriceSnapshot != nil && current.PayloadSHA256 != ""
+			case current.BillingState == "held" && job.BillingState == "settled":
+				allowed = current.Status == service.CangyuanMediaJobCompleted &&
+					job.Status == service.CangyuanMediaJobCompleted &&
+					current.PriceSnapshot != nil
+			case current.BillingState == "held" && job.BillingState == "released":
+				allowed = current.Status == service.CangyuanMediaJobFailed &&
+					job.Status == service.CangyuanMediaJobFailed &&
+					current.PriceSnapshot != nil
+			case current.BillingState == "pending" && job.BillingState == "settled":
+				// Legacy internal-only settlement; paid HTTP endpoints MUST use
+				// the held-balance flow before accepting upstream submissions.
+				allowed = current.PayloadSHA256 == "" &&
+					current.Status == service.CangyuanMediaJobCompleted &&
+					job.Status == service.CangyuanMediaJobCompleted &&
+					current.PriceSnapshot != nil
+			}
+			if !allowed {
+				return service.ErrCangyuanMediaJobConflict
+			}
 		}
 		_, err := tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			// Retain TTL; polling must not extend job lifetime indefinitely.
