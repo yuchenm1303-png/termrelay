@@ -84,7 +84,8 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 	owner := service.CangyuanMediaJobOwner{UserID: apiKey.UserID, APIKeyID: apiKey.ID}
 	job, err := h.public.Submit(c.Request.Context(), owner, *apiKey.GroupID,
 		kind, modelInput.Model, data, c.GetHeader("Idempotency-Key"))
-	if err != nil && (job == nil || job.BillingState == "pending") {
+	if err != nil && (job == nil || job.BillingState == "pending" ||
+		job.Status == service.CangyuanMediaJobReserved) {
 		status := http.StatusServiceUnavailable
 		message := "Cangyuan media request could not be accepted"
 		switch {
@@ -96,6 +97,8 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 			status, message = http.StatusConflict, "Idempotency-Key conflicts with an existing media request"
 		case errors.Is(err, service.ErrCangyuanMediaNoAccount):
 			status, message = http.StatusServiceUnavailable, "No available media account for this group"
+		case err != nil && strings.Contains(err.Error(), "Idempotency-Key"):
+			status, message = http.StatusBadRequest, "A valid Idempotency-Key header is required"
 		}
 		c.JSON(status, gin.H{"error": gin.H{"type": "media_error", "message": message}})
 		return true
