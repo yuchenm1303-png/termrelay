@@ -320,12 +320,12 @@ func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
 		},
 	}, service.PlatformGrok)
 	for _, path := range []string{"/v1/messages/count_tokens", "/messages/count_tokens"} {
-		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok","messages":[{"role":"user","content":"hi"}]}`))
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok-4","max_tokens":128,"messages":[{"role":"user","content":"hi"}]}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		countTokensRouter.ServeHTTP(w, req)
-		require.Equal(t, http.StatusOK, w.Code, "path=%s", path)
+		require.Equal(t, http.StatusOK, w.Code, "path=%s body=%s", path, w.Body.String())
 		var response struct {
 			InputTokens int `json:"input_tokens"`
 		}

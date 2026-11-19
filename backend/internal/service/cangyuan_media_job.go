@@ -57,11 +57,11 @@ type CangyuanMediaJob struct {
 	PriceSnapshot  *CangyuanMediaPriceSnapshot `json:"price_snapshot,omitempty"`
 	// The original priced payload is pinned without persisting its prompt.
 	// Every paid submission must match this digest before any upstream POST.
-	PayloadSHA256  string                      `json:"payload_sha256,omitempty"`
-	Version        int64                       `json:"version"`
-	CreatedAt      int64                       `json:"created_at"`
-	UpdatedAt      int64                       `json:"updated_at"`
-	ExpiresAt      int64                       `json:"expires_at"`
+	PayloadSHA256 string `json:"payload_sha256,omitempty"`
+	Version       int64  `json:"version"`
+	CreatedAt     int64  `json:"created_at"`
+	UpdatedAt     int64  `json:"updated_at"`
+	ExpiresAt     int64  `json:"expires_at"`
 }
 
 // CangyuanMediaJobStore MUST atomically enforce uniqueness and version CAS,
