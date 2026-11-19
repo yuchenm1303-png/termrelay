@@ -17,14 +17,16 @@ type CangyuanMediaHandler struct {
 	jobs    *service.CangyuanMediaJobService
 	public  *service.CangyuanMediaPublicService
 	billing *service.BillingCacheService
+	audit   *OpenAIGatewayHandler
 }
 
 func NewCangyuanMediaHandler(
 	jobs *service.CangyuanMediaJobService,
 	public *service.CangyuanMediaPublicService,
 	billing *service.BillingCacheService,
+	audit *OpenAIGatewayHandler,
 ) *CangyuanMediaHandler {
-	return &CangyuanMediaHandler{jobs: jobs, public: public, billing: billing}
+	return &CangyuanMediaHandler{jobs: jobs, public: public, billing: billing, audit: audit}
 }
 
 func (h *CangyuanMediaHandler) GetImageGeneration(c *gin.Context) {

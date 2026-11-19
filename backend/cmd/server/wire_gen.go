@@ -300,7 +300,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	cangyuanMediaJobs := service.ProvideCangyuanMediaJobService(cangyuanMediaStore)
 	cangyuanMediaWorker := service.ProvideCangyuanMediaRecoveryWorker(cangyuanMediaJobs, accountRepository, usageBillingRepository)
 	cangyuanMediaPublic := service.NewCangyuanMediaPublicService(cangyuanMediaJobs, cangyuanMediaPriceRegistry, accountRepository, usageBillingRepository)
-	cangyuanMediaHandler := handler.NewCangyuanMediaHandler(cangyuanMediaJobs, cangyuanMediaPublic, billingCacheService)
+	cangyuanMediaHandler := handler.NewCangyuanMediaHandler(cangyuanMediaJobs, cangyuanMediaPublic, billingCacheService, openAIGatewayHandler)
 	batchImageRepository := repository.NewBatchImageRepository(db)
 	batchImageQueue := repository.NewBatchImageQueue(redisClient, configConfig)
 	batchImageModelPricingResolver := service.ProvideBatchImageModelPricingResolver(modelPricingResolver)

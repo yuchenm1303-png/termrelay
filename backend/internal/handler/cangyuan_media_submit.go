@@ -72,6 +72,27 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		})
 		return true
 	}
+	// Media prompts must go through the existing prompt audit before any
+	// balance hold or upstream generation, just like ordinary OpenAI images.
+	// Never skip this control if the audit handler was not wired.
+	if h.audit == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"error": gin.H{"type": "api_error", "message": "Media content auditing is unavailable"},
+		})
+		return true
+	}
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": gin.H{"type": "authentication_error", "message": "Media caller context is unavailable"},
+		})
+		return true
+	}
+	if decision := h.audit.checkSecurityAudit(c, requestLogger(c, "handler.cangyuan_media.submit"),
+		apiKey, subject, service.ContentModerationProtocolOpenAIImages, modelInput.Model, data); decision != nil && !decision.AllowNextStage {
+		h.audit.openAISecurityAuditError(c, decision)
+		return true
+	}
 	if err := h.billing.CheckBillingEligibility(c.Request.Context(), apiKey.User, apiKey,
 		apiKey.Group, subscription, service.QuotaPlatform(c.Request.Context(), apiKey)); err != nil {
 		status, code, message, retryAfter := billingErrorDetails(err)
