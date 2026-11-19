@@ -72,7 +72,7 @@ describe('Cangyuan media price console', () => {
   it('requires manually entered USD prices and only saves a disabled draft by default', async () => {
     const wrapper = mount(CangyuanMediaPricesModal, { props: { show: true }, attachTo: document.body })
     await flushPromises()
-    expect(document.body.textContent).toContain('供应商')
+    expect(document.body.textContent).toContain('计费安全')
     expect(get).toHaveBeenCalledWith('/admin/cangyuan-media/catalog')
 
     const button = document.querySelector<HTMLButtonElement>('.cy-pricing-actions .cy-pricing-primary')
