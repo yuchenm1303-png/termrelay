@@ -37,6 +37,11 @@ func (s *CangyuanMediaJobService) SettleCompleted(
 	if err != nil {
 		return nil, nil, err
 	}
+	// New priced/idempotent jobs have a pinned payload and MUST settle through
+	// SQL balance capture. Never debit their available balance a second time.
+	if job.PayloadSHA256 != "" {
+		return job, nil, ErrCangyuanMediaNotBillable
+	}
 	if job.BillingState == "settled" && job.Status == CangyuanMediaJobCompleted {
 		return job, &UsageBillingApplyResult{Applied: false}, nil
 	}

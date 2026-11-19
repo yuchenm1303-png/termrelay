@@ -295,6 +295,11 @@ func (s *CangyuanMediaJobService) SubmitReserved(ctx context.Context, owner Cang
 			return nil, nil, errors.New("cangyuan media payload differs from the reserved priced request")
 		}
 	}
+	// Paid jobs must freeze their full verified sale price in SQL before
+	// their only upstream POST. A quote alone is not proof of a balance hold.
+	if job.PriceSnapshot != nil && job.BillingState != "held" {
+		return nil, nil, ErrCangyuanMediaNotBillable
+	}
 	if _, err := s.ClaimSubmission(ctx, owner, id); err != nil {
 		return nil, nil, err
 	}

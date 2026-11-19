@@ -174,9 +174,30 @@ func TestCangyuanMediaPricedSubmissionRejectsAlteredPayloadBeforeClaim(t *testin
 	require.NoError(t, err)
 	require.Equal(t, service.CangyuanMediaJobReserved, stored.Status)
 
-	// The approved payload is still eligible: a failed local validation has
-	// not consumed the one-and-only submission claim.
+	// The approved payload still cannot be sent until funds are frozen.
+	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, approved)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaNotBillable)
+	require.Zero(t, posts.Load(), "a verified quote without a balance hold must not submit")
+
+	_, _, err = svc.HoldApprovedCangyuanMediaBalance(ctx, owner, job.ID, &cangyuanEscrowLedgerStub{})
+	require.NoError(t, err)
+	// A failed local validation did not consume the one-and-only submission claim.
 	_, _, err = svc.SubmitReserved(ctx, owner, job.ID, client, approved)
 	require.Error(t, err) // test transport intentionally rejects outbound POST
 	require.Equal(t, int32(1), posts.Load())
+}
+
+func TestCangyuanPricedJobCannotUseLegacyDirectDebit(t *testing.T) {
+	svc, _ := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 17, APIKeyID: 42}
+	quote := cangyuanIdempotencyQuote()
+	payload := []byte(`{"model":"image-model","prompt":"safe test","n":1}`)
+	job, err := svc.ReserveIdempotent(ctx, owner, 66, service.CangyuanImageGeneration,
+		"image-model", payload, "cangyuan-priced-no-direct-debit", quote)
+	require.NoError(t, err)
+	billing := &cangyuanEscrowLedgerStub{}
+	_, _, err = svc.SettleCompleted(ctx, owner, job.ID, billing)
+	require.ErrorIs(t, err, service.ErrCangyuanMediaNotBillable)
+	require.Zero(t, billing.applied)
 }
