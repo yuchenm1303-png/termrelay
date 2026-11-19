@@ -63,6 +63,13 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		})
 		return true
 	}
+	imageRequest := kind == service.CangyuanImageGeneration || kind == service.CangyuanImageEdit
+	if imageRequest && !service.GroupAllowsImageGeneration(apiKey.Group) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": gin.H{"type": "permission_error", "message": service.ImageGenerationPermissionMessage()},
+		})
+		return true
+	}
 	subscription, _ := middleware2.GetSubscriptionFromContext(c)
 	// The current Cangyuan implementation freezes prepaid balance; do not
 	// silently charge that balance on a subscription-mode API key.
@@ -92,6 +99,17 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		apiKey, subject, service.ContentModerationProtocolOpenAIImages, modelInput.Model, data); decision != nil && !decision.AllowNextStage {
 		h.audit.openAISecurityAuditError(c, decision)
 		return true
+	}
+	// Preserve the same image concurrency admission control used by the
+	// ordinary OpenAI image API, rather than bypassing it for media-only accounts.
+	if imageRequest {
+		release, acquired := h.audit.acquireImageGenerationSlot(c, false)
+		if !acquired {
+			return true
+		}
+		if release != nil {
+			defer release()
+		}
 	}
 	if err := h.billing.CheckBillingEligibility(c.Request.Context(), apiKey.User, apiKey,
 		apiKey.Group, subscription, service.QuotaPlatform(c.Request.Context(), apiKey)); err != nil {
