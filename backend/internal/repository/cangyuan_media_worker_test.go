@@ -57,7 +57,8 @@ func TestCangyuanRecoveryWorkerPollsHeldJobFromRedisIndex(t *testing.T) {
 		&service.CangyuanMediaTask{ID: "remote-worker-1", Status: "queued"})
 	require.NoError(t, err)
 
-	queue := svc.Store.(service.CangyuanMediaRecoveryQueue)
+	queue, ok := svc.Store.(service.CangyuanMediaRecoveryQueue)
+	require.True(t, ok)
 	require.NoError(t, queue.Delay(ctx, job.ID, 0))
 	worker := service.NewCangyuanMediaRecoveryWorker(svc,
 		&cangyuanWorkerAccountReader{account: testCangyuanRecoveryAccount()}, billing)
@@ -103,7 +104,8 @@ func TestCangyuanRecoveryWorkerNeverResubmitsUnknownTask(t *testing.T) {
 	require.NoError(t, err)
 	_, err = svc.MarkSubmissionUnknown(ctx, owner, job.ID)
 	require.NoError(t, err)
-	queue := svc.Store.(service.CangyuanMediaRecoveryQueue)
+	queue, ok := svc.Store.(service.CangyuanMediaRecoveryQueue)
+	require.True(t, ok)
 	require.NoError(t, queue.Delay(ctx, job.ID, 0))
 	worker := service.NewCangyuanMediaRecoveryWorker(svc,
 		&cangyuanWorkerAccountReader{account: testCangyuanRecoveryAccount()}, billing)

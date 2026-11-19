@@ -8,9 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Cangyuan's media task reads are authenticated by the existing /v1 gateway
-// stack. No paid POST route is registered until billing/permissions are ready.
-func TestCangyuanMediaStatusRoutesRegisteredWithoutSubmission(t *testing.T) {
+// Cangyuan GET and POST run through the authenticated /v1 stack.
+func TestCangyuanMediaRoutesRegistered(t *testing.T) {
 	router := newGatewayRoutesTestRouter()
 	registered := make(map[string]struct{})
 	for _, route := range router.Routes() {
@@ -19,7 +18,8 @@ func TestCangyuanMediaStatusRoutesRegisteredWithoutSubmission(t *testing.T) {
 	require.Contains(t, registered, "GET /v1/images/generations/:task_id")
 	require.Contains(t, registered, "GET /v1/images/edits/:task_id")
 	require.Contains(t, registered, "GET /v1/videos/:request_id")
-	require.NotContains(t, registered, "POST /v1/videos")
+	require.Contains(t, registered, "POST /v1/videos")
+	require.Contains(t, registered, "POST /videos")
 	// Existing Grok video route must remain available and untouched.
 	require.Contains(t, registered, "POST /v1/videos/generations")
 

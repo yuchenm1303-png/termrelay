@@ -467,6 +467,9 @@ func modelEntitlementMiddleware() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+		// Middleware must not consume the authorized model request: restore
+		// the decoded body before handing it to count_tokens / generation.
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
 
 		model := compositeRequestModelFromBody(c.GetHeader("Content-Type"), body)
 		if model == "" {
