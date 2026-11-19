@@ -3,6 +3,11 @@ import { computed, ref, watch } from 'vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 
 type UpstreamPlatform = 'openai' | 'anthropic' | 'gemini' | 'grok'
+type UpstreamPreset = 'custom' | 'cangyuan'
+type CangyuanPricingInfo = { billing_mode: string; tiered: boolean }
+type CangyuanMediaPreview = { id: string; billing_mode: string; tiered: boolean }
+type CangyuanMediaGroups = { image: CangyuanMediaPreview[]; video: CangyuanMediaPreview[] }
+const CANGYUAN_BASE_URL = 'https://ai.cangyuansuanli.cn'
 
 interface GroupOption {
   id: number
@@ -71,6 +76,7 @@ const emit = defineEmits<{
 }>()
 
 const platform = ref<UpstreamPlatform>('openai')
+const upstreamPreset = ref<UpstreamPreset>('custom')
 const name = ref('')
 const baseUrl = ref('')
 const apiKey = ref('')
@@ -86,10 +92,33 @@ const syncing = ref(false)
 const saving = ref(false)
 const error = ref('')
 const syncedModels = ref<string[]>([])
+const selectedModels = ref<string[]>([])
+const selectedMediaModels = ref<string[]>([])
+const mediaModelFilter = ref('')
+const modelFilter = ref('')
+const modelPricing = ref<Record<string, CangyuanPricingInfo>>({})
+const excludedModels = ref(0)
+const mediaModels = ref<CangyuanMediaGroups>({ image: [], video: [] })
+const isCangyuan = computed(() => platform.value === 'openai' && upstreamPreset.value === 'cangyuan')
+const mediaCount = computed(() => mediaModels.value.image.length + mediaModels.value.video.length)
+const filteredMediaImages = computed(() => {
+  const query = mediaModelFilter.value.trim().toLowerCase()
+  return mediaModels.value.image.filter(item => !query || item.id.toLowerCase().includes(query))
+})
+const filteredMediaVideos = computed(() => {
+  const query = mediaModelFilter.value.trim().toLowerCase()
+  return mediaModels.value.video.filter(item => !query || item.id.toLowerCase().includes(query))
+})
+const selectedMediaImages = computed(() => mediaModels.value.image.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
+const selectedMediaVideos = computed(() => mediaModels.value.video.filter(item => selectedMediaModels.value.includes(item.id)).map(item => item.id))
+const isMediaOnly = computed(() => isCangyuan.value && selectedMediaModels.value.length > 0)
+const filteredModels = computed(() => { const q = modelFilter.value.trim().toLowerCase(); return syncedModels.value.filter(m => !q || m.toLowerCase().includes(q)).slice(0, 60) })
+const modelsToPublish = computed(() => isCangyuan.value ? syncedModels.value.filter(m => selectedModels.value.includes(m)) : syncedModels.value)
+const tieredSelected = computed(() => modelsToPublish.value.filter(model => modelPricing.value[model]?.tiered).length)
 
 const selectedPlatform = computed(() => platformOptions.find((item) => item.value === platform.value) || platformOptions[0])
 const canSync = computed(() => Boolean(baseUrl.value.trim() && apiKey.value.trim()) && !syncing.value)
-const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value)
+const canSave = computed(() => Boolean(name.value.trim() && baseUrl.value.trim() && apiKey.value.trim()) && !saving.value && (!isCangyuan.value || selectedModels.value.length > 0 || selectedMediaModels.value.length > 0))
 
 function cleanBaseUrl(value: string) {
   return value.trim().replace(/\/+$/, '')
@@ -98,20 +127,30 @@ function cleanBaseUrl(value: string) {
 function validateBaseUrl(value: string) {
   try {
     const url = new URL(cleanBaseUrl(value))
-    return url.protocol === 'http:' || url.protocol === 'https:'
+    return isCangyuan.value ? cleanBaseUrl(value) === CANGYUAN_BASE_URL : (url.protocol === 'http:' || url.protocol === 'https:')
   } catch {
     return false
   }
 }
 
 function passthroughExtra() {
-  if (platform.value === 'openai') return { openai_passthrough: true }
+  if (platform.value === 'openai') {
+    if (!isCangyuan.value) return { openai_passthrough: true }
+    const base = { upstream_vendor: 'cangyuan', openai_passthrough: false, openai_responses_mode: 'force_chat_completions' }
+    if (isMediaOnly.value) return {
+      ...base,
+      cangyuan_media_only: true,
+      cangyuan_media_models: { image: selectedMediaImages.value, video: selectedMediaVideos.value },
+    }
+    return base
+  }
   if (platform.value === 'anthropic') return { anthropic_passthrough: true }
   return {}
 }
 
 function resetForm() {
   platform.value = 'openai'
+  upstreamPreset.value = 'custom'
   name.value = ''
   baseUrl.value = ''
   apiKey.value = ''
@@ -126,6 +165,13 @@ function resetForm() {
   saving.value = false
   error.value = ''
   syncedModels.value = []
+  selectedModels.value = []
+  selectedMediaModels.value = []
+  mediaModelFilter.value = ''
+  modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
 }
 
 function close() {
@@ -134,6 +180,7 @@ function close() {
 }
 
 function toggleGroup(id: number) {
+  if (isCangyuan.value) return
   groupIds.value = groupIds.value.includes(id)
     ? groupIds.value.filter((item) => item !== id)
     : [...groupIds.value, id]
@@ -169,7 +216,7 @@ async function loadGroups() {
       groups.value = received.filter((item) => String(item.platform || '').toLowerCase() === requestedPlatform)
     }
 
-    if (!groupIds.value.length && groups.value.length) {
+    if (!groupIds.value.length && groups.value.length && !isCangyuan.value) {
       const preferred = groups.value.find((item) => String(item.name || '').toLowerCase().includes('default')) || groups.value[0]
       groupIds.value = [preferred.id]
     }
@@ -181,16 +228,71 @@ async function loadGroups() {
 }
 
 function onPlatformChange() {
+  upstreamPreset.value = 'custom'
   groupIds.value = []
   groups.value = []
   syncedModels.value = []
+  selectedModels.value = []
+  selectedMediaModels.value = []
+  mediaModelFilter.value = ''
+  modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
   error.value = ''
   void loadGroups()
+}
+
+function onPresetChange() {
+  if (isCangyuan.value) {
+    baseUrl.value = CANGYUAN_BASE_URL
+    if (!name.value.trim()) name.value = '沧元算力'
+    // Remain out of live routing until an administrator has checked pricing and usage.
+    groupIds.value = []
+  } else if (baseUrl.value === CANGYUAN_BASE_URL) {
+    baseUrl.value = ''
+  }
+  syncedModels.value = []
+  selectedModels.value = []
+  selectedMediaModels.value = []
+  mediaModelFilter.value = ''
+  modelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
+  error.value = ''
+}
+
+function invalidateModelDiscovery() {
+  syncedModels.value = []
+  selectedModels.value = []
+  selectedMediaModels.value = []
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
+}
+
+function toggleModel(model: string) {
+  if (!selectedModels.value.includes(model)) selectedMediaModels.value = []
+  selectedModels.value = selectedModels.value.includes(model) ? selectedModels.value.filter(m => m !== model) : [...selectedModels.value, model]
+}
+
+function toggleMediaModel(model: string) {
+  if (!selectedMediaModels.value.includes(model)) selectedModels.value = []
+  selectedMediaModels.value = selectedMediaModels.value.includes(model)
+    ? selectedMediaModels.value.filter(m => m !== model)
+    : [...selectedMediaModels.value, model]
 }
 
 async function syncModels() {
   error.value = ''
   syncedModels.value = []
+  selectedModels.value = []
+  selectedMediaModels.value = []
+  mediaModelFilter.value = ''
+  modelPricing.value = {}
+  excludedModels.value = 0
+  mediaModels.value = { image: [], video: [] }
   if (!validateBaseUrl(baseUrl.value)) {
     error.value = '请输入有效的 Base URL，例如 https://api.example.com'
     return
@@ -203,17 +305,31 @@ async function syncModels() {
   syncing.value = true
   try {
     if (previewMode) {
+      if (isCangyuan.value) {
+        error.value = '静态预览无法验证沧元 API Key；请在正式控制台同步真实模型。'
+        return
+      }
       syncedModels.value = [...selectedPlatform.value.previewModels]
       return
     }
-    const response = await api.post<{ models?: unknown[] }>('/admin/accounts/models/sync-upstream-preview', {
+    const response = await api.post<{ models?: unknown[]; pricing?: Record<string, CangyuanPricingInfo>; filtered_count?: number; media_models?: Partial<CangyuanMediaGroups> }>('/admin/accounts/models/sync-upstream-preview', {
       platform: platform.value,
       type: 'apikey',
+      ...(isCangyuan.value ? { vendor: 'cangyuan' } : {}),
       base_url: cleanBaseUrl(baseUrl.value),
       api_key: apiKey.value.trim(),
     })
     syncedModels.value = normalizeModels(response.data?.models)
-    if (!syncedModels.value.length) error.value = '连接成功，但上游没有返回可用模型。'
+    modelPricing.value = isCangyuan.value ? (response.data?.pricing || {}) : {}
+    excludedModels.value = isCangyuan.value ? Math.max(0, Number(response.data?.filtered_count || 0)) : 0
+    const discoveredMedia = response.data?.media_models
+    mediaModels.value = isCangyuan.value ? {
+      image: Array.isArray(discoveredMedia?.image) ? discoveredMedia.image : [],
+      video: Array.isArray(discoveredMedia?.video) ? discoveredMedia.video : [],
+    } : { image: [], video: [] }
+    if (!syncedModels.value.length && !mediaCount.value) error.value = isCangyuan.value
+      ? '这把密钥没有符合当前协议且已分类的对话、图片或视频模型。'
+      : '连接成功，但上游没有返回可用模型。'
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -239,9 +355,16 @@ async function submit() {
   // Always verify the live upstream before persisting the account. Besides
   // validating the credentials, this gives us the exact model whitelist that
   // should be advertised by TermRelay for this relay account.
-  if (!syncedModels.value.length) {
+  if (!syncedModels.value.length && !mediaCount.value) {
     await syncModels()
-    if (!syncedModels.value.length) return
+    if (!syncedModels.value.length && !mediaCount.value) return
+  }
+
+  // Media-only accounts are accepted but remain unschedulable until the
+  // dedicated image/video gateway and verified pricing are fully enabled.
+  if (isCangyuan.value && !modelsToPublish.value.length && !selectedMediaModels.value.length) {
+    error.value = '请选择至少一个已分类的对话、图片或视频模型。'
+    return
   }
 
   saving.value = true
@@ -252,7 +375,7 @@ async function submit() {
       return
     }
 
-    const modelMapping = Object.fromEntries(syncedModels.value.map((model) => [model, model]))
+    const modelMapping = Object.fromEntries(modelsToPublish.value.map((model) => [model, model]))
     await api.post<CreateAccountResult>('/admin/accounts', {
       name: name.value.trim(),
       notes: notes.value.trim() || undefined,
@@ -269,7 +392,10 @@ async function submit() {
       concurrency: Math.max(1, Math.round(Number(concurrency.value) || 1)),
       priority: Math.max(0, Math.round(Number(priority.value) || 0)),
       rate_multiplier: Math.max(0, Number(rateMultiplier.value) || 0),
-      group_ids: groupIds.value,
+      group_ids: isCangyuan.value ? [] : groupIds.value,
+      // Without this, the backend silently attaches an account with no
+      // group IDs to openai-default, making unpriced models routable.
+      skip_default_group_bind: isCangyuan.value,
     })
 
     apiKey.value = ''
@@ -328,6 +454,15 @@ watch(
                 <small>协议会同时决定模型探测、可选分组和请求转发；账户创建后不可直接修改。</small>
               </label>
 
+              <label v-if="platform === 'openai'" class="field field-wide">
+                <span>上游供应商</span>
+                <select v-model="upstreamPreset" class="protocol-select" :disabled="saving || syncing" @change="onPresetChange">
+                  <option value="custom">自定义 OpenAI 兼容上游</option>
+                  <option value="cangyuan">沧元算力 · New API</option>
+                </select>
+                <small>沧元使用 OpenAI 兼容协议，仍归属 OpenAI 分组；选择后自动填写官方入口，不会创建新协议分组。</small>
+              </label>
+
               <label class="field field-wide">
                 <span>账户名称</span>
                 <input v-model="name" type="text" maxlength="80" :placeholder="`例如 ${selectedPlatform.label} Primary`" autocomplete="off" />
@@ -337,38 +472,85 @@ watch(
                 <span>Base URL</span>
                 <div class="input-with-prefix">
                   <b>URL</b>
-                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="baseUrl" type="url" :placeholder="selectedPlatform.baseUrlPlaceholder" autocomplete="off" @input="invalidateModelDiscovery" />
                 </div>
-                <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。</small>
+                <small>填写服务根地址；TermRelay 会按 {{ selectedPlatform.label }} 协议建立上游连接。{{ isCangyuan ? '这里预填沧元主站入口。' : '' }}</small>
               </label>
 
               <label class="field field-wide">
                 <span>API Key</span>
                 <div class="secret-input">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7" cy="10" r="3" /><path d="m9.7 8.3 6-6M13 5l2 2" /></svg>
-                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="syncedModels = []" />
+                  <input v-model="apiKey" :type="showApiKey ? 'text' : 'password'" :placeholder="selectedPlatform.keyPlaceholder" autocomplete="off" @input="invalidateModelDiscovery" />
                   <button type="button" @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button>
                 </div>
               </label>
             </div>
 
-            <div class="model-probe" :class="{ ready: syncedModels.length }">
+            <div class="model-probe" :class="{ ready: syncedModels.length || mediaCount }">
               <div class="probe-copy">
                 <span class="probe-icon">
                   <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h12M4 10h12M4 14.5h7" /></svg>
                 </span>
                 <div>
-                  <strong>{{ syncedModels.length ? `已发现 ${syncedModels.length} 个模型` : '检测上游模型' }}</strong>
-                  <small>{{ syncedModels.length ? '模型目录已验证，创建后保持原始模型 ID 透传。' : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
+                  <strong>{{ (syncedModels.length || mediaCount) ? `已发现 ${syncedModels.length + mediaCount} 个候选模型` : '检测上游模型' }}</strong>
+                  <small>{{ (syncedModels.length || mediaCount) ? (isCangyuan ? '已按官方价格类型区分对话、图片和视频；媒体模型暂不开放计费。' : '模型目录已验证，创建后保持原始模型 ID 透传。') : `建议创建前先检测 ${selectedPlatform.label} 上游模型，确认凭据和地址可用。` }}</small>
                 </div>
               </div>
               <button type="button" :disabled="!canSync" @click="syncModels">
                 <svg :class="{ spinning: syncing }" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.2 6.1A7 7 0 1 0 17 12" /><path d="M16.3 2.9v3.6h-3.6" /></svg>
-                {{ syncing ? '检测中' : syncedModels.length ? '重新检测' : '同步模型' }}
+                {{ syncing ? '检测中' : (syncedModels.length || mediaCount) ? '重新检测' : '同步模型' }}
               </button>
             </div>
 
-            <div v-if="syncedModels.length" class="model-preview">
+            <div v-if="isCangyuan && syncedModels.length" class="cangyuan-model-select">
+              <div class="cangyuan-warning">
+                <strong>选择对话模型 · {{ selectedModels.length }} / {{ syncedModels.length }}</strong>
+                <small>已按这把 API Key 的模型目录和沧元官方价格表交叉筛选；排除了 {{ excludedModels }} 个图片、视频、按次计费或未分类模型。分档报价仍须单独验价，不会自动转成本站销售价格。</small>
+              </div>
+              <input v-model="modelFilter" type="search" placeholder="搜索上游模型 ID" autocomplete="off" aria-label="搜索上游模型" />
+              <div class="cangyuan-model-list">
+                <label v-for="model in filteredModels" :key="model" class="cangyuan-model">
+                  <input type="checkbox" :checked="selectedModels.includes(model)" @change="toggleModel(model)" />
+                  <code>{{ model }}</code>
+                  <small v-if="modelPricing[model]?.tiered" class="cangyuan-pricing-tier">分档计费</small>
+                  <small v-else class="cangyuan-pricing-standard">按量计费</small>
+                </label>
+                <p v-if="!filteredModels.length" class="cangyuan-no-model">没有匹配的模型</p>
+              </div>
+              <small>每次最多显示 60 个搜索结果。已选中 {{ tieredSelected }} 个分档价格模型，需先校验各档成本和用户售价。创建后默认暂停调度，不会自动上架。</small>
+            </div>
+
+            <div v-if="isCangyuan && mediaCount" class="cangyuan-media-preview">
+              <div class="cangyuan-media-heading">
+                <strong>图片与视频 · 已选 {{ selectedMediaModels.length }} / {{ mediaCount }}</strong>
+                <small>可单独创建图片/视频上游测试账号，默认暂停调度，未配置售价前不会提供生成或收费。选择媒体模型时会取消对话模型的选择。</small>
+              </div>
+              <input v-model="mediaModelFilter" class="cangyuan-media-search" type="search" placeholder="搜索所有图片 / 视频模型 ID" autocomplete="off" aria-label="搜索沧元媒体模型" />
+              <div class="cangyuan-media-groups">
+                <div class="cangyuan-media-group">
+                  <strong>图像生成 / 编辑 <span>{{ mediaModels.image.length }}</span></strong>
+                  <label v-for="item in filteredMediaImages" :key="item.id" class="cangyuan-media-choice">
+                    <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
+                    <code>{{ item.id }}</code>
+                    <span>{{ item.tiered ? '分档' : '按次' }}</span>
+                  </label>
+                  <small v-if="!filteredMediaImages.length">没有匹配的图片模型</small>
+                </div>
+                <div class="cangyuan-media-group">
+                  <strong>视频生成 <span>{{ mediaModels.video.length }}</span></strong>
+                  <label v-for="item in filteredMediaVideos" :key="item.id" class="cangyuan-media-choice">
+                    <input type="checkbox" :checked="selectedMediaModels.includes(item.id)" @change="toggleMediaModel(item.id)" />
+                    <code>{{ item.id }}</code>
+                    <span>{{ item.tiered ? '分档' : '按次' }}</span>
+                  </label>
+                  <small v-if="!filteredMediaVideos.length">没有匹配的视频模型</small>
+                </div>
+              </div>
+              <small>显示匹配的图片 {{ filteredMediaImages.length }} 个、视频 {{ filteredMediaVideos.length }} 个；搜索不影响已选 {{ selectedMediaModels.length }} 个模型。账号保存后仍暂停调度，未核价前不会上架。</small>
+            </div>
+
+            <div v-if="syncedModels.length && !isCangyuan" class="model-preview">
               <code v-for="model in syncedModels.slice(0, 8)" :key="model">{{ model }}</code>
               <span v-if="syncedModels.length > 8">+{{ syncedModels.length - 8 }}</span>
             </div>
@@ -402,10 +584,11 @@ watch(
           <section class="form-section group-section">
             <div class="section-heading">
               <span>03</span>
-              <div><strong>调度分组</strong><small>选择允许该账户参与调度的 {{ selectedPlatform.label }} 分组</small></div>
+              <div><strong>调度分组</strong><small>{{ isCangyuan ? '默认不绑定分组；核对接口与售价后再开放' : `选择允许该账户参与调度的 ${selectedPlatform.label} 分组` }}</small></div>
             </div>
 
-            <div v-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
+            <p v-if="isCangyuan" class="group-empty">沧元账号创建时不会绑定任何生产分组。完成价格校验、失败扣费测试后，在编辑账号中手动绑定。</p>
+            <div v-else-if="groupsLoading" class="groups-loading"><i></i><i></i><i></i></div>
             <div v-else-if="groups.length" class="group-options">
               <button
                 v-for="group in groups"
@@ -608,6 +791,19 @@ watch(
 .model-preview code, .model-preview span { min-height: 23px; padding: 0 7px; border: 1px solid #292e35; border-radius: 6px; background: #121419; color: #858e99; display: inline-flex; align-items: center; font: 560 .58rem/1 var(--font-mono); }
 .model-preview span { color: #6e7782; }
 
+.cangyuan-model-select { display: grid; gap: 10px; margin-top: 12px; }
+.cangyuan-warning { display: flex; flex-direction: column; gap: 5px; padding: 12px; border: 1px solid #4a382b; border-radius: 9px; background: #221a15; }
+.cangyuan-warning strong { color: #e9c7a6; font-size: .71rem; }
+.cangyuan-warning small, .cangyuan-model-select > small { color: #a39a91; font-size: .62rem; line-height: 1.55; }
+.cangyuan-model-select > input { width: 100%; height: 38px; padding: 0 11px; border: 1px solid #343941; border-radius: 8px; outline: 0; background: #0c0e12; color: #e6e9ed; }
+.cangyuan-model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 230px; overflow-y: auto; gap: 5px; }
+.cangyuan-model { display: flex; align-items: center; min-width: 0; gap: 8px; padding: 8px 10px; border: 1px solid #292e35; border-radius: 7px; color: #c5cbd2; cursor: pointer; }
+.cangyuan-model input { accent-color: #43cd98; }
+.cangyuan-model .cangyuan-pricing-tier { white-space: nowrap; margin-left: auto; color: #edc58e; font-size: .59rem; }
+.cangyuan-model .cangyuan-pricing-standard { white-space: nowrap; margin-left: auto; color: #829897; font-size: .59rem; }
+.cangyuan-model code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .65rem; }
+.cangyuan-no-model { margin: 4px; color: #858e99; font-size: .67rem; }
+
 .schedule-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .group-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .group-options > button {
@@ -656,7 +852,7 @@ watch(
   .create-dialog-head p { max-width: 520px; }
   .create-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .create-dialog-body { padding: 18px; }
-  .form-grid, .schedule-grid, .group-options { grid-template-columns: 1fr; }
+  .form-grid, .schedule-grid, .group-options, .cangyuan-model-list { grid-template-columns: 1fr; }
   .model-probe { align-items: flex-start; flex-direction: column; }
   .model-probe > button { width: 100%; justify-content: center; }
   .create-dialog-foot { padding: 12px 18px; align-items: stretch; flex-direction: column; }
@@ -664,4 +860,22 @@ watch(
   .create-dialog-foot > div:last-child { width: 100%; }
   .cancel-button, .save-button { flex: 1; justify-content: center; }
 }
+
+.cangyuan-media-preview { border: 1px solid rgba(144, 159, 158, .24); border-radius: 16px; padding: 16px; display: grid; gap: 12px; }
+.cangyuan-media-preview small { color: var(--text-secondary, #94a3a2); line-height: 1.5; font-size: 12px; }
+.cangyuan-media-heading { display: grid; gap: 5px; }
+.cangyuan-media-heading strong { font-size: 14px; }
+.cangyuan-media-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cangyuan-media-group { min-width: 0; display: grid; align-content: start; gap: 7px; border: 1px solid rgba(144, 159, 158, .18); border-radius: 12px; padding: 12px; }
+.cangyuan-media-group > strong { font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+.cangyuan-media-group > strong span { opacity: .65; }
+.cangyuan-media-choice { min-width: 0; display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 11px; }
+.cangyuan-media-choice input { accent-color: #43cd98; flex-shrink: 0; }
+.cangyuan-media-choice code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.cangyuan-media-choice span { flex-shrink: 0; font-size: 10px; opacity: .6; }
+@media (max-width: 620px) { .cangyuan-media-groups { grid-template-columns: 1fr; } }
+
+.cangyuan-media-search { width: 100%; min-width: 0; padding: 11px 13px; border: 1px solid rgba(144, 159, 158, .24); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 12px; outline-offset: 2px; }
+.cangyuan-media-group { max-height: 300px; overflow-y: auto; }
+.cangyuan-media-choice { flex-shrink: 0; }
 </style>

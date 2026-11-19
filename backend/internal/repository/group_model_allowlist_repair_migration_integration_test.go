@@ -20,7 +20,10 @@ func TestMigration236RenamesLegacyModelsListConfigColumn(t *testing.T) {
 	tx := testTx(t)
 	ctx := context.Background()
 
-	_, err := tx.ExecContext(ctx, "ALTER TABLE groups RENAME COLUMN model_allowlist TO models_list_config")
+	// Recreate the pre-237 schema for this migration-236 regression test.
+	_, err := tx.ExecContext(ctx, "ALTER TABLE groups DROP COLUMN IF EXISTS models_list_config")
+	require.NoError(t, err)
+	_, err = tx.ExecContext(ctx, "ALTER TABLE groups RENAME COLUMN model_allowlist TO models_list_config")
 	require.NoError(t, err)
 
 	var groupID int64
@@ -50,7 +53,11 @@ func TestMigration236BackfillsWhenBothColumnsExist(t *testing.T) {
 	tx := testTx(t)
 	ctx := context.Background()
 
-	_, err := tx.ExecContext(ctx,
+	// 237 restores this display-only column. Remove it inside the rolled-back
+	// test transaction to exercise 236's historical both-columns case.
+	_, err := tx.ExecContext(ctx, "ALTER TABLE groups DROP COLUMN IF EXISTS models_list_config")
+	require.NoError(t, err)
+	_, err = tx.ExecContext(ctx,
 		"ALTER TABLE groups ADD COLUMN models_list_config JSONB NOT NULL DEFAULT '{}'::jsonb")
 	require.NoError(t, err)
 

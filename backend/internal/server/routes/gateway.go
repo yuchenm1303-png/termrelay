@@ -78,6 +78,15 @@ func RegisterGatewayRoutes(
 		return getGroupPlatform(c) == service.PlatformOpenAI
 	}
 	imagesHandler := func(c *gin.Context) {
+		if getGroupPlatform(c) == service.PlatformOpenAI && h.CangyuanMedia != nil {
+			kind := service.CangyuanImageGeneration
+			if strings.HasSuffix(c.Request.URL.Path, "/edits") {
+				kind = service.CangyuanImageEdit
+			}
+			if h.CangyuanMedia.TrySubmit(c, kind) {
+				return
+			}
+		}
 		switch getGroupPlatform(c) {
 		case service.PlatformOpenAI:
 			h.OpenAIGateway.Images(c)
@@ -94,6 +103,10 @@ func RegisterGatewayRoutes(
 		}
 	}
 	videoGenerationHandler := func(c *gin.Context) {
+		if getGroupPlatform(c) == service.PlatformOpenAI && h.CangyuanMedia != nil &&
+			h.CangyuanMedia.TrySubmit(c, service.CangyuanVideoGeneration) {
+			return
+		}
 		if getGroupPlatform(c) == service.PlatformGrok {
 			h.OpenAIGateway.GrokVideoGeneration(c)
 			return
@@ -107,6 +120,16 @@ func RegisterGatewayRoutes(
 		})
 	}
 	videoStatusHandler := func(c *gin.Context) {
+		// Cangyuan tasks have a private, owner-scoped cyjob_ identifier.
+		// Do not pass these through the existing Grok/Sora status path.
+		if strings.HasPrefix(c.Param("request_id"), "cyjob_") {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetVideo(c)
+			return
+		}
 		// Video status requests do not carry a model, so composite groups cannot
 		// be resolved by compositeTargetPlatformMiddleware. Route them through
 		// the Grok handler and let scheduler/account selection enforce capacity.
@@ -248,6 +271,22 @@ func RegisterGatewayRoutes(
 		gateway.POST("/images/generations/async", h.AsyncImage.Submit)
 		gateway.POST("/images/edits/async", h.AsyncImage.Submit)
 		gateway.GET("/images/tasks/:task_id", h.AsyncImage.Get)
+		// Read-only, API-key-owned Cangyuan media jobs. Submission routes are
+		// intentionally not registered until pricing/entitlements are enforced.
+		gateway.GET("/images/generations/:task_id", func(c *gin.Context) {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetImageGeneration(c)
+		})
+		gateway.GET("/images/edits/:task_id", func(c *gin.Context) {
+			if h.CangyuanMedia == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Media task not found"}})
+				return
+			}
+			h.CangyuanMedia.GetImageEdit(c)
+		})
 		gateway.POST("/images/batches", h.BatchImage.Submit)
 		gateway.GET("/images/batches", h.BatchImage.List)
 		gateway.GET("/images/batches/models", h.BatchImage.Models)
@@ -258,6 +297,9 @@ func RegisterGatewayRoutes(
 		gateway.POST("/images/batches/:id/cancel", h.BatchImage.Cancel)
 		gateway.DELETE("/images/batches/:id", h.BatchImage.DeleteRecord)
 		gateway.DELETE("/images/batches/:id/outputs", h.BatchImage.DeleteOutputs)
+		// OpenAI-compatible image routes auto-detect Cangyuan media-only models.
+		// Cangyuan video uses POST /v1/videos, not Grok's /videos/generations.
+		gateway.POST("/videos", videoGenerationHandler)
 		gateway.POST("/videos/generations", videoGenerationHandler)
 		gateway.POST("/videos/edits", videoEditHandler)
 		gateway.POST("/videos/extensions", videoExtensionHandler)
@@ -337,6 +379,7 @@ func RegisterGatewayRoutes(
 	r.POST("/images/generations/async", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, h.AsyncImage.Submit)
 	r.POST("/images/edits/async", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, h.AsyncImage.Submit)
 	r.GET("/images/tasks/:task_id", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), compositeTarget, requireGroupAnthropic, h.AsyncImage.Get)
+	r.POST("/videos", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, videoGenerationHandler)
 	r.POST("/videos/generations", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, videoGenerationHandler)
 	r.POST("/videos/edits", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, videoEditHandler)
 	r.POST("/videos/extensions", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), modelEntitlement, compositeTarget, requireGroupAnthropic, videoExtensionHandler)
@@ -424,6 +467,9 @@ func modelEntitlementMiddleware() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+		// Middleware must not consume the authorized model request: restore
+		// the decoded body before handing it to count_tokens / generation.
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
 
 		model := compositeRequestModelFromBody(c.GetHeader("Content-Type"), body)
 		if model == "" {

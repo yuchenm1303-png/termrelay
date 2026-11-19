@@ -261,8 +261,20 @@ func TestGatewayRoutesNonGrokVideosAreRejectedAtPlatformGate(t *testing.T) {
 	}
 }
 
-func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireOpenAITarget(t *testing.T) {
+func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRespectPlatformDetection(t *testing.T) {
 	router := newGatewayRoutesTestRouter(service.PlatformComposite)
+	// This minimal test router uses the built-in model platform detector.
+	// Unknown models fail closed, while recognized OpenAI models are
+	// routed through the OpenAI-compatible endpoint, even without a
+	// repository-backed explicit composite route.
+	registered := false
+	for _, route := range router.Routes() {
+		if route.Method == http.MethodPost && route.Path == "/v1/embeddings" {
+			registered = true
+			break
+		}
+	}
+	require.True(t, registered, "POST /v1/embeddings should be registered")
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/embeddings", strings.NewReader(`{"model":"gemini-2.5-pro","input":"hello"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -276,7 +288,11 @@ func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireOpenAITarget(t *testing
 	w = httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
-	require.NotEqual(t, http.StatusNotFound, w.Code)
+	// The test OpenAI handler has no service dependencies, so it may return
+	// an internal error. What matters here is that platform detection
+	// sends a recognized OpenAI model to the correct handler rather than
+	// rejecting it as an unsupported composite endpoint.
+	require.NotEqual(t, http.StatusNotFound, w.Code, "recognized OpenAI model should pass composite platform detection")
 }
 
 func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
@@ -303,15 +319,18 @@ func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
 	}
 
 	countTokensRouter := newGatewayRoutesTestRouterWithConfig(&config.Config{
-		Gateway: config.GatewayConfig{MaxBodySize: 1024 * 1024},
+		Gateway: config.GatewayConfig{
+			MaxBodySize:     1024 * 1024,
+			TextMaxBodySize: 1024 * 1024,
+		},
 	}, service.PlatformGrok)
 	for _, path := range []string{"/v1/messages/count_tokens", "/messages/count_tokens"} {
-		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok","messages":[{"role":"user","content":"hi"}]}`))
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok-4","max_tokens":128,"messages":[{"role":"user","content":"hi"}]}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
 		countTokensRouter.ServeHTTP(w, req)
-		require.Equal(t, http.StatusOK, w.Code, "path=%s", path)
+		require.Equal(t, http.StatusOK, w.Code, "path=%s body=%s", path, w.Body.String())
 		var response struct {
 			InputTokens int `json:"input_tokens"`
 		}

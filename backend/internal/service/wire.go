@@ -551,6 +551,31 @@ func ProvideImageTaskService(store ImageTaskStore, settings *ImageStorageSetting
 	return NewImageTaskServiceWithResolver(store, settings.Resolver(), defaultImageTaskTTL, defaultImageTaskExecutionTimeout)
 }
 
+// ProvideCangyuanMediaJobService constructs a private, authenticated task
+// registry; it does not register submission or payment endpoints.
+func ProvideCangyuanMediaJobService(store CangyuanMediaJobStore) *CangyuanMediaJobService {
+	return &CangyuanMediaJobService{Store: store}
+}
+
+// ProvideCangyuanMediaRecoveryWorker starts the cross-instance background
+// GET poller only for already-funded media jobs in the private due index.
+// It never creates a generation or sends a paid POST.
+func ProvideCangyuanMediaRecoveryWorker(
+	jobs *CangyuanMediaJobService,
+	accounts AccountRepository,
+	billing UsageBillingRepository,
+) *CangyuanMediaRecoveryWorker {
+	worker := NewCangyuanMediaRecoveryWorker(jobs, accounts, billing)
+	worker.Start()
+	return worker
+}
+
+// ProvideCangyuanMediaPriceRegistry uses the persistent admin settings DB.
+// No user-facing media endpoint may accept client-supplied approved pricing.
+func ProvideCangyuanMediaPriceRegistry(settings SettingRepository) *CangyuanMediaPriceRegistry {
+	return NewCangyuanMediaPriceRegistry(settings)
+}
+
 // ProvideBackupService creates and starts BackupService
 func ProvideBackupService(
 	settingRepo SettingRepository,
@@ -698,6 +723,10 @@ var ProviderSet = wire.NewSet(
 	NewOpenAIGatewayService,
 	ProvideImageStorageSettingService,
 	ProvideImageTaskService,
+	ProvideCangyuanMediaJobService,
+	ProvideCangyuanMediaRecoveryWorker,
+	ProvideCangyuanMediaPriceRegistry,
+	NewCangyuanMediaPublicService,
 	ProvideBatchImageModelPricingResolver,
 	NewBatchImagePublicService,
 	NewBatchImageDownloadService,

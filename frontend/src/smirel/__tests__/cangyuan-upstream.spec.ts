@@ -1,0 +1,274 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import CreateUpstreamAccountModal from '../components/CreateUpstreamAccountModal.vue'
+import { api } from '../core/api'
+
+vi.mock('../core/api', () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+  },
+  previewMode: false,
+  getErrorMessage: (error: unknown) => error instanceof Error ? error.message : String(error),
+}))
+
+const get = vi.mocked(api.get)
+const post = vi.mocked(api.post)
+
+function element<T extends HTMLElement>(selector: string): T {
+  const found = document.querySelector<T>(selector)
+  if (!found) throw new Error(`Missing element: ${selector}`)
+  return found
+}
+
+function change<T extends HTMLInputElement | HTMLSelectElement>(input: T, value: string) {
+  input.value = value
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  input.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+describe('Cangyuan New API setup', () => {
+  beforeEach(() => {
+    get.mockReset()
+    post.mockReset()
+    get.mockResolvedValue({
+      data: [{ id: 99, name: 'openai-default', platform: 'openai', status: 'active' }],
+    } as never)
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return { data: { models: ['verified-chat-model'], filtered_count: 1, pricing: { 'verified-chat-model': { billing_mode: 'tiered_expr', tiered: true } } } } as never
+      }
+      return { data: { id: 14 } } as never
+    })
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('requires explicit approved models and never silently attaches openai-default', async () => {
+    const wrapper = mount(CreateUpstreamAccountModal, {
+      props: { show: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find((select) => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+
+    expect(element<HTMLInputElement>('.input-with-prefix input').value)
+      .toBe('https://ai.cangyuansuanli.cn')
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+
+    change(element<HTMLInputElement>('.secret-input input'), 'test-not-a-real-key')
+    await nextTick()
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    expect(post).toHaveBeenCalledWith(
+      '/admin/accounts/models/sync-upstream-preview',
+      expect.objectContaining({
+        platform: 'openai',
+        type: 'apikey',
+        vendor: 'cangyuan',
+        base_url: 'https://ai.cangyuansuanli.cn',
+        api_key: 'test-not-a-real-key',
+      }),
+    )
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+
+    const choices = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-model'))
+    expect(choices).toHaveLength(1)
+    expect(choices[0].textContent).toContain('分档计费')
+    expect(document.querySelector('.cangyuan-warning')?.textContent).toContain('排除了 1 个')
+    const selected = choices.find((label) => label.textContent?.includes('verified-chat-model'))
+    expect(selected).toBeDefined()
+    selected!.querySelector<HTMLInputElement>('input')!.click()
+    await nextTick()
+
+    element<HTMLButtonElement>('.save-button').click()
+    await flushPromises()
+    const create = post.mock.calls.find(([url]) => url === '/admin/accounts')
+    expect(create).toBeDefined()
+    expect(create![1]).toEqual(expect.objectContaining({
+      platform: 'openai',
+      type: 'apikey',
+      group_ids: [],
+      skip_default_group_bind: true,
+      extra: {
+        upstream_vendor: 'cangyuan',
+        openai_passthrough: false,
+        openai_responses_mode: 'force_chat_completions',
+      },
+      credentials: {
+        api_key: 'test-not-a-real-key',
+        base_url: 'https://ai.cangyuansuanli.cn',
+        model_mapping: { 'verified-chat-model': 'verified-chat-model' },
+      },
+    }))
+    wrapper.unmount()
+  })
+  it('reports media models separately without enabling a media-only account', async () => {
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return {
+          data: {
+            models: [],
+            filtered_count: 2,
+            media_models: {
+              image: [{ id: 'photo-model', billing_mode: 'tiered_expr', tiered: true }],
+              video: [{ id: 'video-model', billing_mode: 'per_request', tiered: false }],
+            },
+          },
+        } as never
+      }
+      return { data: { id: 14 } } as never
+    })
+    const wrapper = mount(CreateUpstreamAccountModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find((select) => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+
+    const key = element<HTMLInputElement>('.secret-input input')
+    change(key, 'safe-test-only-key')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    const preview = element<HTMLElement>('.cangyuan-media-preview')
+    expect(preview.textContent).toContain('photo-model')
+    expect(preview.textContent).toContain('video-model')
+    expect(preview.textContent).toContain('分档')
+    expect(preview.textContent).toContain('按次')
+    expect(document.querySelectorAll('.cangyuan-model')).toHaveLength(0)
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+
+    change(key, 'a-different-key')
+    await nextTick()
+    expect(document.querySelector('.cangyuan-media-preview')).toBeNull()
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+    expect(post.mock.calls.filter(([url]) => url === '/admin/accounts')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
+  it('creates an isolated media-only upstream account without any chat model', async () => {
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return { data: {
+          models: [],
+          filtered_count: 2,
+          media_models: {
+            image: [{ id: 'image-test', billing_mode: 'tiered_expr', tiered: true }],
+            video: [{ id: 'video-test', billing_mode: 'per_request', tiered: false }],
+          },
+        } } as never
+      }
+      return { data: { id: 25 } } as never
+    })
+    const wrapper = mount(CreateUpstreamAccountModal, {
+      props: { show: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find((select) => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+    change(element<HTMLInputElement>('.secret-input input'), 'fixture-media-only-key')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    const choices = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-media-choice'))
+    expect(choices).toHaveLength(2)
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(true)
+    for (const choice of choices) choice.querySelector<HTMLInputElement>('input')!.click()
+    await nextTick()
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(false)
+
+    element<HTMLButtonElement>('.save-button').click()
+    await flushPromises()
+    const create = post.mock.calls.find(([url]) => url === '/admin/accounts')
+    expect(create).toBeDefined()
+    expect(create![1]).toEqual(expect.objectContaining({
+      platform: 'openai',
+      type: 'apikey',
+      group_ids: [],
+      skip_default_group_bind: true,
+      credentials: {
+        api_key: 'fixture-media-only-key',
+        base_url: 'https://ai.cangyuansuanli.cn',
+        model_mapping: {},
+      },
+      extra: {
+        upstream_vendor: 'cangyuan',
+        openai_passthrough: false,
+        openai_responses_mode: 'force_chat_completions',
+        cangyuan_media_only: true,
+        cangyuan_media_models: { image: ['image-test'], video: ['video-test'] },
+      },
+    }))
+    wrapper.unmount()
+  })
+
+  it('can search and select media models beyond the former six-item limit', async () => {
+    const imageModels = Array.from({ length: 12 }, (_, i) => ({
+      id: `photo-model-${i + 1}`, billing_mode: 'per_request', tiered: false,
+    }))
+    post.mockImplementation(async (url) => {
+      if (url === '/admin/accounts/models/sync-upstream-preview') {
+        return { data: {
+          models: [],
+          media_models: { image: imageModels, video: [] },
+        } } as never
+      }
+      return { data: { id: 55 } } as never
+    })
+
+    const wrapper = mount(CreateUpstreamAccountModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    const preset = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
+      .find(select => select.querySelector('option[value="cangyuan"]'))
+    expect(preset).toBeDefined()
+    change(preset!, 'cangyuan')
+    await nextTick()
+    change(element<HTMLInputElement>('.secret-input input'), 'fixture-key-for-model-search')
+    element<HTMLButtonElement>('.model-probe button').click()
+    await flushPromises()
+
+    expect(document.querySelectorAll('.cangyuan-media-choice')).toHaveLength(12)
+    const filter = element<HTMLInputElement>('.cangyuan-media-search')
+    change(filter, 'photo-model-12')
+    await nextTick()
+    const results = Array.from(document.querySelectorAll<HTMLLabelElement>('.cangyuan-media-choice'))
+    expect(results).toHaveLength(1)
+    expect(results[0].textContent).toContain('photo-model-12')
+    results[0].querySelector<HTMLInputElement>('input')!.click()
+    await nextTick()
+    change(filter, 'photo-model-8')
+    await nextTick()
+    expect(document.querySelectorAll('.cangyuan-media-choice')).toHaveLength(1)
+    expect(document.querySelector('.cangyuan-media-heading')?.textContent).toContain('已选 1')
+    expect(element<HTMLButtonElement>('.save-button').disabled).toBe(false)
+
+    element<HTMLButtonElement>('.save-button').click()
+    await flushPromises()
+    const created = post.mock.calls.find(([url]) => url === '/admin/accounts')
+    expect(created).toBeDefined()
+    expect(created![1]).toEqual(expect.objectContaining({
+      credentials: expect.objectContaining({ model_mapping: {} }),
+      extra: expect.objectContaining({
+        cangyuan_media_only: true,
+        cangyuan_media_models: { image: ['photo-model-12'], video: [] },
+      }),
+    }))
+    wrapper.unmount()
+  })
+
+})
