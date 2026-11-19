@@ -11,12 +11,12 @@ import (
 )
 
 type cangyuanMediaCatalogEntry struct {
-	ModelName    string      `json:"model_name"`
-	QuotaType    *int        `json:"quota_type"`
-	BillingMode  string      `json:"billing_mode"`
-	ModelPrice   json.Number `json:"model_price"`
-	RequestUnit  string      `json:"request_unit"`
-	Endpoints    []string    `json:"supported_endpoint_types"`
+	ModelName   string      `json:"model_name"`
+	QuotaType   *int        `json:"quota_type"`
+	BillingMode string      `json:"billing_mode"`
+	ModelPrice  json.Number `json:"model_price"`
+	RequestUnit string      `json:"request_unit"`
+	Endpoints   []string    `json:"supported_endpoint_types"`
 }
 
 type cangyuanMediaCatalogSource struct {
@@ -26,12 +26,12 @@ type cangyuanMediaCatalogSource struct {
 }
 
 type cangyuanMediaCatalogItem struct {
-	ID           string      `json:"id"`
-	Kind         string      `json:"kind"`
-	BillingMode  string      `json:"billing_mode"`
-	ModelPrice   json.Number `json:"model_price"`
-	RequestUnit  string      `json:"request_unit"`
-	Tiered       bool        `json:"tiered"`
+	ID          string      `json:"id"`
+	Kind        string      `json:"kind"`
+	BillingMode string      `json:"billing_mode"`
+	ModelPrice  json.Number `json:"model_price"`
+	RequestUnit string      `json:"request_unit"`
+	Tiered      bool        `json:"tiered"`
 }
 
 type cangyuanMediaCatalogResponse struct {
@@ -91,9 +91,9 @@ func parseCangyuanMediaCatalog(raw []byte) (*cangyuanMediaCatalogResponse, error
 			result.Items = append(result.Items, cangyuanMediaCatalogItem{
 				ID: entry.ModelName, Kind: kind,
 				BillingMode: entry.BillingMode,
-				ModelPrice: entry.ModelPrice,
+				ModelPrice:  entry.ModelPrice,
 				RequestUnit: entry.RequestUnit,
-				Tiered: entry.BillingMode == "tiered_expr",
+				Tiered:      entry.BillingMode == "tiered_expr",
 			})
 		}
 	}
