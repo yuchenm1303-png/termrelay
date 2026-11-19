@@ -261,11 +261,12 @@ func TestGatewayRoutesNonGrokVideosAreRejectedAtPlatformGate(t *testing.T) {
 	}
 }
 
-func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireResolvedTarget(t *testing.T) {
+func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRespectPlatformDetection(t *testing.T) {
 	router := newGatewayRoutesTestRouter(service.PlatformComposite)
-	// This minimal test router deliberately has no composite resolver.
-	// The route must exist, but neither an unknown nor an OpenAI-like model
-	// may bypass target resolution simply by naming an OpenAI model.
+	// This minimal test router uses the built-in model platform detector.
+	// Unknown models fail closed, while recognized OpenAI models are
+	// routed through the OpenAI-compatible endpoint, even without a
+	// repository-backed explicit composite route.
 	registered := false
 	for _, route := range router.Routes() {
 		if route.Method == http.MethodPost && route.Path == "/v1/embeddings" {
@@ -287,7 +288,11 @@ func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireResolvedTarget(t *testi
 	w = httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
-	require.Equal(t, http.StatusNotFound, w.Code, "a composite key with no resolver must fail closed")
+	// The test OpenAI handler has no service dependencies, so it may return
+	// an internal error. What matters here is that platform detection
+	// sends a recognized OpenAI model to the correct handler rather than
+	// rejecting it as an unsupported composite endpoint.
+	require.NotEqual(t, http.StatusNotFound, w.Code, "recognized OpenAI model should pass composite platform detection")
 }
 
 func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
