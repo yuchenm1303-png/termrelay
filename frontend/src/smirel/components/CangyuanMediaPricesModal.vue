@@ -75,7 +75,7 @@ watch(() => props.show, visible => {
     editorOpen.value = false
     void load()
   }
-})
+}, { immediate: true })
 
 function resetDraft() {
   editOriginalId.value = ''
