@@ -65,7 +65,7 @@ func TestCangyuanMediaReadRoutesOnlyReturnOwnedResults(t *testing.T) {
 		ResultURLs:   []string{"https://cdn.example.org/output.png"},
 		BillingState: "settled", CreatedAt: 1700000000, ExpiresAt: 1700200000,
 	}
-	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}})
+	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}}, nil, nil)
 	owner := service.CangyuanMediaJobOwner{UserID: 8, APIKeyID: 13}
 	r := newCangyuanMediaHandlerTestRouter(handler, owner)
 	w := httptest.NewRecorder()
@@ -115,7 +115,7 @@ func TestCangyuanMediaReadVideoAndPendingStatus(t *testing.T) {
 		Model: "video-fixture", Kind: service.CangyuanVideoGeneration,
 		Status: service.CangyuanMediaJobQueued, BillingState: "pending",
 	}
-	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}})
+	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{job: job}}, nil, nil)
 	r := newCangyuanMediaHandlerTestRouter(handler, service.CangyuanMediaJobOwner{UserID: 8, APIKeyID: 13})
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/videos/"+testCangyuanJobID, nil))
@@ -148,7 +148,7 @@ func TestCangyuanMediaReadVideoAndPendingStatus(t *testing.T) {
 }
 
 func TestCangyuanMediaReadStorageFailuresRemainPrivate(t *testing.T) {
-	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{err: context.DeadlineExceeded}})
+	handler := NewCangyuanMediaHandler(&service.CangyuanMediaJobService{Store: &cangyuanMediaReadStore{err: context.DeadlineExceeded}}, nil, nil)
 	r := newCangyuanMediaHandlerTestRouter(handler, service.CangyuanMediaJobOwner{UserID: 8, APIKeyID: 13})
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/videos/"+testCangyuanJobID, nil))

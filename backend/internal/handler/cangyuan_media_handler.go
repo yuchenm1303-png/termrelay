@@ -9,15 +9,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CangyuanMediaHandler exposes only the owner-scoped task read API.
-// Submission and settlement routes remain unregistered until admin-approved
-// prices, quota reservation, entitlement and usage logging are available.
+// CangyuanMediaHandler exposes owner-scoped GET and optional verified-price
+// paid POST dispatch. A paid request requires authenticated group membership,
+// valid billing entitlement, an explicitly schedulable media-only account,
+// an enabled admin price rule and a successful SQL balance hold.
 type CangyuanMediaHandler struct {
-	jobs *service.CangyuanMediaJobService
+	jobs    *service.CangyuanMediaJobService
+	public  *service.CangyuanMediaPublicService
+	billing *service.BillingCacheService
 }
 
-func NewCangyuanMediaHandler(jobs *service.CangyuanMediaJobService) *CangyuanMediaHandler {
-	return &CangyuanMediaHandler{jobs: jobs}
+func NewCangyuanMediaHandler(
+	jobs *service.CangyuanMediaJobService,
+	public *service.CangyuanMediaPublicService,
+	billing *service.BillingCacheService,
+) *CangyuanMediaHandler {
+	return &CangyuanMediaHandler{jobs: jobs, public: public, billing: billing}
 }
 
 func (h *CangyuanMediaHandler) GetImageGeneration(c *gin.Context) {
