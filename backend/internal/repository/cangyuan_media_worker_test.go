@@ -28,12 +28,12 @@ func testCangyuanRecoveryAccount() *service.Account {
 		ID: 7, Platform: service.PlatformOpenAI, Type: service.AccountTypeAPIKey,
 		Status: service.StatusActive, Schedulable: true,
 		Credentials: map[string]any{
-			"api_key": "no-network-test-token",
+			"api_key":  "no-network-test-token",
 			"base_url": "https://ai.cangyuansuanli.cn",
 		},
 		Extra: map[string]any{
-			"upstream_vendor": "cangyuan",
-			"cangyuan_media_only": true,
+			"upstream_vendor":       "cangyuan",
+			"cangyuan_media_only":   true,
 			"cangyuan_media_models": map[string]any{"image": []any{"image-model"}},
 			"openai_responses_mode": "force_chat_completions",
 		},
@@ -69,8 +69,8 @@ func TestCangyuanRecoveryWorkerPollsHeldJobFromRedisIndex(t *testing.T) {
 				require.Equal(t, "/v1/images/generations/remote-worker-1", req.URL.Path)
 				return &http.Response{
 					StatusCode: http.StatusOK,
-					Body: io.NopCloser(strings.NewReader(`{"id":"remote-worker-1","status":"completed","data":[{"url":"https://cdn.example.com/sunrise.png"}]}`)),
-					Header: make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{"id":"remote-worker-1","status":"completed","data":[{"url":"https://cdn.example.com/sunrise.png"}]}`)),
+					Header:     make(http.Header),
 				}, nil
 			})},
 		}

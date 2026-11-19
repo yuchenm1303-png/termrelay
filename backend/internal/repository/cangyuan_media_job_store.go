@@ -341,7 +341,7 @@ func (s *cangyuanMediaJobStore) Delay(ctx context.Context, id string, delay time
 		delay = 0
 	}
 	return s.rdb.ZAddArgs(ctx, cangyuanMediaActiveIndex, redis.ZAddArgs{
-		XX: true,
+		XX:      true,
 		Members: []redis.Z{{Score: float64(time.Now().UTC().Add(delay).Unix()), Member: id}},
 	}).Err()
 }

@@ -111,9 +111,9 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 	}
 	if err != nil && job.Status == service.CangyuanMediaJobFailed {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"error": gin.H{"type": "media_error", "message": "Upstream rejected the media request"},
+			"error":   gin.H{"type": "media_error", "message": "Upstream rejected the media request"},
 			"task_id": job.ID,
-			"status": "failed",
+			"status":  "failed",
 		})
 		return true
 	}
@@ -125,13 +125,13 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 	}
 	c.Header("Retry-After", "6")
 	c.JSON(http.StatusAccepted, gin.H{
-		"id": job.ID,
-		"task_id": job.ID,
-		"object": "media.task",
-		"model": job.Model,
-		"status": status,
+		"id":         job.ID,
+		"task_id":    job.ID,
+		"object":     "media.task",
+		"model":      job.Model,
+		"status":     status,
 		"created_at": job.CreatedAt,
-		"message": "Query the task status with the same API key; never resubmit an ambiguous generation",
+		"message":    "Query the task status with the same API key; never resubmit an ambiguous generation",
 	})
 	return true
 }

@@ -60,9 +60,9 @@ type CangyuanMediaJob struct {
 	PayloadSHA256   string `json:"payload_sha256,omitempty"`
 	IdempotencyHash string `json:"idempotency_hash,omitempty"`
 	Version         int64  `json:"version"`
-	CreatedAt     int64  `json:"created_at"`
-	UpdatedAt     int64  `json:"updated_at"`
-	ExpiresAt     int64  `json:"expires_at"`
+	CreatedAt       int64  `json:"created_at"`
+	UpdatedAt       int64  `json:"updated_at"`
+	ExpiresAt       int64  `json:"expires_at"`
 }
 
 // CangyuanMediaJobStore MUST atomically enforce uniqueness and version CAS,

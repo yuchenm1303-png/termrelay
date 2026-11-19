@@ -57,9 +57,9 @@ func cangyuanPublicTestService(t *testing.T) (
 		&cangyuanPublicPriceSettings{values: make(map[string]string)})
 	rule := service.CangyuanMediaPriceRule{
 		ID: "single-image-test", Model: "image-model", Kind: service.CangyuanImageGeneration,
-		Options: map[string]json.RawMessage{"n": json.RawMessage("1")},
+		Options:  map[string]json.RawMessage{"n": json.RawMessage("1")},
 		Snapshot: cangyuanIdempotencyQuote(),
-		Enabled: true,
+		Enabled:  true,
 	}
 	require.NoError(t, prices.Put(context.Background(), rule))
 	account := testCangyuanRecoveryAccount()
@@ -81,8 +81,8 @@ func cangyuanPublicTestService(t *testing.T) (
 				postCalls.Add(1)
 				return &http.Response{
 					StatusCode: http.StatusOK,
-					Body: io.NopCloser(strings.NewReader(`{"id":"upstream_public_test","status":"queued"}`)),
-					Header: make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{"id":"upstream_public_test","status":"queued"}`)),
+					Header:     make(http.Header),
 				}, nil
 			})},
 		}
@@ -166,8 +166,8 @@ func TestCangyuanPublicMediaDefinitiveRejectionRefundsWithoutResubmission(t *tes
 				postCalls.Add(1)
 				return &http.Response{
 					StatusCode: http.StatusBadRequest,
-					Body: io.NopCloser(strings.NewReader(`{"error":"bad prompt"}`)),
-					Header: make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{"error":"bad prompt"}`)),
+					Header:     make(http.Header),
 				}, nil
 			})},
 		}
