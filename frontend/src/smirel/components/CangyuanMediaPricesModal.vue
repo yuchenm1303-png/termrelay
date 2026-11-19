@@ -108,9 +108,14 @@ function editRule(rule: PriceRule) {
 
 function chooseModel(item: CatalogItem) {
   draft.model = item.id
-  draft.kind = item.kind
+  // Image models can be sold under either generation or edit endpoints.
+  // Keep an explicitly selected image_edit kind rather than silently
+  // changing it back to image_generation when selecting a model.
+  if (item.kind === 'video_generation') draft.kind = 'video_generation'
+  else if (draft.kind !== 'image_edit') draft.kind = 'image_generation'
   if (!draft.id && !editing.value) {
-    draft.id = (item.id.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').slice(0, 60) + '-v1').slice(0, 80)
+    const prefix = draft.kind === 'image_edit' ? 'edit-' : draft.kind === 'video_generation' ? 'video-' : ''
+    draft.id = (prefix + item.id.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').slice(0, 60) + '-v1').slice(0, 80)
   }
 }
 
