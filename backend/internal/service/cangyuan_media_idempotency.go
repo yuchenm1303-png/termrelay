@@ -73,6 +73,7 @@ func (s *CangyuanMediaJobService) ReserveIdempotent(
 		return nil, fmt.Errorf("encode media price quote: %w", err)
 	}
 	hashKey := sha256.Sum256([]byte(fmt.Sprintf("%d:%d:%s", owner.UserID, owner.APIKeyID, clientKey)))
+	job.IdempotencyHash = hex.EncodeToString(hashKey[:])
 	fingerprintBytes := sha256.Sum256([]byte(
 		fmt.Sprintf("%d:%s:%s:", accountID, kind, model) + string(payload) + ":" + string(quotedBytes),
 	))

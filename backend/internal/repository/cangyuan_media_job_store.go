@@ -13,6 +13,8 @@ import (
 
 const cangyuanMediaJobKeyPrefix = "cangyuan_media_job:"
 const cangyuanMediaIdempotencyPrefix = "cangyuan_media_idempotency:"
+const cangyuanMediaActiveIndex = "cangyuan_media_active_jobs"
+const cangyuanMediaTerminalRetention = 48 * time.Hour
 
 type cangyuanMediaIdempotencyEntry struct {
 	JobID       string `json:"job_id"`
@@ -172,6 +174,7 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 			current.APIKeyID != job.APIKeyID || current.AccountID != job.AccountID ||
 			current.Kind != job.Kind || current.Model != job.Model ||
 			current.PayloadSHA256 != job.PayloadSHA256 ||
+			current.IdempotencyHash != job.IdempotencyHash ||
 			current.CreatedAt != job.CreatedAt || current.ExpiresAt != job.ExpiresAt {
 			return service.ErrCangyuanMediaJobConflict
 		}
@@ -219,7 +222,8 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 			case current.BillingState == "pending" && job.BillingState == "held":
 				allowed = current.Status == service.CangyuanMediaJobReserved &&
 					job.Status == service.CangyuanMediaJobReserved &&
-					current.PriceSnapshot != nil && current.PayloadSHA256 != ""
+					current.PriceSnapshot != nil && current.PayloadSHA256 != "" &&
+					len(current.IdempotencyHash) == 64
 			case current.BillingState == "held" && job.BillingState == "settled":
 				allowed = current.Status == service.CangyuanMediaJobCompleted &&
 					job.Status == service.CangyuanMediaJobCompleted &&
@@ -240,12 +244,51 @@ func (s *cangyuanMediaJobStore) CompareAndSwap(ctx context.Context, job *service
 				return service.ErrCangyuanMediaJobConflict
 			}
 		}
+		// While money is frozen, neither the task nor its client retry key
+		// may expire. Otherwise a delayed upstream generation could become
+		// untraceable while the user's balance remains frozen, and a retry
+		// might create another paid task after the original dedup TTL.
+		dedupKey := ""
+		if len(job.IdempotencyHash) == 64 {
+			dedupKey = cangyuanMediaIdempotencyPrefix + job.IdempotencyHash
+		}
+		if job.BillingState == "held" {
+			if dedupKey == "" {
+				return service.ErrCangyuanMediaJobConflict
+			}
+			raw, err := tx.Get(ctx, dedupKey).Bytes()
+			if err != nil {
+				return service.ErrCangyuanMediaJobConflict
+			}
+			var mapped cangyuanMediaIdempotencyEntry
+			if json.Unmarshal(raw, &mapped) != nil || mapped.JobID != job.ID {
+				return service.ErrCangyuanMediaJobConflict
+			}
+		}
 		_, err := tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-			// Retain TTL; polling must not extend job lifetime indefinitely.
-			return pipe.Set(ctx, key, data, redis.KeepTTL).Err()
+			pipe.Set(ctx, key, data, redis.KeepTTL)
+			switch job.BillingState {
+			case "held":
+				// Persist on every held-state CAS; a later status change must
+				// not silently reintroduce the reservation's original TTL.
+				pipe.Persist(ctx, key)
+				pipe.Persist(ctx, dedupKey)
+				pipe.ZAdd(ctx, cangyuanMediaActiveIndex, redis.Z{
+					Score:  float64(time.Now().UTC().Add(6 * time.Second).Unix()),
+					Member: job.ID,
+				})
+			case "settled", "released":
+				// Both SQL and Redis confirm the final accounting state.
+				pipe.Expire(ctx, key, cangyuanMediaTerminalRetention)
+				if dedupKey != "" {
+					pipe.Expire(ctx, dedupKey, cangyuanMediaTerminalRetention)
+				}
+				pipe.ZRem(ctx, cangyuanMediaActiveIndex, job.ID)
+			}
+			return nil
 		})
 		return err
-	}, key)
+	}, append([]string{key}, cangyuanMediaWatchDedupKey(job)...)...)
 	if errors.Is(err, redis.TxFailedErr) {
 		return service.ErrCangyuanMediaJobConflict
 	}
@@ -262,4 +305,11 @@ func equalCangyuanMediaResultURLs(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func cangyuanMediaWatchDedupKey(job *service.CangyuanMediaJob) []string {
+	if job == nil || len(job.IdempotencyHash) != 64 {
+		return nil
+	}
+	return []string{cangyuanMediaIdempotencyPrefix + job.IdempotencyHash}
 }

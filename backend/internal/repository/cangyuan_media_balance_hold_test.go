@@ -197,3 +197,47 @@ func TestCangyuanEscrowRequiresPinnedPricedRequestAndTerminalFailure(t *testing.
 	require.ErrorIs(t, err, service.ErrCangyuanMediaNotBillable)
 	require.True(t, errors.Is(err, service.ErrCangyuanMediaNotBillable))
 }
+
+func TestCangyuanMediaHeldFundsKeepTaskAndRetryKeyUntilSettled(t *testing.T) {
+	svc, mr := newCangyuanMediaJobTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 100, APIKeyID: 200}
+	quote := cangyuanIdempotencyQuote()
+	payload := []byte(`{"model":"image-model","prompt":"persistent marina","n":1}`)
+	job, err := svc.ReserveIdempotent(ctx, owner, 66, service.CangyuanImageGeneration,
+		"image-model", payload, "persistent-media-key", quote)
+	require.NoError(t, err)
+	require.Len(t, job.IdempotencyHash, 64)
+	jobKey := cangyuanMediaJobKeyPrefix + job.ID
+	retryKey := cangyuanMediaIdempotencyPrefix + job.IdempotencyHash
+	require.True(t, mr.TTL(jobKey) > 0)
+	require.True(t, mr.TTL(retryKey) > 0)
+
+	ledger := &cangyuanEscrowLedgerStub{}
+	_, _, err = svc.HoldApprovedCangyuanMediaBalance(ctx, owner, job.ID, ledger)
+	require.NoError(t, err)
+	require.Equal(t, time.Duration(0), mr.TTL(jobKey), "funded task must not expire")
+	require.Equal(t, time.Duration(0), mr.TTL(retryKey), "client retry key must not expire while funded")
+	require.True(t, mr.Exists(cangyuanMediaActiveIndex))
+
+	mr.FastForward(49 * time.Hour)
+	held, err := svc.Get(ctx, owner, job.ID)
+	require.NoError(t, err)
+	require.Equal(t, "held", held.BillingState)
+	again, err := svc.ReserveIdempotent(ctx, owner, 66, service.CangyuanImageGeneration,
+		"image-model", payload, "persistent-media-key", quote)
+	require.NoError(t, err)
+	require.Equal(t, job.ID, again.ID, "long-running retry must never create a new paid task")
+
+	_, err = svc.ClaimSubmission(ctx, owner, job.ID)
+	require.NoError(t, err)
+	_, err = svc.AttachSubmitted(ctx, owner, job.ID, &service.CangyuanMediaTask{
+		ID: "remote_persistent", Status: "failed",
+	})
+	require.NoError(t, err)
+	_, _, err = svc.ReleaseFailedCangyuanMediaBalance(ctx, owner, job.ID, ledger)
+	require.NoError(t, err)
+	require.True(t, mr.TTL(jobKey) > 0)
+	require.True(t, mr.TTL(retryKey) > 0)
+	require.False(t, mr.Exists(cangyuanMediaActiveIndex), "terminal accounting removes active index")
+}
