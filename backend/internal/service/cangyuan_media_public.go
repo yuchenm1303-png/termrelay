@@ -130,8 +130,20 @@ func (s *CangyuanMediaPublicService) Submit(
 	}
 	latest, _, submitErr := s.Jobs.SubmitReserved(ctx, owner, job.ID, client, payload)
 	if submitErr != nil {
-		// The upstream may have accepted the request before the connection
-		// failed. Always return the local task ID for later reconciliation.
+		// A definitive provider rejection means no generation was accepted.
+		// Release the frozen price now; do not strand money waiting for a
+		// poll that cannot succeed without a remote task ID.
+		if latest != nil && latest.Status == CangyuanMediaJobFailed &&
+			latest.BillingState == "held" {
+			released, _, refundErr := s.Jobs.ReleaseFailedCangyuanMediaBalance(
+				ctx, owner, job.ID, s.Billing)
+			if refundErr == nil {
+				return released, submitErr
+			}
+			return latest, errors.Join(submitErr, refundErr)
+		}
+		// A timeout or malformed accepted response is ambiguous. Return the
+		// original task ID but never automatically retry the upstream POST.
 		if stored, readErr := s.Jobs.Get(ctx, owner, job.ID); readErr == nil {
 			return stored, submitErr
 		}

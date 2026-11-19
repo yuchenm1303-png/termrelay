@@ -152,3 +152,42 @@ func TestCangyuanPublicMediaSubmissionRejectsUnpricedOrUnfundedRequests(t *testi
 	require.Equal(t, "held", queued.BillingState)
 	require.Equal(t, int32(1), posts.Load())
 }
+
+func TestCangyuanPublicMediaDefinitiveRejectionRefundsWithoutResubmission(t *testing.T) {
+	svc, billing, _ := cangyuanPublicTestService(t)
+	ctx := context.Background()
+	owner := service.CangyuanMediaJobOwner{UserID: 101, APIKeyID: 202}
+	var postCalls atomic.Int32
+	svc.ClientFactory = func(_ *service.Account) *service.CangyuanMediaClient {
+		return &service.CangyuanMediaClient{
+			APIKey: "fake",
+			HTTP: &http.Client{Transport: cangyuanCoordinatorTransport(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, http.MethodPost, req.Method)
+				postCalls.Add(1)
+				return &http.Response{
+					StatusCode: http.StatusBadRequest,
+					Body: io.NopCloser(strings.NewReader(`{"error":"bad prompt"}`)),
+					Header: make(http.Header),
+				}, nil
+			})},
+		}
+	}
+	payload := []byte(`{"model":"image-model","prompt":"invalid upstream request","n":1}`)
+	job, err := svc.Submit(ctx, owner, 3, service.CangyuanImageGeneration,
+		"image-model", payload, "definitely-rejected")
+	var rejected *service.CangyuanMediaRejectedError
+	require.ErrorAs(t, err, &rejected)
+	require.Equal(t, http.StatusBadRequest, rejected.StatusCode)
+	require.NotNil(t, job)
+	require.Equal(t, service.CangyuanMediaJobFailed, job.Status)
+	require.Equal(t, "released", job.BillingState)
+	require.Equal(t, 1, billing.holdCalls)
+	require.Equal(t, 1, billing.releaseCalls)
+	require.Equal(t, int32(1), postCalls.Load())
+	again, err := svc.Submit(ctx, owner, 3, service.CangyuanImageGeneration,
+		"image-model", payload, "definitely-rejected")
+	require.NoError(t, err)
+	require.Equal(t, job.ID, again.ID)
+	require.Equal(t, int32(1), postCalls.Load())
+	require.Equal(t, 1, billing.releaseCalls)
+}

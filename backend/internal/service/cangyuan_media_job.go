@@ -191,6 +191,22 @@ func (s *CangyuanMediaJobService) MarkSubmissionUnknown(ctx context.Context, own
 	return s.persistTransition(ctx, job, CangyuanMediaJobSubmitUnknown, "", nil)
 }
 
+// MarkSubmissionRejected records a definite 4xx response from the provider.
+// A failed task can safely release its frozen balance without another POST.
+func (s *CangyuanMediaJobService) MarkSubmissionRejected(ctx context.Context, owner CangyuanMediaJobOwner, id string) (*CangyuanMediaJob, error) {
+	job, err := s.Get(ctx, owner, id)
+	if err != nil {
+		return nil, err
+	}
+	if job.Status == CangyuanMediaJobFailed {
+		return job, nil
+	}
+	if job.Status != CangyuanMediaJobSubmitting {
+		return nil, ErrCangyuanMediaJobState
+	}
+	return s.persistTransition(ctx, job, CangyuanMediaJobFailed, "", nil)
+}
+
 // AttachSubmitted links the ID returned from the one-and-only upstream POST.
 // A second submission or a different task ID must not overwrite that link.
 func (s *CangyuanMediaJobService) AttachSubmitted(ctx context.Context, owner CangyuanMediaJobOwner, id string, task *CangyuanMediaTask) (*CangyuanMediaJob, error) {
@@ -310,6 +326,14 @@ func (s *CangyuanMediaJobService) SubmitReserved(ctx context.Context, owner Cang
 	storeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	if submitErr != nil {
+		var rejected *CangyuanMediaRejectedError
+		if errors.As(submitErr, &rejected) {
+			failed, storeErr := s.MarkSubmissionRejected(storeCtx, owner, id)
+			if storeErr != nil {
+				return nil, nil, errors.Join(submitErr, fmt.Errorf("record rejected cangyuan media submission: %w", storeErr))
+			}
+			return failed, nil, submitErr
+		}
 		_, storeErr := s.MarkSubmissionUnknown(storeCtx, owner, id)
 		if storeErr != nil {
 			return nil, nil, errors.Join(submitErr, fmt.Errorf("record ambiguous cangyuan media submission: %w", storeErr))

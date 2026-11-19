@@ -109,10 +109,18 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		})
 		return true
 	}
+	if err != nil && job.Status == service.CangyuanMediaJobFailed {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"error": gin.H{"type": "media_error", "message": "Upstream rejected the media request"},
+			"task_id": job.ID,
+			"status": "failed",
+		})
+		return true
+	}
 	status := string(job.Status)
-	if err != nil {
-		// An upstream timeout may mean the submission was accepted. Return
-		// the same task ID; never advise the client to send another paid POST.
+	if err != nil && (job.Status == service.CangyuanMediaJobSubmitting ||
+		job.Status == service.CangyuanMediaJobSubmitUnknown) {
+		// An upstream timeout may mean the submission was accepted.
 		status = "submit_unknown"
 	}
 	c.Header("Retry-After", "6")

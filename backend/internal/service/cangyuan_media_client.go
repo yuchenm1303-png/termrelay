@@ -36,6 +36,26 @@ var cangyuanTaskIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,256}$`)
 // billing. A task being queued is not a chargeable completed image/video.
 // Callers must implement persistent ownership and success-only settlement
 // before exposing the client to user-facing routes.
+// CangyuanMediaRejectedError represents a definitive pre-generation HTTP
+// rejection. A dropped connection, 5xx or malformed 2xx response is NOT a
+// rejection: the upstream might already be generating and must be reconciled.
+type CangyuanMediaRejectedError struct {
+	StatusCode int
+}
+
+func (e *CangyuanMediaRejectedError) Error() string {
+	return fmt.Sprintf("cangyuan media submission rejected with HTTP %d", e.StatusCode)
+}
+
+func isCangyuanMediaDefiniteRejection(status int) bool {
+	switch status {
+	case 400, 401, 403, 404, 413, 415, 422:
+		return true
+	default:
+		return false
+	}
+}
+
 type CangyuanMediaClient struct {
 	APIKey string
 	HTTP   *http.Client
@@ -304,6 +324,9 @@ func (c *CangyuanMediaClient) do(ctx context.Context, method, path string, paylo
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		if method == http.MethodPost && isCangyuanMediaDefiniteRejection(resp.StatusCode) {
+			return nil, &CangyuanMediaRejectedError{StatusCode: resp.StatusCode}
+		}
 		return nil, fmt.Errorf("cangyuan media upstream returned HTTP %d", resp.StatusCode)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, cangyuanMediaResponseLimit+1))
