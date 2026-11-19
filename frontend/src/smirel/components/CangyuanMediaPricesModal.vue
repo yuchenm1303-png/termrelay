@@ -244,7 +244,7 @@ function close() {
         <div class="cy-pricing-actions">
           <button type="button" class="cy-pricing-primary" :disabled="loading" @click="resetDraft">新增价格规则</button>
           <button type="button" :disabled="loading" @click="load">{{ loading ? '读取中…' : '刷新模型与价格' }}</button>
-          <a href="https://ai.cangyuansuanli.cn/console/pricing" target="_blank" rel="noopener noreferrer">核对官方价格</a>
+          <a href="https://ai.cangyuansuanli.cn/pricing" target="_blank" rel="noopener noreferrer">核对官方价格</a>
         </div>
         <div v-if="editorOpen" class="cy-pricing-editor">
           <div class="cy-pricing-editor-head">

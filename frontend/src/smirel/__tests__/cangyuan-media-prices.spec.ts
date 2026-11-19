@@ -107,6 +107,22 @@ describe('Cangyuan media price console', () => {
     wrapper.unmount()
   })
 
+  it('keeps image edit billing distinct from image generation when selecting a model', async () => {
+    const wrapper = mount(CangyuanMediaPricesModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    document.querySelector<HTMLButtonElement>('.cy-pricing-actions .cy-pricing-primary')!.click()
+    await nextTick()
+    const selector = document.querySelector<HTMLSelectElement>('.cy-pricing-field select')!
+    selector.value = 'image_edit'
+    selector.dispatchEvent(new Event('change', { bubbles: true }))
+    await nextTick()
+    document.querySelector<HTMLButtonElement>('.cy-pricing-models button')!.click()
+    await nextTick()
+    expect(selector.value).toBe('image_edit')
+    expect(field('规则 ID').value).toBe('edit-nano-banana2-1k-v1')
+    wrapper.unmount()
+  })
+
   it('blocks enabling user billing without explicit review confirmation', async () => {
     const wrapper = mount(CangyuanMediaPricesModal, { props: { show: true }, attachTo: document.body })
     await flushPromises()
