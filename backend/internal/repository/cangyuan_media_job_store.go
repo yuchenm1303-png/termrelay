@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 const cangyuanMediaJobKeyPrefix = "cangyuan_media_job:"
 const cangyuanMediaIdempotencyPrefix = "cangyuan_media_idempotency:"
 const cangyuanMediaActiveIndex = "cangyuan_media_active_jobs"
+const cangyuanMediaRecoveryLeasePrefix = "cangyuan_media_recovery_lease:"
 const cangyuanMediaTerminalRetention = 48 * time.Hour
 
 type cangyuanMediaIdempotencyEntry struct {
@@ -312,4 +314,62 @@ func cangyuanMediaWatchDedupKey(job *service.CangyuanMediaJob) []string {
 		return nil
 	}
 	return []string{cangyuanMediaIdempotencyPrefix + job.IdempotencyHash}
+}
+
+// Due lists a bounded page of indexed, already-funded jobs. It never scans
+// the Redis keyspace and never includes unpriced or unauthenticated tasks.
+func (s *cangyuanMediaJobStore) Due(ctx context.Context, limit int64) ([]string, error) {
+	if s == nil || s.rdb == nil {
+		return nil, errors.New("cangyuan media recovery queue unavailable")
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	return s.rdb.ZRangeByScore(ctx, cangyuanMediaActiveIndex, &redis.ZRangeBy{
+		Min: "-inf", Max: strconv.FormatInt(time.Now().UTC().Unix(), 10),
+		Offset: 0, Count: limit,
+	}).Result()
+}
+
+// Delay uses XX so finishing a task cannot accidentally recreate its
+// deleted active-index entry when settlement races with a delayed poller.
+func (s *cangyuanMediaJobStore) Delay(ctx context.Context, id string, delay time.Duration) error {
+	if s == nil || s.rdb == nil || !strings.HasPrefix(id, "cyjob_") {
+		return service.ErrCangyuanMediaJobNotFound
+	}
+	if delay < 0 {
+		delay = 0
+	}
+	return s.rdb.ZAddArgs(ctx, cangyuanMediaActiveIndex, redis.ZAddArgs{
+		XX: true,
+		Members: []redis.Z{{Score: float64(time.Now().UTC().Add(delay).Unix()), Member: id}},
+	}).Err()
+}
+
+func (s *cangyuanMediaJobStore) Remove(ctx context.Context, id string) error {
+	if s == nil || s.rdb == nil {
+		return errors.New("cangyuan media recovery queue unavailable")
+	}
+	return s.rdb.ZRem(ctx, cangyuanMediaActiveIndex, id).Err()
+}
+
+func (s *cangyuanMediaJobStore) Claim(ctx context.Context, id, token string, ttl time.Duration) (bool, error) {
+	if s == nil || s.rdb == nil || token == "" || ttl <= 0 ||
+		!strings.HasPrefix(id, "cyjob_") {
+		return false, errors.New("invalid cangyuan media recovery claim")
+	}
+	return s.rdb.SetNX(ctx, cangyuanMediaRecoveryLeasePrefix+id, token, ttl).Result()
+}
+
+// Release is token-checked: a worker cannot delete the lease of a successor
+// that acquired it after the previous worker timed out or was restarted.
+func (s *cangyuanMediaJobStore) Release(ctx context.Context, id, token string) error {
+	if s == nil || s.rdb == nil || token == "" {
+		return errors.New("invalid cangyuan media recovery release")
+	}
+	const releaseScript = `if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0`
+	return s.rdb.Eval(ctx, releaseScript, []string{cangyuanMediaRecoveryLeasePrefix + id}, token).Err()
 }
