@@ -726,6 +726,7 @@ var ProviderSet = wire.NewSet(
 	ProvideCangyuanMediaJobService,
 	ProvideCangyuanMediaRecoveryWorker,
 	ProvideCangyuanMediaPriceRegistry,
+	NewCangyuanMediaPublicService,
 	ProvideBatchImageModelPricingResolver,
 	NewBatchImagePublicService,
 	NewBatchImageDownloadService,
