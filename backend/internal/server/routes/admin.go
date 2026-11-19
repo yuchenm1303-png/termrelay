@@ -787,6 +787,7 @@ func registerAffiliateRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 // These routes inherit panel admin authentication, compliance guard, and
 // audit logging. Every write/delete additionally requires step-up 2FA.
 func registerCangyuanMediaPricingRoutes(admin *gin.RouterGroup, h *handler.Handlers, stepUpAuth middleware.StepUpAuthMiddleware) {
+	admin.GET("/cangyuan-media/catalog", h.Admin.CangyuanMediaPrices.Catalog)
 	prices := admin.Group("/cangyuan-media/prices")
 	prices.GET("", h.Admin.CangyuanMediaPrices.List)
 	prices.PUT("/:id", gin.HandlerFunc(stepUpAuth), h.Admin.CangyuanMediaPrices.Upsert)
