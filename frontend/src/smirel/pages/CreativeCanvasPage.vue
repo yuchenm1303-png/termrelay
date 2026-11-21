@@ -102,7 +102,10 @@ const edges = computed(() => {
   })
 })
 const activeKey = computed(() => apiKeys.value.find(k => String(k.id) === selectedKeyId.value) || null)
-const isRunReady = computed(() => Boolean(activeKey.value?.key && activeKey.value.status === 'active' && !previewMode))
+// Preview 01: keep paid generation out of the general public UI until
+// authenticated exact USD price quotes are implemented.
+const isRunReady = computed(() => Boolean(state.user?.role === 'admin' &&
+  activeKey.value?.key && activeKey.value.status === 'active' && !previewMode))
 const canUndo = computed(() => undoStack.value.length > 0)
 const canRedo = computed(() => redoStack.value.length > 0)
 
@@ -448,6 +451,7 @@ function pollUntilDone(node: CreativeNode, rounds: number) {
   pollingTimers.add(timer)
 }
 async function runNode(node: CreativeNode) {
+  if (state.user?.role !== 'admin') return problem('当前版本仅管理员可运行真实付费生成。普通用户可以编辑和保存画布。')
   if (!['image','video'].includes(node.kind) || runningNodes[node.id] || node.taskId ||
     node.status === 'submitting' || node.status === 'submit_unknown') return
   const key = activeKey.value
@@ -715,12 +719,12 @@ onBeforeUnmount(() => {
             <button v-if="!selectedNode.taskId" type="button" class="cc-run-button"
               :disabled="runningNodes[selectedNode.id] || !isRunReady || selectedNode.status === 'submitting' || selectedNode.status === 'submit_unknown'"
               @click="runNode(selectedNode)">
-              <span>✦</span> {{ runningNodes[selectedNode.id] ? '正在提交…' : '运行此节点 · 可能收费' }}
+              <span>✦</span> {{ state.user?.role !== 'admin' ? '付费运行 · 内测未开放' : runningNodes[selectedNode.id] ? '正在提交…' : '运行此节点 · 可能收费' }}
             </button>
             <button v-else type="button" class="cc-run-button cc-run-secondary" :disabled="pollingNodes[selectedNode.id]" @click="fetchTask(selectedNode)">
               {{ pollingNodes[selectedNode.id] ? '查询中…' : '查询生成任务' }}
             </button>
-            <p class="cc-small-hint">仅单节点手动执行。任务将冻结并按后台审核价结算；连接线不会自动触发付费执行。</p>
+            <p class="cc-small-hint">Preview 01 仅允许管理员手动调用真实生成；普通用户可自由编辑。上线前还需接入精确价格预览。连接线不会自动触发付费执行。</p>
           </template>
           <div class="cc-inspector-rule"></div>
           <div class="cc-node-actions"><button type="button" @click="duplicateNode">复制节点</button><button type="button" @click="clearLinks">清除连线</button><button type="button" class="cc-danger-text" @click="deleteNode">删除节点</button></div>
