@@ -29,7 +29,7 @@ type TaskResponse = {
 }
 type PointerDrag =
   | { mode: 'pan'; pointerId: number; clientX: number; clientY: number; panX: number; panY: number }
-  | { mode: 'node'; pointerId: number; clientX: number; clientY: number; x: number; y: number; nodeId: string }
+  | { mode: 'node'; pointerId: number; clientX: number; clientY: number; x: number; y: number; nodeId: string; moved: boolean }
 
 const { state } = useSession()
 const userId = computed(() => state.user?.id ?? 0)
@@ -79,6 +79,12 @@ const nodeWidth = 294
 const nodePortY = 104
 const stageStyle = computed(() => ({
   transform: `translate3d(${panX.value}px,${panY.value}px,0) scale(${zoom.value})`,
+}))
+// Tile the backdrop in screen coordinates rather than clipping it to the
+// finite SVG layer; this keeps the dotted canvas visually infinite.
+const gridStyle = computed(() => ({
+  backgroundSize: `${23 * zoom.value}px ${23 * zoom.value}px`,
+  backgroundPosition: `${panX.value}px ${panY.value}px`,
 }))
 const edges = computed(() => {
   const map = new Map(project.value?.nodes.map(node => [node.id, node]) || [])
@@ -243,9 +249,8 @@ function pointerStartNode(event: PointerEvent, node: CreativeNode) {
   if (event.button !== 0 && event.pointerType === 'mouse') return
   if ((event.target as HTMLElement).closest('button, input, textarea, a')) return
   choose(node.id)
-  snapshot()
   drag = { mode: 'node', pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY,
-    x: node.x, y: node.y, nodeId: node.id }
+    x: node.x, y: node.y, nodeId: node.id, moved: false }
   ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
 }
 function pointerMove(event: PointerEvent) {
@@ -257,6 +262,11 @@ function pointerMove(event: PointerEvent) {
     panY.value = drag.panY + dy
   } else {
     const movement = drag
+    if (!movement.moved && Math.abs(dx) + Math.abs(dy) > 4) {
+      snapshot()
+      movement.moved = true
+    }
+    if (!movement.moved) return
     const node = project.value.nodes.find(n => n.id === movement.nodeId)
     if (!node) return
     const oldX = movement.x
@@ -267,7 +277,7 @@ function pointerMove(event: PointerEvent) {
 }
 function finishPointer(event: PointerEvent) {
   if (!drag || drag.pointerId !== event.pointerId) return
-  if (drag.mode === 'node') touchProject()
+  if (drag.mode === 'node' && drag.moved) touchProject()
   drag = null
 }
 function zoomTo(next: number, pivotX?: number, pivotY?: number) {
@@ -583,7 +593,7 @@ onBeforeUnmount(() => {
             <button type="button" @click="insert('video')">＋ 视频</button>
           </div>
         </div>
-        <div ref="viewport" class="cc-viewport" role="application" aria-label="AI 创作节点画布"
+        <div ref="viewport" class="cc-viewport" role="application" aria-label="AI 创作节点画布" :style="gridStyle"
           @pointerdown.self="pointerStartPan" @pointermove="pointerMove" @pointerup="finishPointer"
           @pointercancel="finishPointer" @wheel.prevent="onWheel">
           <div class="cc-stage" :style="stageStyle" @pointerdown.self="pointerStartPan">
