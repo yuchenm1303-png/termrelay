@@ -59,6 +59,7 @@ const redoStack = ref<string[]>([])
 let drag: PointerDrag | null = null
 let saveHandle: number | undefined
 let destroyed = false
+let hydrationVersion = 0
 const pollingTimers = new Set<number>()
 const maxProjects = 20
 
@@ -350,6 +351,8 @@ async function onAsset(event: Event) {
   try {
     if (!node) throw Error('节点不存在')
     if (node.kind !== 'image' && node.kind !== 'video') throw Error('只有图片／视频节点支持本地素材')
+    if (node.kind === 'image' && !file.type.startsWith('image/')) throw Error('图片节点请上传图片，不能选择视频文件')
+    if (node.kind === 'video' && !file.type.startsWith('video/')) throw Error('视频节点请上传视频文件，不能选择图片文件')
     const assetId = creativeId()
     await storeCreativeAsset(userId.value, assetId, file)
     snapshot()
@@ -361,16 +364,24 @@ async function onAsset(event: Event) {
   finally { (event.target as HTMLInputElement).value = ''; assetTarget.value = '' }
 }
 async function hydrateAssets() {
+  const version = ++hydrationVersion
   await nextTick()
+  if (destroyed || version !== hydrationVersion) return
+  const ownerId = userId.value
+  const projectId = project.value.id
   for (const key of Object.keys(assetUrls)) {
     URL.revokeObjectURL(assetUrls[key])
     delete assetUrls[key]
   }
-  for (const node of project.value?.nodes || []) {
+  for (const node of project.value.nodes) {
     if (!node.assetId) continue
     try {
-      const data = await readCreativeAsset(userId.value, node.assetId)
-      if (!destroyed && data) assetUrls[node.id] = URL.createObjectURL(data)
+      const data = await readCreativeAsset(ownerId, node.assetId)
+      // Never attach another user's local asset after a fast account switch.
+      if (!destroyed && version === hydrationVersion && ownerId === userId.value &&
+        project.value.id === projectId && data) {
+        assetUrls[node.id] = URL.createObjectURL(data)
+      }
     } catch { /* a missing local binary should not prevent editing the project */ }
   }
 }
@@ -520,6 +531,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   destroyed = true
+  hydrationVersion += 1
   window.removeEventListener('keydown', onKeyboard)
   if (saveHandle) window.clearTimeout(saveHandle)
   for (const timer of pollingTimers) window.clearTimeout(timer)
