@@ -535,7 +535,7 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" />
+    <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-i-d="cangyuanTestKey.id" />
 
     <section class="keys-library">
       <header class="keys-library-heading">
