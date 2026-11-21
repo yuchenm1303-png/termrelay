@@ -72,7 +72,7 @@ const kindNames: Record<CanvasNodeKind, string> = {
   prompt: '提示词', image: '图片生成', video: '视频生成', note: '便签',
 }
 const statusNames: Record<CanvasTaskStatus, string> = {
-  idle: '未运行', queued: '已排队', in_progress: '生成中', submitting: '提交中',
+  idle: '未运行', reserved: '已预留', queued: '已排队', in_progress: '生成中', submitting: '提交中',
   submit_unknown: '提交状态未知', completed: '已完成', failed: '失败',
 }
 const nodeWidth = 294
@@ -211,6 +211,7 @@ function deleteNode() {
   project.value.links = project.value.links.filter(link => link.from !== id && link.to !== id)
   selectedId.value = ''
   connectionFrom.value = connectionFrom.value === id ? '' : connectionFrom.value
+  touchProject()
 }
 function clearLinks() {
   if (!project.value || !selectedNode.value) return
