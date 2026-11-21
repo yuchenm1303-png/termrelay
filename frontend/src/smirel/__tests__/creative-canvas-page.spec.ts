@@ -62,7 +62,7 @@ describe('creative canvas UI foundation', () => {
 
     // Link two valid nodes via their accessible connection ports.
     const source = wrapper.findAll('.cc-node')[0]
-    const target = wrapper.findAll('.cc-node')[4]
+    const target = wrapper.findAll('.cc-node')[2] // video accepts input from prompt
     await source.find('.cc-port-out').trigger('click')
     expect(wrapper.text()).toContain('连接中')
     await target.find('.cc-port-in').trigger('click')
