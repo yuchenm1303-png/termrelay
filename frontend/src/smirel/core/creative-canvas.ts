@@ -2,7 +2,7 @@
 // signed-in browser/user until an authenticated cloud persistence API exists.
 // Never put access tokens or API key material into a canvas document.
 export type CanvasNodeKind = 'prompt' | 'image' | 'video' | 'note'
-export type CanvasTaskStatus = 'idle' | 'queued' | 'in_progress' | 'submitting' | 'submit_unknown' | 'completed' | 'failed'
+export type CanvasTaskStatus = 'idle' | 'reserved' | 'queued' | 'in_progress' | 'submitting' | 'submit_unknown' | 'completed' | 'failed'
 
 export interface CreativeNode {
   id: string
@@ -36,7 +36,7 @@ const prefix = 'muxway.creation.projects.v1'
 const maxNodes = 120
 const maxLinks = 250
 const kinds: CanvasNodeKind[] = ['prompt', 'image', 'video', 'note']
-const statuses: CanvasTaskStatus[] = ['idle', 'queued', 'in_progress', 'submitting', 'submit_unknown', 'completed', 'failed']
+const statuses: CanvasTaskStatus[] = ['idle', 'reserved', 'queued', 'in_progress', 'submitting', 'submit_unknown', 'completed', 'failed']
 const safeId = /^[a-zA-Z0-9_-]{1,80}$/
 
 function clipped(value: unknown, size: number): string {
@@ -183,6 +183,8 @@ export function importCreativeProject(input: string): CreativeProject {
   if (!doc) throw Error('文件格式不受支持或数据不完整')
   const now = new Date().toISOString()
   return { ...doc, id: creativeId(), title: doc.title + ' · 导入', createdAt: now, updatedAt: now,
-    nodes: doc.nodes.map(node => ({ ...node, status: node.taskId ? 'queued' : node.status })),
+    // Imported projects cannot take over another user's private media job or
+    // local IndexedDB asset ID. Keep prompt/model history and HTTPS results.
+    nodes: doc.nodes.map(node => ({ ...node, status: 'idle', taskId: '', taskKeyId: null, assetId: '' })),
   }
 }
