@@ -57,6 +57,8 @@ const pollingNodes = reactive<Record<string, boolean>>({})
 const undoStack = ref<string[]>([])
 const redoStack = ref<string[]>([])
 let drag: PointerDrag | null = null
+const touchPoints = new Map<number, { x: number; y: number }>()
+let pinch: { initialDistance: number; initialZoom: number; worldX: number; worldY: number } | null = null
 let saveHandle: number | undefined
 let destroyed = false
 let hydrationVersion = 0
@@ -243,13 +245,49 @@ function endConnect(id: string) {
 }
 function clearConnection() { connectionFrom.value = '' }
 
+function touchMidpoint() {
+  const [a, b] = [...touchPoints.values()]
+  if (!a || !b) return null
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(b.x - a.x, b.y - a.y) }
+}
+function trackPointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return
+  touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY })
+  if (touchPoints.size < 2) return
+  const midpoint = touchMidpoint()
+  const bounds = viewport.value?.getBoundingClientRect()
+  if (!midpoint || !bounds || midpoint.distance < 12) return
+  pinch = {
+    initialDistance: midpoint.distance, initialZoom: zoom.value,
+    worldX: (midpoint.x - bounds.left - panX.value) / zoom.value,
+    worldY: (midpoint.y - bounds.top - panY.value) / zoom.value,
+  }
+  drag = null
+}
+function trackPointerMove(event: PointerEvent) {
+  if (!touchPoints.has(event.pointerId)) return
+  touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY })
+  if (!pinch || touchPoints.size < 2) return
+  const midpoint = touchMidpoint()
+  const bounds = viewport.value?.getBoundingClientRect()
+  if (!midpoint || !bounds) return
+  zoom.value = Math.min(1.7, Math.max(.4, pinch.initialZoom * midpoint.distance / pinch.initialDistance))
+  panX.value = midpoint.x - bounds.left - pinch.worldX * zoom.value
+  panY.value = midpoint.y - bounds.top - pinch.worldY * zoom.value
+}
+function trackPointerEnd(event: PointerEvent) {
+  touchPoints.delete(event.pointerId)
+  if (touchPoints.size < 2) pinch = null
+}
 function pointerStartPan(event: PointerEvent) {
+  if (touchPoints.size > 1) return
   if (event.button !== 0 && event.pointerType === 'mouse') return
   selectedId.value = ''
   drag = { mode: 'pan', pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, panX: panX.value, panY: panY.value }
   ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
 }
 function pointerStartNode(event: PointerEvent, node: CreativeNode) {
+  if (touchPoints.size > 1) return
   if (event.button !== 0 && event.pointerType === 'mouse') return
   if ((event.target as HTMLElement).closest('button, input, textarea, a')) return
   choose(node.id)
@@ -258,7 +296,7 @@ function pointerStartNode(event: PointerEvent, node: CreativeNode) {
   ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
 }
 function pointerMove(event: PointerEvent) {
-  if (!drag || drag.pointerId !== event.pointerId) return
+  if (pinch || !drag || drag.pointerId !== event.pointerId) return
   const dx = event.clientX - drag.clientX
   const dy = event.clientY - drag.clientY
   if (drag.mode === 'pan') {
@@ -539,6 +577,8 @@ onBeforeUnmount(() => {
   hydrationVersion += 1
   window.removeEventListener('keydown', onKeyboard)
   if (saveHandle) window.clearTimeout(saveHandle)
+  touchPoints.clear()
+  pinch = null
   saveNow() // Never lose the final <420ms of edits when navigating away.
   for (const timer of pollingTimers) window.clearTimeout(timer)
   for (const key of Object.keys(assetUrls)) URL.revokeObjectURL(assetUrls[key])
@@ -612,6 +652,8 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div ref="viewport" class="cc-viewport" role="application" aria-label="AI 创作节点画布" :style="gridStyle"
+          @pointerdown.capture="trackPointerDown" @pointermove.capture="trackPointerMove"
+          @pointerup.capture="trackPointerEnd" @pointercancel.capture="trackPointerEnd"
           @pointerdown.self="pointerStartPan" @pointermove="pointerMove" @pointerup="finishPointer"
           @pointercancel="finishPointer" @wheel.prevent="onWheel">
           <div class="cc-stage" :style="stageStyle" @pointerdown.self="pointerStartPan">
@@ -662,7 +704,7 @@ onBeforeUnmount(() => {
             <p>点击左侧工具或顶部快捷按钮，创建你的第一个节点。</p>
           </div>
           <div class="cc-canvas-bottom">
-            <div class="cc-canvas-tips"><span>✦</span> 拖拽移动 · 双指滚动平移 · Ctrl / ⌘ + 滚轮缩放</div>
+            <div class="cc-canvas-tips"><span>✦</span> 拖拽移动 · 双指捏合缩放 · Ctrl / ⌘ + 滚轮缩放</div>
             <div class="cc-zoom-controls">
               <button type="button" title="缩小" @click="zoomTo(zoom - 0.12)">−</button>
               <span>{{ Math.round(zoom * 100) }}%</span>
