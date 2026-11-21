@@ -107,7 +107,11 @@ export function normalizeProject(raw: unknown): CreativeProject | null {
       resultUrl: safeMediaUrl(item.resultUrl), assetId: safeId.test(String(item.assetId ?? '')) ? item.assetId : '',
       taskId: /^cyjob_[a-zA-Z0-9_-]{1,72}$/.test(String(item.taskId ?? '')) ? item.taskId : '',
       taskKeyId: Number.isSafeInteger(item.taskKeyId) && Number(item.taskKeyId) > 0 ? Number(item.taskKeyId) : null,
-      status: statuses.includes(item.status) ? item.status : 'idle',
+      // A browser reload during an in-flight POST is ambiguous. Treat it as
+      // unknown rather than offering another paid submission.
+      status: item.status === 'submitting' && !item.taskId
+        ? 'submit_unknown'
+        : statuses.includes(item.status) ? item.status : 'idle',
     })
   }
   const links: CreativeLink[] = []
