@@ -9,6 +9,7 @@ export interface NavItem {
 // Primary user navigation: only pages that deserve a persistent sidebar entry.
 export const userNavigation: NavItem[] = [
   { path: '/dashboard', name: 'Dashboard', label: '控制台', feature: 'dashboard', short: 'DB' },
+  { path: '/create', name: 'CreativeCanvas', label: 'AI 创作', feature: 'creative-canvas', short: 'CR' },
   { path: '/keys', name: 'Keys', label: 'API 密钥', feature: 'keys', short: 'AK' },
   { path: '/usage', name: 'Usage', label: '用量统计', feature: 'usage', short: 'US' },
   { path: '/subscriptions', name: 'Subscriptions', label: '充值/订阅', feature: 'subscriptions', short: 'SB' },
@@ -71,7 +72,7 @@ export interface NavGroupSpec {
 
 export const userNavigationGroups: NavGroupSpec[] = [
   { key: 'console', features: ['dashboard', 'keys', 'usage', 'usage-records'] },
-  { key: 'resources', features: ['model-catalog', 'experience', 'monitor'] },
+  { key: 'resources', features: ['creative-canvas', 'model-catalog', 'experience', 'monitor'] },
   { key: 'billing', features: ['wallet', 'subscriptions', 'purchase', 'orders', 'redeem'] },
   { key: 'account', features: ['affiliate', 'profile'] },
   { key: 'support', features: ['announcements', 'support', 'tickets'] },
@@ -79,11 +80,11 @@ export const userNavigationGroups: NavGroupSpec[] = [
 
 export const adminNavigationGroups: NavGroupSpec[] = [
   { key: 'console', features: ['admin-dashboard', 'keys', 'admin-users'] },
-  { key: 'resources', features: ['admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog'] },
+  { key: 'resources', features: ['creative-canvas', 'admin-accounts', 'admin-groups', 'admin-channels', 'model-catalog'] },
   { key: 'operations', features: ['admin-usage', 'admin-ops'] },
   { key: 'transactions', features: ['admin-payment-dashboard', 'admin-orders', 'admin-plans'] },
   { key: 'system', features: ['admin-settings'] },
 ]
 
 // Routes that belong to whichever workspace (user/admin) the visitor is in.
-export const neutralWorkspacePaths = ['/keys', '/model-plaza', '/profile']
+export const neutralWorkspacePaths = ['/keys', '/model-plaza', '/profile', '/create']
