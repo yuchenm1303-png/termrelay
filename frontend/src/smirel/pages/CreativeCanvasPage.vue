@@ -49,7 +49,6 @@ const panY = ref(92)
 const notice = ref('画布将在本设备自动保存。')
 const error = ref('')
 const saveState = ref('已保存到本机')
-const saving = ref(false)
 const apiKeys = ref<KeyOption[]>([])
 const selectedKeyId = ref('')
 const keyLoading = ref(false)
@@ -256,10 +255,11 @@ function pointerMove(event: PointerEvent) {
     panX.value = drag.panX + dx
     panY.value = drag.panY + dy
   } else {
-    const node = project.value.nodes.find(n => n.id === drag!.nodeId)
+    const movement = drag
+    const node = project.value.nodes.find(n => n.id === movement.nodeId)
     if (!node) return
-    const oldX = drag.x
-    const oldY = drag.y
+    const oldX = movement.x
+    const oldY = movement.y
     node.x = Math.max(-8000, Math.min(8000, Math.round((oldX + dx / zoom.value) / 8) * 8))
     node.y = Math.max(-8000, Math.min(8000, Math.round((oldY + dy / zoom.value) / 8) * 8))
   }
