@@ -107,6 +107,44 @@ describe('Cangyuan media price console', () => {
     wrapper.unmount()
   })
 
+  it('limits the initial Safari picker rows and finds models using the search field', async () => {
+    get.mockImplementation(async url => {
+      if (url === '/admin/cangyuan-media/prices') return { data: { data: [] } } as never
+      if (url === '/admin/cangyuan-media/catalog') return { data: {
+        pricing_version: 'provider-v2026',
+        items: Array.from({ length: 30 }, (_, index) => ({
+          id: `image-model-${String(index).padStart(2, '0')}`,
+          kind: 'image_generation',
+          model_price: 0.08,
+          billing_mode: 'per_request',
+          request_unit: 'image',
+          tiered: false,
+        })),
+      } } as never
+      throw Error('unexpected URL ' + url)
+    })
+
+    const wrapper = mount(CangyuanMediaPricesModal, { props: { show: true }, attachTo: document.body })
+    await flushPromises()
+    document.querySelector<HTMLButtonElement>('.cy-pricing-actions .cy-pricing-primary')!.click()
+    await nextTick()
+
+    expect(document.querySelectorAll('.cy-pricing-models button')).toHaveLength(8)
+    expect(document.body.textContent).toContain('默认展示前 8 个型号')
+    await input('检索官方模型', 'image-model-27')
+    const matches = document.querySelectorAll<HTMLButtonElement>('.cy-pricing-models button')
+    expect(matches).toHaveLength(1)
+    expect(matches[0]?.textContent).toContain('image-model-27')
+    matches[0]!.click()
+    await nextTick()
+    expect(field('精确模型 ID').value).toBe('image-model-27')
+    expect(matches[0]!.getAttribute('aria-pressed')).toBe('true')
+
+    await input('检索官方模型', 'nothing-matches')
+    expect(document.body.textContent).toContain('没有匹配的型号')
+    wrapper.unmount()
+  })
+
   it('keeps image edit billing distinct from image generation when selecting a model', async () => {
     const wrapper = mount(CangyuanMediaPricesModal, { props: { show: true }, attachTo: document.body })
     await flushPromises()
