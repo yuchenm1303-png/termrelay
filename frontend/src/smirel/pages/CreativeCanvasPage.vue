@@ -33,7 +33,10 @@ type PointerDrag =
 
 const { state } = useSession()
 const userId = computed(() => state.user?.id ?? 0)
-const shelf = ref<CreativeShelf>(loadCreativeShelf(userId.value))
+// Keep the owner bound to its shelf even during logout/fast account changes.
+// Otherwise an unmount could write the previous user's draft under user 0.
+let shelfOwnerId = userId.value
+const shelf = ref<CreativeShelf>(loadCreativeShelf(shelfOwnerId))
 const project = computed(() => shelf.value.projects.find(p => p.id === shelf.value.activeId) || shelf.value.projects[0])
 const selectedId = ref('')
 const selectedNode = computed(() => project.value?.nodes.find(node => node.id === selectedId.value) || null)
@@ -139,7 +142,7 @@ function touchProject() {
 function saveNow() {
   if (!project.value) return
   try {
-    saveCreativeShelf(userId.value, shelf.value)
+    saveCreativeShelf(shelfOwnerId, shelf.value)
     saveState.value = '已保存到本机'
   } catch (err) {
     saveState.value = '保存失败'
@@ -395,7 +398,7 @@ async function onAsset(event: Event) {
     if (node.kind === 'image' && !file.type.startsWith('image/')) throw Error('图片节点请上传图片，不能选择视频文件')
     if (node.kind === 'video' && !file.type.startsWith('video/')) throw Error('视频节点请上传视频文件，不能选择图片文件')
     const assetId = creativeId()
-    await storeCreativeAsset(userId.value, assetId, file)
+    await storeCreativeAsset(shelfOwnerId, assetId, file)
     snapshot()
     node.assetId = assetId
     if (assetUrls[node.id]) URL.revokeObjectURL(assetUrls[node.id])
@@ -408,7 +411,7 @@ async function hydrateAssets() {
   const version = ++hydrationVersion
   await nextTick()
   if (destroyed || version !== hydrationVersion) return
-  const ownerId = userId.value
+  const ownerId = shelfOwnerId
   const projectId = project.value.id
   for (const key of Object.keys(assetUrls)) {
     URL.revokeObjectURL(assetUrls[key])
@@ -419,7 +422,7 @@ async function hydrateAssets() {
     try {
       const data = await readCreativeAsset(ownerId, node.assetId)
       // Never attach another user's local asset after a fast account switch.
-      if (!destroyed && version === hydrationVersion && ownerId === userId.value &&
+      if (!destroyed && version === hydrationVersion && ownerId === shelfOwnerId &&
         project.value.id === projectId && data) {
         assetUrls[node.id] = URL.createObjectURL(data)
       }
@@ -556,13 +559,19 @@ watch(shelf, () => {
   if (saveHandle) window.clearTimeout(saveHandle)
   saveHandle = window.setTimeout(() => saveNow(), 420)
 }, { deep: true })
-watch(userId, () => {
-  shelf.value = loadCreativeShelf(userId.value)
+watch(userId, (nextOwner) => {
+  if (nextOwner === shelfOwnerId) return
+  if (saveHandle) window.clearTimeout(saveHandle)
+  try { saveCreativeShelf(shelfOwnerId, shelf.value) } catch { /* best-effort flush of old owner's draft */ }
+  shelfOwnerId = nextOwner
+  shelf.value = loadCreativeShelf(shelfOwnerId)
   selectedId.value = ''
   selectedKeyId.value = ''
   apiKeys.value = []
   undoStack.value = []
   redoStack.value = []
+  for (const timer of pollingTimers) window.clearTimeout(timer)
+  pollingTimers.clear()
   void hydrateAssets()
   void loadKeys()
 })
