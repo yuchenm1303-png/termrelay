@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   blankProject, canConnect, importCreativeProject, loadCreativeShelf,
   makeNode, normalizeProject, safeMediaUrl, saveCreativeShelf, starterProject,
-  type CreativeProject,
 } from '../core/creative-canvas'
 
 beforeEach(() => localStorage.clear())
