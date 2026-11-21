@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps<{ apiKey: string; apiKeyID: number }>()
+const props = defineProps<{ apiKey: string; apiKeyId: number }>()
 type MediaTask = {
   id?: string
   task_id?: string
@@ -17,7 +17,7 @@ const status = ref('')
 const error = ref('')
 const resultURL = ref('')
 let alive = true
-const savedTaskSlot = 'cangyuan-media-qa-one-shot:' + props.apiKeyID
+const savedTaskSlot = 'cangyuan-media-qa-one-shot:' + props.apiKeyId
 function remember(value: string) {
   try { window.sessionStorage.setItem(savedTaskSlot, value) } catch { /* private browsing may disable storage */ }
 }
