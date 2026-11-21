@@ -31,7 +31,7 @@ describe('Cangyuan one-click media smoke test', () => {
       }
     }))
 
-    const wrapper = mount(CangyuanMediaSmokeTest, { props: { apiKey: key, apiKeyID: 47 } })
+    const wrapper = mount(CangyuanMediaSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
     expect(wrapper.html()).not.toContain(key)
     await wrapper.find('button').trigger('click')
     await flushPromises()
@@ -58,7 +58,7 @@ describe('Cangyuan one-click media smoke test', () => {
   it('does not retry a network-ambiguous POST', async () => {
     const post = vi.fn(async () => { throw Error('network dropped') })
     vi.stubGlobal('fetch', post)
-    const wrapper = mount(CangyuanMediaSmokeTest, { props: { apiKey: key, apiKeyID: 47 } })
+    const wrapper = mount(CangyuanMediaSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(post).toHaveBeenCalledTimes(1)
