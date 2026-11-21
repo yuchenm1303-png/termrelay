@@ -530,6 +530,7 @@ watch(userId, () => {
 })
 onMounted(() => {
   window.addEventListener('keydown', onKeyboard)
+  saveNow() // Persist starter project even if the user does not edit it.
   void hydrateAssets()
   void loadKeys()
 })
@@ -538,6 +539,7 @@ onBeforeUnmount(() => {
   hydrationVersion += 1
   window.removeEventListener('keydown', onKeyboard)
   if (saveHandle) window.clearTimeout(saveHandle)
+  saveNow() // Never lose the final <420ms of edits when navigating away.
   for (const timer of pollingTimers) window.clearTimeout(timer)
   for (const key of Object.keys(assetUrls)) URL.revokeObjectURL(assetUrls[key])
 })
