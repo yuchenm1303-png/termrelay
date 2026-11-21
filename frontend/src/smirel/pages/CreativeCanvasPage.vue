@@ -104,6 +104,7 @@ function feedback(text: string) { notice.value = text; error.value = '' }
 function problem(text: string) { error.value = text }
 function snapshot() {
   if (!project.value) return
+  touchProject()
   undoStack.value.push(JSON.stringify({ nodes: project.value.nodes, links: project.value.links }))
   if (undoStack.value.length > 35) undoStack.value.shift()
   redoStack.value = []
@@ -126,7 +127,6 @@ function touchProject() {
 }
 function saveNow() {
   if (!project.value) return
-  touchProject()
   try {
     saveCreativeShelf(userId.value, shelf.value)
     saveState.value = '已保存到本机'
@@ -256,12 +256,17 @@ function pointerMove(event: PointerEvent) {
     panX.value = drag.panX + dx
     panY.value = drag.panY + dy
   } else {
-    const node = project.value.nodes.find(n => n.id === drag!.mode === 'node' ? '' : '') // placeholder
-    void node
+    const node = project.value.nodes.find(n => n.id === drag!.nodeId)
+    if (!node) return
+    const oldX = drag.x
+    const oldY = drag.y
+    node.x = Math.max(-8000, Math.min(8000, Math.round((oldX + dx / zoom.value) / 8) * 8))
+    node.y = Math.max(-8000, Math.min(8000, Math.round((oldY + dy / zoom.value) / 8) * 8))
   }
 }
 function finishPointer(event: PointerEvent) {
   if (!drag || drag.pointerId !== event.pointerId) return
+  if (drag.mode === 'node') touchProject()
   drag = null
 }
 function zoomTo(next: number, pivotX?: number, pivotY?: number) {
