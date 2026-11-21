@@ -3,6 +3,7 @@ import UiSelect from '../components/ui/UiSelect.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
+import CangyuanMediaSmokeTest from '../components/CangyuanMediaSmokeTest.vue'
 import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
@@ -197,6 +198,11 @@ const activeKeyCount = computed(() => keys.value.filter((item) => (item.status |
 const unboundKeyCount = computed(() => keys.value.filter((item) => item.group_id == null).length)
 const totalConcurrency = computed(() => keys.value.reduce((sum, item) => sum + Number(item.current_concurrency || 0), 0))
 const selectedGroup = computed(() => groups.value.find((item) => String(item.id) === groupId.value) || null)
+// Only the owner of an active key bound to the private media QA group sees this tester.
+const cangyuanTestKey = computed(() => keys.value.find((item) => {
+  const group = item.group || groups.value.find((g) => g.id === item.group_id)
+  return item.status === 'active' && group?.name === 'cangyuan-media-sandbox' && typeof item.key === 'string'
+}) || null)
 const canCreate = computed(() => Boolean(name.value.trim() && groupId.value && groups.value.length && !creating.value))
 
 function effectiveRate(group: GroupItem) {
@@ -528,6 +534,8 @@ onBeforeUnmount(() => {
         <p>{{ copy.unboundHint }}</p>
       </div>
     </section>
+
+    <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" />
 
     <section class="keys-library">
       <header class="keys-library-heading">
