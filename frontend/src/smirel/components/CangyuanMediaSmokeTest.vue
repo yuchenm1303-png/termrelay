@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps<{ apiKey: string }>()
+const props = defineProps<{ apiKey: string; apiKeyID: number }>()
 type MediaTask = {
   id?: string
   task_id?: string
@@ -17,6 +17,25 @@ const status = ref('')
 const error = ref('')
 const resultURL = ref('')
 let alive = true
+const savedTaskSlot = 'cangyuan-media-qa-one-shot:' + props.apiKeyID
+function remember(value: string) {
+  try { window.sessionStorage.setItem(savedTaskSlot, value) } catch { /* private browsing may disable storage */ }
+}
+function forget() {
+  try { window.sessionStorage.removeItem(savedTaskSlot) } catch { /* no-op */ }
+}
+onMounted(() => {
+  try {
+    const previous = window.sessionStorage.getItem(savedTaskSlot) || ''
+    if (validTaskID(previous)) {
+      taskID.value = previous
+      status.value = 'previously_submitted'
+    } else if (previous === 'submit_unknown') {
+      status.value = 'submit_unknown'
+      error.value = '此前提交状态不确定。为防止重复扣费，已禁止再次提交；请管理员核对任务记录。'
+    }
+  } catch { /* no-op */ }
+})
 onBeforeUnmount(() => { alive = false })
 
 const target = '/v1/images/generations'
@@ -71,6 +90,8 @@ async function startSingleImage() {
   }
   if (!window.confirm('这会发起且仅发起一次实际图片生成，按测试分组的已审核价格计费。确认继续？')) return
   sending.value = true
+  // Persist the uncertain state BEFORE the POST so reload cannot re-submit it.
+  remember('submit_unknown')
   error.value = ''
   resultURL.value = ''
   try {
@@ -91,6 +112,8 @@ async function startSingleImage() {
     })
     const data = await readJson(response)
     if (!response.ok) {
+      // The gateway has explicitly rejected this request; no task was accepted.
+      forget()
       error.value = '请求被拒绝（HTTP ' + response.status + '）：' +
         (data.error?.message || '检查测试通道是否开启及价格规则是否已审核。').slice(0, 180)
       return
@@ -102,6 +125,7 @@ async function startSingleImage() {
       return
     }
     taskID.value = id
+    remember(id)
     status.value = data.status || 'queued'
   } catch {
     // A dropped response can mean the upstream already accepted the job.
