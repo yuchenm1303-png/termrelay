@@ -10,14 +10,14 @@ This is the first incremental implementation of the image/video creative workben
 - Multi-project editing, debounced drafts isolated by signed-in user ID, safe JSON export/import, and per-user IndexedDB for local image/video uploads.
 - Manual generation of image/video nodes through **existing** `/v1/images/generations`, `/v1/videos` and owner-scoped `GET` status routes. The chosen API key lives in component memory only, not project JSON or storage.
 - Generated outputs appear on nodes only after a successful, settled backend task. Existing price/entitlement/escrow checks continue to reject unapproved models/options.
-- Every paid POST requires a direct click and browser confirmation. A job ID is stored immediately; on timeout/unknown state, the node blocks repeat submissions. Only GET status calls are automatically repeated.
+- During Preview 01, only administrators see an enabled paid-run button; all other users can edit the canvas but cannot submit paid media from this route. Every paid POST requires a direct click and browser confirmation. A job ID is stored immediately; on timeout/unknown state, the node blocks repeat submissions. Only GET status calls are automatically repeated.
 
 ## Explicit MVP limits
 
 - Canvas drafts and uploaded media are **browser-local only**. There is no cloud sync, cross-device persistence, binary export, team collaboration, or server file workspace. Local browser data can be cleared; users should export their project JSON for structural backups. JSON does not contain uploaded binary assets.
 - Connections model the creative graph but **do not automatically execute** other nodes or charge users. Prompt text connects to generation nodes; image-to-video reference media parameter mapping is intentionally deferred until provider-specific capabilities and pricing are validated.
 - Current model IDs are editable starting examples, **not** a guarantee of key authorization or an approved price. Video options must match the server's exact verified pricing tier; the default `{}` is a draft.
-- The client does not give an authoritative upfront quote. An administrator-approved USD price is enforced server-side, but a price quote preview before confirmation is a next milestone. Until that is complete, this route should be presented as **Preview 01** and paid execution should remain limited to authorized test keys and explicit confirmations.
+- The client does not give an authoritative upfront quote. An administrator-approved USD price is enforced server-side, but a price quote preview before confirmation is a next milestone. Until that is complete, this route is presented as **Preview 01**, with paid execution restricted to signed-in administrators using authorized keys and explicit confirmations.
 - Task status polling is bounded; after page reload the user needs to select the original API Key to resume status reads. Another user's key cannot read the task.
 
 ## Next milestones
