@@ -42,7 +42,7 @@ const filteredCatalog = computed(() => {
     (!q || item.id.toLowerCase().includes(q)) &&
     (draft.kind !== 'video_generation' || item.kind === 'video_generation') &&
     (draft.kind === 'video_generation' || item.kind === 'image_generation'),
-  ).slice(0, 90)
+  ).slice(0, query.value.trim() ? 24 : 8)
 })
 const activeCount = computed(() => rules.value.filter(rule => rule.enabled).length)
 const editing = computed(() => Boolean(editOriginalId.value))
@@ -262,11 +262,15 @@ function close() {
             <label class="cy-pricing-field">检索官方模型
               <input v-model="query" type="search" placeholder="搜索模型 ID" />
             </label>
-            <div v-if="!editing && catalog?.items.length" class="cy-pricing-models">
-              <button v-for="item in filteredCatalog" :key="item.kind + ':' + item.id" type="button" :class="{ picked: draft.model === item.id }" @click="chooseModel(item)">
+            <div v-if="!editing && catalog?.items.length" class="cy-pricing-model-picker">
+              <p class="cy-pricing-model-hint">默认展示前 8 个型号；在上方搜索模型 ID 可找到全部型号。</p>
+              <div class="cy-pricing-models" role="group" aria-label="选择官方媒体模型">
+              <button v-for="item in filteredCatalog" :key="item.kind + ':' + item.id" type="button" :aria-pressed="draft.model === item.id" :class="{ picked: draft.model === item.id }" @click="chooseModel(item)">
                 <span>{{ item.id }}</span>
                 <small>{{ item.tiered ? '分档' : '按次' }} · 参考标价 {{ item.model_price }} {{ item.request_unit }}</small>
               </button>
+              <p v-if="!filteredCatalog.length" class="cy-pricing-model-empty">没有匹配的型号，请尝试其他名称或类型。</p>
+              </div>
             </div>
             <label class="cy-pricing-field">精确模型 ID
               <input v-model="draft.model" :readonly="editing" type="text" placeholder="选择或输入上游模型 ID" />
@@ -356,12 +360,17 @@ function close() {
 .cy-pricing-field input,.cy-pricing-field select,.cy-pricing-field textarea { box-sizing:border-box; width:100%; border:1px solid var(--border-color,#3b444c); background:var(--bg-primary,#10161b); border-radius:9px; color:var(--text-primary,#f0f3f5); padding:10px 11px; font-size:12px; outline-offset:2px; }
 .cy-pricing-field textarea { resize:vertical; font-family:ui-monospace,monospace; }
 .cy-pricing-field small { line-height:1.5; }
-.cy-pricing-wide,.cy-pricing-models { grid-column:1/-1; }
-.cy-pricing-models { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; max-height:146px; overflow:auto; }
-.cy-pricing-models button { text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap:3px; overflow:hidden; }
-.cy-pricing-models button span { max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.cy-pricing-models button small { font-size:10px; color:var(--text-secondary,#b6bec4); }
-.cy-pricing-models button.picked { border-color:var(--text-primary,#c3d0d2); }
+/* iPad Safari: a max-height grid with many implicit rows compresses buttons into
+   overlapping lines. A non-shrinking flex list keeps each touch target readable. */
+.cy-pricing-wide,.cy-pricing-model-picker { grid-column:1/-1; min-width:0; }
+.cy-pricing-model-picker { display:flex; flex-direction:column; gap:7px; }
+.cy-pricing-model-hint,.cy-pricing-model-empty { font-size:11px; line-height:1.5; color:var(--text-secondary,#a7b2b9); margin:0; }
+.cy-pricing-models { display:flex; flex-direction:column; flex-wrap:nowrap; gap:8px; min-height:0; max-height:288px; overflow-y:auto; overflow-x:hidden; padding:4px; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.cy-pricing-editor .cy-pricing-models button { box-sizing:border-box; display:flex; flex:0 0 auto; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; width:100%; height:auto; min-height:58px; max-height:none; padding:10px 12px; text-align:left; font-size:12px; line-height:1.45; white-space:normal; overflow:visible; }
+.cy-pricing-models button span { min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
+.cy-pricing-models button small { min-width:0; max-width:48%; flex:0 1 48%; font-size:11px; line-height:1.4; text-align:right; overflow-wrap:anywhere; color:var(--text-secondary,#b6bec4); }
+.cy-pricing-editor .cy-pricing-models button.picked { border-color:var(--text-primary,#c3d0d2); background:rgba(130,150,160,.08); }
+.cy-pricing-model-empty { padding:12px; }
 .cy-pricing-check { display:flex; gap:9px; align-items:flex-start; font-size:12px; margin:12px 0; line-height:1.6; cursor:pointer; }
 .cy-pricing-check input { margin-top:3px; }
 .cy-pricing-reviewed { padding:10px; border-radius:9px; border:1px solid rgba(201,151,75,.4); }
@@ -379,7 +388,8 @@ function close() {
 @media (max-width:640px) {
  .cy-pricing-panel { padding:16px; max-height:96vh; border-radius:14px; }
  .cy-pricing-form { grid-template-columns:1fr; }
- .cy-pricing-models { grid-template-columns:1fr; }
+ .cy-pricing-editor .cy-pricing-models button { flex-direction:column; align-items:flex-start; justify-content:center; gap:3px; min-height:64px; }
+ .cy-pricing-models button small { flex:0 0 auto; max-width:100%; text-align:left; }
  .cy-pricing-rule { flex-wrap:wrap; }
  .cy-pricing-rule > div { flex:1 1 100%; }
 }
