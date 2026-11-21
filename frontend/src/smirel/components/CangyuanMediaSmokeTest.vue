@@ -112,10 +112,17 @@ async function startSingleImage() {
     })
     const data = await readJson(response)
     if (!response.ok) {
-      // The gateway has explicitly rejected this request; no task was accepted.
-      forget()
-      error.value = '请求被拒绝（HTTP ' + response.status + '）：' +
-        (data.error?.message || '检查测试通道是否开启及价格规则是否已审核。').slice(0, 180)
+      // A 5xx/timeout can be ambiguous: never create a second paid upstream
+      // task even when the browser did receive an HTTP response.
+      const definitelyRejected = [400, 401, 402, 403, 404, 413, 415, 422].includes(response.status)
+      if (definitelyRejected) {
+        forget()
+        error.value = '请求被拒绝（HTTP ' + response.status + '）：' +
+          (data.error?.message || '检查测试通道是否开启及价格规则是否已审核。').slice(0, 180)
+      } else {
+        status.value = 'submit_unknown'
+        error.value = '请求状态不确定（HTTP ' + response.status + '），为避免重复扣费已禁止重新提交。请管理员检查任务记录。'
+      }
       return
     }
     const id = data.task_id || data.id || ''
