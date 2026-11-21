@@ -24,6 +24,7 @@ describe('creative canvas UI foundation', () => {
     vi.stubGlobal('confirm', vi.fn(() => true))
   })
   afterEach(() => {
+    user.id = 99
     document.body.innerHTML = ''
     vi.unstubAllGlobals()
   })
@@ -75,6 +76,24 @@ describe('creative canvas UI foundation', () => {
     expect(stored).toContain('我的第一张创作画布')
     expect(JSON.parse(stored).projects[0].nodes).toHaveLength(5)
     expect(stored).not.toContain('sk-')
+    wrapper.unmount()
+  })
+
+  it('keeps unsaved edits with the previous account during a fast user switch', async () => {
+    const wrapper = mountCanvas()
+    await flushPromises()
+    await wrapper.findAll('.cc-node')[0].trigger('click')
+    await wrapper.find('.cc-inspector textarea').setValue('只属于用户 99 的私有草稿')
+    await nextTick()
+
+    // A rapid logout/login must never write old content under a new user ID.
+    user.id = 100
+    await nextTick()
+    await flushPromises()
+
+    expect(localStorage.getItem('muxway.creation.projects.v1.user-99')).toContain('只属于用户 99 的私有草稿')
+    expect(localStorage.getItem('muxway.creation.projects.v1.user-100') || '').not.toContain('只属于用户 99 的私有草稿')
+    expect(wrapper.findAll('.cc-node')).toHaveLength(3)
     wrapper.unmount()
   })
 
