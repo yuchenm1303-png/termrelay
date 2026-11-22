@@ -135,8 +135,15 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		return true
 	}
 	owner := service.CangyuanMediaJobOwner{UserID: apiKey.UserID, APIKeyID: apiKey.ID}
+	var expected []service.CangyuanMediaPriceExpectation
+	if c.GetHeader("X-Canvas-Quoted-Sale-USD") != "" {
+		expected = append(expected, service.CangyuanMediaPriceExpectation{
+			TotalSaleUSD:   strings.TrimSpace(c.GetHeader("X-Canvas-Quoted-Sale-USD")),
+			PricingVersion: strings.TrimSpace(c.GetHeader("X-Canvas-Quoted-Pricing-Version")),
+		})
+	}
 	job, err := h.public.Submit(c.Request.Context(), owner, *apiKey.GroupID,
-		kind, modelInput.Model, data, c.GetHeader("Idempotency-Key"))
+		kind, modelInput.Model, data, c.GetHeader("Idempotency-Key"), expected...)
 	if err != nil && (job == nil || job.BillingState == "pending" ||
 		job.Status == service.CangyuanMediaJobReserved) {
 		status := http.StatusServiceUnavailable
@@ -146,6 +153,8 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 			status, message = http.StatusPaymentRequired, "Insufficient balance for approved media price"
 		case errors.Is(err, service.ErrCangyuanMediaPriceNotFound):
 			status, message = http.StatusUnprocessableEntity, "This media model and option combination has no enabled verified price"
+		case errors.Is(err, service.ErrCangyuanMediaPriceChanged):
+			status, message = http.StatusConflict, "Media price changed; refresh the canvas quote before generation"
 		case errors.Is(err, service.ErrCangyuanMediaIdempotencyConflict):
 			status, message = http.StatusConflict, "Idempotency-Key conflicts with an existing media request"
 		case errors.Is(err, service.ErrCangyuanMediaNoAccount):
@@ -153,7 +162,11 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		case err != nil && strings.Contains(err.Error(), "Idempotency-Key"):
 			status, message = http.StatusBadRequest, "A valid Idempotency-Key header is required"
 		}
-		c.JSON(status, gin.H{"error": gin.H{"type": "media_error", "message": message}})
+		errorType := "media_error"
+		if errors.Is(err, service.ErrCangyuanMediaPriceChanged) {
+			errorType = "price_changed"
+		}
+		c.JSON(status, gin.H{"error": gin.H{"type": errorType, "message": message}})
 		return true
 	}
 	if job == nil {
