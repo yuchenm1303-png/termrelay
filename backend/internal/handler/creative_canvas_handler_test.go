@@ -108,7 +108,10 @@ func testCreativeHandlerRouter(h *CreativeCanvasHandler, userID int64) *gin.Engi
 func TestCreativeCanvasGetAlwaysScopesQueriesToJWTUser(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		require.NoError(t, db.Close())
+	})
 	h := &CreativeCanvasHandler{db: db}
 	mock.ExpectQuery("SELECT document, version FROM creative_canvas_projects WHERE user_id=\\$1 AND id=\\$2").
 		WithArgs(int64(19), "cr_secret").WillReturnRows(sqlmock.NewRows([]string{"document", "version"}))
@@ -122,7 +125,10 @@ func TestCreativeCanvasGetAlwaysScopesQueriesToJWTUser(t *testing.T) {
 func TestCreativeCanvasPutRejectsOversizedOrInvalidPayloadBeforeDatabaseWrite(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		require.NoError(t, db.Close())
+	})
 	h := &CreativeCanvasHandler{db: db}
 	post := func(body string) int {
 		request := httptest.NewRequest(http.MethodPut, "/creative/projects/cr_test", bytes.NewBufferString(body))
@@ -138,7 +144,10 @@ func TestCreativeCanvasPutRejectsOversizedOrInvalidPayloadBeforeDatabaseWrite(t 
 func TestCreativeCanvasPutCASConflictCannotOverwriteConcurrentRevision(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		require.NoError(t, db.Close())
+	})
 	h := &CreativeCanvasHandler{db: db}
 	mock.ExpectBegin()
 	mock.ExpectExec("pg_advisory_xact_lock").WithArgs(int64(300800000019)).
@@ -159,7 +168,10 @@ func TestCreativeCanvasPutCASConflictCannotOverwriteConcurrentRevision(t *testin
 func TestCreativeCanvasListExposesOnlyCurrentUsersProjects(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		require.NoError(t, db.Close())
+	})
 	h := &CreativeCanvasHandler{db: db}
 	mock.ExpectQuery("SELECT id,title,version,created_at,updated_at").
 		WithArgs(int64(71)).
