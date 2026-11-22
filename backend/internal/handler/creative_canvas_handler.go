@@ -70,10 +70,14 @@ type creativeCanvasPut struct {
 // persistence. The authenticated user ID is never taken from client JSON.
 type CreativeCanvasHandler struct {
 	db *sql.DB
+	apiKeys *service.APIKeyService
+	prices *service.CangyuanMediaPriceRegistry
+	media *service.CangyuanMediaPublicService
 }
 
-func NewCreativeCanvasHandler(db *sql.DB) *CreativeCanvasHandler {
-	return &CreativeCanvasHandler{db: db}
+func NewCreativeCanvasHandler(db *sql.DB, apiKeys *service.APIKeyService,
+	prices *service.CangyuanMediaPriceRegistry, media *service.CangyuanMediaPublicService) *CreativeCanvasHandler {
+	return &CreativeCanvasHandler{db: db, apiKeys: apiKeys, prices: prices, media: media}
 }
 
 func validateCreativeDocument(raw json.RawMessage, routeID string) ([]byte, string, error) {
