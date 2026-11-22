@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	creativeCanvasMaxBytes = 500000
+	creativeCanvasMaxBytes    = 500000
 	creativeCanvasMaxProjects = 20
-	creativeCanvasMaxNodes = 120
-	creativeCanvasMaxLinks = 250
+	creativeCanvasMaxNodes    = 120
+	creativeCanvasMaxLinks    = 250
 )
 
 var creativeCanvasIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,80}$`)
@@ -69,10 +69,10 @@ type creativeCanvasPut struct {
 // CreativeCanvasHandler uses the already established JWT user session for
 // persistence. The authenticated user ID is never taken from client JSON.
 type CreativeCanvasHandler struct {
-	db *sql.DB
+	db      *sql.DB
 	apiKeys *service.APIKeyService
-	prices *service.CangyuanMediaPriceRegistry
-	media *service.CangyuanMediaPublicService
+	prices  *service.CangyuanMediaPriceRegistry
+	media   *service.CangyuanMediaPublicService
 }
 
 func NewCreativeCanvasHandler(db *sql.DB, apiKeys *service.APIKeyService,
