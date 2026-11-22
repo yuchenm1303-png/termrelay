@@ -55,6 +55,29 @@ describe('Cangyuan one-click media smoke test', () => {
     wrapper.unmount()
   })
 
+  it('keeps prior image task GET available after quota exhaustion', async () => {
+    const requests: string[] = []
+    window.sessionStorage.setItem('cangyuan-media-qa-one-shot:47', 'cyjob_paidimage123')
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      requests.push((init.method || 'GET') + ' ' + url)
+      return { ok: true, status: 200, json: async () => ({
+        status: 'completed', data: [{ url: 'https://example.com/settled-image.png' }],
+      }) }
+    }))
+    const wrapper = mount(CangyuanMediaSmokeTest, {
+      props: { apiKey: key, apiKeyId: 47, canSubmit: false },
+    })
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    expect((buttons[0].element as HTMLButtonElement).disabled).toBe(true)
+    await buttons[0].trigger('click')
+    await buttons[1].trigger('click')
+    await flushPromises()
+    expect(requests).toEqual(['GET /v1/images/generations/cyjob_paidimage123'])
+    expect(wrapper.find('a[href="https://example.com/settled-image.png"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('does not retry a network-ambiguous POST', async () => {
     const post = vi.fn(async () => { throw Error('network dropped') })
     vi.stubGlobal('fetch', post)
