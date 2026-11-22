@@ -54,7 +54,21 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		return true
 	}
 	if len(candidates) == 0 {
+		// The caller has already obtained a canvas quote. If an account became
+		// unavailable in the meantime, do not fall through to an unrelated
+		// OpenAI/Grok provider that might charge for a different model.
+		if c.GetHeader("X-Canvas-Quoted-Sale-USD") != "" ||
+			c.GetHeader("X-Canvas-Quoted-Pricing-Version") != "" {
+			c.JSON(http.StatusConflict, gin.H{"error": gin.H{
+				"type": "price_changed", "message": "Media account or approved quote is no longer available"}})
+			return true
+		}
 		return false
+	}
+	// Canvas-originated paid requests carry the exact price/version the user
+	// confirmed. Reject stale prices before touching the balance hold.
+	if !matchCanvasPriceExpectation(h, c, kind, modelInput.Model, data) {
+		return true
 	}
 	c.Header("Cache-Control", "no-store")
 	if apiKey.User == nil || apiKey.Group.Status != service.StatusActive {
@@ -121,8 +135,15 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		return true
 	}
 	owner := service.CangyuanMediaJobOwner{UserID: apiKey.UserID, APIKeyID: apiKey.ID}
+	var expected []service.CangyuanMediaPriceExpectation
+	if c.GetHeader("X-Canvas-Quoted-Sale-USD") != "" {
+		expected = append(expected, service.CangyuanMediaPriceExpectation{
+			TotalSaleUSD:   strings.TrimSpace(c.GetHeader("X-Canvas-Quoted-Sale-USD")),
+			PricingVersion: strings.TrimSpace(c.GetHeader("X-Canvas-Quoted-Pricing-Version")),
+		})
+	}
 	job, err := h.public.Submit(c.Request.Context(), owner, *apiKey.GroupID,
-		kind, modelInput.Model, data, c.GetHeader("Idempotency-Key"))
+		kind, modelInput.Model, data, c.GetHeader("Idempotency-Key"), expected...)
 	if err != nil && (job == nil || job.BillingState == "pending" ||
 		job.Status == service.CangyuanMediaJobReserved) {
 		status := http.StatusServiceUnavailable
@@ -132,6 +153,8 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 			status, message = http.StatusPaymentRequired, "Insufficient balance for approved media price"
 		case errors.Is(err, service.ErrCangyuanMediaPriceNotFound):
 			status, message = http.StatusUnprocessableEntity, "This media model and option combination has no enabled verified price"
+		case errors.Is(err, service.ErrCangyuanMediaPriceChanged):
+			status, message = http.StatusConflict, "Media price changed; refresh the canvas quote before generation"
 		case errors.Is(err, service.ErrCangyuanMediaIdempotencyConflict):
 			status, message = http.StatusConflict, "Idempotency-Key conflicts with an existing media request"
 		case errors.Is(err, service.ErrCangyuanMediaNoAccount):
@@ -139,7 +162,11 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		case err != nil && strings.Contains(err.Error(), "Idempotency-Key"):
 			status, message = http.StatusBadRequest, "A valid Idempotency-Key header is required"
 		}
-		c.JSON(status, gin.H{"error": gin.H{"type": "media_error", "message": message}})
+		errorType := "media_error"
+		if errors.Is(err, service.ErrCangyuanMediaPriceChanged) {
+			errorType = "price_changed"
+		}
+		c.JSON(status, gin.H{"error": gin.H{"type": errorType, "message": message}})
 		return true
 	}
 	if job == nil {

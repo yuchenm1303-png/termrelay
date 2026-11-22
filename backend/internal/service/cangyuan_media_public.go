@@ -10,9 +10,36 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 var ErrCangyuanMediaNoAccount = errors.New("no eligible cangyuan media account in this API key group")
+var ErrCangyuanMediaPriceChanged = errors.New("approved media price changed before balance reservation")
+
+// Optional, caller-supplied maximum consent for a canvas payment. It is not
+// trusted as a billable price; the server compares it to its frozen snapshot.
+type CangyuanMediaPriceExpectation struct {
+	TotalSaleUSD   string
+	PricingVersion string
+}
+
+func cangyuanMediaPriceMatchesExpectation(snapshot *CangyuanMediaPriceSnapshot, expected CangyuanMediaPriceExpectation) bool {
+	if snapshot == nil || !snapshot.VerifiedByAdmin ||
+		snapshot.Currency != "USD" || snapshot.PricingVersion != expected.PricingVersion ||
+		snapshot.Units <= 0 {
+		return false
+	}
+	unit, err := parseCangyuanMediaMoney(snapshot.UnitSalePriceUSD)
+	if err != nil {
+		return false
+	}
+	consented, err := parseCangyuanMediaMoney(expected.TotalSaleUSD)
+	if err != nil || !consented.IsPositive() {
+		return false
+	}
+	return unit.Mul(decimal.NewFromInt(int64(snapshot.Units))).Equal(consented)
+}
 
 // CangyuanMediaPublicAccountLister selects exclusively from the API key's
 // authenticated group, never from all accounts or an ungrouped fallback.
@@ -74,12 +101,16 @@ func (s *CangyuanMediaPublicService) Candidates(
 func (s *CangyuanMediaPublicService) Submit(
 	ctx context.Context, owner CangyuanMediaJobOwner, groupID int64,
 	kind CangyuanMediaKind, model string, payload []byte, idempotencyKey string,
+	expectations ...CangyuanMediaPriceExpectation,
 ) (*CangyuanMediaJob, error) {
 	if s == nil || s.Jobs == nil || s.Prices == nil || s.Billing == nil {
 		return nil, errors.New("cangyuan media public billing is unavailable")
 	}
 	if err := validateCangyuanMediaJobOwner(owner); err != nil {
 		return nil, err
+	}
+	if len(expectations) > 1 {
+		return nil, ErrCangyuanMediaPriceChanged
 	}
 	if idempotencyKey == "" || len(idempotencyKey) > 128 ||
 		strings.TrimSpace(idempotencyKey) != idempotencyKey {
@@ -101,6 +132,12 @@ func (s *CangyuanMediaPublicService) Submit(
 		payload, idempotencyKey, s.Prices)
 	if err != nil {
 		return nil, err
+	}
+	// The job's frozen snapshot is the actual amount SQL will hold and settle.
+	// Check consent again HERE, after reserving the immutable snapshot and
+	// before any balance hold or remote POST, closing the quote/submit race.
+	if len(expectations) == 1 && !cangyuanMediaPriceMatchesExpectation(job.PriceSnapshot, expectations[0]) {
+		return job, ErrCangyuanMediaPriceChanged
 	}
 	if job.Status != CangyuanMediaJobReserved {
 		return job, nil

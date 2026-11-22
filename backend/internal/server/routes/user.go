@@ -73,6 +73,17 @@ func RegisterUserRoutes(
 			}
 		}
 
+		// Creative canvas documents are scoped to the JWT user and guarded by
+		// the same user-mode rate limiter and audit middleware as API keys.
+		if h.CreativeCanvas != nil {
+			creative := authenticated.Group("/creative")
+			creative.GET("/projects", h.CreativeCanvas.List)
+			creative.GET("/projects/:id", h.CreativeCanvas.Get)
+			creative.PUT("/projects/:id", h.CreativeCanvas.Put)
+			creative.DELETE("/projects/:id", h.CreativeCanvas.Delete)
+			creative.POST("/media/quote", h.CreativeCanvas.QuoteMedia)
+		}
+
 		// API Key管理
 		keys := authenticated.Group("/keys")
 		{

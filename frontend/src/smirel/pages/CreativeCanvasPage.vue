@@ -5,10 +5,14 @@ import { api, getErrorMessage, previewMode } from '../core/api'
 import { useSession } from '../core/session'
 import {
   blankProject, canConnect, creativeId, importCreativeProject, loadCreativeShelf,
-  makeNode, safeMediaUrl, saveCreativeShelf,
+  makeNode, normalizeProject, safeMediaUrl, saveCreativeShelf,
   type CanvasNodeKind, type CanvasTaskStatus, type CreativeNode, type CreativeProject, type CreativeShelf,
 } from '../core/creative-canvas'
 import { readCreativeAsset, storeCreativeAsset } from '../core/creative-assets'
+import {
+  listCloudProjects, getCloudProject, putCloudProject, deleteCloudProject, getCreativeMediaQuote,
+  type CreativeMediaQuote,
+} from '../core/creative-cloud'
 import '../styles/creative-canvas.css'
 
 type KeyOption = {
@@ -25,7 +29,7 @@ type TaskResponse = {
   status?: CanvasTaskStatus
   video_url?: string
   data?: Array<{ url?: string }>
-  error?: { message?: string }
+  error?: { message?: string; type?: string }
 }
 type PointerDrag =
   | { mode: 'pan'; pointerId: number; clientX: number; clientY: number; panX: number; panY: number }
@@ -52,9 +56,21 @@ const panY = ref(92)
 const notice = ref('画布将在本设备自动保存。')
 const error = ref('')
 const saveState = ref('已保存到本机')
+const cloudState = ref('正在连接云端…')
+const cloudReady = ref(false)
+const cloudConflict = ref(false)
+const cloudVersions = new Map<string, number>()
+const cloudHashes = new Map<string, string>()
+let cloudEpoch = 0
+let cloudSaveChain: Promise<void> = Promise.resolve()
 const apiKeys = ref<KeyOption[]>([])
 const selectedKeyId = ref('')
 const keyLoading = ref(false)
+let keyRequestEpoch = 0
+const quoteLoading = ref(false)
+const latestQuote = ref<CreativeMediaQuote | null>(null)
+const quotedNodeId = ref('')
+const quotedPayloadJSON = ref('')
 const runningNodes = reactive<Record<string, boolean>>({})
 const pollingNodes = reactive<Record<string, boolean>>({})
 const undoStack = ref<string[]>([])
@@ -144,11 +160,128 @@ function saveNow() {
   try {
     saveCreativeShelf(shelfOwnerId, shelf.value)
     saveState.value = '已保存到本机'
+    if (cloudReady.value) queueCloudSave()
   } catch (err) {
     saveState.value = '保存失败'
     problem(getErrorMessage(err))
   }
 }
+
+// Local persistence is always the fallback. Cloud writes are serialized and
+// version-gated, so an outdated device cannot silently overwrite revisions.
+function queueCloudSave(targetId = project.value?.id) {
+  if (!cloudReady.value || !targetId || previewMode) return
+  const owner = shelfOwnerId
+  const epoch = cloudEpoch
+  const id = targetId
+  const candidate = shelf.value.projects.find(item => item.id === id)
+  if (!candidate) return
+  const content = JSON.stringify(candidate)
+  if (cloudHashes.get(id) === content) return
+  cloudSaveChain = cloudSaveChain.catch(() => {}).then(async () => {
+    if (destroyed || !cloudReady.value || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    const current = shelf.value.projects.find(p => p.id === id)
+    if (!current) return
+    const latest = JSON.stringify(current)
+    if (cloudHashes.get(id) === latest) return
+    cloudState.value = '正在同步云端…'
+    try {
+      const version = cloudVersions.get(id) || 0
+      const saved = await putCloudProject(JSON.parse(latest) as CreativeProject, version)
+      if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+      cloudVersions.set(id, saved.version)
+      cloudHashes.set(id, latest)
+      cloudState.value = '已同步云端'
+      if (JSON.stringify(shelf.value.projects.find(p => p.id === id)) !== latest) {
+        queueCloudSave() // A second edit arrived while the first write was pending.
+      }
+    } catch (caught) {
+      if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+      cloudReady.value = false
+      cloudConflict.value = true
+      cloudState.value = '云端同步暂停 · 本机草稿安全保留'
+      problem('云端保存失败或版本冲突。草稿已保留在本机，请导出备份后点击「重新连接云端」。' +
+        getErrorMessage(caught).slice(0, 95))
+    }
+  })
+}
+
+async function connectCloud() {
+  const owner = shelfOwnerId
+  const epoch = ++cloudEpoch
+  cloudReady.value = false
+  cloudConflict.value = false
+  cloudState.value = previewMode ? '静态预览 · 仅本地存储' : '正在连接云端…'
+  cloudVersions.clear()
+  cloudHashes.clear()
+  if (previewMode || owner <= 0) return
+  try {
+    const metas = await listCloudProjects()
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    const remote = await Promise.all(metas.map(async item => ({
+      meta: item, snapshot: await getCloudProject(item.id),
+    })))
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+
+    const current = shelf.value.projects
+    const remoteIds = new Set(remote.map(item => item.meta.id))
+    const merged: CreativeProject[] = []
+    let recoveryCount = 0
+    for (const item of remote) {
+      const verified = normalizeProject(item.snapshot.project)
+      if (!verified || verified.id !== item.meta.id || item.snapshot.version !== item.meta.version) {
+        throw Error('云端项目数据不完整')
+      }
+      const local = current.find(p => p.id === verified.id)
+      if (local && JSON.stringify(local) !== JSON.stringify(verified)) {
+        // Never overwrite an unsynced local edit. Fork it as an independent
+        // project rather than replaying stale versions over a remote document.
+        // This is a same-user recovery copy, not an untrusted JSON import:
+        // retain owned task IDs and local asset refs so an uncertain paid job
+        // can still be queried without ever resubmitting it.
+        const recovery: CreativeProject = {
+          ...JSON.parse(JSON.stringify(local)) as CreativeProject,
+          id: creativeId(),
+          title: (local.title.slice(0, 72) + ' · 本机恢复').slice(0, 90),
+          updatedAt: new Date().toISOString(),
+        }
+        merged.push(recovery)
+        recoveryCount += 1
+      }
+      merged.push(verified)
+      cloudVersions.set(verified.id, item.meta.version)
+      cloudHashes.set(verified.id, JSON.stringify(verified))
+    }
+    for (const item of current) if (!remoteIds.has(item.id)) merged.push(item)
+    if (merged.length > maxProjects) {
+      throw Error('云端与本机项目合计超过 20 个；未自动合并，请先导出本机备份。')
+    }
+    const active = shelf.value.activeId
+    shelf.value = {
+      projects: merged.length ? merged : [blankProject()],
+      activeId: merged.some(item => item.id === active) ? active : (merged[0]?.id || ''),
+    }
+    if (!merged.length) shelf.value.activeId = shelf.value.projects[0].id
+    cloudReady.value = true
+    cloudState.value = '已连接云端'
+    saveCreativeShelf(owner, shelf.value)
+    if (recoveryCount) {
+      feedback('检测到多设备内容差异，已将本机草稿另存为 ' + recoveryCount + ' 个恢复副本；未覆盖云端版本。')
+    }
+    // Upload any local-only projects that have never been stored remotely,
+    // not just whichever canvas happens to be selected on this device.
+    for (const item of shelf.value.projects) {
+      if (!cloudVersions.has(item.id)) queueCloudSave(item.id)
+    }
+    void hydrateAssets()
+  } catch (caught) {
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    cloudReady.value = false
+    cloudState.value = '离线草稿 · 云端未同步'
+    problem('云端连接未完成，本机草稿仍可正常编辑：' + getErrorMessage(caught))
+  }
+}
+
 function resetView() {
   zoom.value = 0.86
   panX.value = 70
@@ -186,12 +319,25 @@ function copyProject() {
   switchProject(copy.id)
   feedback('已复制项目和节点，历史生成任务不会重复执行')
 }
-function removeProject() {
-  if (!project.value || !window.confirm('删除当前画布？这是本机操作，无法从服务器恢复。')) return
-  shelf.value.projects = shelf.value.projects.filter(p => p.id !== project.value.id)
-  if (shelf.value.projects.length === 0) shelf.value.projects.push(blankProject())
-  switchProject(shelf.value.projects[0].id)
-  feedback('画布已删除')
+async function removeProject() {
+  if (!project.value || !window.confirm('确定删除当前画布？云端与本机的该项目都会删除，操作无法撤销。')) return
+  const id = project.value.id
+  if (!cloudReady.value && !previewMode) return problem('云端暂未连接，避免删除后重新同步恢复；请先重新连接。')
+  try {
+    const version = cloudVersions.get(id)
+    if (version && !previewMode) {
+      await cloudSaveChain
+      const currentVersion = cloudVersions.get(id)
+      if (!currentVersion) throw Error('无法取得云端项目版本')
+      await deleteCloudProject(id, currentVersion)
+      cloudVersions.delete(id)
+      cloudHashes.delete(id)
+    }
+    shelf.value.projects = shelf.value.projects.filter(p => p.id !== id)
+    if (shelf.value.projects.length === 0) shelf.value.projects.push(blankProject())
+    switchProject(shelf.value.projects[0].id)
+    feedback('画布已删除')
+  } catch (caught) { problem('无法删除云端项目，本机副本已保留：' + getErrorMessage(caught)) }
 }
 function insert(kind: CanvasNodeKind) {
   if (!project.value) return
@@ -444,14 +590,24 @@ function inputPrompt(node: CreativeNode): string {
 
 async function loadKeys() {
   if (previewMode) return
+  const epoch = ++keyRequestEpoch
+  const owner = shelfOwnerId
   keyLoading.value = true
   try {
     const response = await api.get<KeyOption[] | { items?: KeyOption[] }>('/keys', { params: { page: 1, page_size: 100 } })
+    // Old account's JWT request may resolve after logout/relogin.
+    // Never rehydrate keys or update selection across that boundary.
+    if (destroyed || owner !== shelfOwnerId || epoch !== keyRequestEpoch) return
     const list = Array.isArray(response.data) ? response.data : (response.data.items || [])
     apiKeys.value = list.filter(key => key.status === 'active' && typeof key.key === 'string' && key.key.startsWith('sk-'))
     if (apiKeys.value.length === 1) selectedKeyId.value = String(apiKeys.value[0].id)
-  } catch (err) { problem('读取 API Key 失败：' + getErrorMessage(err)) }
-  finally { keyLoading.value = false }
+  } catch (err) {
+    if (!destroyed && owner === shelfOwnerId && epoch === keyRequestEpoch) {
+      problem('读取 API Key 失败：' + getErrorMessage(err))
+    }
+  } finally {
+    if (epoch === keyRequestEpoch) keyLoading.value = false
+  }
 }
 function safeTaskId(value: unknown): string {
   return typeof value === 'string' && /^cyjob_[a-zA-Z0-9_-]{1,72}$/.test(value) ? value : ''
@@ -491,66 +647,154 @@ function pollUntilDone(node: CreativeNode, rounds: number) {
   }, 6000)
   pollingTimers.add(timer)
 }
+function nodePayload(node: CreativeNode): Record<string, unknown> {
+  if (!['image', 'video'].includes(node.kind)) throw Error('当前节点不能执行生成')
+  const prompt = inputPrompt(node)
+  if (!prompt || prompt.length > 6000) throw Error('请输入有效提示词（最多 6000 字）。')
+  if (!node.model.trim() || node.model.length > 200) throw Error('请输入模型 ID。')
+  let options: Record<string, unknown>
+  try {
+    const value: unknown = JSON.parse(node.options || '{}')
+    if (!value || Array.isArray(value) || typeof value !== 'object') throw Error()
+    options = { ...(value as Record<string, unknown>) }
+  } catch { throw Error('生成参数必须是合法 JSON 对象。') }
+  if (Object.keys(options).some(k => ['model','prompt','idempotency_key','async','response_format'].includes(k))) {
+    throw Error('参数中包含保留字段，请只填写官方支持的生成档位选项。')
+  }
+  if (node.kind === 'image' && options.n !== 1) throw Error('图片生成请使用 {"n":1}。')
+  const wantsImageReference = options.canvas_use_input_image === true
+  delete options.canvas_use_input_image
+  if (node.kind !== 'video' && wantsImageReference) throw Error('只有视频节点支持使用前置图片')
+  if (wantsImageReference) {
+    const reference = project.value.links
+      .filter(link => link.to === node.id)
+      .map(link => project.value.nodes.find(item => item.id === link.from))
+      .find(parent => parent?.kind === 'image' && parent.status === 'completed' &&
+        Boolean(parent.taskId && safeMediaUrl(parent.resultUrl)))
+    if (!reference) throw Error('请先完成并连接一个真实生成的图片节点，才能作为视频首帧。')
+    if (options.first_image_url || options.reference_image_urls) {
+      throw Error('已勾选画布首帧引用，请不要重复填写官方首帧参数。')
+    }
+    options.first_image_url = reference.resultUrl
+  }
+  const payload: Record<string, unknown> = { ...options, model: node.model.trim(), prompt }
+  if (node.kind === 'image') Object.assign(payload, { async: true, response_format: 'url' })
+  return payload
+}
+async function quoteNode(node: CreativeNode): Promise<CreativeMediaQuote> {
+  const key = activeKey.value
+  if (!key?.key || key.status !== 'active') throw Error('请先选择一把与媒体分组绑定的有效 API Key')
+  const payload = nodePayload(node)
+  return getCreativeMediaQuote({
+    api_key_id: key.id,
+    kind: node.kind === 'video' ? 'video' : 'image',
+    model: node.model.trim(),
+    payload,
+  })
+}
+async function previewPrice(node: CreativeNode) {
+  if (quoteLoading.value) return
+  quoteLoading.value = true
+  latestQuote.value = null
+  try {
+    const payload = nodePayload(node)
+    const keyID = activeKey.value?.id || 0
+    const value = await quoteNode(node)
+    if (keyID !== activeKey.value?.id || JSON.stringify(nodePayload(node)) !== JSON.stringify(payload)) return
+    latestQuote.value = value
+    quotedNodeId.value = node.id
+    quotedPayloadJSON.value = JSON.stringify(payload)
+    feedback('已按后台审核的美元售价返回精确报价；提交时会二次校验，不会按变化后的售价扣费。')
+  } catch (caught) {
+    problem('当前参数无法取得审核报价：' + getErrorMessage(caught))
+  } finally { quoteLoading.value = false }
+}
+const selectedQuote = computed(() => {
+  if (!selectedNode.value || !latestQuote.value || selectedNode.value.id !== quotedNodeId.value ||
+    activeKey.value?.id !== latestQuote.value.api_key_id) return null
+  try {
+    if (JSON.stringify(nodePayload(selectedNode.value)) !== quotedPayloadJSON.value) return null
+    return latestQuote.value
+  } catch { return null }
+})
+
 async function runNode(node: CreativeNode) {
   if (state.user?.role !== 'admin') return problem('当前版本仅管理员可运行真实付费生成。普通用户可以编辑和保存画布。')
   if (!['image','video'].includes(node.kind) || runningNodes[node.id] || node.taskId ||
     node.status === 'submitting' || node.status === 'submit_unknown') return
   const key = activeKey.value
   if (!key?.key || key.status !== 'active') return problem('请先选择一把与媒体分组绑定的有效 API Key。')
-  const prompt = inputPrompt(node)
-  if (!prompt || prompt.length > 6000) return problem('请输入有效提示词（最多 6000 字）。')
-  if (!node.model.trim()) return problem('请输入模型 ID。')
-  let options: Record<string, unknown>
-  try {
-    const decoded: unknown = JSON.parse(node.options || '{}')
-    if (!decoded || Array.isArray(decoded) || typeof decoded !== 'object') throw Error('对象')
-    options = decoded as Record<string, unknown>
-    if (Object.keys(options).some(item => ['model','prompt','idempotency_key'].includes(item))) throw Error('保留参数')
-    if (node.kind === 'image' && options.n !== 1) throw Error('图片测试仅允许 n=1')
-  } catch { return problem('生成参数必须是合法 JSON 对象；图片生成请填写 {"n":1}。') }
-  if (!window.confirm('即将向真实上游提交一次' + kindNames[node.kind] +
-    '请求，可能产生费用。费用由后台已审核价格决定，未审核的档位会被拒绝。确认继续？')) return
+  let payload: Record<string, unknown>
+  try { payload = nodePayload(node) }
+  catch (caught) { return problem(getErrorMessage(caught)) }
+  const owner = shelfOwnerId
+  const keyID = key.id
   runningNodes[node.id] = true
-  snapshot()
-  node.status = 'submitting'
-  node.taskKeyId = key.id
-  node.resultUrl = ''
-  saveNow() // Persist uncertain state BEFORE the one paid POST.
-  const payload: Record<string, unknown> = { ...options, model: node.model.trim(), prompt }
-  if (node.kind === 'image') Object.assign(payload, { async: true, response_format: 'url' })
   try {
-    const response = await fetch(node.kind === 'image' ? '/v1/images/generations' : '/v1/videos', {
-      method: 'POST', cache: 'no-store', credentials: 'omit',
-      headers: {
-        Authorization: 'Bearer ' + key.key, 'Content-Type': 'application/json',
-        Accept: 'application/json', 'Idempotency-Key': 'canvas-' + creativeId(),
-      },
-      body: JSON.stringify(payload),
-    })
-    const data = await response.json() as TaskResponse
-    if (!response.ok) {
-      if ([400,401,402,403,404,413,415,422].includes(response.status)) {
-        node.status = 'failed'
-        return problem(data.error?.message || '请求被拒绝：HTTP ' + response.status)
+    // Quote is mandatory, even when the user has already previewed a price.
+    // No paid POST is sent if the server cannot verify this exact request.
+    let quote: CreativeMediaQuote
+    try {
+      quote = await getCreativeMediaQuote({
+        api_key_id: keyID, kind: node.kind === 'video' ? 'video' : 'image',
+        model: node.model.trim(), payload,
+      })
+    } catch (caught) {
+      return problem('生成已取消：此模型／参数没有有效审核报价。' + getErrorMessage(caught))
+    }
+    if (destroyed || owner !== shelfOwnerId || keyID !== activeKey.value?.id ||
+      !project.value.nodes.includes(node)) return problem('当前用户、画布或密钥已切换，请重新核对报价。')
+    let currentPayload: Record<string, unknown>
+    try { currentPayload = nodePayload(node) } catch { return problem('节点内容已修改，请重新核价。') }
+    if (JSON.stringify(currentPayload) !== JSON.stringify(payload)) return problem('参数已修改，请重新核价。')
+    const displayUSD = quote.total_sale_usd.replace(/0+$/, '').replace(/\.$/, '')
+    if (!window.confirm('本次' + kindNames[node.kind] + '，已审核售价：USD $' + displayUSD +
+      '\n计价档位：' + quote.tier + ' · 数量 ' + quote.units +
+      '\n确认支付后仅提交一次。如价格变动服务器会拒绝，不会按新价格额外扣费。')) return
+
+    snapshot()
+    node.status = 'submitting'
+    node.taskKeyId = key.id
+    node.resultUrl = ''
+    saveNow() // Persist uncertain state BEFORE the paid request.
+    try {
+      const response = await fetch(node.kind === 'image' ? '/v1/images/generations' : '/v1/videos', {
+        method: 'POST', cache: 'no-store', credentials: 'omit',
+        headers: {
+          Authorization: 'Bearer ' + key.key, 'Content-Type': 'application/json',
+          Accept: 'application/json', 'Idempotency-Key': 'canvas-' + creativeId(),
+          'X-Canvas-Quoted-Sale-USD': quote.total_sale_usd,
+          'X-Canvas-Quoted-Pricing-Version': quote.pricing_version,
+        },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json() as TaskResponse
+      if (!response.ok) {
+        if ([400,401,402,403,404,413,415,422].includes(response.status) ||
+          (response.status === 409 && data.error?.type === 'price_changed')) {
+          node.status = 'failed'
+          return problem(data.error?.message || '请求被拒绝：HTTP ' + response.status)
+        }
+        node.status = 'submit_unknown'
+        return problem('提交结果不确定（HTTP ' + response.status + '）。为防止重复扣费，请勿重新运行这个节点。')
       }
+      const id = safeTaskId(data.task_id || data.id)
+      if (!id) {
+        node.status = 'submit_unknown'
+        return problem('任务已受理但没有可靠任务编号。已禁止重复提交，请在后台核查。')
+      }
+      node.taskId = id
+      node.status = data.status || 'queued'
+      feedback('提交成功，任务正在后台处理。此节点不会再次自动提交。')
+      pollUntilDone(node, 18)
+    } catch {
       node.status = 'submit_unknown'
-      return problem('提交结果不确定（HTTP ' + response.status + '）。为防止重复扣费，请勿重新运行这个节点。')
+      problem('网络异常，可能已被上游接受；已锁定重复提交。请联系管理员核查任务。')
+    } finally {
+      saveNow()
     }
-    const id = safeTaskId(data.task_id || data.id)
-    if (!id) {
-      node.status = 'submit_unknown'
-      return problem('任务已受理但没有可靠任务编号。已禁止重复提交，请在后台核查。')
-    }
-    node.taskId = id
-    node.status = data.status || 'queued'
-    feedback('提交成功，任务正在后台处理。此节点不会再次自动提交。')
-    pollUntilDone(node, 18)
-  } catch {
-    node.status = 'submit_unknown'
-    problem('网络异常，可能已被上游接受；已锁定重复提交。请联系管理员核查任务。')
   } finally {
     runningNodes[node.id] = false
-    saveNow()
   }
 }
 
@@ -561,6 +805,12 @@ watch(shelf, () => {
 }, { deep: true })
 watch(userId, (nextOwner) => {
   if (nextOwner === shelfOwnerId) return
+  keyRequestEpoch += 1
+  keyLoading.value = false
+  cloudReady.value = false
+  cloudEpoch += 1
+  cloudVersions.clear()
+  cloudHashes.clear()
   if (saveHandle) window.clearTimeout(saveHandle)
   try { saveCreativeShelf(shelfOwnerId, shelf.value) } catch { /* best-effort flush of old owner's draft */ }
   shelfOwnerId = nextOwner
@@ -574,15 +824,20 @@ watch(userId, (nextOwner) => {
   pollingTimers.clear()
   void hydrateAssets()
   void loadKeys()
+  void connectCloud()
 })
 onMounted(() => {
   window.addEventListener('keydown', onKeyboard)
   saveNow() // Persist starter project even if the user does not edit it.
   void hydrateAssets()
   void loadKeys()
+  void connectCloud()
 })
 onBeforeUnmount(() => {
   destroyed = true
+  keyRequestEpoch += 1
+  cloudReady.value = false
+  cloudEpoch += 1
   hydrationVersion += 1
   window.removeEventListener('keydown', onKeyboard)
   if (saveHandle) window.clearTimeout(saveHandle)
@@ -598,7 +853,7 @@ onBeforeUnmount(() => {
   <div class="cc-page">
     <header class="cc-header">
       <div class="cc-heading">
-        <span class="cc-eyebrow"><span class="cc-orbit"></span> MUXWAY / CREATIVE STUDIO <i>PREVIEW 01</i></span>
+        <span class="cc-eyebrow"><span class="cc-orbit"></span> MUXWAY / CREATIVE STUDIO <i>PREVIEW 02</i></span>
         <h1>AI 创作画布</h1>
         <p>一个自由连接的创作空间。由提示词开始，把图片和视频延伸成完整的创作流程。</p>
       </div>
@@ -622,7 +877,8 @@ onBeforeUnmount(() => {
       <button type="button" title="复制当前画布" @click="copyProject">复制</button>
       <button type="button" title="删除当前画布" class="cc-danger-text" @click="removeProject">删除</button>
       <div class="cc-grow"></div>
-      <span class="cc-local-pill">仅本机保存 · 未同步云端</span>
+      <span class="cc-local-pill">{{ cloudState }}</span>
+      <button v-if="!cloudReady && !previewMode" type="button" title="重新连接云端" @click="connectCloud">{{ cloudConflict ? '↻ 处理同步冲突' : '↻ 重新连接' }}</button>
       <button type="button" title="撤销" :disabled="!canUndo" @click="history('undo')">↶</button>
       <button type="button" title="重做" :disabled="!canRedo" @click="history('redo')">↷</button>
     </div>
@@ -749,7 +1005,7 @@ onBeforeUnmount(() => {
             <label class="cc-field">精确参数（JSON）
               <textarea v-model="selectedNode.options" rows="3" spellcheck="false" maxlength="2500" placeholder='{"n":1}'></textarea>
             </label>
-            <p class="cc-small-hint">模型和生成参数需与后台审核价一致，否则服务器会拒绝收费。图片默认仅生成一张；视频每次生成一条。</p>
+            <p class="cc-small-hint">模型和生成参数必须与审核价一致。图片请填写 {"n":1}；视频可加 "canvas_use_input_image":true，将已完成并连接的图片作为首帧（必须存在对应的已审核档位）。</p>
             <label class="cc-field">参考素材
               <button type="button" class="cc-asset-button" @click="pickAsset">＋ 上传本地图片 / 视频</button>
             </label>
@@ -769,6 +1025,17 @@ onBeforeUnmount(() => {
             <p v-if="!apiKeys.length" class="cc-small-hint">尚无可用 Key。请先在 <RouterLink to="/keys">API 密钥</RouterLink> 创建媒体分组凭证。</p>
             <div v-if="selectedNode.taskId" class="cc-task-info">任务编号 <strong>{{ selectedNode.taskId }}</strong><span>状态：{{ statusNames[selectedNode.status] }}</span></div>
             <div v-if="selectedNode.status === 'submit_unknown'" class="cc-task-warning">提交状态不确定。为避免重复扣费，此节点不能重新发送。请核对使用记录。</div>
+            <template v-if="!selectedNode.taskId">
+              <button type="button" class="cc-asset-button" :disabled="quoteLoading || !activeKey" @click="previewPrice(selectedNode)">
+                {{ quoteLoading ? '核对审核价中…' : '查看本节点精确售价' }}
+              </button>
+              <div v-if="selectedQuote" class="cc-quote-preview">
+                <span>ADMIN-APPROVED · USD</span>
+                <strong>$ {{ selectedQuote.total_sale_usd }}</strong>
+                <small>{{ selectedQuote.tier }} · {{ selectedQuote.units }} 个输出</small>
+                <p>以当前参数核价，运行前再次核对。价格变化时拒绝生成。</p>
+              </div>
+            </template>
             <button v-if="!selectedNode.taskId" type="button" class="cc-run-button"
               :disabled="runningNodes[selectedNode.id] || !isRunReady || selectedNode.status === 'submitting' || selectedNode.status === 'submit_unknown'"
               @click="runNode(selectedNode)">
