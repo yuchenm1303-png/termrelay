@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 // Separate, once-only video QA from the already completed image QA. It never
 // posts from a poll, reload, mount hook or ambiguous network response.
-const props = defineProps<{ apiKey: string; apiKeyId: number; priceApproved?: boolean }>()
+const props = defineProps<{ apiKey: string; apiKeyId: number; priceApproved?: boolean; canSubmit?: boolean }>()
 type VideoTask = {
   id?: string
   task_id?: string
@@ -82,7 +82,7 @@ async function refreshStatus() {
 }
 
 async function startOneVideo() {
-  if (sending.value || taskID.value || status.value === 'submit_unknown' || !props.priceApproved) return
+  if (sending.value || taskID.value || status.value === 'submit_unknown' || !props.priceApproved || props.canSubmit === false) return
   if (!props.apiKey.startsWith('sk-')) {
     error.value = '测试密钥无效，无法提交视频任务。'
     return
@@ -161,8 +161,8 @@ async function startOneVideo() {
     </div>
     <p v-if="!priceApproved" class="cy-video-pending">当前没有与此请求精确匹配的已启用视频报价，已锁定生成按钮。审核定价后刷新本页。</p>
     <div class="cy-video-actions">
-      <button type="button" class="cy-video-primary" :disabled="!priceApproved || sending || Boolean(taskID) || status === 'submit_unknown'" @click="startOneVideo">
-        {{ sending ? '正在提交…' : taskID ? '已提交一次，不可重复' : status === 'submit_unknown' ? '结果不明，禁止重试' : !priceApproved ? '待管理员审核视频价格' : '生成一个测试视频' }}
+      <button type="button" class="cy-video-primary" :disabled="canSubmit === false || !priceApproved || sending || Boolean(taskID) || status === 'submit_unknown'" @click="startOneVideo">
+        {{ sending ? '正在提交…' : taskID ? '已提交一次，不可重复' : status === 'submit_unknown' ? '结果不明，禁止重试' : canSubmit === false ? '额度已用尽，仅可查询' : !priceApproved ? '待管理员审核视频价格' : '生成一个测试视频' }}
       </button>
       <button v-if="taskID" type="button" :disabled="polling" @click="refreshStatus">
         {{ polling ? '查询中…' : '查询任务状态' }}
