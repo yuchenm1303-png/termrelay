@@ -66,6 +66,7 @@ type Handlers struct {
 	ModelPlaza       *ModelPlazaHandler
 	AsyncImage       *AsyncImageHandler
 	CangyuanMedia    *CangyuanMediaHandler
+	CreativeCanvas   *CreativeCanvasHandler
 	BatchImage       *BatchImageHandler
 }
 
