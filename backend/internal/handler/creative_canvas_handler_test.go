@@ -54,7 +54,26 @@ func TestCreativeCanvasDocumentValidation(t *testing.T) {
 	_, _, err = validateCreativeDocument(payload, "cr_test")
 	require.Error(t, err)
 
+	image["resultUrl"] = "https://"
+	payload, err = json.Marshal(doc)
+	require.NoError(t, err)
+	_, _, err = validateCreativeDocument(payload, "cr_test")
+	require.Error(t, err, "hostless HTTPS media must not be persisted")
+
+	image["resultUrl"] = "https://user:pass@example.org/asset.png"
+	payload, err = json.Marshal(doc)
+	require.NoError(t, err)
+	_, _, err = validateCreativeDocument(payload, "cr_test")
+	require.Error(t, err, "credential-bearing media links must be rejected")
+
 	image["resultUrl"] = "https://example.org/output.png"
+	image["options"] = `{"n":1,"api_key":"sk-this-must-never-be-saved"}`
+	payload, err = json.Marshal(doc)
+	require.NoError(t, err)
+	_, _, err = validateCreativeDocument(payload, "cr_test")
+	require.Error(t, err, "nested API secrets must never enter cloud project storage")
+
+	image["options"] = `{"n":1}`
 	doc["links"] = []any{
 		map[string]any{"id": "cr_edge1", "from": "cr_prompt", "to": "cr_image"},
 		map[string]any{"id": "cr_edge2", "from": "cr_image", "to": "cr_prompt"},
