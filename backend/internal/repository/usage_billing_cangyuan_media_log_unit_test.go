@@ -4,7 +4,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
