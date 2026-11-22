@@ -47,6 +47,33 @@ describe('Cangyuan once-only video QA card', () => {
     wrapper.unmount()
   })
 
+  it('allows correction after a definite no-charge 422 without reopening a second accepted job', async () => {
+    let posts = 0
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+      if (init.method === 'POST') {
+        posts++
+        if (posts === 1) return {
+          ok: false, status: 422,
+          json: async () => ({ error: { message: 'Missing approved media price' } }),
+        }
+        return { ok: true, status: 202, json: async () => ({ task_id: 'cyjob_afterpricing', status: 'queued' }) }
+      }
+      return { ok: true, status: 200, json: async () => ({ status: 'queued' }) }
+    }))
+    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(posts).toBe(1)
+    expect(wrapper.text()).toContain('请求已被明确拒绝')
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(posts).toBe(2)
+    expect(wrapper.text()).toContain('已提交一次，不可重复')
+    await wrapper.find('button').trigger('click')
+    expect(posts).toBe(2)
+    wrapper.unmount()
+  })
+
   it('persists uncertain state and prevents repeat paid POST', async () => {
     const post = vi.fn(async () => { throw Error('dropped response') })
     vi.stubGlobal('fetch', post)
