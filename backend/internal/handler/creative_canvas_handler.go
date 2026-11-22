@@ -94,7 +94,7 @@ func validateCreativeDocument(raw json.RawMessage, routeID string) ([]byte, stri
 		return nil, "", errors.New("canvas document contains trailing values")
 	}
 	if document.Version != 1 || document.ID != routeID ||
-		len(document.Title) == 0 || len(document.Title) > 90 ||
+		utf8.RuneCountInString(document.Title) == 0 || utf8.RuneCountInString(document.Title) > 90 ||
 		len(document.CreatedAt) > 40 || len(document.UpdatedAt) > 40 ||
 		len(document.Nodes) > creativeCanvasMaxNodes || len(document.Links) > creativeCanvasMaxLinks {
 		return nil, "", errors.New("invalid canvas metadata, node count or link count")
