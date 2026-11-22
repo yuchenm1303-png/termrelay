@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import CangyuanMediaSmokeTest from '../components/CangyuanMediaSmokeTest.vue'
+import CangyuanVideoSmokeTest from '../components/CangyuanVideoSmokeTest.vue'
 import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
@@ -50,6 +51,7 @@ const createError = ref('')
 const keys = ref<ApiKeyItem[]>([])
 const groups = ref<GroupItem[]>([])
 const groupRates = ref<Record<string, number>>({})
+const approvedVideoPrice = ref(false)
 const createOpen = ref(false)
 const advancedOpen = ref(false)
 const createdKey = ref<ApiKeyItem | null>(null)
@@ -267,6 +269,28 @@ function normalizeKeys(data: KeyListPayload) {
 
 let groupRateRequestId = 0
 
+async function loadApprovedVideoPrice() {
+  approvedVideoPrice.value = false
+  try {
+    const response = await api.get<{ data: Array<{
+      model: string
+      kind: string
+      enabled: boolean
+      options: Record<string, unknown>
+    }> }>('/admin/cangyuan-media/prices')
+    approvedVideoPrice.value = Array.isArray(response.data?.data) && response.data.data.some(rule =>
+      rule.enabled === true &&
+      rule.kind === 'video_generation' &&
+      rule.model === 'omni-fast' &&
+      rule.options != null &&
+      Object.keys(rule.options).length === 0,
+    )
+  } catch {
+    // A missing admin session or an unapproved price must keep paid QA locked.
+    approvedVideoPrice.value = false
+  }
+}
+
 async function loadGroupRates(requestId: number) {
   try {
     const response = await api.get<Record<string, number>>('/groups/rates')
@@ -305,6 +329,7 @@ async function loadPage() {
     // The card grid depends on keys + groups, not the secondary rate API.
     // Resolve the visible cards now; refresh rates independently afterward.
     void loadGroupRates(requestId)
+    if (cangyuanTestKey.value) void loadApprovedVideoPrice()
   } catch (caught) {
     error.value = getErrorMessage(caught)
   } finally {
@@ -536,6 +561,7 @@ onBeforeUnmount(() => {
     </section>
 
     <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" />
+    <CangyuanVideoSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" :price-approved="approvedVideoPrice" />
 
     <section class="keys-library">
       <header class="keys-library-heading">
