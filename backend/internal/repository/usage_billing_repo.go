@@ -54,6 +54,12 @@ func (r *usageBillingRepository) Apply(ctx context.Context, cmd *service.UsageBi
 	if err := r.applyUsageBillingEffects(ctx, tx, cmd, result); err != nil {
 		return nil, err
 	}
+	// A successful Cangyuan media quota capture must have a durable matching
+	// customer-visible usage row in this same transaction. Otherwise keep the
+	// quota step retriable; never claim full settlement with a missing log.
+	if err := recordSettledCangyuanMediaUsage(ctx, tx, cmd); err != nil {
+		return nil, err
+	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, err
