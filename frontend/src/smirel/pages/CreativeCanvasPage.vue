@@ -235,8 +235,15 @@ async function connectCloud() {
       if (local && JSON.stringify(local) !== JSON.stringify(verified)) {
         // Never overwrite an unsynced local edit. Fork it as an independent
         // project rather than replaying stale versions over a remote document.
-        const recovery = importCreativeProject(JSON.stringify(local))
-        recovery.title = (local.title.slice(0, 72) + ' · 本机恢复').slice(0, 90)
+        // This is a same-user recovery copy, not an untrusted JSON import:
+        // retain owned task IDs and local asset refs so an uncertain paid job
+        // can still be queried without ever resubmitting it.
+        const recovery: CreativeProject = {
+          ...JSON.parse(JSON.stringify(local)) as CreativeProject,
+          id: creativeId(),
+          title: (local.title.slice(0, 72) + ' · 本机恢复').slice(0, 90),
+          updatedAt: new Date().toISOString(),
+        }
         merged.push(recovery)
         recoveryCount += 1
       }
