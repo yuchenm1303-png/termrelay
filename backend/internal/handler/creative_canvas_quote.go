@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -23,17 +21,12 @@ type creativeMediaQuoteRequest struct {
 // A preflight quote is not permission to charge: the real generation route
 // rechecks account authorization, price and quota under the billing lock.
 // No provider credentials or provider cost are exposed in the response.
-func (h *CreativeCanvasHandler) QuoteMedia(
-	c *gin.Context,
-	apiKeyService *service.APIKeyService,
-	prices *service.CangyuanMediaPriceRegistry,
-	media *service.CangyuanMediaPublicService,
-) {
+func (h *CreativeCanvasHandler) QuoteMedia(c *gin.Context) {
 	userID, ok := creativeAuthUser(c)
 	if !ok {
 		return
 	}
-	if h == nil || apiKeyService == nil || prices == nil || media == nil {
+	if h == nil || h.apiKeys == nil || h.prices == nil || h.media == nil {
 		creativeFail(c, http.StatusServiceUnavailable, "Media price quote is unavailable")
 		return
 	}
@@ -54,7 +47,7 @@ func (h *CreativeCanvasHandler) QuoteMedia(
 		creativeFail(c, http.StatusBadRequest, "Unsupported media type")
 		return
 	}
-	key, err := apiKeyService.GetByID(c.Request.Context(), req.APIKeyID)
+	key, err := h.apiKeys.GetByID(c.Request.Context(), req.APIKeyID)
 	if err != nil || key == nil || key.UserID != userID {
 		creativeFail(c, http.StatusNotFound, "API Key not found")
 		return
@@ -68,12 +61,12 @@ func (h *CreativeCanvasHandler) QuoteMedia(
 		creativeFail(c, http.StatusForbidden, "API Key or group is not eligible for media billing")
 		return
 	}
-	candidates, err := media.Candidates(c.Request.Context(), *key.GroupID, kind, req.Model)
+	candidates, err := h.media.Candidates(c.Request.Context(), *key.GroupID, kind, req.Model)
 	if err != nil || len(candidates) == 0 {
 		creativeFail(c, http.StatusServiceUnavailable, "No schedulable media account for this model and group")
 		return
 	}
-	approved, err := prices.Quote(c.Request.Context(), kind, req.Model, req.Payload)
+	approved, err := h.prices.Quote(c.Request.Context(), kind, req.Model, req.Payload)
 	if errors.Is(err, service.ErrCangyuanMediaPriceNotFound) {
 		creativeFail(c, http.StatusUnprocessableEntity, "No enabled administrator-approved price matches these exact options")
 		return
@@ -148,7 +141,3 @@ func matchCanvasPriceExpectation(h *CangyuanMediaHandler, c *gin.Context,
 
 // The quote response is never cached by intermediaries because its eligibility
 // and price are bound to a signed-in user and a particular API key ID.
-func creativeQuoteID(id int64) string { return strconv.FormatInt(id, 10) }
-
-// type reference also protects against a hidden API-key auth regression.
-var _ = middleware2.GetAuthSubjectFromContext
