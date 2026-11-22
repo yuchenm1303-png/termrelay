@@ -260,7 +260,11 @@ async function connectCloud() {
     if (recoveryCount) {
       feedback('检测到多设备内容差异，已将本机草稿另存为 ' + recoveryCount + ' 个恢复副本；未覆盖云端版本。')
     }
-    if (!cloudVersions.has(shelf.value.activeId)) queueCloudSave()
+    // Upload any local-only projects that have never been stored remotely,
+    // not just whichever canvas happens to be selected on this device.
+    for (const item of shelf.value.projects) {
+      if (!cloudVersions.has(item.id)) queueCloudSave(item.id)
+    }
     void hydrateAssets()
   } catch (caught) {
     if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
