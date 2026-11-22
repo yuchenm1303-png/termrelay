@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps<{ apiKey: string; apiKeyId: number }>()
+const props = defineProps<{ apiKey: string; apiKeyId: number; canSubmit?: boolean }>()
 type MediaTask = {
   id?: string
   task_id?: string
@@ -83,7 +83,7 @@ async function refreshStatus() {
 }
 
 async function startSingleImage() {
-  if (sending.value || taskID.value) return
+  if (sending.value || taskID.value || props.canSubmit === false) return
   if (!props.apiKey.startsWith('sk-')) {
     error.value = '当前密钥不可用，不能发起测试。'
     return
@@ -168,8 +168,8 @@ async function startSingleImage() {
       真实请求可能收费。先由管理员确认测试账号、审核价格及余额冻结已就绪，再点击；提交后只查询状态，不会重复生成。
     </div>
     <div class="cy-test-actions">
-      <button type="button" class="cy-test-primary" :disabled="sending || Boolean(taskID) || Boolean(status === 'submit_unknown')" @click="startSingleImage">
-        {{ sending ? '正在提交…' : taskID ? '已提交一次，不可重复' : status === 'submit_unknown' ? '请求不确定，禁止重试' : '生成一张测试图片' }}
+      <button type="button" class="cy-test-primary" :disabled="canSubmit === false || sending || Boolean(taskID) || Boolean(status === 'submit_unknown')" @click="startSingleImage">
+        {{ sending ? '正在提交…' : taskID ? '已提交一次，不可重复' : status === 'submit_unknown' ? '请求不确定，禁止重试' : canSubmit === false ? '额度已用尽，仅可查询' : '生成一张测试图片' }}
       </button>
       <button v-if="taskID" type="button" :disabled="polling" @click="refreshStatus">
         {{ polling ? '查询中…' : '查询任务状态' }}
