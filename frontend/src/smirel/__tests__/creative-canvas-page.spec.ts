@@ -90,6 +90,34 @@ describe('creative canvas UI foundation', () => {
     wrapper.unmount()
   })
 
+  it('drops old-account API key responses that resolve after switching users', async () => {
+    let resolveOldKeys: ((value: unknown) => void) | undefined
+    const delayedOldKeys = new Promise(resolve => { resolveOldKeys = resolve })
+    let keyRequests = 0
+    vi.mocked(api.get).mockImplementation(async (path) => {
+      if (path === '/keys') {
+        keyRequests += 1
+        if (keyRequests === 1) return delayedOldKeys as never
+        return { data: [{ id: 78, name: 'New owner key', key: 'sk-new-owner-test',
+          status: 'active', group_id: 2 }] } as never
+      }
+      return { data: [] } as never
+    })
+    const wrapper = mountCanvas()
+    await flushPromises()
+    user.id = 100
+    await nextTick()
+    await flushPromises()
+    resolveOldKeys?.({ data: [{ id: 47, name: 'Old owner key',
+      key: 'sk-old-owner-test', status: 'active', group_id: 1 }] })
+    await flushPromises()
+    await wrapper.findAll('.cc-node')[1].trigger('click')
+    const options = wrapper.find('.cc-inspector select').text()
+    expect(options).toContain('New owner key')
+    expect(options).not.toContain('Old owner key')
+    wrapper.unmount()
+  })
+
   it('keeps unsaved edits with the previous account during a fast user switch', async () => {
     const wrapper = mountCanvas()
     await flushPromises()
