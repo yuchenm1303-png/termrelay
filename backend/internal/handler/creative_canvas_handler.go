@@ -370,8 +370,3 @@ func (h *CreativeCanvasHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"deleted": true}})
 }
 
-// Cloud projects must not inherit credentials through JSON. A fresh UUID only
-// identifies a document; it is never an authorization capability.
-func newCreativeCanvasID() string {
-	return "cr_" + strings.ReplaceAll(uuid.NewString(), "-", "")
-}
