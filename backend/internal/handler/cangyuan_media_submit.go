@@ -56,6 +56,11 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 	if len(candidates) == 0 {
 		return false
 	}
+	// Canvas-originated paid requests carry the exact price/version the user
+	// confirmed. Reject stale prices before touching the balance hold.
+	if !matchCanvasPriceExpectation(h, c, kind, modelInput.Model, data) {
+		return true
+	}
 	c.Header("Cache-Control", "no-store")
 	if apiKey.User == nil || apiKey.Group.Status != service.StatusActive {
 		c.JSON(http.StatusForbidden, gin.H{
