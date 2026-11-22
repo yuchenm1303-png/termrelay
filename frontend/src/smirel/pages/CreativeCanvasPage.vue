@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
       <button type="button" title="删除当前画布" class="cc-danger-text" @click="removeProject">删除</button>
       <div class="cc-grow"></div>
       <span class="cc-local-pill">{{ cloudState }}</span>
-      <button v-if="!cloudReady && !previewMode" type="button" title="重新连接云端" @click="connectCloud">↻ 重新连接</button>
+      <button v-if="!cloudReady && !previewMode" type="button" title="重新连接云端" @click="connectCloud">{{ cloudConflict ? '↻ 处理同步冲突' : '↻ 重新连接' }}</button>
       <button type="button" title="撤销" :disabled="!canUndo" @click="history('undo')">↶</button>
       <button type="button" title="重做" :disabled="!canRedo" @click="history('redo')">↷</button>
     </div>
