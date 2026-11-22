@@ -90,7 +90,7 @@ func TestCreativeCanvasGetAlwaysScopesQueriesToJWTUser(t *testing.T) {
 	defer db.Close()
 	h := &CreativeCanvasHandler{db: db}
 	mock.ExpectQuery("SELECT document, version FROM creative_canvas_projects WHERE user_id=\\$1 AND id=\\$2").
-		WithArgs(int64(19), "cr_secret").WillReturnRows(sqlmock.NewRows([]string{"document","version"}))
+		WithArgs(int64(19), "cr_secret").WillReturnRows(sqlmock.NewRows([]string{"document", "version"}))
 	request := httptest.NewRequest(http.MethodGet, "/creative/projects/cr_secret", nil)
 	response := httptest.NewRecorder()
 	testCreativeHandlerRouter(h, 19).ServeHTTP(response, request)
@@ -142,7 +142,7 @@ func TestCreativeCanvasListExposesOnlyCurrentUsersProjects(t *testing.T) {
 	h := &CreativeCanvasHandler{db: db}
 	mock.ExpectQuery("SELECT id,title,version,created_at,updated_at").
 		WithArgs(int64(71)).
-		WillReturnRows(sqlmock.NewRows([]string{"id","title","version","created_at","updated_at"}).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "version", "created_at", "updated_at"}).
 			AddRow("cr_user71", "User 71 canvas", int64(3), time.Now(), time.Now()))
 	request := httptest.NewRequest(http.MethodGet, "/creative/projects", nil)
 	response := httptest.NewRecorder()
@@ -151,4 +151,3 @@ func TestCreativeCanvasListExposesOnlyCurrentUsersProjects(t *testing.T) {
 	require.Contains(t, response.Body.String(), "User 71 canvas")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
-
