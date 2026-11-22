@@ -28,9 +28,9 @@ func NewAPIKeyAuthMiddleware(apiKeyService *service.APIKeyService, subscriptionS
 //   - 鉴权（Authentication）：验证 Key 有效性、用户状态、IP 限制 —— 始终执行
 //   - 计费执行（Billing Enforcement）：过期/配额/订阅/余额检查 —— skipBilling 时整块跳过
 //
-// /v1/usage、/v1/sub2api/billing 端点与异步生图任务查询只需鉴权，不需要计费执行。
+// /v1/usage、/v1/sub2api/billing 端点与异步图片/视频任务查询只需鉴权，不需要计费执行。
 // usage 允许过期/配额耗尽的 Key 查询自身用量，billing 用于读取当前 Key 的倍率配置，
-// 异步生图查询允许已耗尽额度的 Key 拉取自身任务结果。
+// 异步图片/视频查询允许已耗尽额度的 Key 拉取自身任务结果。
 func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// ── 1. 提取 API Key ──────────────────────────────────────────
@@ -172,9 +172,9 @@ func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscripti
 		// quota-exhausted or lacks an active subscription so clients can still
 		// discover the exact model IDs they are entitled to configure. Real
 		// inference endpoints continue through the normal billing checks.
-		// Async image task polling likewise only reads data that already belongs
+		// Async image/video task polling likewise only reads data that already belongs
 		// to the authenticated key.
-		skipBilling := c.Request.URL.Path == "/v1/usage" || billingInfoRequest || modelCatalogRequest || isAsyncImageTaskRead(c.Request.Method, c.Request.URL.Path)
+		skipBilling := c.Request.URL.Path == "/v1/usage" || billingInfoRequest || modelCatalogRequest || isAsyncMediaTaskRead(c.Request.Method, c.Request.URL.Path)
 
 		// ── 4. SimpleMode → early return ─────────────────────────────
 
@@ -338,11 +338,38 @@ func isOpenAICompatibleAPIKeyRequest(c *gin.Context) bool {
 	return false
 }
 
-func isAsyncImageTaskRead(method, path string) bool {
+// isAsyncMediaTaskRead bypasses billing enforcement (not authentication)
+// for already submitted async media jobs. Callers still must present the
+// owning API key; the media handler separately enforces job owner and kind.
+// Querying an existing result never creates another billable provider task.
+func isAsyncMediaTaskRead(method, path string) bool {
 	if method != http.MethodGet {
 		return false
 	}
-	return strings.HasPrefix(path, "/v1/images/tasks/") || strings.HasPrefix(path, "/images/tasks/")
+	if strings.HasPrefix(path, "/v1/images/tasks/") || strings.HasPrefix(path, "/images/tasks/") {
+		return true
+	}
+	for _, prefix := range []string{
+		"/v1/images/generations/",
+		"/v1/images/edits/",
+		"/v1/videos/",
+	} {
+		if !strings.HasPrefix(path, prefix) {
+			continue
+		}
+		id := strings.TrimPrefix(path, prefix)
+		if !strings.HasPrefix(id, "cyjob_") || len(id) < len("cyjob_")+1 || len(id) > len("cyjob_")+240 {
+			return false
+		}
+		for _, ch := range id[len("cyjob_"):] {
+			if ch != '_' && ch != '-' && (ch < '0' || ch > '9') &&
+				(ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 // GetAPIKeyFromContext 从上下文中获取API key
