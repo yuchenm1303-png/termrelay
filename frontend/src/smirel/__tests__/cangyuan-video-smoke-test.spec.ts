@@ -26,7 +26,7 @@ describe('Cangyuan once-only video QA card', () => {
         task_id: 'cyjob_videoqa1', status: 'completed', video_url: 'https://example.com/video.mp4',
       }) }
     }))
-    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
+    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47, priceApproved: true } })
     expect(wrapper.html()).not.toContain(key)
     await wrapper.find('button').trigger('click')
     await flushPromises()
@@ -60,7 +60,7 @@ describe('Cangyuan once-only video QA card', () => {
       }
       return { ok: true, status: 200, json: async () => ({ status: 'queued' }) }
     }))
-    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
+    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47, priceApproved: true } })
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(posts).toBe(1)
@@ -77,13 +77,13 @@ describe('Cangyuan once-only video QA card', () => {
   it('persists uncertain state and prevents repeat paid POST', async () => {
     const post = vi.fn(async () => { throw Error('dropped response') })
     vi.stubGlobal('fetch', post)
-    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
+    const wrapper = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47, priceApproved: true } })
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(post).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('禁止重试')
     wrapper.unmount()
-    const restored = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47 } })
+    const restored = mount(CangyuanVideoSmokeTest, { props: { apiKey: key, apiKeyId: 47, priceApproved: true } })
     await flushPromises()
     await restored.find('button').trigger('click')
     expect(post).toHaveBeenCalledTimes(1)
