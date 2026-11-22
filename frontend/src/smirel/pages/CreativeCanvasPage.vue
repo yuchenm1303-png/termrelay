@@ -29,7 +29,7 @@ type TaskResponse = {
   status?: CanvasTaskStatus
   video_url?: string
   data?: Array<{ url?: string }>
-  error?: { message?: string }
+  error?: { message?: string; type?: string }
 }
 type PointerDrag =
   | { mode: 'pan'; pointerId: number; clientX: number; clientY: number; panX: number; panY: number }
