@@ -101,8 +101,8 @@ func validateCreativeDocument(raw json.RawMessage, routeID string) ([]byte, stri
 	}
 	nodes := make(map[string]creativeCanvasNode, len(document.Nodes))
 	for _, node := range document.Nodes {
-		if !creativeCanvasIDPattern.MatchString(node.ID) || len(node.Title) > 90 ||
-			len(node.Prompt) > 6000 || len(node.Model) > 200 || len(node.Options) > 2500 ||
+		if !creativeCanvasIDPattern.MatchString(node.ID) || utf8.RuneCountInString(node.Title) > 90 ||
+			utf8.RuneCountInString(node.Prompt) > 6000 || len(node.Model) > 200 || len(node.Options) > 2500 ||
 			len(node.ResultURL) > 2048 || !isCreativeCoordinate(node.X) || !isCreativeCoordinate(node.Y) {
 			return nil, "", errors.New("invalid canvas node")
 		}
