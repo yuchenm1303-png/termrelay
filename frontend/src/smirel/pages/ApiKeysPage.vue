@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ApiKeyCredentialCard from '../components/ApiKeyCredentialCard.vue'
 import CangyuanMediaSmokeTest from '../components/CangyuanMediaSmokeTest.vue'
+import CangyuanVideoSmokeTest from '../components/CangyuanVideoSmokeTest.vue'
 import AsyncDataReveal from '../components/AsyncDataReveal.vue'
 import { api, getErrorMessage, previewMode } from '../core/api'
 import { pushNotification } from '../core/notifications'
@@ -536,6 +537,7 @@ onBeforeUnmount(() => {
     </section>
 
     <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" />
+    <CangyuanVideoSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" />
 
     <section class="keys-library">
       <header class="keys-library-heading">
