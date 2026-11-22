@@ -62,6 +62,7 @@ const openUtility = ref<UtilityPanel | null>(null)
 const { state, isAdmin } = useSession()
 const logoUrl = `${import.meta.env.BASE_URL}muxway-mark.svg?v=20260920-ribbon`
 const sharedKeysNavigation = userNavigation.find((item) => item.feature === 'keys')
+const sharedCreativeNavigation = userNavigation.find((item) => item.feature === 'creative-canvas')
 const MODE_STORAGE_KEY = 'smirel.workspace.mode'
 const LAST_ADMIN_ROUTE_KEY = 'smirel.workspace.last-admin-route'
 const LAST_USER_ROUTE_KEY = 'smirel.workspace.last-user-route'
@@ -101,7 +102,7 @@ const modelCatalogNavItem = computed<NavItem>(() => ({
 const navigation = computed<NavItem[]>(() => {
   if (!isAdminWorkspace.value) return [...userNavigation, modelCatalogNavItem.value]
   if (!sharedKeysNavigation) return [...adminNavigation, modelCatalogNavItem.value]
-  return [adminNavigation[0], sharedKeysNavigation, ...adminNavigation.slice(1), modelCatalogNavItem.value]
+  return [adminNavigation[0], sharedKeysNavigation, ...(sharedCreativeNavigation ? [sharedCreativeNavigation] : []), ...adminNavigation.slice(1), modelCatalogNavItem.value]
 })
 const initials = computed(() => (state.user?.username || state.user?.email || 'S').slice(0, 1).toUpperCase())
 const accountName = computed(() => state.user?.username || state.user?.email?.split('@')[0] || 'Muxway')
@@ -115,6 +116,7 @@ const navIconByFeature: Record<string, string> = {
   usage: 'chart',
   'usage-records': 'receipt',
   experience: 'activity',
+  'creative-canvas': 'layers',
   monitor: 'activity',
   wallet: 'wallet',
   subscriptions: 'credit-card',
@@ -146,6 +148,7 @@ const navLabelKeyByFeature: Record<string, string> = {
   usage: 'nav.usage',
   'usage-records': 'nav.usageRecords',
   experience: 'nav.experience',
+  'creative-canvas': 'nav.createCanvas',
   monitor: 'nav.monitor',
   wallet: 'nav.wallet',
   subscriptions: 'nav.subscriptions',

@@ -5,6 +5,7 @@ import AuthPage from '../smirel/pages/AuthPage.vue'
 import OAuthCallbackPage from '../smirel/pages/OAuthCallbackPage.vue'
 import WorkspacePage from '../smirel/pages/WorkspacePage.vue'
 import ApiKeysPage from '../smirel/pages/ApiKeysPage.vue'
+import CreativeCanvasPage from '../smirel/pages/CreativeCanvasPage.vue'
 import UserUsagePage from '../smirel/pages/UserUsagePage.vue'
 import UserBillingRoutePage from '../smirel/pages/UserBillingRoutePage.vue'
 import UserOrdersPage from '../smirel/components/UserOrdersPage.vue'
@@ -30,7 +31,9 @@ const workspaceRoutes: RouteRecordRaw[] = [
   ...[...userNavigation, ...userSecondaryRoutes].map((item) => ({
     path: item.path,
     name: item.name,
-    component: item.path === '/keys'
+    component: item.path === '/create'
+      ? CreativeCanvasPage
+      : item.path === '/keys'
       ? ApiKeysPage
       : item.path === '/usage'
         ? UserUsagePage
