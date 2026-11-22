@@ -14,6 +14,21 @@ describe('Cangyuan once-only video QA card', () => {
     vi.unstubAllGlobals()
   })
 
+  it('prevents video submission before an exact admin price is approved', async () => {
+    const post = vi.fn()
+    vi.stubGlobal('fetch', post)
+    const wrapper = mount(CangyuanVideoSmokeTest, {
+      props: { apiKey: key, apiKeyId: 47, priceApproved: false },
+    })
+    await flushPromises()
+    const button = wrapper.find('button')
+    expect((button.element as HTMLButtonElement).disabled).toBe(true)
+    expect(wrapper.text()).toContain('待管理员审核视频价格')
+    await button.trigger('click')
+    expect(post).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
   it('creates one video task and only polls GET until completed', async () => {
     const requests: Array<{ url: string; method: string; headers: Record<string, string>; body?: string }> = []
     vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
