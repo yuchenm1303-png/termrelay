@@ -203,7 +203,7 @@ const selectedGroup = computed(() => groups.value.find((item) => String(item.id)
 // Only the owner of an active key bound to the private media QA group sees this tester.
 const cangyuanTestKey = computed(() => keys.value.find((item) => {
   const group = item.group || groups.value.find((g) => g.id === item.group_id)
-  return item.status === 'active' && group?.name === 'cangyuan-media-sandbox' && typeof item.key === 'string'
+  return (item.status === 'active' || item.status === 'quota_exhausted') && group?.name === 'cangyuan-media-sandbox' && typeof item.key === 'string'
 }) || null)
 const canCreate = computed(() => Boolean(name.value.trim() && groupId.value && groups.value.length && !creating.value))
 
@@ -560,8 +560,8 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" />
-    <CangyuanVideoSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" :price-approved="approvedVideoPrice" />
+    <CangyuanMediaSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" :can-submit="cangyuanTestKey.status === 'active'" />
+    <CangyuanVideoSmokeTest v-if="cangyuanTestKey" :api-key="cangyuanTestKey.key || ''" :api-key-id="cangyuanTestKey.id" :price-approved="approvedVideoPrice" :can-submit="cangyuanTestKey.status === 'active'" />
 
     <section class="keys-library">
       <header class="keys-library-heading">
