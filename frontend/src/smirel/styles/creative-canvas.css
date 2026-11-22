@@ -146,6 +146,11 @@
 .cc-run-secondary { color:var(--cc-ink); background:var(--cc-soft); border:1px solid var(--cc-border); }
 .cc-task-info { font-size:10px; line-height:1.7; color:var(--cc-muted); margin:10px 0; overflow-wrap:anywhere; border:1px solid var(--cc-border); padding:10px; border-radius:9px; }
 .cc-task-info strong,.cc-task-info span { display:block; font-size:11px; color:var(--cc-ink); }
+.cc-quote-preview { display:flex; flex-direction:column; gap:5px; padding:13px; margin:12px 0 14px; background:rgba(115,135,194,.07); border:1px solid rgba(148,153,208,.23); border-radius:11px; }
+.cc-quote-preview span { font-size:9px; letter-spacing:.14em; font-weight:730; color:#a89dd6; }
+.cc-quote-preview strong { font-size:24px; font-weight:740; letter-spacing:-.035em; color:var(--cc-ink); }
+.cc-quote-preview small { font-size:10px; color:var(--ws-text-soft,var(--cc-ink)); }
+.cc-quote-preview p { margin:4px 0 0; line-height:1.6; font-size:10px; color:var(--cc-muted); }
 .cc-task-warning { padding:11px; border-radius:9px; color:#dfaaaa; background:rgba(194,93,93,.08); font-size:11px; line-height:1.6; margin:10px 0; }
 .cc-node-actions { display:flex; flex-wrap:wrap; gap:7px; }
 .cc-node-actions button { font-size:10px !important; border-radius:8px; border:1px solid var(--cc-border); background:transparent; color:var(--cc-ink); padding:8px 10px; }
