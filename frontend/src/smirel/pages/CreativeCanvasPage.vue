@@ -5,10 +5,13 @@ import { api, getErrorMessage, previewMode } from '../core/api'
 import { useSession } from '../core/session'
 import {
   blankProject, canConnect, creativeId, importCreativeProject, loadCreativeShelf,
-  makeNode, safeMediaUrl, saveCreativeShelf,
+  makeNode, normalizeProject, safeMediaUrl, saveCreativeShelf,
   type CanvasNodeKind, type CanvasTaskStatus, type CreativeNode, type CreativeProject, type CreativeShelf,
 } from '../core/creative-canvas'
 import { readCreativeAsset, storeCreativeAsset } from '../core/creative-assets'
+import {
+  listCloudProjects, getCloudProject, putCloudProject, deleteCloudProject, getCreativeMediaQuote,
+} from '../core/creative-cloud'
 import '../styles/creative-canvas.css'
 
 type KeyOption = {
@@ -52,6 +55,13 @@ const panY = ref(92)
 const notice = ref('画布将在本设备自动保存。')
 const error = ref('')
 const saveState = ref('已保存到本机')
+const cloudState = ref('正在连接云端…')
+const cloudReady = ref(false)
+const cloudConflict = ref(false)
+const cloudVersions = new Map<string, number>()
+const cloudHashes = new Map<string, string>()
+let cloudEpoch = 0
+let cloudSaveChain: Promise<void> = Promise.resolve()
 const apiKeys = ref<KeyOption[]>([])
 const selectedKeyId = ref('')
 const keyLoading = ref(false)
@@ -144,11 +154,115 @@ function saveNow() {
   try {
     saveCreativeShelf(shelfOwnerId, shelf.value)
     saveState.value = '已保存到本机'
+    if (cloudReady.value) queueCloudSave()
   } catch (err) {
     saveState.value = '保存失败'
     problem(getErrorMessage(err))
   }
 }
+
+// Local persistence is always the fallback. Cloud writes are serialized and
+// version-gated, so an outdated device cannot silently overwrite revisions.
+function queueCloudSave() {
+  if (!cloudReady.value || !project.value || previewMode) return
+  const owner = shelfOwnerId
+  const epoch = cloudEpoch
+  const id = project.value.id
+  const content = JSON.stringify(project.value)
+  if (cloudHashes.get(id) === content) return
+  cloudSaveChain = cloudSaveChain.catch(() => {}).then(async () => {
+    if (destroyed || !cloudReady.value || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    const current = shelf.value.projects.find(p => p.id === id)
+    if (!current) return
+    const latest = JSON.stringify(current)
+    if (cloudHashes.get(id) === latest) return
+    cloudState.value = '正在同步云端…'
+    try {
+      const version = cloudVersions.get(id) || 0
+      const saved = await putCloudProject(JSON.parse(latest) as CreativeProject, version)
+      if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+      cloudVersions.set(id, saved.version)
+      cloudHashes.set(id, latest)
+      cloudState.value = '已同步云端'
+      if (JSON.stringify(shelf.value.projects.find(p => p.id === id)) !== latest) {
+        queueCloudSave() // A second edit arrived while the first write was pending.
+      }
+    } catch (caught) {
+      if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+      cloudReady.value = false
+      cloudConflict.value = true
+      cloudState.value = '云端同步暂停 · 本机草稿安全保留'
+      problem('云端保存失败或版本冲突。草稿已保留在本机，请导出备份后点击「重新连接云端」。' +
+        getErrorMessage(caught).slice(0, 95))
+    }
+  })
+}
+
+async function connectCloud() {
+  const owner = shelfOwnerId
+  const epoch = ++cloudEpoch
+  cloudReady.value = false
+  cloudConflict.value = false
+  cloudState.value = previewMode ? '静态预览 · 仅本地存储' : '正在连接云端…'
+  cloudVersions.clear()
+  cloudHashes.clear()
+  if (previewMode || owner <= 0) return
+  try {
+    const metas = await listCloudProjects()
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    const remote = await Promise.all(metas.map(async item => ({
+      meta: item, snapshot: await getCloudProject(item.id),
+    })))
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+
+    const current = shelf.value.projects
+    const remoteIds = new Set(remote.map(item => item.meta.id))
+    const merged: CreativeProject[] = []
+    let recoveryCount = 0
+    for (const item of remote) {
+      const verified = normalizeProject(item.snapshot.project)
+      if (!verified || verified.id !== item.meta.id || item.snapshot.version !== item.meta.version) {
+        throw Error('云端项目数据不完整')
+      }
+      const local = current.find(p => p.id === verified.id)
+      if (local && JSON.stringify(local) !== JSON.stringify(verified)) {
+        // Never overwrite an unsynced local edit. Fork it as an independent
+        // project rather than replaying stale versions over a remote document.
+        const recovery = importCreativeProject(JSON.stringify(local))
+        recovery.title = (local.title.slice(0, 72) + ' · 本机恢复').slice(0, 90)
+        merged.push(recovery)
+        recoveryCount += 1
+      }
+      merged.push(verified)
+      cloudVersions.set(verified.id, item.meta.version)
+      cloudHashes.set(verified.id, JSON.stringify(verified))
+    }
+    for (const item of current) if (!remoteIds.has(item.id)) merged.push(item)
+    if (merged.length > maxProjects) {
+      throw Error('云端与本机项目合计超过 20 个；未自动合并，请先导出本机备份。')
+    }
+    const active = shelf.value.activeId
+    shelf.value = {
+      projects: merged.length ? merged : [blankProject()],
+      activeId: merged.some(item => item.id === active) ? active : (merged[0]?.id || ''),
+    }
+    if (!merged.length) shelf.value.activeId = shelf.value.projects[0].id
+    cloudReady.value = true
+    cloudState.value = '已连接云端'
+    saveCreativeShelf(owner, shelf.value)
+    if (recoveryCount) {
+      feedback('检测到多设备内容差异，已将本机草稿另存为 ' + recoveryCount + ' 个恢复副本；未覆盖云端版本。')
+    }
+    if (!cloudVersions.has(shelf.value.activeId)) queueCloudSave()
+    void hydrateAssets()
+  } catch (caught) {
+    if (destroyed || cloudEpoch !== epoch || shelfOwnerId !== owner) return
+    cloudReady.value = false
+    cloudState.value = '离线草稿 · 云端未同步'
+    problem('云端连接未完成，本机草稿仍可正常编辑：' + getErrorMessage(caught))
+  }
+}
+
 function resetView() {
   zoom.value = 0.86
   panX.value = 70
@@ -186,12 +300,25 @@ function copyProject() {
   switchProject(copy.id)
   feedback('已复制项目和节点，历史生成任务不会重复执行')
 }
-function removeProject() {
-  if (!project.value || !window.confirm('删除当前画布？这是本机操作，无法从服务器恢复。')) return
-  shelf.value.projects = shelf.value.projects.filter(p => p.id !== project.value.id)
-  if (shelf.value.projects.length === 0) shelf.value.projects.push(blankProject())
-  switchProject(shelf.value.projects[0].id)
-  feedback('画布已删除')
+async function removeProject() {
+  if (!project.value || !window.confirm('确定删除当前画布？云端与本机的该项目都会删除，操作无法撤销。')) return
+  const id = project.value.id
+  if (!cloudReady.value && !previewMode) return problem('云端暂未连接，避免删除后重新同步恢复；请先重新连接。')
+  try {
+    const version = cloudVersions.get(id)
+    if (version && !previewMode) {
+      await cloudSaveChain
+      const currentVersion = cloudVersions.get(id)
+      if (!currentVersion) throw Error('无法取得云端项目版本')
+      await deleteCloudProject(id, currentVersion)
+      cloudVersions.delete(id)
+      cloudHashes.delete(id)
+    }
+    shelf.value.projects = shelf.value.projects.filter(p => p.id !== id)
+    if (shelf.value.projects.length === 0) shelf.value.projects.push(blankProject())
+    switchProject(shelf.value.projects[0].id)
+    feedback('画布已删除')
+  } catch (caught) { problem('无法删除云端项目，本机副本已保留：' + getErrorMessage(caught)) }
 }
 function insert(kind: CanvasNodeKind) {
   if (!project.value) return
@@ -561,6 +688,10 @@ watch(shelf, () => {
 }, { deep: true })
 watch(userId, (nextOwner) => {
   if (nextOwner === shelfOwnerId) return
+  cloudReady.value = false
+  cloudEpoch += 1
+  cloudVersions.clear()
+  cloudHashes.clear()
   if (saveHandle) window.clearTimeout(saveHandle)
   try { saveCreativeShelf(shelfOwnerId, shelf.value) } catch { /* best-effort flush of old owner's draft */ }
   shelfOwnerId = nextOwner
@@ -574,15 +705,19 @@ watch(userId, (nextOwner) => {
   pollingTimers.clear()
   void hydrateAssets()
   void loadKeys()
+  void connectCloud()
 })
 onMounted(() => {
   window.addEventListener('keydown', onKeyboard)
   saveNow() // Persist starter project even if the user does not edit it.
   void hydrateAssets()
   void loadKeys()
+  void connectCloud()
 })
 onBeforeUnmount(() => {
   destroyed = true
+  cloudReady.value = false
+  cloudEpoch += 1
   hydrationVersion += 1
   window.removeEventListener('keydown', onKeyboard)
   if (saveHandle) window.clearTimeout(saveHandle)
@@ -598,7 +733,7 @@ onBeforeUnmount(() => {
   <div class="cc-page">
     <header class="cc-header">
       <div class="cc-heading">
-        <span class="cc-eyebrow"><span class="cc-orbit"></span> MUXWAY / CREATIVE STUDIO <i>PREVIEW 01</i></span>
+        <span class="cc-eyebrow"><span class="cc-orbit"></span> MUXWAY / CREATIVE STUDIO <i>PREVIEW 02</i></span>
         <h1>AI 创作画布</h1>
         <p>一个自由连接的创作空间。由提示词开始，把图片和视频延伸成完整的创作流程。</p>
       </div>
@@ -622,7 +757,8 @@ onBeforeUnmount(() => {
       <button type="button" title="复制当前画布" @click="copyProject">复制</button>
       <button type="button" title="删除当前画布" class="cc-danger-text" @click="removeProject">删除</button>
       <div class="cc-grow"></div>
-      <span class="cc-local-pill">仅本机保存 · 未同步云端</span>
+      <span class="cc-local-pill">{{ cloudState }}</span>
+      <button v-if="!cloudReady && !previewMode" type="button" title="重新连接云端" @click="connectCloud">↻ 重新连接</button>
       <button type="button" title="撤销" :disabled="!canUndo" @click="history('undo')">↶</button>
       <button type="button" title="重做" :disabled="!canRedo" @click="history('redo')">↷</button>
     </div>
