@@ -127,6 +127,34 @@ describe('creative canvas UI foundation', () => {
     wrapper.unmount()
   })
 
+  it('forks a same-user conflict while preserving an already-submitted paid job ID', async () => {
+    const local = starterProject()
+    local.nodes[1].taskId = 'cyjob_' + 'a'.repeat(32)
+    local.nodes[1].taskKeyId = 47
+    local.nodes[1].status = 'queued'
+    localStorage.setItem('muxway.creation.projects.v1.user-99', JSON.stringify({
+      activeId: local.id, projects: [local],
+    }))
+    const remote = JSON.parse(JSON.stringify(local)) as typeof local
+    remote.title = 'Cloud version changed on another device'
+    vi.mocked(api.get).mockImplementation(async (url) => {
+      if (url === '/creative/projects') return { data: { items: [{
+        id: remote.id, title: remote.title, version: 6, updated_at: remote.updatedAt,
+      }] } } as never
+      if (url === '/creative/projects/' + remote.id) return { data: { project: remote, version: 6 } } as never
+      return { data: [] } as never
+    })
+    const wrapper = mountCanvas()
+    await flushPromises()
+    const localRecord = localStorage.getItem('muxway.creation.projects.v1.user-99') || ''
+    const stored = JSON.parse(localRecord) as { projects: typeof local[] }
+    expect(stored.projects).toHaveLength(2)
+    const recovery = stored.projects.find(item => item.id !== remote.id)
+    expect(recovery?.nodes[1].taskId).toBe(local.nodes[1].taskId)
+    expect(recovery?.nodes[1].taskKeyId).toBe(47)
+    wrapper.unmount()
+  })
+
   it('requires an approved quote and sends the exact price/version with only one paid POST', async () => {
     vi.mocked(api.get).mockImplementation(async (url) => {
       if (url === '/keys') return { data: [{
