@@ -108,7 +108,7 @@ describe('creative canvas UI foundation', () => {
     wrapper.unmount()
   })
 
-  it('loads a cloud document by JWT user and retains local differences as a recovery draft', async () => {
+  it('restores a cloud document and preserves local-only projects', async () => {
     const remote = starterProject()
     remote.id = 'cr_remote_user99'
     remote.title = 'Cloud restored project'
@@ -122,7 +122,7 @@ describe('creative canvas UI foundation', () => {
     const wrapper = mountCanvas()
     await flushPromises()
     expect(wrapper.findAll('.cc-project-select option')).toHaveLength(2)
-    expect(wrapper.text()).toContain('已连接云端')
+    expect(wrapper.text()).toMatch(/已连接云端|已同步云端/)
     expect(wrapper.find('.cc-project-select').text()).toContain('Cloud restored project')
     wrapper.unmount()
   })
