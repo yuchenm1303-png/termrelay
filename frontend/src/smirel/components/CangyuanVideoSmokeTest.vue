@@ -30,6 +30,9 @@ function validTaskID(value: string): boolean {
 function remember(value: string) {
   try { window.sessionStorage.setItem(slot, value) } catch { /* private browsing */ }
 }
+function forget() {
+  try { window.sessionStorage.removeItem(slot) } catch { /* private browsing */ }
+}
 async function readJson(response: Response): Promise<VideoTask> {
   const data: unknown = await response.json().catch(() => ({}))
   return data && typeof data === 'object' && !Array.isArray(data) ? data as VideoTask : {}
@@ -104,9 +107,17 @@ async function startOneVideo() {
     })
     const data = await readJson(response)
     if (!response.ok) {
-      status.value = 'submit_unknown'
-      error.value = '提交失败（HTTP ' + response.status + '）。为避免重复扣费，本页面不再提交；请管理员查看任务与计费。' +
-        (data.error?.message ? ' ' + data.error.message.slice(0, 120) : '')
+      // Definitive validation/auth rejections do not accept an upstream job.
+      // Ambiguous errors must remain locked, exactly as in image QA.
+      const definitelyRejected = [400, 401, 402, 403, 404, 413, 415, 422].includes(response.status)
+      if (definitelyRejected) {
+        forget()
+        error.value = '请求已被明确拒绝（HTTP ' + response.status + '），未创建任务。请检查价格和测试权限。' +
+          (data.error?.message ? ' ' + data.error.message.slice(0, 120) : '')
+      } else {
+        status.value = 'submit_unknown'
+        error.value = '提交结果不确定（HTTP ' + response.status + '），禁止重新提交，请管理员核对任务与扣费。'
+      }
       return
     }
     const id = data.task_id || data.id || ''
