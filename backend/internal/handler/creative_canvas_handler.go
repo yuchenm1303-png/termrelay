@@ -228,7 +228,7 @@ func (h *CreativeCanvasHandler) List(c *gin.Context) {
 		creativeFail(c, http.StatusServiceUnavailable, "Cloud canvas query failed")
 		return
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	items := make([]gin.H, 0, creativeCanvasMaxProjects)
 	for rows.Next() {
 		var id, title string
@@ -303,7 +303,7 @@ func (h *CreativeCanvasHandler) Put(c *gin.Context) {
 		creativeFail(c, http.StatusServiceUnavailable, "Canvas save unavailable")
 		return
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	// Serialize creates per owner so concurrent first saves cannot exceed the
 	// per-user 20-project limit. The SQL update itself is compare-and-swap.
 	if _, err = tx.ExecContext(c.Request.Context(), `SELECT pg_advisory_xact_lock($1)`, 300800000000+userID); err != nil {
