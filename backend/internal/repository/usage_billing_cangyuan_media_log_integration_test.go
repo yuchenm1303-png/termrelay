@@ -33,6 +33,13 @@ func TestUsageBillingRepositoryApply_CangyuanMediaWritesOneDurableUsageRow(t *te
 	})
 
 	requestID := "cangyuan-media:cyjob_" + uuid.NewString()
+	// This test writes to the shared integration database. Remove its log even
+	// on failed assertions so unrelated dashboard/range tests stay isolated.
+	t.Cleanup(func() {
+		_, cleanupErr := integrationDB.ExecContext(context.Background(),
+			"DELETE FROM usage_logs WHERE request_id=$1 AND api_key_id=$2", requestID, apiKey.ID)
+		require.NoError(t, cleanupErr)
+	})
 	command := &service.UsageBillingCommand{
 		RequestID: requestID, UserID: user.ID, APIKeyID: apiKey.ID,
 		AccountID: account.ID, AccountType: service.AccountTypeAPIKey,
