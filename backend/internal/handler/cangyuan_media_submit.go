@@ -54,6 +54,15 @@ func (h *CangyuanMediaHandler) TrySubmit(c *gin.Context, kind service.CangyuanMe
 		return true
 	}
 	if len(candidates) == 0 {
+		// The caller has already obtained a canvas quote. If an account became
+		// unavailable in the meantime, do not fall through to an unrelated
+		// OpenAI/Grok provider that might charge for a different model.
+		if c.GetHeader("X-Canvas-Quoted-Sale-USD") != "" ||
+			c.GetHeader("X-Canvas-Quoted-Pricing-Version") != "" {
+			c.JSON(http.StatusConflict, gin.H{"error": gin.H{
+				"type": "price_changed", "message": "Media account or approved quote is no longer available"}})
+			return true
+		}
 		return false
 	}
 	// Canvas-originated paid requests carry the exact price/version the user
