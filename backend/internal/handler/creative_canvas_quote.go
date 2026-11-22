@@ -83,18 +83,18 @@ func (h *CreativeCanvasHandler) QuoteMedia(c *gin.Context) {
 	total := unit.Mul(decimal.NewFromInt(int64(approved.Units))).StringFixed(8)
 	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{
-		"currency": "USD",
-		"kind": req.Kind,
-		"model": req.Model,
-		"api_key_id": req.APIKeyID,
-		"group_id": *key.GroupID,
-		"units": approved.Units,
+		"currency":            "USD",
+		"kind":                req.Kind,
+		"model":               req.Model,
+		"api_key_id":          req.APIKeyID,
+		"group_id":            *key.GroupID,
+		"units":               approved.Units,
 		"unit_sale_price_usd": approved.UnitSalePriceUSD,
-		"total_sale_usd": total,
-		"tier": approved.Tier,
-		"pricing_version": approved.PricingVersion,
-		"approved": true,
-		"disclaimer": "Final execution checks the same quote and rejects stale or changed pricing",
+		"total_sale_usd":      total,
+		"tier":                approved.Tier,
+		"pricing_version":     approved.PricingVersion,
+		"approved":            true,
+		"disclaimer":          "Final execution checks the same quote and rejects stale or changed pricing",
 	}})
 }
 
