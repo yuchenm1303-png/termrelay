@@ -8,13 +8,13 @@ import (
 
 func TestCangyuanCanvasPriceExpectationMatchesFrozenBillingSnapshot(t *testing.T) {
 	snapshot := &CangyuanMediaPriceSnapshot{
-		PricingVersion: "admin-v1",
-		Currency:       "USD",
-		Tier:           "default",
-		Units:          1,
-		UnitSalePriceUSD: "0.01",
+		PricingVersion:      "admin-v1",
+		Currency:            "USD",
+		Tier:                "default",
+		Units:               1,
+		UnitSalePriceUSD:    "0.01",
 		UnitProviderCostUSD: "0.005",
-		VerifiedByAdmin: true,
+		VerifiedByAdmin:     true,
 	}
 	expected := CangyuanMediaPriceExpectation{TotalSaleUSD: "0.01000000", PricingVersion: "admin-v1"}
 	require.True(t, cangyuanMediaPriceMatchesExpectation(snapshot, expected))
