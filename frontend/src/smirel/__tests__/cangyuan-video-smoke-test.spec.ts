@@ -14,6 +14,29 @@ describe('Cangyuan once-only video QA card', () => {
     vi.unstubAllGlobals()
   })
 
+  it('allows GET of a settled video after quota exhaustion but never POST', async () => {
+    const requests: string[] = []
+    window.sessionStorage.setItem('cangyuan-video-qa-one-shot:47', 'cyjob_paidvideo123')
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      requests.push((init.method || 'GET') + ' ' + url)
+      return { ok: true, status: 200, json: async () => ({
+        status: 'completed', video_url: 'https://example.com/settled-video.mp4',
+      }) }
+    }))
+    const wrapper = mount(CangyuanVideoSmokeTest, {
+      props: { apiKey: key, apiKeyId: 47, priceApproved: true, canSubmit: false },
+    })
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    expect((buttons[0].element as HTMLButtonElement).disabled).toBe(true)
+    await buttons[0].trigger('click')
+    await buttons[1].trigger('click')
+    await flushPromises()
+    expect(requests).toEqual(['GET /v1/videos/cyjob_paidvideo123'])
+    expect(wrapper.find('a[href="https://example.com/settled-video.mp4"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('prevents video submission before an exact admin price is approved', async () => {
     const post = vi.fn()
     vi.stubGlobal('fetch', post)
