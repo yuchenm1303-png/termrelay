@@ -66,6 +66,7 @@ let cloudSaveChain: Promise<void> = Promise.resolve()
 const apiKeys = ref<KeyOption[]>([])
 const selectedKeyId = ref('')
 const keyLoading = ref(false)
+let keyRequestEpoch = 0
 const quoteLoading = ref(false)
 const latestQuote = ref<CreativeMediaQuote | null>(null)
 const quotedNodeId = ref('')
@@ -589,14 +590,24 @@ function inputPrompt(node: CreativeNode): string {
 
 async function loadKeys() {
   if (previewMode) return
+  const epoch = ++keyRequestEpoch
+  const owner = shelfOwnerId
   keyLoading.value = true
   try {
     const response = await api.get<KeyOption[] | { items?: KeyOption[] }>('/keys', { params: { page: 1, page_size: 100 } })
+    // Old account's JWT request may resolve after logout/relogin.
+    // Never rehydrate keys or update selection across that boundary.
+    if (destroyed || owner !== shelfOwnerId || epoch !== keyRequestEpoch) return
     const list = Array.isArray(response.data) ? response.data : (response.data.items || [])
     apiKeys.value = list.filter(key => key.status === 'active' && typeof key.key === 'string' && key.key.startsWith('sk-'))
     if (apiKeys.value.length === 1) selectedKeyId.value = String(apiKeys.value[0].id)
-  } catch (err) { problem('读取 API Key 失败：' + getErrorMessage(err)) }
-  finally { keyLoading.value = false }
+  } catch (err) {
+    if (!destroyed && owner === shelfOwnerId && epoch === keyRequestEpoch) {
+      problem('读取 API Key 失败：' + getErrorMessage(err))
+    }
+  } finally {
+    if (epoch === keyRequestEpoch) keyLoading.value = false
+  }
 }
 function safeTaskId(value: unknown): string {
   return typeof value === 'string' && /^cyjob_[a-zA-Z0-9_-]{1,72}$/.test(value) ? value : ''
@@ -794,6 +805,8 @@ watch(shelf, () => {
 }, { deep: true })
 watch(userId, (nextOwner) => {
   if (nextOwner === shelfOwnerId) return
+  keyRequestEpoch += 1
+  keyLoading.value = false
   cloudReady.value = false
   cloudEpoch += 1
   cloudVersions.clear()
@@ -822,6 +835,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   destroyed = true
+  keyRequestEpoch += 1
   cloudReady.value = false
   cloudEpoch += 1
   hydrationVersion += 1
