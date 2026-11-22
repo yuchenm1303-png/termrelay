@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -137,6 +138,14 @@ func validateCreativeDocument(raw json.RawMessage, routeID string) ([]byte, stri
 		if json.Unmarshal([]byte(node.Options), &options) != nil || options == nil {
 			return nil, "", errors.New("invalid node generation options JSON")
 		}
+		// Even a user-edited JSON string cannot bypass the strict top-level
+		// schema by nesting credentials inside a node's provider options.
+		for key := range options {
+			switch strings.ToLower(key) {
+			case "api_key", "apikey", "authorization", "access_token", "refresh_token", "secret", "client_secret", "password":
+				return nil, "", errors.New("credentials must never be stored in a cloud canvas")
+			}
+		}
 		nodes[node.ID] = node
 	}
 	pairs := make(map[string]bool, len(document.Links))
@@ -194,8 +203,12 @@ func isCreativeCoordinate(value float64) bool {
 }
 
 func isCreativeSafeHTTPSURL(value string) bool {
-	return strings.HasPrefix(value, "https://") && !strings.Contains(value, "@") &&
-		!strings.ContainsAny(value, "\r\n\x00") && len(value) <= 2048
+	if len(value) == 0 || len(value) > 2048 || strings.ContainsAny(value, "\r\n\x00") {
+		return false
+	}
+	parsed, err := url.Parse(value)
+	return err == nil && parsed.Scheme == "https" && parsed.Hostname() != "" &&
+		parsed.User == nil && parsed.Fragment == "" && parsed.Opaque == ""
 }
 
 func creativeAuthUser(c *gin.Context) (int64, bool) {
