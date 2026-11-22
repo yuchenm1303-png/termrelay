@@ -152,4 +152,3 @@ func TestCreativeCanvasListExposesOnlyCurrentUsersProjects(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-var _ *sql.DB
