@@ -20,9 +20,9 @@ func TestUsageBillingRepositoryApply_CangyuanMediaWritesOneDurableUsageRow(t *te
 	repo := NewUsageBillingRepository(client, integrationDB)
 
 	user := mustCreateUser(t, client, &service.User{
-		Email: fmt.Sprintf("cangyuan-media-usage-%d@example.com", time.Now().UnixNano()),
+		Email:        fmt.Sprintf("cangyuan-media-usage-%d@example.com", time.Now().UnixNano()),
 		PasswordHash: "hash",
-		Balance: 100,
+		Balance:      100,
 	})
 	apiKey := mustCreateApiKey(t, client, &service.APIKey{
 		UserID: user.ID, Key: "sk-cangyuan-media-" + uuid.NewString(), Name: "media-audit",
