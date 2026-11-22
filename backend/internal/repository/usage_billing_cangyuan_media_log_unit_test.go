@@ -16,13 +16,13 @@ import (
 
 func TestRecordSettledCangyuanMediaUsage_OneRecordByKind(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
-		kind      string
-		count     int
-		imgCount  int
+		name       string
+		kind       string
+		count      int
+		imgCount   int
 		videoCount int
-		imageSize any
-		source    any
+		imageSize  any
+		source     any
 	}{
 		{name: "image", kind: "image", count: 1, imgCount: 1, videoCount: 0, imageSize: "mixed", source: "legacy"},
 		{name: "video", kind: "video", count: 0, imgCount: 0, videoCount: 1},
