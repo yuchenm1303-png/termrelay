@@ -31,7 +31,7 @@ func recordSettledCangyuanMediaUsage(ctx context.Context, tx *sql.Tx, cmd *servi
 	switch cmd.MediaType {
 	case "image":
 		if cmd.ImageCount < 1 {
-			return errors.New("Cangyuan image settlement must specify image count")
+			return errors.New("cangyuan image settlement must specify image count")
 		}
 		imageCount = cmd.ImageCount
 		// The approved billable snapshot currently records the count, not the
@@ -42,7 +42,7 @@ func recordSettledCangyuanMediaUsage(ctx context.Context, tx *sql.Tx, cmd *servi
 		imageSizeSource = "legacy"
 	case "video":
 		if cmd.ImageCount != 0 {
-			return errors.New("Cangyuan video settlement cannot count images")
+			return errors.New("cangyuan video settlement cannot count images")
 		}
 		videoCount = 1
 	default:
