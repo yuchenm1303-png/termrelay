@@ -168,12 +168,14 @@ function saveNow() {
 
 // Local persistence is always the fallback. Cloud writes are serialized and
 // version-gated, so an outdated device cannot silently overwrite revisions.
-function queueCloudSave() {
-  if (!cloudReady.value || !project.value || previewMode) return
+function queueCloudSave(targetId = project.value?.id) {
+  if (!cloudReady.value || !targetId || previewMode) return
   const owner = shelfOwnerId
   const epoch = cloudEpoch
-  const id = project.value.id
-  const content = JSON.stringify(project.value)
+  const id = targetId
+  const candidate = shelf.value.projects.find(item => item.id === id)
+  if (!candidate) return
+  const content = JSON.stringify(candidate)
   if (cloudHashes.get(id) === content) return
   cloudSaveChain = cloudSaveChain.catch(() => {}).then(async () => {
     if (destroyed || !cloudReady.value || cloudEpoch !== epoch || shelfOwnerId !== owner) return
